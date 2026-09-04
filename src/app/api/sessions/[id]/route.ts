@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCompletedSessionById } from "@/features/sessions/session.query";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { getCompletedSessionById } from "@/features/sessions/queries/session.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export async function GET(
   _request: Request,

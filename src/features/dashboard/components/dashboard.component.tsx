@@ -11,18 +11,19 @@ import {
   Play,
   Sparkles,
 } from "lucide-react";
-import { FocusChart } from "@/features/dashboard/components/focus-chart.component";
-import type { DashboardData } from "@/features/dashboard/dashboard.types";
+import { TimeBarChart } from "@/components/ui/charts/time-bar-chart.component";
+import type { DashboardData } from "@/features/dashboard/analytics/types/dashboard.types";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
+import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
-import type { SessionListItem } from "@/features/sessions/session.types";
-import { useActiveTimer } from "@/features/sessions/use-active-timer.hook";
-import { cn } from "@/lib/class-name.util";
+import type { SessionListItem } from "@/features/sessions/types/session.types";
+import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
+import { cn } from "@/lib/styles/utils/class-name.util";
 import {
   formatDuration,
   TIMEFRAMES,
   type Timeframe,
-} from "@/lib/dates/period.util";
+} from "@/lib/dates/utils/period.util";
 
 export function Dashboard({
   userName,
@@ -193,7 +194,7 @@ export function Dashboard({
             </div>
             <Clock3 className="text-text-muted size-4" />
           </div>
-          <FocusChart data={data.chart} />
+          <TimeBarChart data={data.chart} />
         </div>
 
         <div className="py-3xl lg:pl-4xl">
@@ -215,7 +216,7 @@ export function Dashboard({
                 : 0;
               return (
                 <Link
-                  href={`/domains/${domain.slug}`}
+                  href={getDomainHref(domain.slug)}
                   className="domain-metric group"
                   key={domain.id}
                 >

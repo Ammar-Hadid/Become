@@ -1,19 +1,29 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
-import { getDomainBySlug } from "@/features/domains/domain.query";
+import { getDomainBySlug } from "@/features/domains/queries/domain.query";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
-import { getRecentSessions } from "@/features/sessions/session.query";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
-import { formatDuration } from "@/lib/dates/period.util";
+import { getRecentSessions } from "@/features/sessions/queries/session.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { formatDuration } from "@/lib/dates/utils/period.util";
 
 export default async function DomainPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ session?: string | string[] }>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
   const { slug } = await params;
+  if (slug === "engineering") {
+    const session = (await searchParams).session;
+    redirect(
+      typeof session === "string"
+        ? `/engineering?session=${encodeURIComponent(session)}`
+        : "/engineering",
+    );
+  }
   const domain = await getDomainBySlug(user.id, slug);
   if (!domain) notFound();
   const sessions = await getRecentSessions(user.id, 50, domain.id);

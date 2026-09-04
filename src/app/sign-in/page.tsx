@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { ArrowDownRight } from "lucide-react";
-import { BrandMark } from "@/components/layout/brand-mark.component";
+import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { AuthForm } from "@/features/auth/components/auth-form.component";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export default async function SignInPage() {
   if (await getCurrentUser()) redirect("/");
@@ -10,7 +10,7 @@ export default async function SignInPage() {
     <main className="auth-page">
       <section className="auth-story">
         <BrandMark />
-        <div className="relative z-10 max-w-xl">
+        <div className="relative z-10 max-w-copy">
           <p className="eyebrow text-primary mb-2xl">
             Your personal operating system
           </p>
@@ -19,7 +19,7 @@ export default async function SignInPage() {
             <br />
             <span>visible.</span>
           </h1>
-          <p className="text-text-secondary text-section mt-7 max-w-md leading-relaxed">
+          <p className="text-text-secondary text-section mt-7 max-w-copy leading-relaxed">
             Connect intention to action, time to evidence, and daily work to the
             person you are becoming.
           </p>
@@ -34,7 +34,7 @@ export default async function SignInPage() {
         <div className="auth-grid" aria-hidden="true" />
       </section>
       <section className="auth-panel">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-copy">
           <div className="mb-4xl lg:hidden">
             <BrandMark />
           </div>

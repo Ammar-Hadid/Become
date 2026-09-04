@@ -1,5 +1,5 @@
 import { Braces, Compass, Landmark, Play } from "lucide-react";
-import { cn } from "@/lib/class-name.util";
+import { cn } from "@/lib/styles/utils/class-name.util";
 
 const icons = {
   engineering: Braces,

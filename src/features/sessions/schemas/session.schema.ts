@@ -1,0 +1,43 @@
+import { z } from "zod";
+import {
+  ENGINEERING_CONTEXT_VALUES,
+  ENGINEERING_EVIDENCE_TYPE_VALUES,
+} from "@/features/engineering/constants/engineering.constants";
+
+const optionalText = z
+  .string()
+  .trim()
+  .max(500)
+  .optional()
+  .transform((value) => value || null);
+
+export const startSessionSchema = z.object({
+  domainId: z.string().min(1),
+  activityTypeId: z.string().min(1),
+  engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
+  engineeringProjectId: z.string().min(1).nullable().optional(),
+  description: optionalText,
+});
+
+export const completeSessionSchema = z.object({
+  outcome: optionalText,
+  notes: optionalText,
+  engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
+  engineeringProjectId: z.string().min(1).nullable().optional(),
+  engineeringEvidence: z
+    .object({
+      type: z.enum(ENGINEERING_EVIDENCE_TYPE_VALUES),
+      title: z.string().trim().min(1).max(160),
+      details: z
+        .string()
+        .trim()
+        .max(5000)
+        .optional()
+        .transform((value) => value || null),
+    })
+    .nullable()
+    .optional(),
+});
+
+export type StartSessionInput = z.infer<typeof startSessionSchema>;
+export type CompleteSessionInput = z.infer<typeof completeSessionSchema>;

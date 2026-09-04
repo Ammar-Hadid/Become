@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { History } from "lucide-react";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
-import { getRecentSessions } from "@/features/sessions/session.query";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { getRecentSessions } from "@/features/sessions/queries/session.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export const metadata: Metadata = { title: "Sessions" };
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { startSessionSchema } from "@/features/sessions/session.schema";
-import { startSession } from "@/features/sessions/start-session.service";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { startSessionSchema } from "@/features/sessions/schemas/session.schema";
+import { startSession } from "@/features/sessions/lifecycle/services/start-session.service";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -26,6 +26,24 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "A timer is already running." },
       { status: 409 },
+    );
+  }
+  if (result.status === "engineering-context-required") {
+    return NextResponse.json(
+      { error: "Choose an Engineering context." },
+      { status: 400 },
+    );
+  }
+  if (result.status === "invalid-engineering-details") {
+    return NextResponse.json(
+      { error: "Engineering details require the Engineering domain." },
+      { status: 400 },
+    );
+  }
+  if (result.status === "project-not-found") {
+    return NextResponse.json(
+      { error: "Engineering project not found." },
+      { status: 404 },
     );
   }
 
