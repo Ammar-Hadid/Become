@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { DEFAULT_DOMAINS } from "../src/features/domains/domain.constants";
-import { toDomainSlug } from "../src/features/domains/domain.util";
+import { DEFAULT_DOMAINS } from "../src/features/domains/defaults/constants/domain.constants";
+import { toDomainSlug } from "../src/features/domains/identity/utils/domain.util";
+import { synchronizeBuiltInTechnologies } from "../src/features/engineering/technologies/services/synchronize-built-in-technologies.service";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
@@ -12,6 +13,13 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
+  const referenceData = await prisma.$transaction(
+    (transaction) => synchronizeBuiltInTechnologies(transaction),
+    { isolationLevel: "Serializable", timeout: 30_000 },
+  );
+  console.log("Built-in Engineering technologies:", referenceData);
+  if (process.argv.includes("--reference-data-only")) return;
+
   const user = await prisma.user.findUnique({
     where: { email: "demo@become.local" },
   });
@@ -45,4 +53,9 @@ async function main() {
   }
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

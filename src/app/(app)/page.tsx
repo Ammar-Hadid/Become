@@ -1,10 +1,10 @@
 import { DateTime } from "luxon";
 import { Dashboard } from "@/features/dashboard/components/dashboard.component";
-import { getDashboardData } from "@/features/dashboard/dashboard.query";
-import { getRecentSessions } from "@/features/sessions/session.query";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { getDashboardData } from "@/features/dashboard/analytics/queries/dashboard.query";
+import { getRecentSessions } from "@/features/sessions/queries/session.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
-import { getSeasonForDate } from "@/lib/dates/period.util";
+import { getSeasonForDate } from "@/lib/dates/utils/period.util";
 
 export default async function HomePage() {
   const user = await getCurrentUser();

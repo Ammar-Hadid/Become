@@ -1,9 +1,9 @@
 import { DateTime } from "luxon";
 import { NextResponse } from "next/server";
-import { getDashboardData } from "@/features/dashboard/dashboard.query";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { getDashboardData } from "@/features/dashboard/analytics/queries/dashboard.query";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
-import { isTimeframe } from "@/lib/dates/period.util";
+import { isTimeframe } from "@/lib/dates/utils/period.util";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();

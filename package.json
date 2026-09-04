@@ -21,6 +21,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:sync-tech": "prisma db seed -- --reference-data-only",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.62.0",
     "recharts": "^3.10.1",
+    "simple-icons": "^16.29.0",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.1.5"
   },

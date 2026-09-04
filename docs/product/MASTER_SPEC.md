@@ -524,7 +524,7 @@ Purpose:
 
 > What am I building, solving, learning, and improving?
 
-Potential activities:
+Engineering activities:
 
 - coding
 - debugging
@@ -533,10 +533,33 @@ Potential activities:
 - testing
 - deployment
 - code review
-- internship
-- personal project
 
-Engineering sessions may link to projects.
+Each Engineering session records the setting in which the work happened:
+
+- uni
+- internship
+- personal
+- professional
+
+This context belongs to the session and is independent of its optional project.
+It must not be derived historically from `EngineeringProject`. Each project also
+stores its own required context from the same enum. Selecting a project when
+starting a session prefills the project's context as an editable default, but
+the session's stored context remains the authoritative historical value so later
+project changes cannot reclassify past work. Selecting a context never selects a
+project.
+
+Engineering sessions may optionally link to projects. An `EngineeringProject`
+may store an optional nullable `liveUrl` in addition to its repository URL.
+Modified project create/edit forms protect against accidental navigation with a
+discard confirmation; Phase 2 does not add drafts or autosave.
+
+Engineering projects may also have an optional reusable technology stack through
+canonical `Technology` records and an explicit project-technology join. Built-in
+technologies are global system records; missing technologies may be created as
+user-owned custom records with normalized names and slugs. Technologies belong
+to projects only in Phase 2. Do not add technology selection to timer flows or
+store technology attribution on `Session`.
 
 Potential outputs:
 
@@ -555,7 +578,9 @@ Eventually support analytics such as:
 - active days
 - project breakdown
 - activity breakdown
-- internship vs personal work
+- context breakdown across uni, internship, personal, and professional work
+- distinct projects worked on during the timeframe by project context
+- time on projects using a technology, clearly labeled as project association
 - coding vs learning
 - week/month/season/year trends
 - features completed
@@ -564,6 +589,18 @@ Eventually support analytics such as:
 
 The domain should eventually answer:
 "What did I actually learn and build this season?"
+
+Project-context counts and Session-context time are separate measures. “Projects
+worked on this season by context” includes a distinct project only when linked
+Engineering Session time overlaps that season, then groups it by the project's
+current context. A future “projects created this season” measure must instead use
+an explicitly documented project creation or start-date boundary.
+
+Project-technology buckets may overlap because one project can use several
+technologies. Never sum those buckets or describe them as direct time spent using
+a technology; stronger attribution requires session-level data that Phase 2 does
+not collect. These Phase 2 buckets use the project's current stack rather than a
+historical per-session technology snapshot.
 
 ---
 
@@ -1382,7 +1419,7 @@ Do not automatically continue to Phase 2.
 
 ### Phase 2: Engineering
 
-Add engineering projects, project-linked sessions, activity breakdown, history, output/learning records where useful, and engineering analytics.
+Add engineering projects with required project context, reusable technology stacks, protected create/edit forms, optionally project-linked sessions, independent session context, activity and context breakdowns, history, output/learning records where useful, and engineering analytics.
 
 ### Phase 3: Finance
 

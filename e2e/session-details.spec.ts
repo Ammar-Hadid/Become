@@ -21,10 +21,11 @@ async function recordSession(
   },
 ) {
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: /Engineering/ }).click();
+  await page.getByRole("button", { name: "Engineering", exact: true }).click();
   await page
     .getByTestId("activity-select")
     .selectOption({ label: details.activity });
+  await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   if (details.focus) {
     await page.getByTestId("session-description").fill(details.focus);
   }
@@ -158,25 +159,18 @@ test("completed sessions share one responsive details experience across contexts
   await expect(page.getByTestId("session-detail-notes")).toHaveCount(0);
   await page.getByRole("button", { name: "Close session details" }).click();
 
-  await page.goto("/domains/engineering");
-  await page
-    .getByTestId("session-row-trigger")
-    .filter({ hasText: "Polish the evidence experience" })
-    .click();
+  await page.goto(`/domains/engineering?session=${completedSessionId}`);
+  await expect(page).toHaveURL(/\/engineering\?session=/);
   const domainUrl = new URL(page.url());
-  expect(domainUrl.pathname).toBe("/domains/engineering");
+  expect(domainUrl.pathname).toBe("/engineering");
   expect(domainUrl.searchParams.get("session")).toBeTruthy();
+  await expect(page.getByTestId("session-details")).toBeVisible();
   await expect(page.getByTestId("session-detail-notes")).toContainText(
     "Preserved the original page and scroll position.",
   );
-  await page.getByRole("button", { name: "Close session details" }).click();
-  await expect(page).toHaveURL(/\/domains\/engineering$/);
-
-  await page.goto(`/domains/engineering?session=${completedSessionId}`);
-  await expect(page.getByTestId("session-details")).toBeVisible();
   await expect(page.getByTestId("session-detail-outcome")).toContainText(
     "A clear reusable session drawer",
   );
   await page.getByRole("button", { name: "Close session details" }).click();
-  await expect(page).toHaveURL(/\/domains\/engineering$/);
+  await expect(page).toHaveURL(/\/engineering$/);
 });

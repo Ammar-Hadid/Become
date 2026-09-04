@@ -7,18 +7,59 @@ datasource db {
   provider = "postgresql"
 }
 
+enum EngineeringProjectStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum EngineeringContext {
+  UNI
+  INTERNSHIP
+  PERSONAL
+  PROFESSIONAL
+}
+
+enum EngineeringEvidenceType {
+  FEATURE_COMPLETED
+  BUG_SOLVED
+  CONCEPT_LEARNED
+  DEPLOYMENT
+  ARCHITECTURE_DECISION
+  TECHNICAL_DISCOVERY
+}
+
+enum TechnologyCategory {
+  LANGUAGE
+  FRAMEWORK
+  LIBRARY
+  DATABASE
+  RUNTIME
+  ORM_DATA
+  TESTING
+  BUILD_TOOL
+  INFRASTRUCTURE
+  PLATFORM
+  TOOL
+  OTHER
+}
+
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  emailVerified Boolean        @default(false)
-  image         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  authSessions  AuthSession[]
-  accounts      Account[]
-  domains       Domain[]
-  sessions      Session[]
+  id                  String                @id @default(cuid())
+  name                String
+  email               String                @unique
+  emailVerified       Boolean               @default(false)
+  image               String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  authSessions        AuthSession[]
+  accounts            Account[]
+  domains             Domain[]
+  sessions            Session[]
+  engineeringProjects EngineeringProject[]
+  engineeringEvidence EngineeringEvidence[]
+  technologies        Technology[]
 
   @@map("user")
 }
@@ -87,6 +128,7 @@ model Domain {
   activityTypes  ActivityType[]
   sessions       Session[]
 
+  @@unique([id, userId])
   @@unique([userId, slug])
   @@index([userId, sortOrder])
   @@map("domain")
@@ -104,29 +146,115 @@ model ActivityType {
   domain    Domain    @relation(fields: [domainId], references: [id], onDelete: Cascade)
   sessions  Session[]
 
+  @@unique([id, domainId])
   @@unique([domainId, slug])
   @@index([domainId, sortOrder])
   @@map("activity_type")
 }
 
 model Session {
-  id             String       @id @default(cuid())
-  userId         String
-  domainId       String
-  activityTypeId String
-  startedAt      DateTime
-  endedAt        DateTime?
-  description    String?
-  outcome        String?
-  notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  domain         Domain       @relation(fields: [domainId], references: [id], onDelete: Restrict)
-  activityType   ActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict)
+  id                   String                @id @default(cuid())
+  userId               String
+  domainId             String
+  activityTypeId       String
+  engineeringProjectId String?
+  engineeringContext   EngineeringContext?
+  startedAt            DateTime
+  endedAt              DateTime?
+  description          String?
+  outcome              String?
+  notes                String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain               Domain                @relation(fields: [domainId, userId], references: [id, userId], onDelete: Restrict)
+  activityType         ActivityType          @relation(fields: [activityTypeId, domainId], references: [id, domainId], onDelete: Restrict)
+  engineeringProject   EngineeringProject?   @relation("EngineeringProjectSessions", fields: [engineeringProjectId, userId], references: [id, userId], onDelete: Restrict)
+  engineeringEvidence  EngineeringEvidence[] @relation("EngineeringEvidenceSession")
 
+  @@unique([id, userId])
   @@index([userId, startedAt])
   @@index([userId, endedAt])
   @@index([domainId, startedAt])
+  @@index([userId, engineeringProjectId, startedAt])
+  @@index([userId, engineeringContext, startedAt])
   @@map("session")
+}
+
+model EngineeringProject {
+  id            String                         @id @default(cuid())
+  userId        String
+  name          String                         @db.VarChar(120)
+  description   String?                        @db.Text
+  context       EngineeringContext             @default(PERSONAL)
+  status        EngineeringProjectStatus       @default(ACTIVE)
+  repositoryUrl String?                        @db.VarChar(2048)
+  liveUrl       String?                        @db.VarChar(2048)
+  notes         String?                        @db.Text
+  startedOn     DateTime?                      @db.Date
+  completedOn   DateTime?                      @db.Date
+  archivedAt    DateTime?
+  createdAt     DateTime                       @default(now())
+  updatedAt     DateTime                       @updatedAt
+  user          User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions      Session[]                      @relation("EngineeringProjectSessions")
+  evidence      EngineeringEvidence[]          @relation("EngineeringProjectEvidence")
+  technologies  EngineeringProjectTechnology[]
+
+  @@unique([id, userId])
+  @@index([userId, archivedAt, status])
+  @@index([userId, context, createdAt])
+  @@map("engineering_project")
+}
+
+model EngineeringEvidence {
+  id         String                  @id @default(cuid())
+  userId     String
+  type       EngineeringEvidenceType
+  title      String                  @db.VarChar(160)
+  details    String?                 @db.Text
+  occurredAt DateTime                @default(now())
+  projectId  String?
+  sessionId  String?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  user       User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    EngineeringProject?     @relation("EngineeringProjectEvidence", fields: [projectId, userId], references: [id, userId], onDelete: Restrict)
+  session    Session?                @relation("EngineeringEvidenceSession", fields: [sessionId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@index([userId, occurredAt])
+  @@index([userId, type, occurredAt])
+  @@index([userId, projectId, occurredAt])
+  @@index([userId, sessionId])
+  @@map("engineering_evidence")
+}
+
+model Technology {
+  id           String                         @id @default(cuid())
+  userId       String?
+  name         String                         @db.VarChar(80)
+  slug         String                         @db.VarChar(80)
+  category     TechnologyCategory
+  iconKey      String?                        @db.VarChar(80)
+  isBuiltIn    Boolean                        @default(false)
+  createdAt    DateTime                       @default(now())
+  updatedAt    DateTime                       @updatedAt
+  user         User?                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectLinks EngineeringProjectTechnology[]
+
+  @@unique([userId, slug])
+  @@index([isBuiltIn, category, name])
+  @@map("technology")
+}
+
+model EngineeringProjectTechnology {
+  engineeringProjectId String
+  technologyId         String
+  createdAt            DateTime           @default(now())
+  engineeringProject   EngineeringProject @relation(fields: [engineeringProjectId], references: [id], onDelete: Cascade)
+  technology           Technology         @relation(fields: [technologyId], references: [id], onDelete: Restrict)
+
+  @@id([engineeringProjectId, technologyId])
+  @@index([technologyId])
+  @@map("engineering_project_technology")
 }

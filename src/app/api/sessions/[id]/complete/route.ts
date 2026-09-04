@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { completeSession } from "@/features/sessions/complete-session.service";
-import { completeSessionSchema } from "@/features/sessions/session.schema";
-import { getCurrentUser } from "@/lib/auth/current-user.query";
+import { completeSession } from "@/features/sessions/lifecycle/services/complete-session.service";
+import { completeSessionSchema } from "@/features/sessions/schemas/session.schema";
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export async function POST(
   request: Request,
@@ -21,11 +21,26 @@ export async function POST(
     );
 
   const { id } = await context.params;
-  const completed = await completeSession(user.id, id, parsed.data);
-  if (!completed)
+  const result = await completeSession(user.id, id, parsed.data);
+  if (result.status === "not-found")
     return NextResponse.json(
       { error: "Active session not found." },
       { status: 404 },
+    );
+  if (result.status === "project-not-found")
+    return NextResponse.json(
+      { error: "Engineering project not found." },
+      { status: 404 },
+    );
+  if (result.status === "invalid-engineering-details")
+    return NextResponse.json(
+      { error: "Engineering details require the Engineering domain." },
+      { status: 400 },
+    );
+  if (result.status === "engineering-context-required")
+    return NextResponse.json(
+      { error: "Choose an Engineering context." },
+      { status: 400 },
     );
   return NextResponse.json({ ok: true });
 }

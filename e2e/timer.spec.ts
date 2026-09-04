@@ -18,8 +18,9 @@ test("a new user can start, recover, and complete a timer", async ({
 }) => {
   await createAccount(page, "Ammar");
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: /Engineering/ }).click();
+  await page.getByRole("button", { name: "Engineering", exact: true }).click();
   await page.getByTestId("activity-select").selectOption({ label: "Coding" });
+  await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("session-description").fill("Build the timer journey");
   await page.getByTestId("confirm-start-timer").click();
 

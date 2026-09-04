@@ -3,6 +3,7 @@
 
   /* Brand */
   --color-primary: #e8a83e;
+  --color-primary-muted: rgba(232, 168, 62, .25);
   --color-primary-hover: #f0b64d;
   --color-primary-subtle: #2a2114;
   --color-on-primary: #17110a;
@@ -55,7 +56,18 @@
   --container-page: 1180px;
   --container-copy: 42rem;
   --spacing-shell-sidebar: 15.5rem;
-  --spacing-control-height: 2.8125rem;
+
+  /* ===== Form Controls ===== */
+
+  /* Input */
+  --spacing-input-height-sm: 2.25rem;
+  --spacing-input-height-md: 2.8125rem;
+  --spacing-input-height-lg: 3.25rem;
+
+  /* Textarea */
+  --spacing-textarea-height-sm: 5rem;
+  --spacing-textarea-height-md: 8rem;
+  --spacing-textarea-height-lg: 10rem;
 
   /* ===== Radius ===== */
   --radius-control: 0.6875rem;

@@ -10,7 +10,7 @@
   },
   "aliases": {
     "components": "@/components",
-    "utils": "@/lib/class-name.util",
+    "utils": "@/lib/styles/utils/class-name.util",
     "ui": "@/components/ui",
     "lib": "@/lib"
   },

@@ -1,0 +1,98 @@
+.icon-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+  transition: var(--duration-fast) var(--ease-standard);
+}
+
+.icon-button:hover {
+  border-color: #3a3f49;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-primary);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 9px;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.text-input,
+.select-wrap {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-input);
+  color: var(--color-text-primary);
+  outline: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.text-input {
+  display: block;
+  min-height: var(--spacing-input-height-md);
+  padding: 11px 13px;
+  font-size: var(--text-body);
+}
+
+textarea.text-input--textarea-sm {
+  min-height: var(--spacing-textarea-height-sm);
+}
+
+textarea.text-input--textarea-md {
+  min-height: var(--spacing-textarea-height-md);
+}
+
+textarea.text-input--textarea-lg {
+  min-height: var(--spacing-textarea-height-lg);
+}
+
+.text-input::placeholder {
+  color: #4f535c;
+}
+
+.text-input:focus,
+.select-wrap:focus-within {
+  border-color: #8e6a31;
+  box-shadow: 0 0 0 3px rgba(232, 168, 62, 0.08);
+}
+
+.select-wrap {
+  display: flex;
+  min-height: var(--spacing-input-height-md);
+  align-items: center;
+  padding: 0 var(--spacing-md);
+}
+
+.select-wrap select {
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+  outline: 0;
+  font-size: var(--text-body);
+}
+
+.select-wrap svg {
+  color: var(--color-text-muted);
+}
+
+.form-error {
+  border: 1px solid rgba(229, 103, 103, 0.3);
+  border-radius: 9px;
+  background: rgba(229, 103, 103, 0.08);
+  padding: 10px 12px;
+  font-size: var(--text-meta);
+  color: #ef9292;
+}

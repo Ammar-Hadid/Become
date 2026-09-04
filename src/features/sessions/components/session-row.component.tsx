@@ -3,10 +3,11 @@
 import { DateTime } from "luxon";
 import { ChevronRight, Circle } from "lucide-react";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
-import type { SessionListItem } from "@/features/sessions/session.types";
-import { useSessionDetails } from "@/features/sessions/use-session-details.hook";
+import { getEngineeringContextLabel } from "@/features/engineering/constants/engineering.constants";
+import type { SessionListItem } from "@/features/sessions/types/session.types";
+import { useSessionDetails } from "@/features/sessions/details/hooks/use-session-details.hook";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
-import { formatDuration } from "@/lib/dates/period.util";
+import { formatDuration } from "@/lib/dates/utils/period.util";
 
 export function SessionRow({
   session,
@@ -18,6 +19,13 @@ export function SessionRow({
   const { openSession } = useSessionDetails();
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
   const title = session.description || session.activityType.name;
+  const engineeringMetadata =
+    session.domain.slug === "engineering"
+      ? [
+          getEngineeringContextLabel(session.engineeringContext),
+          session.engineeringProject?.name,
+        ].filter(Boolean)
+      : [];
   const content = (
     <>
       <div
@@ -37,6 +45,9 @@ export function SessionRow({
         </div>
         <p className="session-metadata text-text-muted mt-xs truncate">
           {session.domain.name} · {session.activityType.name}
+          {engineeringMetadata.length
+            ? ` · ${engineeringMetadata.join(" · ")}`
+            : ""}
           {session.outcome ? ` · ${session.outcome}` : ""}
         </p>
       </div>

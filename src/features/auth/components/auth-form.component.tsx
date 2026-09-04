@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button.component";
-import { authClient } from "@/lib/auth/auth-client.config";
+import { Button } from "@/components/ui/buttons/button.component";
+import { authClient } from "@/lib/auth/config/auth-client.config";
 
 export function AuthForm() {
   const router = useRouter();
