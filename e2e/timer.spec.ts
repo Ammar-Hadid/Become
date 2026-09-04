@@ -65,21 +65,17 @@ test("a new user can start, recover, and complete a timer", async ({
   await page.getByTestId("confirm-stop-timer").click();
   await expect(dashboardTimer).toHaveCount(0);
 
-  const completedSessionLink = page
-    .getByTestId("session-row-link")
+  const completedSessionTrigger = page
+    .getByTestId("session-row-trigger")
     .filter({ hasText: "Build the timer journey" });
-  await expect(completedSessionLink).toHaveAttribute(
-    "href",
-    /\/sessions#session-/,
-  );
-  await completedSessionLink.click();
-  await expect(page).toHaveURL(/\/sessions#session-/);
-
-  const destinationId = new URL(page.url()).hash.slice(1);
-  await expect(page.locator(`#${destinationId}`)).toContainText(
+  await completedSessionTrigger.click();
+  await expect(page).toHaveURL(/\/?session=/);
+  await expect(page.getByTestId("session-details")).toContainText(
     "Timer journey verified",
   );
-  await expect(page.getByTestId("session-row-link")).toHaveCount(0);
+  await page.getByRole("button", { name: "Close session details" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("session-details")).toHaveCount(0);
 });
 
 test("shell controls remain readable, separated, centered, and explicit", async ({

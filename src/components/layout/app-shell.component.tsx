@@ -7,6 +7,7 @@ import { useState } from "react";
 import { BrandMark } from "@/components/layout/brand-mark.component";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { ActiveTimerProvider } from "@/features/sessions/components/active-timer-provider.component";
+import { SessionDetailsProvider } from "@/features/sessions/components/session-details-provider.component";
 import {
   TimerController,
   TimerTrigger,
@@ -41,7 +42,7 @@ export function AppShell({
 
   const navigation = (
     <>
-      <nav className="mt-10 flex-1" aria-label="Primary navigation">
+      <nav className="mt-4xl flex-1" aria-label="Primary navigation">
         <div className="nav-section" data-testid="nav-section-overview">
           <p className="nav-label">Overview</p>
           <Link
@@ -76,17 +77,17 @@ export function AppShell({
           ))}
         </div>
       </nav>
-      <div className="border-t border-[var(--border)] pt-5">
+      <div className="border-border pt-xl border-t">
         <div className="profile-row">
           <div className="profile-identity" data-testid="user-identity">
             <span className="avatar">
               {user.name.slice(0, 1).toUpperCase()}
             </span>
             <span className="min-w-0 flex-1 text-left">
-              <span className="block truncate text-sm font-medium text-[var(--text-primary)]">
+              <span className="text-text-primary text-body block truncate font-medium">
                 {user.name}
               </span>
-              <span className="profile-email block truncate text-[var(--text-muted)]">
+              <span className="profile-email text-text-muted block truncate">
                 {user.email}
               </span>
             </span>
@@ -106,11 +107,11 @@ export function AppShell({
 
   return (
     <ActiveTimerProvider activeSession={activeSession}>
-      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+      <div className="bg-background text-text-primary min-h-screen">
         <aside className="sidebar hidden lg:flex">
           <BrandMark />
           {navigation}
-          <div className="mt-5">
+          <div className="mt-xl">
             <TimerTrigger />
           </div>
         </aside>
@@ -150,9 +151,11 @@ export function AppShell({
           </div>
         )}
 
-        <main className="min-h-screen pb-24 lg:ml-[248px] lg:pb-0">
-          {children}
-        </main>
+        <SessionDetailsProvider>
+          <main className="lg:ml-shell-sidebar min-h-screen pb-24 lg:pb-0">
+            {children}
+          </main>
+        </SessionDetailsProvider>
 
         <TimerController domains={domains} />
 

@@ -1,0 +1,140 @@
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+}
+
+.auth-story {
+  position: relative;
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface-sidebar);
+  padding: 42px 54px;
+}
+
+.auth-story h1 {
+  font-size: clamp(3rem, 5.5vw, 5.8rem);
+  line-height: 0.98;
+  font-weight: 540;
+  letter-spacing: -0.07em;
+}
+
+.auth-story h1 span {
+  color: var(--color-primary);
+}
+
+.auth-quote {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  max-width: 400px;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.auth-quote svg {
+  width: 18px;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.auth-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(circle at 60% 46%, black 0, transparent 70%);
+}
+
+.auth-grid::before {
+  content: "";
+  position: absolute;
+  top: 34%;
+  left: 52%;
+  width: 300px;
+  height: 300px;
+  border: 1px solid rgba(232, 168, 62, 0.2);
+  border-radius: 50%;
+  box-shadow:
+    0 0 100px rgba(232, 168, 62, 0.06),
+    inset 0 0 80px rgba(232, 168, 62, 0.03);
+}
+
+.auth-panel {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 36px var(--spacing-2xl);
+}
+
+.auth-form-wrap {
+  margin-top: 35px;
+}
+
+.auth-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auth-mode-switch button {
+  position: relative;
+  cursor: pointer;
+  padding: 11px;
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+}
+
+.auth-mode-switch button.active {
+  color: var(--color-text-primary);
+}
+
+.auth-mode-switch button.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--color-primary);
+}
+
+.password-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  width: 37px;
+  height: 37px;
+  cursor: pointer;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.password-toggle svg {
+  width: 16px;
+}
+
+.auth-supporting-text {
+  font-size: var(--text-meta);
+}
+
+@media (min-width: 768px) {
+  .auth-page {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+
+  .auth-story {
+    display: flex;
+  }
+}

@@ -25,21 +25,21 @@ export default async function DomainPage({
       <header className="page-header">
         <div>
           <div
-            className="mb-4 flex items-center gap-2 text-sm"
+            className="mb-lg gap-sm text-body flex items-center"
             style={{ color: domain.analyticsColor ?? undefined }}
           >
             <DomainIcon slug={domain.slug} />
             <span>{domain.name}</span>
           </div>
           <h1>{formatDuration(completedSeconds, true)} recorded</h1>
-          <p className="page-description mt-2 text-[var(--text-secondary)]">
+          <p className="page-description text-text-secondary mt-sm">
             Phase 1 activity and session evidence for this domain.
           </p>
         </div>
       </header>
-      <section className="mt-10 border-y border-[var(--border)] py-7">
-        <p className="eyebrow mb-4">Available activities</p>
-        <div className="flex flex-wrap gap-2">
+      <section className="border-border mt-4xl border-y py-7">
+        <p className="eyebrow mb-lg">Available activities</p>
+        <div className="gap-sm flex flex-wrap">
           {domain.activityTypes.map((activity) => (
             <span className="activity-chip" key={activity.id}>
               {activity.name}
@@ -47,20 +47,12 @@ export default async function DomainPage({
           ))}
         </div>
       </section>
-      <section className="mt-10">
-        <p className="eyebrow mb-4">Recent evidence</p>
-        <div className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
+      <section className="mt-4xl">
+        <p className="eyebrow mb-lg">Recent evidence</p>
+        <div className="divide-border border-border divide-y border-y">
           {sessions.length ? (
             sessions.map((session) => (
-              <SessionRow
-                key={session.id}
-                session={session}
-                href={
-                  session.endedAt
-                    ? `/sessions#session-${session.id}`
-                    : undefined
-                }
-              />
+              <SessionRow key={session.id} session={session} />
             ))
           ) : (
             <div className="empty-state">

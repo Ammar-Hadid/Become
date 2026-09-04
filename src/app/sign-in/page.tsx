@@ -11,7 +11,7 @@ export default async function SignInPage() {
       <section className="auth-story">
         <BrandMark />
         <div className="relative z-10 max-w-xl">
-          <p className="eyebrow mb-6 text-[var(--primary)]">
+          <p className="eyebrow text-primary mb-2xl">
             Your personal operating system
           </p>
           <h1>
@@ -19,7 +19,7 @@ export default async function SignInPage() {
             <br />
             <span>visible.</span>
           </h1>
-          <p className="mt-7 max-w-md text-base leading-relaxed text-[var(--text-secondary)]">
+          <p className="text-text-secondary text-section mt-7 max-w-md leading-relaxed">
             Connect intention to action, time to evidence, and daily work to the
             person you are becoming.
           </p>
@@ -35,14 +35,14 @@ export default async function SignInPage() {
       </section>
       <section className="auth-panel">
         <div className="w-full max-w-md">
-          <div className="mb-10 lg:hidden">
+          <div className="mb-4xl lg:hidden">
             <BrandMark />
           </div>
-          <p className="eyebrow mb-3">Welcome</p>
+          <p className="eyebrow mb-md">Welcome</p>
           <h2 className="text-3xl font-semibold tracking-[-0.045em]">
             Continue your record.
           </h2>
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">
+          <p className="text-text-secondary mt-md text-body">
             A truthful view starts with the work you log.
           </p>
           <AuthForm />

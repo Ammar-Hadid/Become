@@ -14,9 +14,9 @@ export default async function SessionsPage() {
     <div className="page-shell">
       <header className="page-header">
         <div>
-          <p className="eyebrow mb-3">Evidence log</p>
+          <p className="eyebrow mb-md">Evidence log</p>
           <h1>Session history</h1>
-          <p className="page-description mt-2 max-w-lg text-[var(--text-secondary)]">
+          <p className="page-description text-text-secondary mt-sm max-w-copy">
             A record of where your attention went, with outcomes preserved
             alongside the time.
           </p>
@@ -25,7 +25,7 @@ export default async function SessionsPage() {
           <History />
         </span>
       </header>
-      <div className="mt-10 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+      <div className="divide-border border-border mt-4xl divide-y border-y">
         {sessions.length ? (
           sessions.map((session) => (
             <SessionRow key={session.id} session={session} />

@@ -27,10 +27,10 @@ export function FocusChart({
             content={({ active, payload, label }) =>
               active && payload?.[0] ? (
                 <div className="chart-tooltip">
-                  <p className="text-xs tracking-[0.15em] text-[var(--text-muted)] uppercase">
+                  <p className="text-text-muted text-label tracking-[0.15em] uppercase">
                     {label}
                   </p>
-                  <p className="mt-1 text-sm font-semibold">
+                  <p className="mt-xs text-body font-semibold">
                     {formatDuration(Number(payload[0].value), true)}
                   </p>
                 </div>

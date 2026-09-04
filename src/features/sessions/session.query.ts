@@ -51,3 +51,12 @@ export async function getRecentSessions(
 
   return sessions.map((session) => toSessionListItem(session));
 }
+
+export async function getCompletedSessionById(userId: string, id: string) {
+  const session = await prisma.session.findFirst({
+    where: { id, userId, endedAt: { not: null } },
+    include: { domain: true, activityType: true },
+  });
+
+  return session ? toSessionListItem(session) : null;
+}

@@ -1,20 +1,21 @@
+"use client";
+
 import { DateTime } from "luxon";
-import Link from "next/link";
-import { ArrowUpRight, Circle } from "lucide-react";
+import { ChevronRight, Circle } from "lucide-react";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import type { SessionListItem } from "@/features/sessions/session.types";
+import { useSessionDetails } from "@/features/sessions/use-session-details.hook";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { formatDuration } from "@/lib/dates/period.util";
 
 export function SessionRow({
   session,
   showDate = true,
-  href,
 }: {
   session: SessionListItem;
   showDate?: boolean;
-  href?: string;
 }) {
+  const { openSession } = useSessionDetails();
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
   const title = session.description || session.activityType.name;
   const content = (
@@ -26,32 +27,32 @@ export function SessionRow({
         <DomainIcon slug={session.domain.slug} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="text-sm font-medium">{title}</h3>
+        <div className="gap-x-sm gap-y-xs flex flex-wrap items-center">
+          <h3 className="text-body font-medium">{title}</h3>
           {!session.endedAt && (
             <span className="running-label">
               <Circle className="size-2 fill-current" /> Running
             </span>
           )}
         </div>
-        <p className="session-metadata mt-1 truncate text-[var(--text-muted)]">
+        <p className="session-metadata text-text-muted mt-xs truncate">
           {session.domain.name} · {session.activityType.name}
           {session.outcome ? ` · ${session.outcome}` : ""}
         </p>
       </div>
       <div className="shrink-0 text-right">
-        <p className="timer-numerals text-sm font-medium">
+        <p className="timer-numerals text-body font-medium">
           {formatDuration(session.durationSeconds, true)}
         </p>
         {showDate && (
-          <p className="session-metadata mt-1 text-[var(--text-muted)]">
+          <p className="session-metadata text-text-muted mt-xs">
             {startedAt.toFormat("ccc, HH:mm")}
           </p>
         )}
       </div>
-      {href && (
-        <ArrowUpRight
-          className="hidden size-4 text-[var(--text-muted)] sm:block"
+      {session.endedAt && (
+        <ChevronRight
+          className="text-text-muted hidden size-4 sm:block"
           aria-hidden="true"
         />
       )}
@@ -59,17 +60,18 @@ export function SessionRow({
   );
 
   const id = `session-${session.id}`;
-  if (href) {
+  if (session.endedAt) {
     return (
-      <Link
+      <button
+        type="button"
         id={id}
         className="session-row session-row-link"
-        href={href}
-        aria-label={`View ${title} in session history`}
-        data-testid="session-row-link"
+        onClick={() => openSession(session)}
+        aria-label={`View details for ${title}`}
+        data-testid="session-row-trigger"
       >
         {content}
-      </Link>
+      </button>
     );
   }
 

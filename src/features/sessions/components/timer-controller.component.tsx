@@ -30,24 +30,24 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
       <button
         onClick={() => window.dispatchEvent(new Event("become:stop-timer"))}
         className={cn(
-          "group flex items-center rounded-full border border-[var(--primary)]/30 bg-[var(--primary-subtle)] text-left transition-colors hover:border-[var(--primary)]/60",
-          compact ? "size-12 justify-center" : "w-full gap-3 px-3 py-2.5",
+          "group border-primary/30 bg-primary-subtle hover:border-primary/60 flex items-center rounded-full border text-left transition-colors",
+          compact ? "size-12 justify-center" : "gap-md px-md w-full py-2.5",
         )}
         aria-label={`Stop ${activeSession.activityType.name} timer`}
         data-testid="active-timer-trigger"
         data-session-id={activeSession.id}
         data-elapsed-seconds={elapsedSeconds}
       >
-        <span className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[#17110a]">
-          <span className="absolute inset-0 animate-ping rounded-full bg-[var(--primary)] opacity-15" />
+        <span className="bg-primary text-on-primary relative flex size-8 shrink-0 items-center justify-center rounded-full">
+          <span className="bg-primary absolute inset-0 animate-ping rounded-full opacity-15" />
           <Square className="size-3 fill-current" />
         </span>
         {!compact && (
           <span className="min-w-0 flex-1">
-            <span className="timer-trigger-label block truncate text-[var(--text-secondary)]">
+            <span className="timer-trigger-label text-text-secondary block truncate">
               {activeSession.activityType.name}
             </span>
-            <span className="timer-numerals block text-sm font-semibold text-[var(--primary)]">
+            <span className="timer-numerals text-primary text-body block font-semibold">
               {formatDuration(elapsedSeconds)}
             </span>
           </span>
@@ -168,7 +168,7 @@ export function TimerController({ domains }: TimerControllerProps) {
           >
             <div className="mb-7 flex items-start justify-between">
               <div>
-                <p className="eyebrow mb-2">
+                <p className="eyebrow mb-sm">
                   {mode === "start"
                     ? "Begin a focus block"
                     : "Complete session"}
@@ -192,7 +192,7 @@ export function TimerController({ domains }: TimerControllerProps) {
             </div>
 
             {mode === "start" ? (
-              <div className="space-y-6">
+              <div className="space-y-2xl">
                 <fieldset>
                   <legend className="field-label">Domain</legend>
                   <div className="domain-picker">
@@ -214,7 +214,7 @@ export function TimerController({ domains }: TimerControllerProps) {
                         <DomainIcon slug={domain.slug} />
                         <span>{domain.name}</span>
                         {selectedDomain?.id === domain.id && (
-                          <Check className="ml-auto size-4 text-[var(--primary)]" />
+                          <Check className="text-primary ml-auto size-4" />
                         )}
                       </button>
                     ))}
@@ -242,7 +242,7 @@ export function TimerController({ domains }: TimerControllerProps) {
                 <label className="block">
                   <span className="field-label">
                     Focus{" "}
-                    <span className="text-[var(--text-muted)] normal-case">
+                    <span className="text-text-muted normal-case">
                       — optional
                     </span>
                   </span>
@@ -268,29 +268,29 @@ export function TimerController({ domains }: TimerControllerProps) {
                 </Button>
               </div>
             ) : activeSession ? (
-              <div className="space-y-6">
+              <div className="space-y-2xl">
                 <div className="stop-summary">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-9 items-center justify-center rounded-full bg-[var(--primary-subtle)] text-[var(--primary)]">
+                  <div className="gap-md flex items-center">
+                    <span className="bg-primary-subtle text-primary flex size-9 items-center justify-center rounded-full">
                       <Clock3 className="size-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-body font-medium">
                         {activeSession.activityType.name}
                       </p>
-                      <p className="dialog-supporting-text text-[var(--text-muted)]">
+                      <p className="dialog-supporting-text text-text-muted">
                         {activeSession.domain.name}
                       </p>
                     </div>
                   </div>
-                  <span className="timer-numerals text-xl font-semibold text-[var(--primary)]">
+                  <span className="timer-numerals text-primary text-xl font-semibold">
                     {formatDuration(elapsedSeconds)}
                   </span>
                 </div>
                 <label className="block">
                   <span className="field-label">
                     Outcome{" "}
-                    <span className="text-[var(--text-muted)] normal-case">
+                    <span className="text-text-muted normal-case">
                       — optional
                     </span>
                   </span>
@@ -306,7 +306,7 @@ export function TimerController({ domains }: TimerControllerProps) {
                 <label className="block">
                   <span className="field-label">
                     Notes{" "}
-                    <span className="text-[var(--text-muted)] normal-case">
+                    <span className="text-text-muted normal-case">
                       — optional
                     </span>
                   </span>
@@ -316,15 +316,16 @@ export function TimerController({ domains }: TimerControllerProps) {
                     onChange={(event) => setNotes(event.target.value)}
                     placeholder="Anything worth preserving"
                     maxLength={500}
+                    data-testid="session-notes"
                   />
                 </label>
                 {error && <p className="form-error">{error}</p>}
-                <div className="flex gap-3">
+                <div className="gap-md flex">
                   <Button
                     variant="ghost"
                     size="lg"
                     onClick={() => setMode("closed")}
-                    className="px-4"
+                    className="px-lg"
                   >
                     <ArrowLeft className="size-4" />
                     Keep running

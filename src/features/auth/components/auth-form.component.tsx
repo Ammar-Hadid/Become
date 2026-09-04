@@ -59,7 +59,7 @@ export function AuthForm() {
           Create account
         </button>
       </div>
-      <form onSubmit={submit} className="mt-8 space-y-5">
+      <form onSubmit={submit} className="mt-3xl space-y-xl">
         {mode === "sign-up" && (
           <label className="block">
             <span className="field-label">Name</span>
@@ -138,7 +138,7 @@ export function AuthForm() {
           )}
         </Button>
       </form>
-      <p className="auth-supporting-text mt-6 text-center leading-relaxed text-[var(--text-muted)]">
+      <p className="auth-supporting-text text-text-muted mt-2xl text-center leading-relaxed">
         Your data stays in your PostgreSQL database.
         <br />
         No activity is shared or published.
