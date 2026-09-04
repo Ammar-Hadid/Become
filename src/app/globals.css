@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/utilities.css";
+@import "../components/layout/app-shell.css";
+@import "../components/ui/controls.css";
+@import "../features/auth/auth.css";
+@import "../features/dashboard/dashboard.css";
+@import "../features/domains/domains.css";
+@import "../features/sessions/sessions.css";

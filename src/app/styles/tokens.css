@@ -1,0 +1,69 @@
+@theme {
+  /* ===== Colors ===== */
+
+  /* Brand */
+  --color-primary: #e8a83e;
+  --color-primary-hover: #f0b64d;
+  --color-primary-subtle: #2a2114;
+  --color-on-primary: #17110a;
+
+  /* Backgrounds and surfaces */
+  --color-background: #090a0c;
+  --color-surface: #111318;
+  --color-surface-elevated: #181b21;
+  --color-surface-sidebar: #0c0d10;
+  --color-surface-input: #0d0f12;
+
+  /* Borders and text */
+  --color-border: #262a32;
+  --color-text-primary: #f4f1ea;
+  --color-text-secondary: #989ba3;
+  --color-text-muted: #666a73;
+
+  /* States */
+  --color-success: #54b88b;
+  --color-danger: #e56767;
+  --color-warning: #d99b42;
+
+  /* ===== Typography ===== */
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1rem;
+  --text-meta: 0.8rem;
+  --text-meta--line-height: 1.25rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-body-lg: 0.9375rem;
+  --text-body-lg--line-height: 1.55;
+  --text-section: 1rem;
+  --text-section--line-height: 1.5;
+  --text-page-title: clamp(2rem, 4vw, 3.35rem);
+  --text-page-title--line-height: 1.02;
+
+  /* ===== Spacing ===== */
+  --spacing-2xs: 0.125rem;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.25rem;
+  --spacing-2xl: 1.5rem;
+  --spacing-3xl: 2rem;
+  --spacing-4xl: 2.5rem;
+
+  /* ===== Layout ===== */
+  --container-page: 1180px;
+  --container-copy: 42rem;
+  --spacing-shell-sidebar: 15.5rem;
+  --spacing-control-height: 2.8125rem;
+
+  /* ===== Radius ===== */
+  --radius-control: 0.6875rem;
+  --radius-panel: 1.125rem;
+  --radius-dialog: 1.25rem;
+
+  /* ===== Motion ===== */
+  --ease-standard: ease;
+  --duration-fast: 150ms;
+  --duration-standard: 200ms;
+}

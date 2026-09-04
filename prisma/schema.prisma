@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  authSessions  AuthSession[]
+  accounts      Account[]
+  domains       Domain[]
+  sessions      Session[]
+
+  @@map("user")
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  issuer                String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issuer, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Domain {
+  id             String         @id @default(cuid())
+  userId         String
+  name           String
+  slug           String
+  icon           String
+  analyticsColor String?
+  sortOrder      Int            @default(0)
+  enabled        Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityTypes  ActivityType[]
+  sessions       Session[]
+
+  @@unique([userId, slug])
+  @@index([userId, sortOrder])
+  @@map("domain")
+}
+
+model ActivityType {
+  id        String    @id @default(cuid())
+  domainId  String
+  name      String
+  slug      String
+  sortOrder Int       @default(0)
+  enabled   Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  domain    Domain    @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  sessions  Session[]
+
+  @@unique([domainId, slug])
+  @@index([domainId, sortOrder])
+  @@map("activity_type")
+}
+
+model Session {
+  id             String       @id @default(cuid())
+  userId         String
+  domainId       String
+  activityTypeId String
+  startedAt      DateTime
+  endedAt        DateTime?
+  description    String?
+  outcome        String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain         Domain       @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  activityType   ActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Restrict)
+
+  @@index([userId, startedAt])
+  @@index([userId, endedAt])
+  @@index([domainId, startedAt])
+  @@map("session")
+}

@@ -1,0 +1,65 @@
+.timer-numerals {
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.page-shell {
+  width: min(var(--container-page), 100%);
+  margin: 0 auto;
+  padding: 54px clamp(var(--spacing-xl), 5vw, 72px) 80px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.page-header h1 {
+  font-size: var(--text-page-title);
+  line-height: var(--text-page-title--line-height);
+  font-weight: 570;
+  letter-spacing: -0.055em;
+}
+
+.page-description {
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+}
+
+.empty-state {
+  display: flex;
+  min-height: 130px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+}
+
+.empty-state button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+}
+
+.empty-state button svg {
+  width: 14px;
+}
+
+@media (max-width: 639px) {
+  .page-shell {
+    padding-top: 34px;
+  }
+}
