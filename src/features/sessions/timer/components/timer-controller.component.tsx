@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { EngineeringTimerFields } from "@/features/engineering/sessions/components/engineering-timer-fields.component";
+import { FinanceTimerFields } from "@/features/finance/sessions/components/finance-timer-fields.component";
+import type {
+  FinanceSessionInput,
+  FinanceWorkOptions,
+} from "@/features/finance/sessions/types/finance-session.types";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -14,7 +20,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/buttons/button.component";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import {
-  ENGINEERING_CONTEXT_OPTIONS,
   ENGINEERING_EVIDENCE_TYPE_OPTIONS,
   getEngineeringContextLabel,
 } from "@/features/engineering/constants/engineering.constants";
@@ -31,6 +36,7 @@ import { formatDuration } from "@/lib/dates/utils/period.util";
 type TimerControllerProps = {
   domains: DomainOption[];
   engineeringProjects: EngineeringProjectOption[];
+  financeOptions: FinanceWorkOptions;
 };
 
 export function TimerTrigger({ compact = false }: { compact?: boolean }) {
@@ -39,7 +45,10 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
   if (activeSession) {
     return (
       <button
-        onClick={() => window.dispatchEvent(new Event("become:stop-timer"))}
+        onClick={(event) => {
+          event.currentTarget.focus();
+          window.dispatchEvent(new Event("become:stop-timer"));
+        }}
         className={cn(
           "group border-primary/30 bg-primary-subtle hover:border-primary/60 flex items-center rounded-full border text-left transition-colors",
           compact ? "size-12 justify-center" : "gap-md px-md w-full py-2.5",
@@ -69,7 +78,10 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
 
   return (
     <Button
-      onClick={() => window.dispatchEvent(new Event("become:start-timer"))}
+      onClick={(event) => {
+        event.currentTarget.focus();
+        window.dispatchEvent(new Event("become:start-timer"));
+      }}
       className={cn(compact ? "size-12 px-0" : "w-full")}
       aria-label="Start timer"
       data-testid="start-timer-trigger"
@@ -83,8 +95,15 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
 export function TimerController({
   domains,
   engineeringProjects,
+  financeOptions,
 }: TimerControllerProps) {
   const router = useRouter();
+  const dialogRef = useRef<HTMLElement>(null);
+  const [finance, setFinance] = useState<FinanceSessionInput>({
+    workSourceId: "",
+    incomeOpportunityId: "",
+    financeCompensationType: "UNKNOWN",
+  });
   const { activeSession, elapsedSeconds } = useActiveTimer();
   const [mode, setMode] = useState<"closed" | "start" | "stop">("closed");
   const [selectedDomainId, setSelectedDomainId] = useState(
@@ -117,6 +136,12 @@ export function TimerController({
       domains.find((domain) => domain.id === selectedDomainId) ?? domains[0],
     [domains, selectedDomainId],
   );
+  const financeKind =
+    selectedDomain?.slug === "finance"
+      ? (selectedDomain.activityTypes.find(
+          (activity) => activity.id === selectedActivityId,
+        )?.financeActivityKind ?? null)
+      : null;
   const isEngineering = selectedDomain?.slug === "engineering";
   const completionProjects = useMemo(() => {
     if (
@@ -150,10 +175,35 @@ export function TimerController({
 
   useEffect(() => {
     if (mode === "closed") return;
-    const closeOnEscape = (event: KeyboardEvent) =>
-      event.key === "Escape" && setMode("closed");
+    const previouslyFocused = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusable = () => [
+      ...(dialogRef.current?.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])",
+      ) ?? []),
+    ];
+    focusable()[0]?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMode("closed");
+      if (event.key !== "Tab") return;
+      const elements = focusable();
+      const first = elements[0];
+      const last = elements.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+    };
   }, [mode]);
 
   async function startTimer() {
@@ -170,6 +220,14 @@ export function TimerController({
         engineeringProjectId: isEngineering
           ? engineeringProjectId || null
           : null,
+        workSourceId:
+          financeKind === "PAID_WORK" ? finance.workSourceId || null : null,
+        incomeOpportunityId:
+          financeKind && financeKind !== "FINANCE_ADMIN"
+            ? finance.incomeOpportunityId || null
+            : null,
+        financeCompensationType:
+          financeKind === "PAID_WORK" ? finance.financeCompensationType : null,
         description,
       }),
     });
@@ -178,6 +236,11 @@ export function TimerController({
     if (!response.ok)
       return setError(body.error ?? "Could not start the timer.");
     setDescription("");
+    setFinance({
+      workSourceId: "",
+      incomeOpportunityId: "",
+      financeCompensationType: "UNKNOWN",
+    });
     setEngineeringContext("");
     setEngineeringProjectId("");
     setMode("closed");
@@ -231,6 +294,7 @@ export function TimerController({
           onMouseDown={() => setMode("closed")}
         >
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="timer-dialog-title"
@@ -312,62 +376,20 @@ export function TimerController({
                     <ChevronRight className="size-4 rotate-90" />
                   </span>
                 </label>
+                <FinanceTimerFields
+                  kind={financeKind}
+                  options={financeOptions}
+                  value={finance}
+                  onChange={setFinance}
+                />
                 {isEngineering && (
-                  <div className="engineering-timer-fields">
-                    <label className="block">
-                      <span className="field-label">Context</span>
-                      <span className="select-wrap">
-                        <select
-                          value={engineeringContext}
-                          onChange={(event) =>
-                            setEngineeringContext(
-                              event.target.value as
-                                EngineeringContextValue | "",
-                            )
-                          }
-                          data-testid="engineering-context-select"
-                        >
-                          <option value="">Choose a context</option>
-                          {ENGINEERING_CONTEXT_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronRight className="size-4 rotate-90" />
-                      </span>
-                    </label>
-                    <label className="block">
-                      <span className="field-label">
-                        Project{" "}
-                        <span className="text-text-muted normal-case">
-                          — optional
-                        </span>
-                      </span>
-                      <span className="select-wrap">
-                        <select
-                          value={engineeringProjectId}
-                          onChange={(event) => {
-                            const projectId = event.target.value;
-                            setEngineeringProjectId(projectId);
-                            const project = engineeringProjects.find(
-                              (candidate) => candidate.id === projectId,
-                            );
-                            if (project) setEngineeringContext(project.context);
-                          }}
-                          data-testid="engineering-project-select"
-                        >
-                          <option value="">No project</option>
-                          {engineeringProjects.map((project) => (
-                            <option key={project.id} value={project.id}>
-                              {project.name}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronRight className="size-4 rotate-90" />
-                      </span>
-                    </label>
-                  </div>
+                  <EngineeringTimerFields
+                    context={engineeringContext}
+                    projectId={engineeringProjectId}
+                    projects={engineeringProjects}
+                    onContextChange={setEngineeringContext}
+                    onProjectChange={setEngineeringProjectId}
+                  />
                 )}
                 <label className="block">
                   <span className="field-label">
@@ -428,56 +450,14 @@ export function TimerController({
                   </span>
                 </div>
                 {activeSession.domain.slug === "engineering" && (
-                  <div className="engineering-timer-fields">
-                    <label className="block">
-                      <span className="field-label">Context</span>
-                      <span className="select-wrap">
-                        <select
-                          value={completionContext}
-                          onChange={(event) =>
-                            setCompletionContext(
-                              event.target.value as
-                                EngineeringContextValue | "",
-                            )
-                          }
-                          data-testid="completion-engineering-context-select"
-                        >
-                          <option value="">Choose a context</option>
-                          {ENGINEERING_CONTEXT_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronRight className="size-4 rotate-90" />
-                      </span>
-                    </label>
-                    <label className="block">
-                      <span className="field-label">
-                        Project{" "}
-                        <span className="text-text-muted normal-case">
-                          — optional
-                        </span>
-                      </span>
-                      <span className="select-wrap">
-                        <select
-                          value={completionProjectId}
-                          onChange={(event) =>
-                            setCompletionProjectId(event.target.value)
-                          }
-                          data-testid="completion-engineering-project-select"
-                        >
-                          <option value="">No project</option>
-                          {completionProjects.map((project) => (
-                            <option key={project.id} value={project.id}>
-                              {project.name}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronRight className="size-4 rotate-90" />
-                      </span>
-                    </label>
-                  </div>
+                  <EngineeringTimerFields
+                    completion
+                    context={completionContext}
+                    projectId={completionProjectId}
+                    projects={completionProjects}
+                    onContextChange={setCompletionContext}
+                    onProjectChange={setCompletionProjectId}
+                  />
                 )}
                 <label className="block">
                   <span className="field-label">

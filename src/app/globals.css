@@ -4,8 +4,11 @@
 @import "./styles/utilities.css";
 @import "../components/layout/app-shell/app-shell.css";
 @import "../components/ui/styles/controls.css";
+@import "../components/ui/menus/menu.css";
 @import "../features/auth/styles/auth.css";
 @import "../features/dashboard/styles/dashboard.css";
 @import "../features/domains/styles/domains.css";
 @import "../features/engineering/styles/engineering.css";
+@import "../features/finance/styles/finance.css";
+@import "../features/settings/styles/settings.css";
 @import "../features/sessions/styles/sessions.css";

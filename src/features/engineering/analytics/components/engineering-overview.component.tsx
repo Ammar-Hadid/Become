@@ -26,7 +26,7 @@ export function EngineeringOverview({
 
   return (
     <div className="page-shell">
-      <header className="page-header">
+      <header className="page-header flex flex-col md:flex-row">
         <div>
           <div className="text-primary mb-lg gap-sm text-body flex items-center">
             <Braces className="size-4" /> Engineering

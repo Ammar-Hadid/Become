@@ -1,6 +1,6 @@
 # Become
 
-Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phase 1: Foundation** and **Phase 2: Engineering**.
+Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phase 1: Foundation**, **Phase 2: Engineering**, and **Phase 3: Finance**.
 
 ## What Phase 1 includes
 
@@ -27,7 +27,20 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Unsaved-change protection on project create and edit forms
 - Dedicated responsive Engineering overview, project, evidence, and historical session-detail flows
 
-Later-phase finance, CRM, goals, experiments, reviews, AI, Gmail, and YouTube pipeline features are intentionally not implemented.
+## What Phase 3 adds
+
+- Dedicated Finance overview, accounts, transactions, savings, recurring, and Work & Opportunities pages
+- Exact integer money and currency-aware manual income, expense, and same-currency transfers
+- Account balances derived from reconciliation snapshots plus subsequent flows, including unavailable-position states
+- Cursor-paginated transaction and reconciliation history with explicit corrections
+- Responsive application Settings and per-currency protected savings reserves
+- Savings goals, atomic allocation plans, partial goal spending, independent allocation release, underfunding and completion review
+- Weekly/monthly/yearly recurring expenses with clamped month ends, snapshotted occurrences, confirmation or explicitly authorized automatic posting, and bounded idempotent catch-up
+- Work sources, prospective opportunities, and explicit accepted-opportunity create/link/not-now choices
+- Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
+- Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
+
+CRM, generic goals/experiments, reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
 
 ## Stack
 
@@ -43,7 +56,7 @@ docker compose up -d
 pnpm install
 pnpm db:generate
 pnpm db:migrate
-pnpm db:sync-reference
+pnpm db:sync-tech
 pnpm dev
 ```
 
@@ -57,10 +70,11 @@ pnpm build          # production build
 pnpm lint           # ESLint
 pnpm typecheck      # TypeScript
 pnpm test           # deterministic unit tests
-pnpm test:e2e       # Playwright critical journey (database must be running)
+pnpm test:e2e       # desktop/tablet/mobile journeys (database must be running)
+pnpm test:finance:integration # real local PostgreSQL constraints and races
 pnpm db:migrate     # apply/create Prisma migrations
 pnpm db:seed        # sync reference data, then ensure demo domains if the user exists
-pnpm db:sync-reference # synchronize built-in reference data only
+pnpm db:sync-tech # synchronize built-in reference data only
 pnpm db:studio      # inspect local data
 ```
 
@@ -75,6 +89,9 @@ pnpm exec playwright install chromium
 - `src/app` contains thin Next.js route and composition files.
 - `src/features/dashboard` owns command-center UI, types, and deterministic aggregation queries.
 - `src/features/engineering` owns Engineering projects, evidence, session extensions, validation, services, queries, and analytics.
+- `src/features/finance` owns accounts, transactions, savings, recurrence, work sources, opportunities, payment attribution, and Finance analytics.
+- `src/features/settings` owns the application Settings shell.
+- `src/lib/money` owns exact decimal parsing, formatting, currency validation and integer allocation.
 - `src/features/sessions` owns timer/session components, queries, schemas, mappers, services, and types.
 - `src/features/domains` owns initial domain configuration, domain queries, and seeding behavior.
 - `src/features/auth` owns the authentication UI.
@@ -131,7 +148,7 @@ To add a technology such as Hono:
    the registry in `engineering-technology-icon.component.tsx`, then use that key
    in the catalog. Store neither SVG markup nor icon objects in the catalog or
    database. Null and unknown keys use the existing Lucide fallback.
-3. Add useful aliases only if needed, then run `pnpm db:sync-reference`.
+3. Add useful aliases only if needed, then run `pnpm db:sync-tech`.
 4. Check the sync summary, resulting row (`pnpm db:studio`), and project selector.
 
 The command uses Prisma 7's explicit seed configuration in `prisma.config.ts`.
@@ -155,7 +172,7 @@ edit an applied migration to add or maintain normal catalog entries.
 
 For a future controlled deployment, generate the client during preparation,
 apply migrations with `pnpm exec prisma migrate deploy`, run
-`pnpm db:sync-reference`, then deploy/start the application. The maintenance
+`pnpm db:sync-tech`, then deploy/start the application. The maintenance
 environment needs the Prisma/tsx tooling and its own securely supplied
 `DATABASE_URL`; production credentials do not belong in local development.
 Run one maintenance job at a time; a concurrency conflict fails the transaction
@@ -187,11 +204,46 @@ database-independent.
 ## Known boundaries
 
 - Dashboard layout is intentionally fixed; persisted drag/reorder/resize begins only when customization is prioritized.
-- Completed sessions cannot be edited or deleted yet; Engineering context and project can be corrected before stopping an active session.
+- Completed session timing cannot be edited or deleted. Finance metadata and payment completeness have narrow correction flows; Engineering context and project can be corrected before stopping an active session.
 - Engineering projects can be edited and archived, and evidence can be edited; permanent deletion is intentionally not exposed.
 - Project forms use browser confirmation rather than drafts or autosave when modified data would be discarded.
 - No password reset or email verification delivery is configured for local personal use.
 - There is no rate-limit adapter yet; deployment should add an infrastructure-appropriate limiter to auth and mutations.
-- Analytics show the current period and its previous equivalent; arbitrary historical period navigation is a later enhancement.
+- Foundation and Engineering analytics show the current period and its previous equivalent. Finance also supports selecting a historical reference date.
 
-The next logical phase is **Phase 3: Finance**—manual accounts and transactions, transfer handling, paid-work linkage, income opportunities, and deterministic financial analytics.
+Further product phases remain governed by `docs/product/MASTER_SPEC.md` and are not included in this implementation.
+
+## Finance semantics and verification
+
+The Phase 3 contract is [PHASE_3_FINANCE.md](docs/product/PHASE_3_FINANCE.md),
+with implementation notes in [phase-3-implementation.md](docs/decisions/phase-3-implementation.md).
+
+An account has no authoritative `currentBalance` or `openingBalance`. Its latest
+reconciliation at or before an instant anchors that balance; only transactions
+strictly after the anchor contribute. Transactions at the reconciliation instant
+are considered included in the observation. Missing anchors mean unknown, never
+zero. Historical savings comparison uses current account inclusion settings;
+Phase 3 does not record an inclusion-policy or savings-allocation timeline.
+
+Savings allocation is current intention, while goal spending is confirmed expense
+attribution. Spending, reserve edits and balance corrections can expose
+underfunding without changing allocations. Completing a goal never creates an
+expense or silently releases savings. Changes to a completed goal's spending
+flag completion for review.
+
+Recurring automatic posting records the user's scheduled assumption; it is not
+bank verification. An authenticated action checks due expenses on Finance entry;
+there is also a Check due expenses button. Processing uses bounded batches and
+unique occurrence/posting keys. This does not guarantee background execution.
+Deleting a generated expense reopens its occurrence for manual confirmation.
+
+Work dates, payment dates and attribution completeness have separate meanings.
+Only earned-work income can fund completed Paid Work sessions. Rate calculations
+use confirmed allocations over overlapping work, even when payment falls outside
+the selected period. Unresolved attribution and mixed currency never produce a
+fabricated rate. Candidate work searches are bounded and include existing links.
+
+Run `pnpm test:finance:integration` against local PostgreSQL after applying
+migrations. It creates isolated test users, exercises actual foreign keys and
+concurrent allocation/recurrence mutations, and cleans up fixtures. Finance
+Playwright tests likewise clean up their own users. No bank credentials are used.

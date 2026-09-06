@@ -15,6 +15,12 @@ export function toSessionListItem(
 
   return {
     id: session.id,
+    financeActivityKind: session.financeActivityKind,
+    financeCompensationType: session.financeCompensationType,
+    workSourceId: session.workSourceId,
+    incomeOpportunityId: session.incomeOpportunityId,
+    paymentAttributionCompleteAt:
+      session.paymentAttributionCompleteAt?.toISOString() ?? null,
     startedAt: session.startedAt.toISOString(),
     endedAt: session.endedAt?.toISOString() ?? null,
     description: session.description,

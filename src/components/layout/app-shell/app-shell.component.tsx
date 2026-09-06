@@ -1,10 +1,13 @@
 "use client";
 
+import type { FinanceWorkOptions } from "@/features/finance/sessions/types/finance-session.types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Home, LogOut, Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Clock3, Home, LogOut, Menu, Settings, X } from "lucide-react";
+import { useState } from "react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
+import { MenuItem } from "@/components/ui/menus/menu-item.component";
+import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import type { EngineeringProjectOption } from "@/features/engineering/types/engineering.types";
@@ -27,45 +30,20 @@ export function AppShell({
   domains,
   activeSession,
   engineeringProjects,
+  financeOptions,
 }: {
   children: React.ReactNode;
   user: { name: string; email: string };
   domains: DomainOption[];
   activeSession: ActiveSessionData | null;
   engineeringProjects: EngineeringProjectOption[];
+  financeOptions: FinanceWorkOptions;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!profileMenuOpen) return;
-
-    function closeProfileMenu(event: MouseEvent) {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
-        setProfileMenuOpen(false);
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setProfileMenuOpen(false);
-    }
-
-    document.addEventListener("mousedown", closeProfileMenu);
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", closeProfileMenu);
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [profileMenuOpen]);
 
   async function signOut() {
-    setProfileMenuOpen(false);
     await authClient.signOut();
     router.push("/sign-in");
     router.refresh();
@@ -101,8 +79,8 @@ export function AppShell({
                 className={cn(
                   "nav-link",
                   (pathname === href ||
-                    (domain.slug === "engineering" &&
-                      pathname.startsWith("/engineering/"))) &&
+                    (["engineering", "finance"].includes(domain.slug) &&
+                      pathname.startsWith(`${href}/`))) &&
                     "active",
                 )}
                 href={href}
@@ -115,42 +93,41 @@ export function AppShell({
         </div>
       </nav>
       <div className="border-border pt-xl border-t">
-        <div className="profile-row" ref={profileMenuRef}>
-          <button
-            type="button"
-            className="profile-trigger"
-            data-testid="user-identity"
-            aria-haspopup="menu"
-            aria-expanded={profileMenuOpen}
-            onClick={() => setProfileMenuOpen((open) => !open)}
-          >
-            <span className="avatar">
-              {user.name.slice(0, 1).toUpperCase()}
-            </span>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="text-text-primary text-body block truncate font-medium">
-                {user.name}
+        <SubMenu
+          label="Account"
+          placement="top-stretch"
+          className="profile-row"
+          trigger={(triggerProps) => (
+            <button
+              {...triggerProps}
+              className="profile-trigger"
+              data-testid="user-identity"
+            >
+              <span className="avatar">
+                {user.name.slice(0, 1).toUpperCase()}
               </span>
-              <span className="profile-email text-text-muted block truncate">
-                {user.email}
+              <span className="min-w-0 flex-1 text-left">
+                <span className="text-text-primary text-body block truncate font-medium">
+                  {user.name}
+                </span>
+                <span className="profile-email text-text-muted block truncate">
+                  {user.email}
+                </span>
               </span>
-            </span>
-          </button>
-          {profileMenuOpen && (
-            <div className="profile-menu" role="menu" aria-label="Account">
-              <button
-                type="button"
-                className="profile-menu-action"
-                onClick={signOut}
-                role="menuitem"
-                aria-label="Sign out"
-              >
-                <LogOut className="size-4" />
-                Sign out
-              </button>
-            </div>
+            </button>
           )}
-        </div>
+        >
+          <MenuItem
+            href="/settings"
+            icon={<Settings />}
+            onSelect={() => setMobileOpen(false)}
+          >
+            Settings
+          </MenuItem>
+          <MenuItem icon={<LogOut />} label="Sign out" onSelect={signOut}>
+            Sign out
+          </MenuItem>
+        </SubMenu>
       </div>
     </>
   );
@@ -208,6 +185,7 @@ export function AppShell({
         </SessionDetailsProvider>
 
         <TimerController
+          financeOptions={financeOptions}
           domains={domains}
           engineeringProjects={engineeringProjects}
         />

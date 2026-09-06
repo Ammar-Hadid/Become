@@ -11,11 +11,20 @@ export default async function DomainPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ session?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
   const { slug } = await params;
+  if (slug === "finance") {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(await searchParams)) {
+      if (typeof value === "string") query.set(key, value);
+      else if (Array.isArray(value))
+        value.forEach((item) => query.append(key, item));
+    }
+    redirect(`/finance${query.size ? `?${query}` : ""}`);
+  }
   if (slug === "engineering") {
     const session = (await searchParams).session;
     redirect(

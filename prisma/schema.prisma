@@ -46,13 +46,13 @@ enum TechnologyCategory {
 }
 
 model User {
-  id                  String                @id @default(cuid())
+  id                  String                            @id @default(cuid())
   name                String
-  email               String                @unique
-  emailVerified       Boolean               @default(false)
+  email               String                            @unique
+  emailVerified       Boolean                           @default(false)
   image               String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  createdAt           DateTime                          @default(now())
+  updatedAt           DateTime                          @updatedAt
   authSessions        AuthSession[]
   accounts            Account[]
   domains             Domain[]
@@ -60,6 +60,26 @@ model User {
   engineeringProjects EngineeringProject[]
   engineeringEvidence EngineeringEvidence[]
   technologies        Technology[]
+  financialAccounts   FinancialAccount[]
+  balanceSnapshots    FinancialAccountBalanceSnapshot[]
+
+  financialTransactions FinancialTransaction[]
+  expenseCategories     ExpenseCategory[]
+  counterparties        Counterparty[]
+
+  financePolicies FinanceCurrencyPolicy[]
+
+  savingsGoals SavingsGoal[]
+  goalExpenses SavingsGoalExpenseAllocation[]
+
+  recurringExpenses RecurringExpense[]
+
+  recurringOccurrences RecurringExpenseOccurrence[]
+
+  workSources         WorkSource[]
+  incomeOpportunities IncomeOpportunity[]
+
+  paymentAllocations PaymentSessionAllocation[]
 
   @@map("user")
 }
@@ -135,16 +155,17 @@ model Domain {
 }
 
 model ActivityType {
-  id        String    @id @default(cuid())
-  domainId  String
-  name      String
-  slug      String
-  sortOrder Int       @default(0)
-  enabled   Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  domain    Domain    @relation(fields: [domainId], references: [id], onDelete: Cascade)
-  sessions  Session[]
+  id                  String               @id @default(cuid())
+  domainId            String
+  name                String
+  slug                String
+  sortOrder           Int                  @default(0)
+  enabled             Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  domain              Domain               @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  sessions            Session[]
+  financeActivityKind FinanceActivityKind?
 
   @@unique([id, domainId])
   @@unique([domainId, slug])
@@ -153,24 +174,32 @@ model ActivityType {
 }
 
 model Session {
-  id                   String                @id @default(cuid())
-  userId               String
-  domainId             String
-  activityTypeId       String
-  engineeringProjectId String?
-  engineeringContext   EngineeringContext?
-  startedAt            DateTime
-  endedAt              DateTime?
-  description          String?
-  outcome              String?
-  notes                String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  domain               Domain                @relation(fields: [domainId, userId], references: [id, userId], onDelete: Restrict)
-  activityType         ActivityType          @relation(fields: [activityTypeId, domainId], references: [id, domainId], onDelete: Restrict)
-  engineeringProject   EngineeringProject?   @relation("EngineeringProjectSessions", fields: [engineeringProjectId, userId], references: [id, userId], onDelete: Restrict)
-  engineeringEvidence  EngineeringEvidence[] @relation("EngineeringEvidenceSession")
+  id                           String                     @id @default(cuid())
+  userId                       String
+  domainId                     String
+  activityTypeId               String
+  engineeringProjectId         String?
+  engineeringContext           EngineeringContext?
+  startedAt                    DateTime
+  endedAt                      DateTime?
+  description                  String?
+  outcome                      String?
+  notes                        String?
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+  user                         User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain                       Domain                     @relation(fields: [domainId, userId], references: [id, userId], onDelete: Restrict)
+  activityType                 ActivityType               @relation(fields: [activityTypeId, domainId], references: [id, domainId], onDelete: Restrict)
+  engineeringProject           EngineeringProject?        @relation("EngineeringProjectSessions", fields: [engineeringProjectId, userId], references: [id, userId], onDelete: Restrict)
+  engineeringEvidence          EngineeringEvidence[]      @relation("EngineeringEvidenceSession")
+  financeActivityKind          FinanceActivityKind?
+  workSourceId                 String?
+  incomeOpportunityId          String?
+  financeCompensationType      FinanceCompensationType?
+  paymentAttributionCompleteAt DateTime?
+  workSource                   WorkSource?                @relation(fields: [workSourceId, userId], references: [id, userId], onDelete: Restrict)
+  incomeOpportunity            IncomeOpportunity?         @relation(fields: [incomeOpportunityId, userId], references: [id, userId], onDelete: Restrict)
+  paymentAllocations           PaymentSessionAllocation[]
 
   @@unique([id, userId])
   @@index([userId, startedAt])
@@ -178,6 +207,7 @@ model Session {
   @@index([domainId, startedAt])
   @@index([userId, engineeringProjectId, startedAt])
   @@index([userId, engineeringContext, startedAt])
+  @@index([userId, financeActivityKind, startedAt])
   @@map("session")
 }
 
@@ -257,4 +287,394 @@ model EngineeringProjectTechnology {
   @@id([engineeringProjectId, technologyId])
   @@index([technologyId])
   @@map("engineering_project_technology")
+}
+
+enum FinancialAccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  DIGITAL_WALLET
+  OTHER
+}
+
+model FinancialAccount {
+  id                     String                            @id @default(cuid())
+  userId                 String
+  name                   String                            @db.VarChar(120)
+  type                   FinancialAccountType
+  currency               String                            @db.VarChar(3)
+  includeInLiquidSavings Boolean                           @default(false)
+  archivedAt             DateTime?
+  createdAt              DateTime                          @default(now())
+  updatedAt              DateTime                          @updatedAt
+  user                   User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots              FinancialAccountBalanceSnapshot[]
+
+  outgoing             FinancialTransaction[]       @relation("TransactionAccount")
+  incoming             FinancialTransaction[]       @relation("TransferDestination")
+  recurringExpenses    RecurringExpense[]
+  recurringOccurrences RecurringExpenseOccurrence[]
+
+  @@unique([id, userId])
+  @@unique([id, userId, currency])
+  @@index([userId, archivedAt])
+  @@map("financial_account")
+}
+
+model FinancialAccountBalanceSnapshot {
+  id           String           @id @default(cuid())
+  userId       String
+  accountId    String
+  balanceMinor BigInt
+  reconciledAt DateTime
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account      FinancialAccount @relation(fields: [accountId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@unique([accountId, reconciledAt])
+  @@index([userId, accountId, reconciledAt])
+  @@map("financial_account_balance_snapshot")
+}
+
+enum FinancialTransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum FinancialInflowKind {
+  EARNED_WORK
+  BUSINESS_REVENUE
+  STUDENT_FINANCE
+  GIFT
+  REFUND
+  REIMBURSEMENT
+  OTHER
+}
+
+model ExpenseCategory {
+  id                   String                       @id @default(cuid())
+  userId               String
+  name                 String                       @db.VarChar(120)
+  normalizedName       String                       @db.VarChar(120)
+  archivedAt           DateTime?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions         FinancialTransaction[]
+  recurringExpenses    RecurringExpense[]
+  recurringOccurrences RecurringExpenseOccurrence[]
+
+  @@unique([id, userId])
+  @@unique([userId, normalizedName])
+  @@map("expense_category")
+}
+
+model Counterparty {
+  id                   String                       @id @default(cuid())
+  userId               String
+  name                 String                       @db.VarChar(120)
+  normalizedName       String                       @db.VarChar(120)
+  archivedAt           DateTime?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions         FinancialTransaction[]
+  recurringExpenses    RecurringExpense[]
+  recurringOccurrences RecurringExpenseOccurrence[]
+
+  @@unique([id, userId])
+  @@unique([userId, normalizedName])
+  @@index([userId, archivedAt, name])
+  @@map("counterparty")
+}
+
+model FinancialTransaction {
+  id                           String                         @id @default(cuid())
+  userId                       String
+  type                         FinancialTransactionType
+  amountMinor                  BigInt
+  currency                     String                         @db.VarChar(3)
+  occurredAt                   DateTime
+  accountId                    String
+  destinationAccountId         String?
+  inflowKind                   FinancialInflowKind?
+  expenseCategoryId            String?
+  counterpartyId               String?
+  notes                        String?
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+  user                         User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account                      FinancialAccount               @relation("TransactionAccount", fields: [accountId, userId, currency], references: [id, userId, currency], onDelete: Restrict)
+  destinationAccount           FinancialAccount?              @relation("TransferDestination", fields: [destinationAccountId, userId, currency], references: [id, userId, currency], onDelete: Restrict)
+  expenseCategory              ExpenseCategory?               @relation(fields: [expenseCategoryId, userId], references: [id, userId], onDelete: Restrict)
+  counterparty                 Counterparty?                  @relation(fields: [counterpartyId, userId], references: [id, userId], onDelete: Restrict)
+  goalAllocations              SavingsGoalExpenseAllocation[]
+  recurringExpenseOccurrenceId String?                        @unique
+  recurringExpenseOccurrence   RecurringExpenseOccurrence?    @relation(fields: [recurringExpenseOccurrenceId, userId], references: [id, userId], onDelete: Restrict)
+  workSourceId                 String?
+  incomeOpportunityId          String?
+  workSource                   WorkSource?                    @relation(fields: [workSourceId, userId], references: [id, userId], onDelete: Restrict)
+  incomeOpportunity            IncomeOpportunity?             @relation(fields: [incomeOpportunityId, userId], references: [id, userId], onDelete: Restrict)
+  paymentAllocations           PaymentSessionAllocation[]
+
+  @@unique([id, userId])
+  @@unique([recurringExpenseOccurrenceId, userId])
+  @@index([userId, occurredAt, id])
+  @@index([userId, accountId, occurredAt])
+  @@index([userId, destinationAccountId, occurredAt])
+  @@index([userId, counterpartyId, occurredAt])
+  @@index([userId, workSourceId, occurredAt])
+  @@index([userId, incomeOpportunityId, occurredAt])
+  @@map("financial_transaction")
+}
+
+model FinanceCurrencyPolicy {
+  id                    String   @id @default(cuid())
+  userId                String
+  currency              String   @db.VarChar(3)
+  protectedReserveMinor BigInt?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
+  @@map("finance_currency_policy")
+}
+
+enum SavingsGoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+model SavingsGoal {
+  id                      String                         @id @default(cuid())
+  userId                  String
+  name                    String                         @db.VarChar(120)
+  currency                String                         @db.VarChar(3)
+  targetAmountMinor       BigInt
+  allocatedAmountMinor    BigInt                         @default(0)
+  status                  SavingsGoalStatus              @default(ACTIVE)
+  completedAt             DateTime?
+  archivedAt              DateTime?
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+  user                    User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses                SavingsGoalExpenseAllocation[]
+  completionNeedsReviewAt DateTime?
+
+  @@unique([id, userId])
+  @@index([userId, currency, archivedAt])
+  @@map("savings_goal")
+}
+
+model SavingsGoalExpenseAllocation {
+  userId        String
+  savingsGoalId String
+  transactionId String
+  amountMinor   BigInt
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal          SavingsGoal          @relation(fields: [savingsGoalId, userId], references: [id, userId], onDelete: Restrict)
+  transaction   FinancialTransaction @relation(fields: [transactionId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@id([savingsGoalId, transactionId])
+  @@index([userId, transactionId])
+  @@map("savings_goal_expense_allocation")
+}
+
+enum RecurringFrequency {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringPostingBehavior {
+  ASK_TO_CONFIRM
+  AUTOMATIC
+}
+
+enum RecurringExpenseStatus {
+  ACTIVE
+  PAUSED
+}
+
+model RecurringExpense {
+  id                 String                       @id @default(cuid())
+  userId             String
+  name               String                       @db.VarChar(120)
+  amountMinor        BigInt
+  currency           String                       @db.VarChar(3)
+  accountId          String
+  expenseCategoryId  String?
+  counterpartyId     String?
+  frequency          RecurringFrequency
+  dayOfWeek          Int?
+  dayOfMonth         Int?
+  monthOfYear        Int?
+  startOn            DateTime                     @db.Date
+  endOn              DateTime?                    @db.Date
+  status             RecurringExpenseStatus       @default(ACTIVE)
+  postingBehavior    RecurringPostingBehavior     @default(ASK_TO_CONFIRM)
+  processedThroughOn DateTime                     @db.Date
+  pausedOn           DateTime?                    @db.Date
+  archivedAt         DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account            FinancialAccount             @relation(fields: [accountId, userId], references: [id, userId], onDelete: Restrict)
+  expenseCategory    ExpenseCategory?             @relation(fields: [expenseCategoryId, userId], references: [id, userId], onDelete: Restrict)
+  counterparty       Counterparty?                @relation(fields: [counterpartyId, userId], references: [id, userId], onDelete: Restrict)
+  occurrences        RecurringExpenseOccurrence[]
+
+  @@unique([id, userId])
+  @@index([userId, status, processedThroughOn])
+  @@index([userId, counterpartyId])
+  @@map("recurring_expense")
+}
+
+enum RecurringOccurrenceStatus {
+  AWAITING_CONFIRMATION
+  POSTED_AUTOMATICALLY
+  POSTED_CONFIRMED
+  SKIPPED
+}
+
+model RecurringExpenseOccurrence {
+  id                      String                    @id @default(cuid())
+  userId                  String
+  recurringExpenseId      String
+  dueOn                   DateTime                  @db.Date
+  nameSnapshot            String                    @db.VarChar(120)
+  scheduledAmountMinor    BigInt
+  currency                String                    @db.VarChar(3)
+  accountId               String
+  expenseCategoryId       String?
+  counterpartyId          String?
+  postingBehaviorSnapshot RecurringPostingBehavior
+  status                  RecurringOccurrenceStatus
+  resolvedAt              DateTime?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  user                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringExpense        RecurringExpense          @relation(fields: [recurringExpenseId, userId], references: [id, userId], onDelete: Restrict)
+  account                 FinancialAccount          @relation(fields: [accountId, userId], references: [id, userId], onDelete: Restrict)
+  expenseCategory         ExpenseCategory?          @relation(fields: [expenseCategoryId, userId], references: [id, userId], onDelete: Restrict)
+  counterparty            Counterparty?             @relation(fields: [counterpartyId, userId], references: [id, userId], onDelete: Restrict)
+  transaction             FinancialTransaction?
+
+  @@unique([id, userId])
+  @@unique([recurringExpenseId, dueOn])
+  @@index([userId, status, dueOn])
+  @@index([userId, counterpartyId, dueOn])
+  @@map("recurring_expense_occurrence")
+}
+
+enum FinanceCompensationType {
+  HOURLY
+  FIXED
+  TASK_BASED
+  UNKNOWN
+}
+
+enum WorkSourceType {
+  EMPLOYER
+  CLIENT
+  PLATFORM
+  OTHER
+}
+
+enum IncomeOpportunityStatus {
+  DISCOVERED
+  APPLIED
+  ASSESSMENT
+  ACCEPTED
+  REJECTED
+  ABANDONED
+}
+
+enum IncomeOpportunityChannel {
+  DIRECT
+  REFERRAL
+  JOB_BOARD
+  MARKETPLACE
+  OUTREACH
+  OTHER
+}
+
+model WorkSource {
+  id                      String                  @id @default(cuid())
+  userId                  String
+  name                    String                  @db.VarChar(120)
+  type                    WorkSourceType
+  defaultCompensationType FinanceCompensationType @default(UNKNOWN)
+  notes                   String?
+  archivedAt              DateTime?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunities           IncomeOpportunity[]
+  transactions            FinancialTransaction[]
+  sessions                Session[]
+
+  @@unique([id, userId])
+  @@index([userId, archivedAt])
+  @@map("work_source")
+}
+
+model IncomeOpportunity {
+  id                    String                    @id @default(cuid())
+  userId                String
+  title                 String                    @db.VarChar(120)
+  organizationName      String?                   @db.VarChar(120)
+  status                IncomeOpportunityStatus   @default(DISCOVERED)
+  channel               IncomeOpportunityChannel?
+  discoveredAt          DateTime
+  appliedAt             DateTime?
+  assessmentAt          DateTime?
+  closedAt              DateTime?
+  resultingWorkSourceId String?
+  compensationType      FinanceCompensationType?
+  expectedAmountMinor   BigInt?
+  expectedCurrency      String?                   @db.VarChar(3)
+  notes                 String?
+  archivedAt            DateTime?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resultingWorkSource   WorkSource?               @relation(fields: [resultingWorkSourceId, userId], references: [id, userId], onDelete: Restrict)
+  transactions          FinancialTransaction[]
+  sessions              Session[]
+
+  @@unique([id, userId])
+  @@index([userId, archivedAt, discoveredAt])
+  @@map("income_opportunity")
+}
+
+enum FinanceActivityKind {
+  PAID_WORK
+  OPPORTUNITY_SEARCH
+  APPLICATION
+  ASSESSMENT
+  FINANCE_ADMIN
+}
+
+model PaymentSessionAllocation {
+  userId        String
+  transactionId String
+  sessionId     String
+  amountMinor   BigInt
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction   FinancialTransaction @relation(fields: [transactionId, userId], references: [id, userId], onDelete: Cascade)
+  session       Session              @relation(fields: [sessionId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@id([transactionId, sessionId])
+  @@index([userId, sessionId])
+  @@map("payment_session_allocation")
 }

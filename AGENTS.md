@@ -128,6 +128,10 @@ Do not introduce speculative infrastructure.
 
 Become uses Tailwind CSS as the default styling approach, backed by a small, explicit global design system.
 
+### Shared submenu component
+
+Whenever an interface needs a submenu or action menu, use the shared menu components in `src/components/ui/menus/`. Do not create feature-specific submenu markup, interaction state, keyboard handling, positioning logic, or duplicate menu styling. Extend the shared menu components when a legitimate new submenu requirement is not yet supported.
+
 ### Design tokens
 
 Define recurring product-wide design decisions as Tailwind theme tokens.

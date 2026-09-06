@@ -3,6 +3,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { SessionDetailsDrawer } from "@/features/sessions/details/components/session-details-drawer.component";
 import { EngineeringSessionDetails } from "@/features/engineering/sessions/components/engineering-session-details.component";
+import { FinanceSessionDetails } from "@/features/finance/sessions/components/finance-session-details.component";
 import type {
   SessionDetailItem,
   SessionListItem,
@@ -121,6 +122,9 @@ export function SessionDetailsProvider({
       {children}
       {selectedSession && (
         <SessionDetailsDrawer session={selectedSession} onClose={closeSession}>
+          {selectedSession.domain.slug === "finance" && (
+            <FinanceSessionDetails session={selectedSession} />
+          )}
           {selectedSession.domain.slug === "engineering" && (
             <EngineeringSessionDetails session={selectedSession} />
           )}
