@@ -1,3 +1,4 @@
+import { getFinanceWorkOptions } from "@/features/finance/queries/finance-options.query";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell/app-shell.component";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
@@ -14,12 +15,14 @@ export default async function AuthenticatedLayout({
   if (!user) redirect("/sign-in");
 
   await ensureDefaultDomains(user.id);
-  const [appData, engineeringProjects] = await Promise.all([
+  const [appData, engineeringProjects, financeOptions] = await Promise.all([
     getAppSessionData(user.id),
     getEngineeringProjectOptions(user.id),
+    getFinanceWorkOptions(user.id),
   ]);
   return (
     <AppShell
+      financeOptions={financeOptions}
       user={user}
       domains={appData.domains}
       activeSession={appData.activeSession}

@@ -128,6 +128,10 @@ Do not introduce speculative infrastructure.
 
 Become uses Tailwind CSS as the default styling approach, backed by a small, explicit global design system.
 
+### Shared submenu component
+
+Whenever an interface needs a submenu or action menu, use the shared menu components in `src/components/ui/menus/`. Do not create feature-specific submenu markup, interaction state, keyboard handling, positioning logic, or duplicate menu styling. Extend the shared menu components when a legitimate new submenu requirement is not yet supported.
+
 ### Design tokens
 
 Define recurring product-wide design decisions as Tailwind theme tokens.
@@ -148,6 +152,15 @@ Before introducing a new color, spacing value, font size, radius, width, or othe
 Use arbitrary values when the value is genuinely component-specific or one-off. Do not create a design token for every literal value.
 
 If a visual value becomes repeated or represents a product-wide design decision, promote it into the theme rather than duplicating literals.
+
+### Locked typography scale
+
+The typography tokens in `src/app/styles/tokens.css` are product-owner controlled and must not be adjusted without the product owner's explicit prior approval. This restriction is absolute and applies especially to every typography `font-size` and `line-height` value.
+
+- Do not add, remove, rename, reorder, or change typography tokens or their values on your own initiative.
+- Do not introduce one-off `font-size` or `line-height` values, arbitrary typography utilities, or Tailwind's default type-scale utilities as a workaround.
+- Apply the existing semantic typography tokens throughout authored application code.
+- If a task appears to require any typography token or value change, stop and ask the product owner for approval before editing it.
 
 ### CSS ownership
 
@@ -189,3 +202,13 @@ The goal is clear ownership:
 - shared application primitive → shared owner
 - feature-specific styling → feature owner
 - simple component styling → Tailwind utilities
+
+### Motion system
+
+Before adding or changing product motion, read `docs/design/MOTION_SYSTEM.md`.
+
+- Reuse the shared motion tokens and established interaction recipes.
+- Keep animation local to the state change it explains and preserve stable layout anchors.
+- Treat motion as progressive enhancement; behavior, focus, and announcements must remain correct with reduced motion.
+- Do not add a motion dependency or invent a feature-specific timing/easing system without documenting a capability the existing CSS, platform, and React View Transition foundation cannot provide.
+- Do not add feature-specific motion to unfinished placeholder domain interfaces. Shared shell motion may still apply.

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { compensationSchema } from "@/features/finance/work-sources/schemas/work-source.schema";
 import {
   ENGINEERING_CONTEXT_VALUES,
   ENGINEERING_EVIDENCE_TYPE_VALUES,
@@ -14,6 +15,11 @@ const optionalText = z
 export const startSessionSchema = z.object({
   domainId: z.string().min(1),
   activityTypeId: z.string().min(1),
+  workSourceId: z.string().min(1).nullable().optional(),
+  incomeOpportunityId: z.string().min(1).nullable().optional(),
+  financeCompensationType: compensationSchema.nullable().optional(),
+  businessCompanyId: z.string().min(1).nullable().optional(),
+  businessNicheId: z.string().min(1).nullable().optional(),
   engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
   engineeringProjectId: z.string().min(1).nullable().optional(),
   description: optionalText,
@@ -22,6 +28,8 @@ export const startSessionSchema = z.object({
 export const completeSessionSchema = z.object({
   outcome: optionalText,
   notes: optionalText,
+  businessCompanyId: z.string().min(1).nullable().optional(),
+  businessNicheId: z.string().min(1).nullable().optional(),
   engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
   engineeringProjectId: z.string().min(1).nullable().optional(),
   engineeringEvidence: z

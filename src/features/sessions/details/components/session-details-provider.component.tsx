@@ -1,8 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import { BusinessSessionDetails } from "@/features/entrepreneurship/sessions/components/business-session-details.component";
 import { createContext, useCallback, useEffect, useRef, useState } from "react";
+import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
+import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { SessionDetailsDrawer } from "@/features/sessions/details/components/session-details-drawer.component";
 import { EngineeringSessionDetails } from "@/features/engineering/sessions/components/engineering-session-details.component";
+import { FinanceSessionDetails } from "@/features/finance/sessions/components/finance-session-details.component";
 import type {
   SessionDetailItem,
   SessionListItem,
@@ -23,17 +28,21 @@ export function SessionDetailsProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [selectedSession, setSelectedSession] =
     useState<SessionDetailItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const sessionCache = useRef(new Map<string, SessionDetailItem>());
   const requestSequence = useRef(0);
   const pageScrollPosition = useRef<number | null>(null);
+  const pageScrollPathname = useRef<string | null>(null);
 
   const loadSessionDetails = useCallback(async (sessionId: string) => {
     const sequence = ++requestSequence.current;
     const cachedSession = sessionCache.current.get(sessionId);
     if (cachedSession) {
       setSelectedSession(cachedSession);
+      setDrawerOpen(true);
       return;
     }
 
@@ -47,22 +56,31 @@ export function SessionDetailsProvider({
       url.searchParams.delete(SESSION_QUERY_KEY);
       window.history.replaceState(window.history.state, "", url);
       setSelectedSession(null);
+      setDrawerOpen(false);
       return;
     }
 
     const session = (await response.json()) as SessionDetailItem;
+    if (sequence !== requestSequence.current) return;
     sessionCache.current.set(session.id, session);
     setSelectedSession(session);
+    setDrawerOpen(true);
   }, []);
 
   const syncFromLocation = useCallback(async () => {
     const url = new URL(window.location.href);
-    const sessionId = url.searchParams.get(SESSION_QUERY_KEY);
+    // This dedicated capture page owns its session parameter; it is not a
+    // request to overlay the global session drawer.
+    const sessionId =
+      url.pathname === "/entrepreneurship/interactions/capture"
+        ? null
+        : url.searchParams.get(SESSION_QUERY_KEY);
 
     if (!sessionId) {
-      setSelectedSession(null);
+      requestSequence.current += 1;
+      setDrawerOpen(false);
       const scrollTop = pageScrollPosition.current;
-      if (scrollTop !== null) {
+      if (scrollTop !== null && pageScrollPathname.current === url.pathname) {
         window.requestAnimationFrame(() => window.scrollTo(0, scrollTop));
       }
       return;
@@ -72,20 +90,29 @@ export function SessionDetailsProvider({
   }, [loadSessionDetails]);
 
   useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
     const initialSync = window.setTimeout(() => void syncFromLocation(), 0);
     window.addEventListener("popstate", syncFromLocation);
     return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
       window.clearTimeout(initialSync);
       window.removeEventListener("popstate", syncFromLocation);
     };
-  }, [syncFromLocation]);
+  }, [syncFromLocation, pathname]);
 
   const openSession = useCallback(
     (session: SessionListItem) => {
       if (!session.endedAt) return;
 
-      pageScrollPosition.current = window.scrollY;
+      if (pageScrollPathname.current !== window.location.pathname) {
+        pageScrollPathname.current = window.location.pathname;
+        pageScrollPosition.current = window.scrollY;
+      } else if (pageScrollPosition.current === null) {
+        pageScrollPosition.current = window.scrollY;
+      }
       setSelectedSession({ ...session, engineeringEvidence: [] });
+      setDrawerOpen(true);
 
       const url = new URL(window.location.href);
       if (url.searchParams.get(SESSION_QUERY_KEY) === session.id) return;
@@ -105,7 +132,8 @@ export function SessionDetailsProvider({
 
   const closeSession = useCallback(() => {
     const url = new URL(window.location.href);
-    setSelectedSession(null);
+    requestSequence.current += 1;
+    setDrawerOpen(false);
 
     if (window.history.state?.[SESSION_HISTORY_STATE_KEY] === true) {
       window.history.back();
@@ -119,13 +147,44 @@ export function SessionDetailsProvider({
   return (
     <SessionDetailsContext.Provider value={{ openSession }}>
       {children}
-      {selectedSession && (
-        <SessionDetailsDrawer session={selectedSession} onClose={closeSession}>
-          {selectedSession.domain.slug === "engineering" && (
-            <EngineeringSessionDetails session={selectedSession} />
-          )}
-        </SessionDetailsDrawer>
-      )}
+      <SessionDetailsStage
+        session={selectedSession}
+        open={drawerOpen}
+        onClose={closeSession}
+      />
     </SessionDetailsContext.Provider>
+  );
+}
+
+function SessionDetailsStage({
+  session,
+  open,
+  onClose,
+}: {
+  session: SessionDetailItem | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const presence = usePresence(open, MOTION_DURATION_MS.standard);
+  if (!presence.isPresent || !session) return null;
+
+  return (
+    <SessionDetailsDrawer
+      session={session}
+      open={open}
+      presenceState={presence.presenceState}
+      onPresenceAnimationEnd={presence.onPresenceAnimationEnd}
+      onClose={onClose}
+    >
+      {session.domain.slug === "entrepreneurship" && (
+        <BusinessSessionDetails session={session} />
+      )}
+      {session.domain.slug === "finance" && (
+        <FinanceSessionDetails session={session} />
+      )}
+      {session.domain.slug === "engineering" && (
+        <EngineeringSessionDetails session={session} />
+      )}
+    </SessionDetailsDrawer>
   );
 }

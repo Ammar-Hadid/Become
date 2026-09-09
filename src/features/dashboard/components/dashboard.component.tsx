@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, ViewTransition } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,6 +17,8 @@ import { DomainIcon } from "@/features/domains/components/domain-icon.component"
 import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
 import type { SessionListItem } from "@/features/sessions/types/session.types";
+import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
+import type { SeasonView } from "@/features/seasons/types/season.types";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import {
@@ -32,6 +34,8 @@ export function Dashboard({
   seasonProgress,
   initialData,
   recentSessions,
+  businessAttention = [],
+  seasonDirection,
 }: {
   userName: string;
   season: string;
@@ -39,16 +43,25 @@ export function Dashboard({
   seasonProgress: number;
   initialData: DashboardData;
   recentSessions: SessionListItem[];
+  businessAttention?: { id: string; text: string; href: string }[];
+  seasonDirection?: SeasonView;
 }) {
   const [data, setData] = useState(initialData);
   const [pending, startTransition] = useTransition();
+  const [requestedTimeframe, setRequestedTimeframe] =
+    useState<Timeframe | null>(null);
   const { activeSession, elapsedSeconds } = useActiveTimer();
 
   function selectTimeframe(timeframe: Timeframe) {
     if (timeframe === data.timeframe) return;
+    setRequestedTimeframe(timeframe);
     startTransition(async () => {
-      const response = await fetch(`/api/dashboard?timeframe=${timeframe}`);
-      if (response.ok) setData((await response.json()) as DashboardData);
+      try {
+        const response = await fetch(`/api/dashboard?timeframe=${timeframe}`);
+        if (response.ok) setData((await response.json()) as DashboardData);
+      } finally {
+        setRequestedTimeframe(null);
+      }
     });
   }
 
@@ -81,6 +94,33 @@ export function Dashboard({
           aria-hidden="true"
         />
       </header>
+      {businessAttention.length > 0 && (
+        <section className="border-border py-xl my-2xl border-y">
+          <div className="gap-lg flex items-center justify-between">
+            <h2 className="eyebrow">
+              Entrepreneurship · chosen actions & source review
+            </h2>
+            <Link
+              href="/entrepreneurship"
+              className="text-body text-text-muted"
+            >
+              View domain →
+            </Link>
+          </div>
+          <ul className="mt-lg gap-md grid">
+            {businessAttention.slice(0, 3).map((item) => (
+              <li key={item.id}>
+                <Link
+                  className="text-body text-text-secondary hover:text-text-primary"
+                  href={item.href}
+                >
+                  {item.text}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {activeSession ? (
         <button
@@ -96,7 +136,7 @@ export function Dashboard({
             </span>
             <div className="min-w-0 text-left">
               <p className="eyebrow text-primary">In focus now</p>
-              <p className="mt-xs truncate text-lg font-medium">
+              <p className="text-h5 mt-xs truncate font-medium">
                 {activeSession.description || activeSession.activityType.name}
               </p>
               <p className="active-session-meta text-text-secondary mt-xs">
@@ -107,7 +147,7 @@ export function Dashboard({
           <div className="gap-lg flex shrink-0 items-center">
             <div className="hidden text-right sm:block">
               <p
-                className="timer-numerals text-primary text-2xl font-semibold"
+                className="timer-numerals text-primary text-h3 font-semibold"
                 data-testid="dashboard-active-session-time"
               >
                 {formatDuration(elapsedSeconds)}
@@ -137,10 +177,12 @@ export function Dashboard({
         </button>
       )}
 
+      {seasonDirection && <SeasonHomeCard season={seasonDirection} />}
+
       <div className="border-border mt-4xl gap-lg pb-2xl flex flex-col border-b sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow mb-sm">Focused time</p>
-          <p className="timer-numerals text-[clamp(2.3rem,5vw,4.2rem)] leading-none font-semibold tracking-[-0.06em]">
+          <p className="timer-numerals text-h1 font-semibold tracking-[-0.06em]">
             {formatDuration(data.totalSeconds, true)}
           </p>
           <p className="text-text-secondary mt-md text-body">
@@ -169,88 +211,111 @@ export function Dashboard({
           {TIMEFRAMES.map((timeframe) => (
             <button
               key={timeframe}
-              className={cn(data.timeframe === timeframe && "active")}
+              className={cn(
+                "motion-selection-control",
+                (requestedTimeframe ?? data.timeframe) === timeframe &&
+                  "active",
+              )}
               onClick={() => selectTimeframe(timeframe)}
               disabled={pending}
+              aria-pressed={
+                (requestedTimeframe ?? data.timeframe) === timeframe
+              }
             >
-              {timeframe[0].toUpperCase() + timeframe.slice(1)}
+              {(requestedTimeframe ?? data.timeframe) === timeframe && (
+                <ViewTransition
+                  name="dashboard-timeframe-indicator"
+                  share="motion-guide"
+                  default="none"
+                >
+                  <span className="motion-selection-guide" aria-hidden />
+                </ViewTransition>
+              )}
+              <span>{timeframe[0].toUpperCase() + timeframe.slice(1)}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <section
-        className={cn("dashboard-analytics", pending && "opacity-60")}
-        aria-busy={pending}
+      <ViewTransition
+        key={data.timeframe}
+        name="dashboard-analytics"
+        share="motion-data-recompose"
+        default="none"
       >
-        <div className="border-border py-3xl lg:pr-4xl min-w-0 border-b lg:border-r lg:border-b-0">
-          <div className="mb-lg flex items-center justify-between">
-            <div>
-              <h2 className="section-title">Rhythm</h2>
-              <p className="section-description">
-                {data.periodLabel} · {data.activeDays} active{" "}
-                {data.activeDays === 1 ? "day" : "days"}
-              </p>
+        <section
+          className={cn("dashboard-analytics", pending && "is-pending")}
+          aria-busy={pending}
+        >
+          <div className="border-border py-3xl lg:pr-4xl min-w-0 border-b lg:border-r lg:border-b-0">
+            <div className="mb-lg flex items-center justify-between">
+              <div>
+                <h2 className="section-title">Rhythm</h2>
+                <p className="section-description">
+                  {data.periodLabel} · {data.activeDays} active{" "}
+                  {data.activeDays === 1 ? "day" : "days"}
+                </p>
+              </div>
+              <Clock3 className="text-text-muted size-4" />
             </div>
-            <Clock3 className="text-text-muted size-4" />
+            <TimeBarChart data={data.chart} />
           </div>
-          <TimeBarChart data={data.chart} />
-        </div>
 
-        <div className="py-3xl lg:pl-4xl">
-          <div className="mb-7 flex items-center justify-between">
-            <div>
-              <h2 className="section-title">Direction</h2>
-              <p className="section-description">
-                Allocation across your domains
-              </p>
+          <div className="py-3xl lg:pl-4xl">
+            <div className="mb-7 flex items-center justify-between">
+              <div>
+                <h2 className="section-title">Direction</h2>
+                <p className="section-description">
+                  Allocation across your domains
+                </p>
+              </div>
+              <span className="dashboard-context text-text-muted">
+                {formatDuration(data.todaySeconds, true)} today
+              </span>
             </div>
-            <span className="dashboard-context text-text-muted">
-              {formatDuration(data.todaySeconds, true)} today
-            </span>
-          </div>
-          <div className="space-y-xl">
-            {data.domains.map((domain) => {
-              const share = data.totalSeconds
-                ? (domain.seconds / data.totalSeconds) * 100
-                : 0;
-              return (
-                <Link
-                  href={getDomainHref(domain.slug)}
-                  className="domain-metric group"
-                  key={domain.id}
-                >
-                  <span
-                    className="domain-metric-icon"
-                    style={{ color: domain.color }}
+            <div className="space-y-xl">
+              {data.domains.map((domain) => {
+                const share = data.totalSeconds
+                  ? (domain.seconds / data.totalSeconds) * 100
+                  : 0;
+                return (
+                  <Link
+                    href={getDomainHref(domain.slug)}
+                    className="domain-metric group"
+                    key={domain.id}
                   >
-                    <DomainIcon slug={domain.slug} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="gap-lg flex items-center justify-between">
-                      <span className="text-body font-medium">
-                        {domain.name}
+                    <span
+                      className="domain-metric-icon"
+                      style={{ color: domain.color }}
+                    >
+                      <DomainIcon slug={domain.slug} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="gap-lg flex items-center justify-between">
+                        <span className="text-body font-medium">
+                          {domain.name}
+                        </span>
+                        <span className="timer-numerals text-body">
+                          {formatDuration(domain.seconds, true)}
+                        </span>
                       </span>
-                      <span className="timer-numerals text-body">
-                        {formatDuration(domain.seconds, true)}
+                      <span className="metric-track">
+                        <span
+                          style={{
+                            width: `${Math.max(share, domain.seconds ? 2 : 0)}%`,
+                            backgroundColor: domain.color,
+                          }}
+                        />
                       </span>
                     </span>
-                    <span className="metric-track">
-                      <span
-                        style={{
-                          width: `${Math.max(share, domain.seconds ? 2 : 0)}%`,
-                          backgroundColor: domain.color,
-                        }}
-                      />
-                    </span>
-                  </span>
-                  <ArrowUpRight className="text-text-muted size-4 opacity-0 transition-opacity group-hover:opacity-100" />
-                </Link>
-              );
-            })}
+                    <ArrowUpRight className="text-text-muted size-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ViewTransition>
 
       <section className="border-border bg-border mt-lg grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-3">
         <div className="signal-cell">
@@ -281,7 +346,7 @@ export function Dashboard({
         <div className="mb-lg flex items-end justify-between">
           <div>
             <p className="eyebrow mb-sm">Evidence</p>
-            <h2 className="section-title text-lg">Recent sessions</h2>
+            <h2 className="section-title">Recent sessions</h2>
           </div>
           <Link href="/sessions" className="text-link">
             View history <ArrowRight className="size-3.5" />

@@ -138,7 +138,7 @@ export function AuthForm() {
           )}
         </Button>
       </form>
-      <p className="auth-supporting-text text-text-muted mt-2xl text-center leading-relaxed">
+      <p className="auth-supporting-text text-text-muted mt-2xl text-center">
         Your data stays in your PostgreSQL database.
         <br />
         No activity is shared or published.

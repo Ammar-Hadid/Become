@@ -38,6 +38,7 @@ export async function getAppSessionData(userId: string, now = DateTime.utc()) {
         id: activity.id,
         name: activity.name,
         slug: activity.slug,
+        financeActivityKind: activity.financeActivityKind,
       })),
     })),
     activeSession: activeSession ? toSessionListItem(activeSession, now) : null,

@@ -1,5 +1,6 @@
 import { ArrowRight, Braces, CalendarDays, Clock3, Plus } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { TimeBarChart } from "@/components/ui/charts/time-bar-chart.component";
 import { EngineeringEvidenceList } from "@/features/engineering/evidence/components/engineering-evidence-list.component";
 import type {
@@ -26,7 +27,7 @@ export function EngineeringOverview({
 
   return (
     <div className="page-shell">
-      <header className="page-header">
+      <header className="page-header flex flex-col md:flex-row">
         <div>
           <div className="text-primary mb-lg gap-sm text-body flex items-center">
             <Braces className="size-4" /> Engineering
@@ -54,7 +55,13 @@ export function EngineeringOverview({
       </header>
 
       <section className="engineering-summary">
-        <div>
+        <ViewTransition
+          key={analytics.timeframe}
+          name="engineering-summary-data"
+          share="motion-data-recompose"
+          default="none"
+        >
+          <div>
           <p className="eyebrow mb-sm">Engineering time</p>
           <p className="timer-numerals engineering-summary-value">
             {formatDuration(analytics.totalSeconds, true)}
@@ -64,21 +71,41 @@ export function EngineeringOverview({
               ? "First recorded time in this period"
               : `${analytics.comparisonPercent > 0 ? "+" : ""}${analytics.comparisonPercent}% from the previous ${analytics.timeframe}`}
           </p>
-        </div>
+          </div>
+        </ViewTransition>
         <div className="timeframe-switcher" aria-label="Engineering timeframe">
           {TIMEFRAMES.map((timeframe) => (
             <Link
               key={timeframe}
               href={`/engineering?timeframe=${timeframe}`}
-              className={cn(analytics.timeframe === timeframe && "active")}
+              className={cn(
+                "motion-selection-control",
+                analytics.timeframe === timeframe && "active",
+              )}
             >
-              {timeframe[0].toUpperCase() + timeframe.slice(1)}
+              {analytics.timeframe === timeframe && (
+                <ViewTransition
+                  name="engineering-timeframe-indicator"
+                  share="motion-guide"
+                  default="none"
+                >
+                  <span className="motion-selection-guide" aria-hidden />
+                </ViewTransition>
+              )}
+              <span>{timeframe[0].toUpperCase() + timeframe.slice(1)}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="engineering-signal-grid">
+      <ViewTransition
+        key={analytics.timeframe}
+        name="engineering-period-data"
+        share="motion-data-recompose"
+        default="none"
+      >
+        <div className="engineering-period-data">
+          <section className="engineering-signal-grid">
         <div>
           <Clock3 />
           <strong>{formatDuration(analytics.totalSeconds, true)}</strong>
@@ -94,9 +121,9 @@ export function EngineeringOverview({
           <strong>{evidenceTotal}</strong>
           <span>Evidence {evidenceTotal === 1 ? "record" : "records"}</span>
         </div>
-      </section>
+          </section>
 
-      <section className="engineering-analytics-grid">
+          <section className="engineering-analytics-grid">
         <div className="engineering-analytics-main">
           <div className="engineering-section-heading">
             <div>
@@ -136,9 +163,9 @@ export function EngineeringOverview({
             total={analytics.totalSeconds}
           />
         )}
-      </section>
+          </section>
 
-      <section className="engineering-output-section">
+          <section className="engineering-output-section">
         <div className="engineering-section-heading">
           <div>
             <p className="eyebrow mb-sm">Outputs and learning</p>
@@ -159,7 +186,9 @@ export function EngineeringOverview({
           ))}
         </div>
         <EngineeringEvidenceList evidence={recentEvidence} compact />
-      </section>
+          </section>
+        </div>
+      </ViewTransition>
 
       <section className="engineering-output-section">
         <div className="engineering-section-heading">
@@ -178,7 +207,13 @@ export function EngineeringOverview({
                 key={project.id}
                 href={`/engineering/projects/${project.id}`}
               >
-                <strong>{project.name}</strong>
+                <ViewTransition
+                  name={`engineering-project-${project.id}`}
+                  share="motion-carry"
+                  default="none"
+                >
+                  <strong>{project.name}</strong>
+                </ViewTransition>
                 <span>
                   {project.sessionCount} sessions · {project.evidenceCount}{" "}
                   evidence

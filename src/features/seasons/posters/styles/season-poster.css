@@ -1,0 +1,419 @@
+.season-poster-anchor {
+  display: block;
+  border-radius: calc(var(--radius-panel) + 4px);
+}
+
+.season-poster-anchor:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+.season-poster {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 31rem;
+  grid-template-columns: minmax(0, 1.06fr) minmax(17rem, 0.94fr);
+  overflow: hidden;
+  border: 1px solid #302a21;
+  border-radius: calc(var(--radius-panel) + 4px);
+  background:
+    radial-gradient(
+      circle at 19% 16%,
+      rgba(232, 168, 62, 0.1),
+      transparent 30%
+    ),
+    linear-gradient(145deg, #151514 0%, #101216 56%, #0b0c0f 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+}
+
+.season-poster::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.025);
+  border-radius: inherit;
+}
+
+.season-poster-copy {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(var(--spacing-2xl), 5vw, 4.5rem);
+}
+
+.season-poster-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-poster-copy > .eyebrow {
+  margin-top: var(--spacing-4xl);
+  color: var(--color-primary);
+}
+
+.season-poster h2 {
+  max-width: 11ch;
+  margin-top: var(--spacing-md);
+  font-size: var(--text-hero);
+  line-height: var(--text-hero--line-height);
+  font-weight: 560;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+
+.season-poster-character {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  color: #d6d2ca;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-poster-character strong {
+  font-weight: 620;
+}
+
+.season-poster-character span {
+  color: #8f9198;
+}
+
+.season-poster-character span::before {
+  content: "·";
+  margin-right: var(--spacing-sm);
+}
+
+.season-poster-direction {
+  max-width: 31rem;
+  margin-top: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+  text-wrap: pretty;
+}
+
+.season-poster-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-2xl);
+}
+
+.season-poster-traits li {
+  border: 1px solid rgba(232, 168, 62, 0.22);
+  border-radius: 999px;
+  background: rgba(232, 168, 62, 0.06);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: #dfbd83;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-poster blockquote {
+  max-width: 31rem;
+  margin-top: auto;
+  padding-top: var(--spacing-4xl);
+}
+
+.season-poster blockquote p {
+  color: #d8d4cb;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.season-poster blockquote cite {
+  display: block;
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-style: normal;
+}
+
+.season-poster-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-3xl);
+  color: var(--color-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.season-poster-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.season-poster-visual {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.season-poster-visual::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #101114 0%, transparent 30%),
+    linear-gradient(0deg, rgba(6, 7, 8, 0.42), transparent 35%);
+  pointer-events: none;
+}
+
+.season-poster-visual img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.84) contrast(1.04);
+}
+
+.season-poster-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 56% 42%,
+      rgba(232, 168, 62, 0.16),
+      transparent 6%
+    ),
+    radial-gradient(
+      circle at 54% 46%,
+      rgba(232, 168, 62, 0.06),
+      transparent 31%
+    ),
+    linear-gradient(155deg, #17171a, #0c0e12);
+}
+
+.season-poster-fallback::before,
+.season-poster-fallback::after,
+.season-poster-orbit {
+  content: "";
+  position: absolute;
+  width: min(25vw, 17rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(232, 168, 62, 0.27);
+  border-radius: 50%;
+  transform: rotate(-16deg) scaleY(0.52);
+}
+
+.season-poster-fallback::before {
+  transform: rotate(43deg) scaleY(0.52);
+}
+
+.season-poster-fallback::after {
+  width: min(14vw, 9rem);
+  border-color: rgba(244, 241, 234, 0.08);
+  transform: rotate(8deg) scaleY(0.75);
+}
+
+.season-poster-orbit::after {
+  content: "";
+  position: absolute;
+  top: 48%;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 25px rgba(232, 168, 62, 0.7);
+}
+
+.season-poster-fallback > div {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 16rem;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.season-poster-fallback svg {
+  width: 22px;
+  height: 22px;
+  margin-bottom: var(--spacing-md);
+  stroke-width: 1.3;
+}
+
+.season-poster-fallback strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  font-weight: 540;
+}
+
+.season-poster-fallback small {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-poster-date {
+  position: absolute;
+  z-index: 3;
+  right: var(--spacing-xl);
+  bottom: var(--spacing-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(9, 10, 12, 0.68);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: #d6d2ca;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  backdrop-filter: blur(12px);
+}
+
+.season-poster-date svg {
+  width: 14px;
+  height: 14px;
+}
+
+.season-poster--archive {
+  min-height: 24rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(12rem, 0.85fr);
+  box-shadow: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-enter),
+    transform var(--duration-spatial) var(--ease-move);
+}
+
+.season-poster-anchor:hover .season-poster--archive {
+  border-color: #51432f;
+  transform: translateY(-2px);
+}
+
+.season-poster--archive .season-poster-copy {
+  padding: var(--spacing-3xl);
+}
+
+.season-poster--archive h2 {
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
+}
+
+.season-poster--home {
+  min-height: 19rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(13rem, 0.8fr);
+  box-shadow: none;
+}
+
+.season-poster--home .season-poster-copy {
+  padding: var(--spacing-2xl);
+}
+
+.season-poster--home .season-poster-context {
+  margin-bottom: 0;
+}
+
+.season-poster--home .season-poster-copy > .eyebrow {
+  margin-top: var(--spacing-2xl);
+}
+
+.season-poster--home h2 {
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
+}
+
+.season-poster--home .season-poster-direction {
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.season-poster--home blockquote,
+.season-poster--home .season-poster-traits {
+  display: none;
+}
+
+.season-poster--home .season-poster-link {
+  margin-top: auto;
+  padding-top: var(--spacing-xl);
+}
+
+@media (max-width: 820px) {
+  .season-poster {
+    min-height: 40rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(20rem, auto) minmax(17rem, 0.8fr);
+  }
+
+  .season-poster-copy {
+    padding: var(--spacing-3xl);
+  }
+
+  .season-poster-visual::before {
+    background:
+      linear-gradient(180deg, #101114 0%, transparent 25%),
+      linear-gradient(0deg, rgba(6, 7, 8, 0.42), transparent 35%);
+  }
+
+  .season-poster-fallback::before,
+  .season-poster-fallback::after,
+  .season-poster-orbit {
+    width: min(48vw, 17rem);
+  }
+
+  .season-poster--archive {
+    min-height: 34rem;
+    grid-template-rows: minmax(17rem, auto) minmax(14rem, 0.8fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .season-poster {
+    min-height: 36rem;
+    grid-template-rows: minmax(19rem, auto) minmax(15rem, 0.8fr);
+  }
+
+  .season-poster h2 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+  }
+
+  .season-poster-copy > .eyebrow {
+    margin-top: var(--spacing-3xl);
+  }
+
+  .season-poster blockquote {
+    padding-top: var(--spacing-3xl);
+  }
+
+  .season-poster--archive {
+    min-height: 30rem;
+    grid-template-rows: minmax(16rem, auto) minmax(12rem, 0.8fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-poster-anchor:hover .season-poster--archive {
+    transform: none;
+  }
+}

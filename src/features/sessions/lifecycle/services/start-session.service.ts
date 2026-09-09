@@ -1,6 +1,8 @@
+import { businessSessionValues } from "@/features/entrepreneurship/sessions/services/business-session.service";
 import { Prisma } from "@/generated/prisma/client";
 import type { StartSessionInput } from "@/features/sessions/schemas/session.schema";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { financeSessionValues } from "@/features/finance/sessions/services/finance-session.service";
 
 export async function startSession(userId: string, input: StartSessionInput) {
   const activity = await prisma.activityType.findFirst({
@@ -14,7 +16,13 @@ export async function startSession(userId: string, input: StartSessionInput) {
   });
 
   if (!activity) return { status: "activity-not-found" } as const;
+  const finance = await financeSessionValues(
+    userId,
+    activity.domain.slug === "finance" ? activity.financeActivityKind : null,
+    input,
+  );
 
+  const business = await businessSessionValues(userId, activity.domain.slug === "entrepreneurship", activity.slug, input);
   const isEngineering = activity.domain.slug === "engineering";
   if (isEngineering && !input.engineeringContext) {
     return { status: "engineering-context-required" } as const;
@@ -43,6 +51,8 @@ export async function startSession(userId: string, input: StartSessionInput) {
     const session = await prisma.session.create({
       data: {
         userId,
+        ...finance,
+        ...business,
         domainId: input.domainId,
         activityTypeId: input.activityTypeId,
         engineeringContext: isEngineering ? input.engineeringContext : null,

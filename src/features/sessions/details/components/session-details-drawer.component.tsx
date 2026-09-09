@@ -2,7 +2,9 @@
 
 import { DateTime } from "luxon";
 import { CalendarDays, Clock3, X } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useId, useRef, type AnimationEvent } from "react";
+import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
+import type { MotionPresenceState } from "@/components/ui/motion/hooks/use-presence.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import type { SessionListItem } from "@/features/sessions/types/session.types";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -10,12 +12,18 @@ import { formatDuration } from "@/lib/dates/utils/period.util";
 
 type SessionDetailsDrawerProps = {
   session: SessionListItem;
+  open: boolean;
+  presenceState: MotionPresenceState;
+  onPresenceAnimationEnd: (event: AnimationEvent<HTMLElement>) => void;
   onClose: () => void;
   children?: React.ReactNode;
 };
 
 export function SessionDetailsDrawer({
   session,
+  open,
+  presenceState,
+  onPresenceAnimationEnd,
   onClose,
   children,
 }: SessionDetailsDrawerProps) {
@@ -31,46 +39,19 @@ export function SessionDetailsDrawer({
   const notes = session.notes?.trim();
   const hasEvidence = Boolean(focus || outcome || notes || children);
 
-  useEffect(() => {
-    const previouslyFocused = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !drawerRef.current) return;
-
-      const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
-    };
-  }, [onClose]);
+  useModalLayer({
+    open,
+    containerRef: drawerRef,
+    initialFocusRef: closeButtonRef,
+    onClose,
+  });
 
   return (
     <div
       className="session-details-backdrop"
+      data-state={presenceState}
+      aria-hidden={!open}
+      onAnimationEnd={onPresenceAnimationEnd}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -89,7 +70,7 @@ export function SessionDetailsDrawer({
             <p className="eyebrow mb-md">Session details</p>
             <h2
               id={titleId}
-              className="text-2xl font-semibold tracking-[-0.04em]"
+              className="text-h3 font-semibold tracking-[-0.04em]"
             >
               {focus || session.activityType.name}
             </h2>
@@ -203,7 +184,7 @@ function DetailSection({
   return (
     <section data-testid={testId}>
       <h3 className="eyebrow mb-sm">{label}</h3>
-      <p className="text-text-secondary text-body leading-6 whitespace-pre-wrap">
+      <p className="text-text-secondary text-body whitespace-pre-wrap">
         {children}
       </p>
     </section>

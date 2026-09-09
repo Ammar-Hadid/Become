@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./utils/browser-test.util";
 
 async function createAccount(page: Page, name: string) {
   const email = `timer-${Date.now()}-${Math.random().toString(16).slice(2)}@example.com`;

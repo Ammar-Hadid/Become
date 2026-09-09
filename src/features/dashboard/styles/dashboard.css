@@ -11,7 +11,8 @@
 
 .dashboard-context,
 .active-session-meta {
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 
 .active-session-hero {
@@ -90,12 +91,14 @@
 
 .empty-focus-strip strong {
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 500;
 }
 
 .empty-focus-strip small {
   margin-top: 2px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -113,7 +116,8 @@
   cursor: pointer;
   border-radius: 999px;
   padding: 7px 13px;
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
   transition: var(--duration-fast) var(--ease-standard);
 }
@@ -125,9 +129,7 @@
 
 .timeframe-switcher button.active,
 .timeframe-switcher a.active {
-  background: var(--color-surface-elevated);
   color: var(--color-text-primary);
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-analytics {
@@ -135,15 +137,21 @@
   transition: opacity var(--duration-standard) var(--ease-standard);
 }
 
+.dashboard-analytics.is-pending {
+  opacity: 0.68;
+}
+
 .section-title {
-  font-size: var(--text-section);
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
   font-weight: 560;
   letter-spacing: -0.015em;
 }
 
 .section-description {
   margin-top: 4px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -186,7 +194,7 @@
   min-width: 0;
   height: 100%;
   border-radius: inherit;
-  transition: width 0.45s var(--ease-standard);
+  transition: width var(--duration-spatial) var(--ease-move);
 }
 
 .signal-cell {
@@ -205,21 +213,23 @@
 }
 
 .signal-value {
-  font-size: 1.65rem;
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
   font-weight: 580;
   letter-spacing: -0.045em;
 }
 
 .signal-copy {
   max-width: 260px;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
 }
 
 .signal-label {
   margin-top: 6px;
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -243,7 +253,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-secondary);
   transition: color var(--duration-fast) var(--ease-standard);
 }

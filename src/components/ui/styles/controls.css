@@ -16,10 +16,21 @@
   color: var(--color-text-primary);
 }
 
+.icon-button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-button:active {
+    transform: none;
+  }
+}
+
 .field-label {
   display: block;
   margin-bottom: 9px;
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -44,6 +55,7 @@
   min-height: var(--spacing-input-height-md);
   padding: 11px 13px;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 textarea.text-input--textarea-sm {
@@ -72,19 +84,23 @@ textarea.text-input--textarea-lg {
   display: flex;
   min-height: var(--spacing-input-height-md);
   align-items: center;
-  padding: 0 var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-xl) 0 var(--spacing-md);
 }
 
 .select-wrap select {
-  width: 100%;
+  min-width: 0;
+  flex: 1;
   cursor: pointer;
   appearance: none;
   background: transparent;
   outline: 0;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 .select-wrap svg {
+  flex: 0 0 auto;
   color: var(--color-text-muted);
 }
 
@@ -93,6 +109,7 @@ textarea.text-input--textarea-lg {
   border-radius: 9px;
   background: rgba(229, 103, 103, 0.08);
   padding: 10px 12px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: #ef9292;
 }

@@ -1,7 +1,9 @@
+import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { NextResponse } from "next/server";
 import { startSessionSchema } from "@/features/sessions/schemas/session.schema";
 import { startSession } from "@/features/sessions/lifecycle/services/start-session.service";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { FinanceError } from "@/features/finance/types/finance.types";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -18,7 +20,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await startSession(user.id, parsed.data);
+  const result = await startSession(user.id, parsed.data).catch((error) => {
+    if (error instanceof FinanceError || error instanceof BusinessError)
+      return { status: "invalid-finance" as const, error: error.message };
+    throw error;
+  });
+  if (result.status === "invalid-finance")
+    return NextResponse.json({ error: result.error }, { status: 400 });
   if (result.status === "activity-not-found") {
     return NextResponse.json({ error: "Activity not found." }, { status: 404 });
   }

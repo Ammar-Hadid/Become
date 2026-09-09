@@ -2,21 +2,32 @@
 
 import { DateTime } from "luxon";
 import { ChevronRight, Circle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getEngineeringContextLabel } from "@/features/engineering/constants/engineering.constants";
 import type { SessionListItem } from "@/features/sessions/types/session.types";
+import {
+  SESSION_RESOLUTION_STORAGE_KEY,
+  SESSION_RESOLUTION_WINDOW_MS,
+} from "@/features/sessions/constants/session-motion.constants";
 import { useSessionDetails } from "@/features/sessions/details/hooks/use-session-details.hook";
+import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { formatDuration } from "@/lib/dates/utils/period.util";
 
 export function SessionRow({
-  session,
+  session: serverSession,
   showDate = true,
 }: {
   session: SessionListItem;
   showDate?: boolean;
 }) {
   const { openSession } = useSessionDetails();
+  const { completedSessions } = useActiveTimer();
+  const session = serverSession.endedAt
+    ? serverSession
+    : (completedSessions[serverSession.id] ?? serverSession);
+  const [resolved, setResolved] = useState(false);
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
   const title = session.description || session.activityType.name;
   const engineeringMetadata =
@@ -71,6 +82,39 @@ export function SessionRow({
   );
 
   const id = `session-${session.id}`;
+
+  useEffect(() => {
+    if (!session.endedAt) return;
+    try {
+      const stored = window.sessionStorage.getItem(
+        SESSION_RESOLUTION_STORAGE_KEY,
+      );
+      if (!stored) return;
+      const resolution = JSON.parse(stored) as {
+        sessionId?: string;
+        confirmedAt?: number;
+      };
+      const expired =
+        typeof resolution.confirmedAt !== "number" ||
+        Date.now() - resolution.confirmedAt > SESSION_RESOLUTION_WINDOW_MS;
+      if (expired) {
+        window.sessionStorage.removeItem(SESSION_RESOLUTION_STORAGE_KEY);
+        return;
+      }
+      if (resolution.sessionId !== session.id) return;
+
+      window.sessionStorage.removeItem(SESSION_RESOLUTION_STORAGE_KEY);
+      const frame = window.requestAnimationFrame(() => setResolved(true));
+      return () => window.cancelAnimationFrame(frame);
+    } catch {
+      try {
+        window.sessionStorage.removeItem(SESSION_RESOLUTION_STORAGE_KEY);
+      } catch {
+        // Motion is progressive enhancement; storage availability is optional.
+      }
+    }
+  }, [session.endedAt, session.id]);
+
   if (session.endedAt) {
     return (
       <button
@@ -79,6 +123,7 @@ export function SessionRow({
         className="session-row session-row-link"
         onClick={() => openSession(session)}
         aria-label={`View details for ${title}`}
+        data-motion-arrival={resolved ? "resolved" : undefined}
         data-testid="session-row-trigger"
       >
         {content}

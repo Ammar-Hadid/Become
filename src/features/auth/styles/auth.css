@@ -16,8 +16,8 @@
 }
 
 .auth-story h1 {
-  font-size: clamp(3rem, 5.5vw, 5.8rem);
-  line-height: 0.98;
+  font-size: var(--text-hero);
+  line-height: var(--text-hero--line-height);
   font-weight: 540;
   letter-spacing: -0.07em;
 }
@@ -34,7 +34,7 @@
   align-items: flex-start;
   gap: 14px;
   font-size: var(--text-body);
-  line-height: 1.6;
+  line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
 }
 
@@ -92,6 +92,7 @@
   cursor: pointer;
   padding: 11px;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
 }
 
@@ -126,7 +127,8 @@
 }
 
 .auth-supporting-text {
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 
 @media (min-width: 768px) {

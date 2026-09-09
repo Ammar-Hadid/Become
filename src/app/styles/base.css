@@ -12,6 +12,8 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -20,6 +22,10 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+select:not([multiple]) {
+  min-height: var(--spacing-input-height-md);
 }
 
 button {
@@ -39,5 +45,12 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
   }
 }

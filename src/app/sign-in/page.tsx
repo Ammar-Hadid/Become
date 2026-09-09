@@ -10,7 +10,7 @@ export default async function SignInPage() {
     <main className="auth-page">
       <section className="auth-story">
         <BrandMark />
-        <div className="relative z-10 max-w-copy">
+        <div className="max-w-copy relative z-10">
           <p className="eyebrow text-primary mb-2xl">
             Your personal operating system
           </p>
@@ -19,7 +19,7 @@ export default async function SignInPage() {
             <br />
             <span>visible.</span>
           </h1>
-          <p className="text-text-secondary text-section mt-7 max-w-copy leading-relaxed">
+          <p className="text-text-secondary text-h5 max-w-copy mt-7">
             Connect intention to action, time to evidence, and daily work to the
             person you are becoming.
           </p>
@@ -34,12 +34,12 @@ export default async function SignInPage() {
         <div className="auth-grid" aria-hidden="true" />
       </section>
       <section className="auth-panel">
-        <div className="w-full max-w-copy">
+        <div className="max-w-copy w-full">
           <div className="mb-4xl lg:hidden">
             <BrandMark />
           </div>
           <p className="eyebrow mb-md">Welcome</p>
-          <h2 className="text-3xl font-semibold tracking-[-0.045em]">
+          <h2 className="text-h2 font-semibold tracking-[-0.045em]">
             Continue your record.
           </h2>
           <p className="text-text-secondary mt-md text-body">

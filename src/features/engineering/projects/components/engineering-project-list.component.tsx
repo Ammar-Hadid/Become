@@ -1,5 +1,6 @@
 import { ArrowRight, FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { EngineeringTechnologyStack } from "@/features/engineering/technologies/components/engineering-technology-stack.component";
 import {
   getEngineeringContextLabel,
@@ -27,9 +28,21 @@ export function EngineeringProjectList({
             <Link
               key={value}
               href={`/engineering/projects?scope=${value}`}
-              className={cn(scope === value && "active")}
+              className={cn(
+                "motion-selection-control",
+                scope === value && "active",
+              )}
             >
-              {label}
+              {scope === value && (
+                <ViewTransition
+                  name="engineering-project-filter-indicator"
+                  share="motion-guide"
+                  default="none"
+                >
+                  <span className="motion-selection-guide" aria-hidden />
+                </ViewTransition>
+              )}
+              <span>{label}</span>
             </Link>
           ))}
         </div>
@@ -55,7 +68,13 @@ export function EngineeringProjectList({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="engineering-record-heading">
-                  <strong>{project.name}</strong>
+                  <ViewTransition
+                    name={`engineering-project-${project.id}`}
+                    share="motion-carry"
+                    default="none"
+                  >
+                    <strong>{project.name}</strong>
+                  </ViewTransition>
                   <span>
                     {getEngineeringProjectStatusLabel(project.status)}
                   </span>

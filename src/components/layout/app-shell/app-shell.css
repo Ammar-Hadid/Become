@@ -50,7 +50,8 @@
 
 .nav-label {
   margin: 0 0 var(--spacing-sm) var(--spacing-md);
-  font-size: 0.7rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -62,13 +63,15 @@
 }
 
 .nav-link {
+  position: relative;
   display: flex;
   height: 40px;
   align-items: center;
   gap: 11px;
   border-radius: 9px;
   padding: 0 var(--spacing-md);
-  font-size: 0.9rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
   transition: var(--duration-fast) var(--ease-standard);
 }
@@ -87,7 +90,16 @@
 .nav-link.active {
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);
-  box-shadow: inset 2px 0 0 var(--color-primary);
+}
+
+.nav-link-indicator {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 2px;
+  border-radius: 99px;
+  background: var(--color-primary);
 }
 
 .profile-row {
@@ -120,64 +132,8 @@
 }
 
 .profile-email {
-  font-size: var(--text-meta);
-}
-
-.profile-menu {
-  position: absolute;
-  z-index: 40;
-  right: 0;
-  bottom: calc(100% + var(--spacing-sm));
-  left: 0;
-  display: grid;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface-elevated);
-  padding: var(--spacing-xs);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.24);
-  transform-origin: bottom center;
-  animation: profile-menu-in var(--duration-fast) var(--ease-standard);
-}
-
-.profile-menu-action {
-  display: flex;
-  width: 100%;
-  min-height: var(--spacing-control-height);
-  align-items: center;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-  border-radius: calc(var(--radius-panel) - var(--spacing-xs));
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--text-body);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  transition: var(--duration-fast) var(--ease-standard);
-}
-
-.profile-menu-action:hover,
-.profile-menu-action:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary);
-  outline: none;
-}
-
-.profile-menu-action svg {
-  color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
-}
-
-.profile-menu-action:hover svg,
-.profile-menu-action:focus-visible svg {
-  color: var(--color-primary);
-}
-
-@keyframes profile-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.98);
-  }
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 
 .avatar {
@@ -189,7 +145,8 @@
   border: 1px solid var(--color-border);
   border-radius: 50%;
   background: var(--color-surface-elevated);
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-primary);
 }
 
@@ -217,6 +174,27 @@
   box-shadow: 30px 0 80px black;
 }
 
+.mobile-navigation-layer[data-state="open"] {
+  animation: mobile-navigation-backdrop-in var(--duration-fast)
+    var(--ease-enter);
+}
+
+.mobile-navigation-layer[data-state="open"] .mobile-drawer {
+  animation: mobile-navigation-drawer-in var(--duration-spatial)
+    var(--ease-enter);
+}
+
+.mobile-navigation-layer[data-state="closed"] {
+  pointer-events: none;
+  animation: mobile-navigation-backdrop-out var(--duration-fast)
+    var(--ease-exit) both;
+}
+
+.mobile-navigation-layer[data-state="closed"] .mobile-drawer {
+  animation: mobile-navigation-drawer-out var(--duration-fast) var(--ease-exit)
+    both;
+}
+
 .mobile-bottom-nav {
   position: fixed;
   z-index: 35;
@@ -235,11 +213,13 @@
 }
 
 .mobile-bottom-nav > a {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  font-size: 0.7rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -252,9 +232,42 @@
   color: var(--color-text-primary);
 }
 
+.mobile-bottom-nav-indicator {
+  position: absolute;
+  bottom: -7px;
+  width: 16px;
+  height: 2px;
+  border-radius: 99px;
+  background: var(--color-primary);
+}
+
 .mobile-timer-slot {
   margin-top: -24px;
   justify-self: center;
+}
+
+@keyframes mobile-navigation-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mobile-navigation-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mobile-navigation-drawer-in {
+  from {
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes mobile-navigation-drawer-out {
+  to {
+    transform: translateX(-16px);
+  }
 }
 
 @media (min-width: 1024px) {

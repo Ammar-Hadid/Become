@@ -1,0 +1,656 @@
+"use client";
+
+import {
+  AlertCircle,
+  ChevronDown,
+  Eye,
+  LoaderCircle,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
+import { Button } from "@/components/ui/buttons/button.component";
+import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { CriterionPreview } from "@/features/direction/criteria/components/criterion-preview.component";
+import { searchDirectionOptions } from "@/features/direction/options/utils/direction-option-client.util";
+import { getMetricCatalog } from "@/features/direction/preview/utils/direction-preview-client.util";
+import type {
+  CriterionDraft,
+  CriterionEvaluation,
+  CriterionScopes,
+  MetricCapability,
+  OwnedOption,
+} from "@/features/direction/types/direction.types";
+
+const evidenceTypes = [
+  ["FEATURE_COMPLETED", "Feature completed"],
+  ["BUG_SOLVED", "Bug solved"],
+  ["CONCEPT_LEARNED", "Concept learned"],
+  ["DEPLOYMENT", "Deployment"],
+  ["ARCHITECTURE_DECISION", "Architecture decision"],
+  ["TECHNICAL_DISCOVERY", "Technical discovery"],
+] as const;
+
+function newCriterion(metric: CriterionDraft["metric"]): CriterionDraft {
+  return {
+    key: crypto.randomUUID(),
+    metric,
+    label: "",
+    target: "",
+  };
+}
+
+function ScopePicker({
+  criterion,
+  field,
+  label,
+  entityName,
+  optionKind,
+  initial,
+  onChange,
+  optional = true,
+  scope,
+}: {
+  criterion: CriterionDraft;
+  field:
+    | "workSourceId"
+    | "companyId"
+    | "offerRevisionId"
+    | "nicheId"
+    | "projectId"
+    | "domainId"
+    | "activityTypeId"
+    | "savingsGoalId";
+  label: string;
+  entityName: string;
+  optionKind:
+    | "workSource"
+    | "company"
+    | "offerRevision"
+    | "niche"
+    | "project"
+    | "domain"
+    | "activity"
+    | "savingsGoal";
+  initial?: OwnedOption;
+  onChange: (patch: Partial<CriterionDraft>) => void;
+  optional?: boolean;
+  scope?: { companyId?: string; domainId?: string };
+}) {
+  const selectedId = criterion[field];
+  const initialOption = initial?.id === selectedId ? initial : undefined;
+  return (
+    <ReusableEntityCombobox
+      key={`${criterion.key}-${field}-${scope?.companyId ?? ""}-${scope?.domainId ?? ""}`}
+      label={label}
+      entityName={entityName}
+      idFieldName={`criteria.${criterion.key}.${field}`}
+      queryFieldName={`criteria.${criterion.key}.${field}Search`}
+      options={initialOption ? [initialOption] : []}
+      initialId={selectedId}
+      initialName={initialOption?.name}
+      optional={optional}
+      required={!optional}
+      searchAction={(query) => searchDirectionOptions(optionKind, query, scope)}
+      onSelectedOptionChange={(option) =>
+        onChange({ [field]: option?.id || undefined })
+      }
+      placeholder={`Search ${entityName.toLowerCase()}…`}
+    />
+  );
+}
+
+export function CriterionBuilder({
+  criteria,
+  criterionMode,
+  scopeOptions = {},
+  preview,
+  previewError,
+  previewPending,
+  onChange,
+  onModeChange,
+  onPreview,
+  context = "GOAL",
+}: {
+  criteria: CriterionDraft[];
+  criterionMode: "ALL" | "ANY";
+  scopeOptions?: CriterionScopes;
+  preview: CriterionEvaluation[];
+  previewError: string | null;
+  previewPending: boolean;
+  onChange: (criteria: CriterionDraft[]) => void;
+  onModeChange: (mode: "ALL" | "ANY") => void;
+  onPreview: () => void;
+  context?: "GOAL" | "EXPERIMENT";
+}) {
+  const [catalog, setCatalog] = useState<MetricCapability[]>([]);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getMetricCatalog()
+      .then((items) => {
+        if (!cancelled) {
+          setCatalog(items);
+          setCatalogError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setCatalogError(
+            error instanceof Error
+              ? error.message
+              : "Evidence definitions could not be loaded.",
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function patchCriterion(key: string, patch: Partial<CriterionDraft>) {
+    onChange(
+      criteria.map((criterion) =>
+        criterion.key === key ? { ...criterion, ...patch } : criterion,
+      ),
+    );
+  }
+
+  return (
+    <section
+      className="direction-criteria-builder"
+      aria-labelledby="criteria-builder-title"
+    >
+      <header className="direction-criteria-header">
+        <div>
+          <p className="eyebrow">Optional evidence</p>
+          <h2 id="criteria-builder-title">
+            Define what the record can establish.
+          </h2>
+          <p>
+            Every definition names its source, window, and exclusions. Leave
+            this empty when the outcome needs your judgment.
+          </p>
+        </div>
+        {criteria.length > 1 && (
+          <fieldset className="direction-mode-switch">
+            <legend className="sr-only">How criteria combine</legend>
+            <button
+              type="button"
+              aria-pressed={criterionMode === "ALL"}
+              onClick={() => onModeChange("ALL")}
+            >
+              All required
+            </button>
+            <button
+              type="button"
+              aria-pressed={criterionMode === "ANY"}
+              onClick={() => onModeChange("ANY")}
+            >
+              Any one
+            </button>
+          </fieldset>
+        )}
+      </header>
+
+      {catalogError && (
+        <p className="season-form-error" role="alert">
+          <AlertCircle aria-hidden="true" /> {catalogError}
+        </p>
+      )}
+
+      <div className="direction-criterion-editors">
+        {criteria.map((criterion, index) => {
+          const capability = catalog.find(
+            ({ key }) => key === criterion.metric,
+          );
+          const resolvedScopes = scopeOptions[criterion.key] ?? {};
+          const evaluation = preview.find(({ key }) => key === criterion.key);
+          const monetary =
+            capability?.monetary ??
+            [
+              "WORK_SOURCE_INCOME",
+              "BUSINESS_RECEIPTS",
+              "NEW_RECURRING_COMPANY",
+            ].includes(criterion.metric);
+          const needsTarget = !["MANUAL", "SAVINGS_GOAL"].includes(
+            criterion.metric,
+          );
+          const patch = (value: Partial<CriterionDraft>) =>
+            patchCriterion(criterion.key, value);
+          return (
+            <details
+              className="direction-criterion-editor"
+              key={criterion.key}
+              open
+            >
+              <summary>
+                <span>
+                  <em>{String(index + 1).padStart(2, "0")}</em>
+                  <strong>
+                    {criterion.label ||
+                      capability?.name ||
+                      "Evidence definition"}
+                  </strong>
+                </span>
+                <span>
+                  {capability?.unit ?? "definition"}
+                  <ChevronDown aria-hidden="true" />
+                </span>
+              </summary>
+              <div className="direction-criterion-body">
+                <div className="direction-form-grid">
+                  <label>
+                    <span className="field-label">Evidence type</span>
+                    <span className="select-wrap">
+                      <select
+                        value={criterion.metric}
+                        onChange={(event) =>
+                          onChange(
+                            criteria.map((item) =>
+                              item.key === criterion.key
+                                ? {
+                                    ...newCriterion(
+                                      event.target
+                                        .value as CriterionDraft["metric"],
+                                    ),
+                                    key: item.key,
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                      >
+                        {catalog.map((item) => (
+                          <option key={item.key} value={item.key}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </span>
+                  </label>
+                  <label>
+                    <span className="field-label">Definition label</span>
+                    <input
+                      className="text-input"
+                      value={criterion.label}
+                      maxLength={200}
+                      onChange={(event) => patch({ label: event.target.value })}
+                      placeholder={
+                        capability?.name ?? "What this evidence means"
+                      }
+                    />
+                  </label>
+                  {needsTarget && (
+                    <label>
+                      <span className="field-label">
+                        {monetary
+                          ? "Target amount"
+                          : `Target ${capability?.unit ?? "value"}`}
+                      </span>
+                      <input
+                        className="text-input"
+                        inputMode={monetary ? "decimal" : "numeric"}
+                        value={criterion.target}
+                        onChange={(event) =>
+                          patch({ target: event.target.value })
+                        }
+                        placeholder={monetary ? "150.00" : "1"}
+                      />
+                    </label>
+                  )}
+                  {monetary && (
+                    <CurrencySelect value={criterion.currency ?? ""} onValueChange={(currency) => patch({ currency })} required />
+                  )}
+                  <label>
+                    <span className="field-label">
+                      Evidence starts <span>— defaults to goal</span>
+                    </span>
+                    <input
+                      className="text-input"
+                      type="date"
+                      value={criterion.startOn ?? ""}
+                      onChange={(event) =>
+                        patch({ startOn: event.target.value || undefined })
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span className="field-label">
+                      Evidence ends <span>— defaults to goal</span>
+                    </span>
+                    <input
+                      className="text-input"
+                      type="date"
+                      value={criterion.endOn ?? ""}
+                      onChange={(event) =>
+                        patch({ endOn: event.target.value || undefined })
+                      }
+                    />
+                  </label>
+
+                  {criterion.metric === "WORK_SOURCE_INCOME" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="workSourceId"
+                      label="Exact WorkSource"
+                      entityName="WorkSource"
+                      optionKind="workSource"
+                      initial={resolvedScopes.workSourceId}
+                      optional={false}
+                      onChange={patch}
+                    />
+                  )}
+                  {["BUSINESS_RECEIPTS", "NEW_RECURRING_COMPANY"].includes(
+                    criterion.metric,
+                  ) && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="companyId"
+                      label="Company scope"
+                      entityName="company"
+                      optionKind="company"
+                      initial={resolvedScopes.companyId}
+                      onChange={(value) =>
+                        patch({
+                          ...value,
+                          offerRevisionId:
+                            value.companyId === criterion.companyId
+                              ? criterion.offerRevisionId
+                              : undefined,
+                          baselineAssertions:
+                            value.companyId === criterion.companyId
+                              ? criterion.baselineAssertions
+                              : undefined,
+                        })
+                      }
+                    />
+                  )}
+                  {["BUSINESS_RECEIPTS", "NEW_RECURRING_COMPANY"].includes(
+                    criterion.metric,
+                  ) && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="offerRevisionId"
+                      label="Offer revision"
+                      entityName="offer revision"
+                      optionKind="offerRevision"
+                      initial={resolvedScopes.offerRevisionId}
+                      scope={{ companyId: criterion.companyId }}
+                      onChange={patch}
+                    />
+                  )}
+                  {[
+                    "CONVERSATIONS",
+                    "CONVERSATION_COMPANIES",
+                    "SESSION_TIME",
+                  ].includes(criterion.metric) && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="nicheId"
+                      label="Exploration scope"
+                      entityName="exploration"
+                      optionKind="niche"
+                      initial={resolvedScopes.nicheId}
+                      onChange={patch}
+                    />
+                  )}
+                  {[
+                    "CONVERSATIONS",
+                    "CONVERSATION_COMPANIES",
+                    "SESSION_TIME",
+                  ].includes(criterion.metric) && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="companyId"
+                      label="Company scope"
+                      entityName="company"
+                      optionKind="company"
+                      initial={resolvedScopes.companyId}
+                      onChange={patch}
+                    />
+                  )}
+                  {context === "EXPERIMENT" &&
+                    ["CONVERSATIONS", "CONVERSATION_COMPANIES"].includes(
+                      criterion.metric,
+                    ) && (
+                      <label className="direction-outreach-only direction-field-wide">
+                        <input
+                          type="checkbox"
+                          checked={criterion.selectedOutreachOnly ?? false}
+                          onChange={(event) =>
+                            patch({
+                              selectedOutreachOnly: event.target.checked,
+                            })
+                          }
+                        />
+                        <span>
+                          <strong>
+                            Only conversations linked to this trial’s selected
+                            outreach
+                          </strong>
+                          <small>
+                            Same company, exploration, and evidence window.
+                            Choose at least one outreach record before this
+                            definition can be evaluated.
+                          </small>
+                        </span>
+                      </label>
+                    )}
+                  {["SESSION_TIME", "ENGINEERING_EVIDENCE"].includes(
+                    criterion.metric,
+                  ) && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="projectId"
+                      label="Project scope"
+                      entityName="project"
+                      optionKind="project"
+                      initial={resolvedScopes.projectId}
+                      onChange={patch}
+                    />
+                  )}
+                  {criterion.metric === "SESSION_TIME" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="domainId"
+                      label="Domain scope"
+                      entityName="domain"
+                      optionKind="domain"
+                      initial={resolvedScopes.domainId}
+                      onChange={(value) =>
+                        patch({
+                          ...value,
+                          activityTypeId:
+                            value.domainId === criterion.domainId
+                              ? criterion.activityTypeId
+                              : undefined,
+                        })
+                      }
+                    />
+                  )}
+                  {criterion.metric === "SESSION_TIME" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="activityTypeId"
+                      label="Activity scope"
+                      entityName="activity"
+                      optionKind="activity"
+                      initial={resolvedScopes.activityTypeId}
+                      scope={{ domainId: criterion.domainId }}
+                      onChange={patch}
+                    />
+                  )}
+                  {criterion.metric === "ENGINEERING_EVIDENCE" && (
+                    <label>
+                      <span className="field-label">
+                        Output kind <span>— optional</span>
+                      </span>
+                      <span className="select-wrap">
+                        <select
+                          value={criterion.evidenceType ?? ""}
+                          onChange={(event) =>
+                            patch({
+                              evidenceType: event.target.value || undefined,
+                            })
+                          }
+                        >
+                          <option value="">Every output kind</option>
+                          {evidenceTypes.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </span>
+                    </label>
+                  )}
+                  {criterion.metric === "SAVINGS_GOAL" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="savingsGoalId"
+                      label="Finance savings goal"
+                      entityName="savings goal"
+                      optionKind="savingsGoal"
+                      initial={resolvedScopes.savingsGoalId}
+                      optional={false}
+                      onChange={patch}
+                    />
+                  )}
+
+                  {criterion.metric === "NEW_RECURRING_COMPANY" && (
+                    <>
+                      <label>
+                        <span className="field-label">
+                          Minimum received{" "}
+                          <span>— optional, separate from quote</span>
+                        </span>
+                        <input
+                          className="text-input"
+                          inputMode="decimal"
+                          value={criterion.minimumReceived ?? ""}
+                          onChange={(event) =>
+                            patch({
+                              minimumReceived: event.target.value || undefined,
+                            })
+                          }
+                          placeholder="A separate receipt threshold"
+                        />
+                      </label>
+                      {criterion.companyId && (
+                        <div className="direction-baseline direction-field-wide">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(
+                                criterion.baselineAssertions?.some(
+                                  ({ companyId, noPriorPaidRelationship }) =>
+                                    companyId === criterion.companyId &&
+                                    noPriorPaidRelationship,
+                                ),
+                              )}
+                              onChange={(event) =>
+                                patch({
+                                  baselineAssertions: event.target.checked
+                                    ? [
+                                        {
+                                          companyId: criterion.companyId!,
+                                          noPriorPaidRelationship: true,
+                                          note:
+                                            criterion.baselineAssertions?.[0]
+                                              ?.note ?? "",
+                                        },
+                                      ]
+                                    : [],
+                                })
+                              }
+                            />
+                            <span>
+                              I reviewed the history and found no paid
+                              relationship before this baseline.
+                            </span>
+                          </label>
+                          {criterion.baselineAssertions?.[0]
+                            ?.noPriorPaidRelationship && (
+                            <textarea
+                              className="text-input text-input--textarea-sm"
+                              value={criterion.baselineAssertions[0].note}
+                              onChange={(event) =>
+                                patch({
+                                  baselineAssertions: [
+                                    {
+                                      ...criterion.baselineAssertions![0],
+                                      note: event.target.value,
+                                    },
+                                  ],
+                                })
+                              }
+                              placeholder="What history did you review?"
+                            />
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {capability && (
+                  <aside className="direction-capability-note">
+                    <strong>{capability.description}</strong>
+                    {capability.caveat && <p>{capability.caveat}</p>}
+                  </aside>
+                )}
+
+                {evaluation && <CriterionPreview criterion={evaluation} />}
+                <button
+                  className="direction-remove-criterion"
+                  type="button"
+                  onClick={() =>
+                    onChange(
+                      criteria.filter(({ key }) => key !== criterion.key),
+                    )
+                  }
+                >
+                  <Trash2 aria-hidden="true" /> Remove this definition
+                </button>
+              </div>
+            </details>
+          );
+        })}
+      </div>
+
+      <div className="direction-criteria-actions">
+        <button
+          type="button"
+          disabled={!catalog.length || criteria.length >= 8}
+          onClick={() =>
+            onChange([...criteria, newCriterion(catalog[0]?.key ?? "MANUAL")])
+          }
+        >
+          <Plus aria-hidden="true" /> Add evidence definition
+        </button>
+        {criteria.length > 0 && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={previewPending}
+            onClick={onPreview}
+          >
+            {previewPending ? (
+              <LoaderCircle className="direction-spin" aria-hidden="true" />
+            ) : (
+              <Eye aria-hidden="true" />
+            )}{" "}
+            {previewPending ? "Reading evidence…" : "Preview current evidence"}
+          </Button>
+        )}
+      </div>
+      {previewError && (
+        <p className="season-form-error" role="alert">
+          {previewError}
+        </p>
+      )}
+    </section>
+  );
+}

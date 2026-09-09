@@ -1,6 +1,15 @@
 import type { Prisma } from "@/generated/prisma/client";
+import type {
+  FinanceActivityKind,
+  FinanceCompensationType,
+} from "@/generated/prisma/enums";
 
-export type ActivityOption = { id: string; name: string; slug: string };
+export type ActivityOption = {
+  id: string;
+  name: string;
+  slug: string;
+  financeActivityKind?: FinanceActivityKind | null;
+};
 
 export type DomainOption = {
   id: string;
@@ -12,6 +21,16 @@ export type DomainOption = {
 };
 
 export type SessionListItem = {
+  businessCompanyId?: string | null;
+  businessNicheId?: string | null;
+  businessCompanySnapshot?: string | null;
+  businessNicheSnapshot?: string | null;
+  entrepreneurshipActivityKind?: string | null;
+  financeActivityKind?: FinanceActivityKind | null;
+  financeCompensationType?: FinanceCompensationType | null;
+  workSourceId?: string | null;
+  incomeOpportunityId?: string | null;
+  paymentAttributionCompleteAt?: string | null;
   id: string;
   startedAt: string;
   endedAt: string | null;
@@ -45,6 +64,8 @@ export type ActiveSessionData = SessionListItem;
 export type ActiveTimerState = {
   activeSession: ActiveSessionData | null;
   elapsedSeconds: number;
+  completedSessions: Readonly<Record<string, SessionDetailItem>>;
+  confirmCompletion: (session: SessionDetailItem) => void;
 };
 
 export type SessionWithRelations = Prisma.SessionGetPayload<{

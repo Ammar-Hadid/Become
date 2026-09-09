@@ -19,15 +19,20 @@ export function TimeBarChart({
             dataKey="label"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#666A73", fontSize: 11 }}
+            tick={{
+              fill: "#666A73",
+              fontSize: "var(--text-body-sm)",
+              lineHeight: "var(--text-body-sm--line-height)",
+            }}
             dy={10}
           />
           <Tooltip
             cursor={{ fill: "rgba(255,255,255,0.025)" }}
+            isAnimationActive={false}
             content={({ active, payload, label }) =>
               active && payload?.[0] ? (
                 <div className="chart-tooltip">
-                  <p className="text-text-muted text-label tracking-[0.15em] uppercase">
+                  <p className="text-text-muted text-body-sm tracking-[0.15em] uppercase">
                     {label}
                   </p>
                   <p className="mt-xs text-body font-semibold">
@@ -42,7 +47,7 @@ export function TimeBarChart({
             fill="#E8A83E"
             radius={[4, 4, 1, 1]}
             maxBarSize={34}
-            animationDuration={500}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>
