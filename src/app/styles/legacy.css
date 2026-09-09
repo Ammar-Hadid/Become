@@ -48,7 +48,8 @@ button {
   font-variant-numeric: tabular-nums;
 }
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -101,7 +102,8 @@ button {
 }
 .nav-label {
   margin: 0 0 8px 12px;
-  font-size: 0.7rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -117,7 +119,8 @@ button {
   gap: 11px;
   border-radius: 9px;
   padding: 0 12px;
-  font-size: 0.9rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-secondary);
   transition: 150ms ease;
 }
@@ -157,7 +160,8 @@ button {
 .active-session-meta,
 .dashboard-context,
 .auth-supporting-text {
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 .profile-sign-out {
   display: grid;
@@ -185,7 +189,8 @@ button {
   border: 1px solid var(--border);
   border-radius: 50%;
   background: var(--surface-elevated);
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--primary);
 }
 .mobile-header {
@@ -231,7 +236,8 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  font-size: 0.7rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-muted);
 }
 .mobile-bottom-nav > a svg {
@@ -258,14 +264,14 @@ button {
   gap: 28px;
 }
 .page-header h1 {
-  font-size: clamp(2rem, 4vw, 3.35rem);
-  line-height: 1.02;
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
   font-weight: 570;
   letter-spacing: -0.055em;
 }
 .page-description {
-  font-size: 0.9375rem;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 .season-pill {
   display: inline-flex;
@@ -357,12 +363,14 @@ button {
   display: block;
 }
 .empty-focus-strip strong {
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 500;
 }
 .empty-focus-strip small {
   margin-top: 2px;
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-muted);
 }
 .timeframe-switcher {
@@ -377,7 +385,8 @@ button {
   cursor: pointer;
   border-radius: 999px;
   padding: 7px 13px;
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-muted);
   transition: 0.15s ease;
 }
@@ -394,13 +403,15 @@ button {
   transition: opacity 0.2s ease;
 }
 .section-title {
-  font-size: 1rem;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
   font-weight: 560;
   letter-spacing: -0.015em;
 }
 .section-description {
   margin-top: 4px;
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-muted);
 }
 .chart-tooltip {
@@ -454,19 +465,21 @@ button {
   stroke-width: 1.6;
 }
 .signal-value {
-  font-size: 1.65rem;
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
   font-weight: 580;
   letter-spacing: -0.045em;
 }
 .signal-copy {
   max-width: 260px;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-secondary);
 }
 .signal-label {
   margin-top: 6px;
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-muted);
 }
 .signal-line {
@@ -487,7 +500,8 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-secondary);
   transition: color 0.15s ease;
 }
@@ -524,7 +538,8 @@ button {
   box-shadow: inset 2px 0 0 var(--primary);
 }
 .session-metadata {
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 .session-domain-icon {
   display: grid;
@@ -543,7 +558,8 @@ button {
   border-radius: 999px;
   background: var(--primary-subtle);
   padding: 3px 7px;
-  font-size: 0.675rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--primary);
@@ -556,7 +572,8 @@ button {
   justify-content: center;
   gap: 9px;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-muted);
 }
 .empty-state button {
@@ -573,7 +590,8 @@ button {
   border-radius: 999px;
   background: var(--surface);
   padding: 7px 11px;
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--text-secondary);
 }
 
@@ -635,7 +653,8 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -646,8 +665,8 @@ button {
   height: 14px;
 }
 .session-details-timing dd {
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-secondary);
 }
 .session-details-evidence {
@@ -699,7 +718,8 @@ button {
 .field-label {
   display: block;
   margin-bottom: 9px;
-  font-size: 0.75rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -720,7 +740,8 @@ button {
   border-radius: 11px;
   background: #14161b;
   padding: 0 13px;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-secondary);
   transition: 0.15s ease;
 }
@@ -749,7 +770,8 @@ button {
   display: block;
   min-height: 45px;
   padding: 11px 13px;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 .text-input::placeholder {
   color: #4f535c;
@@ -771,7 +793,8 @@ button {
   appearance: none;
   background: transparent;
   outline: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 .select-wrap svg {
   color: var(--text-muted);
@@ -789,7 +812,8 @@ button {
   border-radius: 9px;
   background: rgba(229, 103, 103, 0.08);
   padding: 10px 12px;
-  font-size: 0.8rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: #ef9292;
 }
 
@@ -809,8 +833,8 @@ button {
   padding: 42px 54px;
 }
 .auth-story h1 {
-  font-size: clamp(3rem, 5.5vw, 5.8rem);
-  line-height: 0.98;
+  font-size: var(--text-hero);
+  line-height: var(--text-hero--line-height);
   font-weight: 540;
   letter-spacing: -0.07em;
 }
@@ -824,8 +848,8 @@ button {
   max-width: 400px;
   align-items: flex-start;
   gap: 14px;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-muted);
 }
 .auth-quote svg {
@@ -875,7 +899,8 @@ button {
   position: relative;
   cursor: pointer;
   padding: 11px;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--text-muted);
 }
 .auth-mode-switch button.active {

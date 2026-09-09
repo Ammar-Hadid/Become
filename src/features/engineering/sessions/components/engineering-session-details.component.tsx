@@ -36,11 +36,11 @@ export function EngineeringSessionDetails({
             {session.engineeringEvidence.map((evidence) => (
               <article key={evidence.id}>
                 <p className="text-body font-medium">{evidence.title}</p>
-                <p className="text-text-muted mt-xs text-meta">
+                <p className="text-text-muted mt-xs text-body-sm">
                   {getEngineeringEvidenceTypeLabel(evidence.type)}
                 </p>
                 {evidence.details && (
-                  <p className="text-text-secondary mt-sm text-body leading-6 whitespace-pre-wrap">
+                  <p className="text-text-secondary mt-sm text-body whitespace-pre-wrap">
                     {evidence.details}
                   </p>
                 )}

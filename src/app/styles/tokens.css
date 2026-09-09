@@ -28,18 +28,24 @@
 
   /* ===== Typography ===== */
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --text-label: 0.75rem;
-  --text-label--line-height: 1rem;
-  --text-meta: 0.8rem;
-  --text-meta--line-height: 1.25rem;
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.25rem;
-  --text-body-lg: 0.9375rem;
+  --text-hero: clamp(3rem, 5.5vw, 5.8rem);
+  --text-hero--line-height: 0.98;
+  --text-h1: clamp(2rem, 4vw, 3.35rem);
+  --text-h1--line-height: 1.02;
+  --text-h2: clamp(1.5rem, 2.5vw, 2.1rem);
+  --text-h2--line-height: 1.2;
+  --text-h3: clamp(1.35rem, 2vw, 1.65rem);
+  --text-h3--line-height: 1.2;
+  --text-h4: clamp(1.15rem, 1.5vw, 1.35rem);
+  --text-h4--line-height: 1.25;
+  --text-h5: clamp(1rem, 1.2vw, 1.15rem);
+  --text-h5--line-height: 1.35;
+  --text-body-sm: clamp(0.75rem, 0.9vw, 0.8rem);
+  --text-body-sm--line-height: 1.4;
+  --text-body: clamp(0.875rem, 1vw, 0.9375rem);
+  --text-body--line-height: 1.5;
+  --text-body-lg: clamp(0.9375rem, 1.5vw, 1.125rem);
   --text-body-lg--line-height: 1.55;
-  --text-section: 1rem;
-  --text-section--line-height: 1.5;
-  --text-page-title: clamp(2rem, 4vw, 3.35rem);
-  --text-page-title--line-height: 1.02;
 
   /* ===== Spacing ===== */
   --spacing-2xs: 0.125rem;

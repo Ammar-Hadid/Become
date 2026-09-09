@@ -19,7 +19,11 @@ export function TimeBarChart({
             dataKey="label"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#666A73", fontSize: 11 }}
+            tick={{
+              fill: "#666A73",
+              fontSize: "var(--text-body-sm)",
+              lineHeight: "var(--text-body-sm--line-height)",
+            }}
             dy={10}
           />
           <Tooltip
@@ -28,7 +32,7 @@ export function TimeBarChart({
             content={({ active, payload, label }) =>
               active && payload?.[0] ? (
                 <div className="chart-tooltip">
-                  <p className="text-text-muted text-label tracking-[0.15em] uppercase">
+                  <p className="text-text-muted text-body-sm tracking-[0.15em] uppercase">
                     {label}
                   </p>
                   <p className="mt-xs text-body font-semibold">

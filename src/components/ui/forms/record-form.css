@@ -10,6 +10,7 @@
   border-radius: 999px;
   padding: 0 var(--spacing-xl);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 540;
   white-space: nowrap;
   transition: var(--duration-fast) var(--ease-standard);
@@ -110,8 +111,8 @@
 
 .finance-dialog-heading h2 {
   margin-top: var(--spacing-sm);
-  font-size: 1.55rem;
-  line-height: 1.15;
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
   font-weight: 560;
   letter-spacing: -0.035em;
 }
@@ -120,7 +121,7 @@
   margin-top: var(--spacing-sm);
   max-width: 30rem;
   font-size: var(--text-body);
-  line-height: 1.5;
+  line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
 }
 

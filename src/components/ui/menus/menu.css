@@ -51,6 +51,7 @@
   border-radius: calc(var(--radius-panel) - var(--spacing-xs));
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 500;
   color: var(--color-text-secondary);
   text-align: left;

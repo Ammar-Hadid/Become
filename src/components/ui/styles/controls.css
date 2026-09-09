@@ -29,7 +29,8 @@
 .field-label {
   display: block;
   margin-bottom: 9px;
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -54,6 +55,7 @@
   min-height: var(--spacing-input-height-md);
   padding: 11px 13px;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 textarea.text-input--textarea-sm {
@@ -94,6 +96,7 @@ textarea.text-input--textarea-lg {
   background: transparent;
   outline: 0;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 .select-wrap svg {
@@ -106,6 +109,7 @@ textarea.text-input--textarea-lg {
   border-radius: 9px;
   background: rgba(229, 103, 103, 0.08);
   padding: 10px 12px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: #ef9292;
 }

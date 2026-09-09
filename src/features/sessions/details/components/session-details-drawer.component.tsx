@@ -70,7 +70,7 @@ export function SessionDetailsDrawer({
             <p className="eyebrow mb-md">Session details</p>
             <h2
               id={titleId}
-              className="text-2xl font-semibold tracking-[-0.04em]"
+              className="text-h3 font-semibold tracking-[-0.04em]"
             >
               {focus || session.activityType.name}
             </h2>
@@ -184,7 +184,7 @@ function DetailSection({
   return (
     <section data-testid={testId}>
       <h3 className="eyebrow mb-sm">{label}</h3>
-      <p className="text-text-secondary text-body leading-6 whitespace-pre-wrap">
+      <p className="text-text-secondary text-body whitespace-pre-wrap">
         {children}
       </p>
     </section>

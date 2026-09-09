@@ -112,8 +112,14 @@ export function TimerController({
   const resolutionTimerRef = useRef<number | null>(null);
   const [resolvedSession, setResolvedSession] =
     useState<SessionDetailItem | null>(null);
-  const [business, setBusiness] = useState({ businessCompanyId: "", businessNicheId: "" });
-  const [completionBusiness, setCompletionBusiness] = useState({ businessCompanyId: "", businessNicheId: "" });
+  const [business, setBusiness] = useState({
+    businessCompanyId: "",
+    businessNicheId: "",
+  });
+  const [completionBusiness, setCompletionBusiness] = useState({
+    businessCompanyId: "",
+    businessNicheId: "",
+  });
   const [captureSessionId, setCaptureSessionId] = useState<string | null>(null);
   const [finance, setFinance] = useState<FinanceSessionInput>({
     workSourceId: "",
@@ -190,8 +196,14 @@ export function TimerController({
         window.dispatchEvent(new Event("become:stop-timer"));
         return;
       }
-      const workspace = /^\/entrepreneurship\/explorations\/([^/]+)/.exec(window.location.pathname)?.[1];
-      const nicheId = (event as CustomEvent<{ businessNicheId?: string }>).detail?.businessNicheId ?? workspace ?? "";
+      const workspace = /^\/entrepreneurship\/explorations\/([^/]+)/.exec(
+        window.location.pathname,
+      )?.[1];
+      const nicheId =
+        (event as CustomEvent<{ businessNicheId?: string }>).detail
+          ?.businessNicheId ??
+        workspace ??
+        "";
       if (nicheId) {
         const domain = domains.find((item) => item.slug === "entrepreneurship");
         if (domain) {
@@ -230,7 +242,10 @@ export function TimerController({
           "",
       );
       setCompletionProjectId(activeSession?.engineeringProject?.id ?? "");
-      setCompletionBusiness({ businessCompanyId: activeSession.businessCompanyId ?? "", businessNicheId: activeSession.businessNicheId ?? "" });
+      setCompletionBusiness({
+        businessCompanyId: activeSession.businessCompanyId ?? "",
+        businessNicheId: activeSession.businessNicheId ?? "",
+      });
       setMode("stop");
       setDialogOpen(true);
     };
@@ -258,7 +273,12 @@ export function TimerController({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...(selectedDomain.slug === "entrepreneurship" ? { businessCompanyId: business.businessCompanyId || null, businessNicheId: business.businessNicheId || null } : {}),
+        ...(selectedDomain.slug === "entrepreneurship"
+          ? {
+              businessCompanyId: business.businessCompanyId || null,
+              businessNicheId: business.businessNicheId || null,
+            }
+          : {}),
         domainId: selectedDomain.id,
         activityTypeId: selectedActivityId,
         engineeringContext: isEngineering ? engineeringContext || null : null,
@@ -305,7 +325,17 @@ export function TimerController({
           body: JSON.stringify({
             outcome,
             notes,
-            ...(activeSession.domain.slug === "entrepreneurship" && (completionBusiness.businessCompanyId !== (activeSession.businessCompanyId ?? "") || completionBusiness.businessNicheId !== (activeSession.businessNicheId ?? "")) ? { businessCompanyId: completionBusiness.businessCompanyId || null, businessNicheId: completionBusiness.businessNicheId || null } : {}),
+            ...(activeSession.domain.slug === "entrepreneurship" &&
+            (completionBusiness.businessCompanyId !==
+              (activeSession.businessCompanyId ?? "") ||
+              completionBusiness.businessNicheId !==
+                (activeSession.businessNicheId ?? ""))
+              ? {
+                  businessCompanyId:
+                    completionBusiness.businessCompanyId || null,
+                  businessNicheId: completionBusiness.businessNicheId || null,
+                }
+              : {}),
             ...(activeSession.domain.slug === "engineering"
               ? {
                   engineeringContext: completionContext || null,
@@ -362,7 +392,8 @@ export function TimerController({
         setEvidenceTitle("");
         setEvidenceDetails("");
         setDialogOpen(false);
-        if (body.session?.domain.slug === "entrepreneurship") setCaptureSessionId(body.session.id);
+        if (body.session?.domain.slug === "entrepreneurship")
+          setCaptureSessionId(body.session.id);
         setResolutionState("idle");
         resolutionTimerRef.current = null;
       }, MOTION_DURATION_MS.emphasis);
@@ -377,7 +408,18 @@ export function TimerController({
 
   return (
     <>
-      {captureSessionId && <aside className="business-completion-note" aria-label="Session saved"><p>Session saved. Something worth keeping?</p><Link href={`/entrepreneurship/interactions/capture?session=${encodeURIComponent(captureSessionId)}`} onClick={() => setCaptureSessionId(null)}>Log an interaction</Link><button onClick={() => setCaptureSessionId(null)}>Not now</button></aside>}
+      {captureSessionId && (
+        <aside className="business-completion-note" aria-label="Session saved">
+          <p>Session saved. Something worth keeping?</p>
+          <Link
+            href={`/entrepreneurship/interactions/capture?session=${encodeURIComponent(captureSessionId)}`}
+            onClick={() => setCaptureSessionId(null)}
+          >
+            Log an interaction
+          </Link>
+          <button onClick={() => setCaptureSessionId(null)}>Not now</button>
+        </aside>
+      )}
       {dialogPresence.isPresent && (
         <div
           className="dialog-backdrop"
@@ -405,7 +447,7 @@ export function TimerController({
                 </p>
                 <h2
                   id="timer-dialog-title"
-                  className="text-2xl font-semibold tracking-[-0.04em]"
+                  className="text-h3 font-semibold tracking-[-0.04em]"
                 >
                   {mode === "start"
                     ? "What are you working on?"
@@ -472,7 +514,12 @@ export function TimerController({
                     <ChevronRight className="size-4 rotate-90" />
                   </span>
                 </label>
-                {selectedDomain?.slug === "entrepreneurship" && <BusinessTimerFields value={business} onChange={setBusiness} />}
+                {selectedDomain?.slug === "entrepreneurship" && (
+                  <BusinessTimerFields
+                    value={business}
+                    onChange={setBusiness}
+                  />
+                )}
                 <FinanceTimerFields
                   kind={financeKind}
                   options={financeOptions}
@@ -551,13 +598,18 @@ export function TimerController({
                       </p>
                     </div>
                   </div>
-                  <span className="timer-numerals text-primary text-xl font-semibold">
+                  <span className="timer-numerals text-primary text-h5 font-semibold">
                     {formatDuration(
                       resolvedSession?.durationSeconds ?? elapsedSeconds,
                     )}
                   </span>
                 </div>
-                {displayedSession.domain.slug === "entrepreneurship" && <BusinessTimerFields value={completionBusiness} onChange={setCompletionBusiness} />}
+                {displayedSession.domain.slug === "entrepreneurship" && (
+                  <BusinessTimerFields
+                    value={completionBusiness}
+                    onChange={setCompletionBusiness}
+                  />
+                )}
                 {displayedSession.domain.slug === "engineering" && (
                   <EngineeringTimerFields
                     completion

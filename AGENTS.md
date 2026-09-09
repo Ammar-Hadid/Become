@@ -153,6 +153,15 @@ Use arbitrary values when the value is genuinely component-specific or one-off. 
 
 If a visual value becomes repeated or represents a product-wide design decision, promote it into the theme rather than duplicating literals.
 
+### Locked typography scale
+
+The typography tokens in `src/app/styles/tokens.css` are product-owner controlled and must not be adjusted without the product owner's explicit prior approval. This restriction is absolute and applies especially to every typography `font-size` and `line-height` value.
+
+- Do not add, remove, rename, reorder, or change typography tokens or their values on your own initiative.
+- Do not introduce one-off `font-size` or `line-height` values, arbitrary typography utilities, or Tailwind's default type-scale utilities as a workaround.
+- Apply the existing semantic typography tokens throughout authored application code.
+- If a task appears to require any typography token or value change, stop and ask the product owner for approval before editing it.
+
 ### CSS ownership
 
 Do not use `globals.css` as the default destination for application styling.

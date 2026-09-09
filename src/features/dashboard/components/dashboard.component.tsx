@@ -90,7 +90,33 @@ export function Dashboard({
           aria-hidden="true"
         />
       </header>
-      {businessAttention.length > 0 && <section className="border-border border-y py-xl my-2xl"><div className="flex items-center justify-between gap-lg"><h2 className="eyebrow">Entrepreneurship · chosen actions & source review</h2><Link href="/entrepreneurship" className="text-body text-text-muted">View domain →</Link></div><ul className="mt-lg grid gap-md">{businessAttention.slice(0, 3).map((item) => <li key={item.id}><Link className="text-body text-text-secondary hover:text-text-primary" href={item.href}>{item.text}</Link></li>)}</ul></section>}
+      {businessAttention.length > 0 && (
+        <section className="border-border py-xl my-2xl border-y">
+          <div className="gap-lg flex items-center justify-between">
+            <h2 className="eyebrow">
+              Entrepreneurship · chosen actions & source review
+            </h2>
+            <Link
+              href="/entrepreneurship"
+              className="text-body text-text-muted"
+            >
+              View domain →
+            </Link>
+          </div>
+          <ul className="mt-lg gap-md grid">
+            {businessAttention.slice(0, 3).map((item) => (
+              <li key={item.id}>
+                <Link
+                  className="text-body text-text-secondary hover:text-text-primary"
+                  href={item.href}
+                >
+                  {item.text}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {activeSession ? (
         <button
@@ -106,7 +132,7 @@ export function Dashboard({
             </span>
             <div className="min-w-0 text-left">
               <p className="eyebrow text-primary">In focus now</p>
-              <p className="mt-xs truncate text-lg font-medium">
+              <p className="text-h5 mt-xs truncate font-medium">
                 {activeSession.description || activeSession.activityType.name}
               </p>
               <p className="active-session-meta text-text-secondary mt-xs">
@@ -117,7 +143,7 @@ export function Dashboard({
           <div className="gap-lg flex shrink-0 items-center">
             <div className="hidden text-right sm:block">
               <p
-                className="timer-numerals text-primary text-2xl font-semibold"
+                className="timer-numerals text-primary text-h3 font-semibold"
                 data-testid="dashboard-active-session-time"
               >
                 {formatDuration(elapsedSeconds)}
@@ -150,7 +176,7 @@ export function Dashboard({
       <div className="border-border mt-4xl gap-lg pb-2xl flex flex-col border-b sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow mb-sm">Focused time</p>
-          <p className="timer-numerals text-[clamp(2.3rem,5vw,4.2rem)] leading-none font-semibold tracking-[-0.06em]">
+          <p className="timer-numerals text-h1 font-semibold tracking-[-0.06em]">
             {formatDuration(data.totalSeconds, true)}
           </p>
           <p className="text-text-secondary mt-md text-body">
@@ -314,7 +340,7 @@ export function Dashboard({
         <div className="mb-lg flex items-end justify-between">
           <div>
             <p className="eyebrow mb-sm">Evidence</p>
-            <h2 className="section-title text-lg">Recent sessions</h2>
+            <h2 className="section-title">Recent sessions</h2>
           </div>
           <Link href="/sessions" className="text-link">
             View history <ArrowRight className="size-3.5" />

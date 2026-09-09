@@ -3,7 +3,8 @@
 }
 
 .eyebrow {
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -24,8 +25,8 @@
 }
 
 .page-header h1 {
-  font-size: var(--text-page-title);
-  line-height: var(--text-page-title--line-height);
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
   font-weight: 570;
   letter-spacing: -0.055em;
 }
@@ -44,6 +45,7 @@
   gap: 9px;
   text-align: center;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
 }
 

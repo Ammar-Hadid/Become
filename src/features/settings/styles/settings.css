@@ -8,8 +8,8 @@
 }
 
 .settings-shell-heading h1 {
-  font-size: clamp(2rem, 3vw, 2.7rem);
-  line-height: 1.05;
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
   font-weight: 570;
   letter-spacing: -0.05em;
 }
@@ -29,7 +29,8 @@
 
 .settings-navigation > p {
   margin: 0 0 var(--spacing-md) var(--spacing-md);
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -64,14 +65,15 @@
 
 .settings-navigation-link strong {
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 550;
   color: var(--color-text-primary);
 }
 
 .settings-navigation-link small {
   margin-top: 3px;
-  font-size: var(--text-label);
-  line-height: 1.35;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 

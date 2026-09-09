@@ -85,7 +85,11 @@ export function CashMovementChart({
                   dataKey="label"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "var(--color-text-muted)", fontSize: 11 }}
+                  tick={{
+                    fill: "var(--color-text-muted)",
+                    fontSize: "var(--text-body-sm)",
+                    lineHeight: "var(--text-body-sm--line-height)",
+                  }}
                   dy={9}
                   interval="preserveStartEnd"
                   minTickGap={12}
@@ -93,7 +97,11 @@ export function CashMovementChart({
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "var(--color-text-muted)", fontSize: 10 }}
+                  tick={{
+                    fill: "var(--color-text-muted)",
+                    fontSize: "var(--text-body-sm)",
+                    lineHeight: "var(--text-body-sm--line-height)",
+                  }}
                   tickFormatter={(value: number) => compactNumber.format(value)}
                   tickCount={5}
                   width={42}

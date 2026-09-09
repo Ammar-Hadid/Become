@@ -68,7 +68,7 @@ export async function BusinessReceipts({
                 >
                   {allocation.companySnapshot}
                 </Link>
-                <p className="text-meta text-text-muted mt-sm">
+                <p className="text-body-sm text-text-muted mt-sm">
                   {allocation.offerRevision
                     ? `${allocation.offerRevision.title} · revision ${allocation.offerRevision.version}`
                     : "Company only"}
@@ -81,7 +81,7 @@ export async function BusinessReceipts({
                 )}
               </strong>
             </div>
-            <p className="text-meta text-text-muted my-md">
+            <p className="text-body-sm text-text-muted my-md">
               {allocation.withdrawnAt
                 ? `Withdrawn · ${allocation.withdrawalReason}`
                 : allocation.needsReviewAt

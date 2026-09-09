@@ -36,7 +36,7 @@ export function BusinessTimerFields({
       </summary>
       <div className="gap-lg pt-lg grid">
         {!options ? (
-          <p className="text-meta text-text-muted">
+          <p className="text-body-sm text-text-muted">
             {failed
               ? "Context could not load. You can still record the session."
               : "Loading context…"}

@@ -18,7 +18,7 @@ export function BusinessSessionDetails({
         {humanize(session.entrepreneurshipActivityKind ?? "UNKNOWN")} · captured
         for this session
       </p>
-      <p className="text-meta text-text-muted mt-lg">
+      <p className="text-body-sm text-text-muted mt-lg">
         Session time does not itself record customer contact or a receipt.
       </p>
       {session.endedAt && (

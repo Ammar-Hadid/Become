@@ -22,6 +22,7 @@
   border-radius: 999px;
   padding: 0 var(--spacing-xl);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 500;
   white-space: nowrap;
   transition: var(--duration-fast) var(--ease-standard);
@@ -58,8 +59,8 @@
 }
 
 .engineering-summary-value {
-  font-size: clamp(2.3rem, 5vw, 4.2rem);
-  line-height: 1;
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
   font-weight: 600;
   letter-spacing: -0.06em;
 }
@@ -98,13 +99,15 @@
 }
 
 .engineering-signal-grid strong {
-  font-size: 1.6rem;
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
   font-weight: 580;
   letter-spacing: -0.04em;
 }
 
 .engineering-signal-grid span {
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -156,13 +159,15 @@
 }
 
 .engineering-evidence-counts strong {
-  font-size: 1.4rem;
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
   font-weight: 580;
 }
 
 .engineering-evidence-counts span {
   margin-top: var(--spacing-xs);
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -194,7 +199,8 @@
 
 .engineering-project-preview span {
   margin-top: var(--spacing-sm);
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -246,6 +252,7 @@ a.engineering-record-row:hover {
   justify-content: space-between;
   gap: var(--spacing-lg);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 .engineering-record-heading strong {
@@ -255,7 +262,8 @@ a.engineering-record-row:hover {
 }
 
 .engineering-record-heading > span {
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -264,14 +272,15 @@ a.engineering-record-row:hover {
   display: block;
   margin-top: var(--spacing-xs);
   overflow-wrap: anywhere;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
 .engineering-record-copy {
   max-width: var(--container-copy);
   margin-top: var(--spacing-sm);
-  line-height: 1.55;
+  line-height: var(--text-body-sm--line-height);
   white-space: pre-wrap;
   color: var(--color-text-secondary);
 }
@@ -291,7 +300,8 @@ a.engineering-record-row:hover {
 
 .engineering-evidence-ledger-heading > p {
   padding-bottom: 1px;
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -317,7 +327,8 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-year-marker h3 {
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--color-text-secondary);
@@ -407,15 +418,16 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-date strong {
-  font-size: 1.125rem;
-  line-height: 1;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
   font-weight: 590;
   letter-spacing: -0.035em;
 }
 
 .engineering-evidence-date span {
   margin-top: var(--spacing-xs);
-  font-size: 0.625rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -445,8 +457,8 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-type-label {
-  font-size: 0.6875rem;
-  line-height: 1rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -456,8 +468,8 @@ a.engineering-record-row:hover {
 .engineering-evidence-title {
   margin-top: var(--spacing-xs);
   overflow-wrap: anywhere;
-  font-size: 1.075rem;
-  line-height: 1.35;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
   font-weight: 560;
   letter-spacing: -0.018em;
   color: var(--color-text-primary);
@@ -470,7 +482,8 @@ a.engineering-record-row:hover {
   align-items: center;
   gap: var(--spacing-xs) var(--spacing-lg);
   margin-top: var(--spacing-sm);
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -584,7 +597,7 @@ a.engineering-record-row:hover {
   margin-top: var(--spacing-md);
   overflow-wrap: anywhere;
   font-size: var(--text-body-lg);
-  line-height: 1.75;
+  line-height: var(--text-body-lg--line-height);
   white-space: pre-wrap;
   color: var(--color-text-primary);
 }
@@ -608,15 +621,16 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-facts dt {
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
 .engineering-evidence-facts dd {
   margin-top: var(--spacing-xs);
   overflow-wrap: anywhere;
-  font-size: var(--text-meta);
-  line-height: 1.5;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-secondary);
 }
 
@@ -646,7 +660,8 @@ a.engineering-record-row:hover {
   border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0 var(--spacing-lg);
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-secondary);
   transition:
     border-color var(--duration-fast) var(--ease-standard),
@@ -698,7 +713,8 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-empty h2 {
-  font-size: var(--text-section);
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
   font-weight: 560;
 }
 
@@ -706,7 +722,7 @@ a.engineering-record-row:hover {
   max-width: 480px;
   margin-top: var(--spacing-sm);
   font-size: var(--text-body);
-  line-height: 1.6;
+  line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
 }
 
@@ -766,8 +782,8 @@ a.engineering-record-row:hover {
 
 .engineering-form-note {
   margin-top: var(--spacing-xl);
-  font-size: var(--text-meta);
-  line-height: 1.5;
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -796,7 +812,8 @@ a.engineering-record-row:hover {
   border-radius: 999px;
   background: var(--color-surface);
   padding: 0 var(--spacing-md);
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-secondary);
 }
 
@@ -842,6 +859,7 @@ a.engineering-record-row:hover {
   background: var(--color-surface);
   padding: 0 var(--spacing-lg) 0 44px;
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-primary);
   outline: none;
 }
@@ -894,13 +912,15 @@ a.engineering-record-row:hover {
 
 .engineering-tech-options strong {
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 520;
 }
 
 .engineering-tech-options small,
 .engineering-tech-options > p,
 .engineering-field-help {
-  font-size: var(--text-meta);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
@@ -914,7 +934,7 @@ a.engineering-record-row:hover {
 
 .engineering-field-help {
   margin-top: var(--spacing-sm);
-  line-height: 1.5;
+  line-height: var(--text-body-sm--line-height);
 }
 
 .engineering-project-facts {
@@ -935,13 +955,15 @@ a.engineering-record-row:hover {
 }
 
 .engineering-project-facts span {
-  font-size: var(--text-label);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
 }
 
 .engineering-project-facts strong {
   margin-top: var(--spacing-sm);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   font-weight: 550;
 }
 
@@ -951,6 +973,7 @@ a.engineering-record-row:hover {
   gap: var(--spacing-sm) var(--spacing-xl);
   padding-top: var(--spacing-xl);
   font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
 }
 
@@ -979,7 +1002,7 @@ a.engineering-record-row:hover {
 }
 
 .engineering-project-notes > p:last-child {
-  line-height: 1.65;
+  line-height: var(--text-body--line-height);
   white-space: pre-wrap;
   color: var(--color-text-secondary);
 }
@@ -1079,7 +1102,8 @@ a.engineering-record-row:hover {
   }
 
   .engineering-evidence-title {
-    font-size: var(--text-section);
+    font-size: var(--text-h5);
+    line-height: var(--text-h5--line-height);
   }
 
   .engineering-evidence-summary-meta {

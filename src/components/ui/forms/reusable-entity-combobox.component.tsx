@@ -346,7 +346,7 @@ export function ReusableEntityCombobox({
         </div>
       )}
       {deferCreation && query.trim() && !selectedId && !open && (
-        <p className="mt-sm text-meta text-text-secondary">
+        <p className="mt-sm text-body-sm text-text-secondary">
           This company will be matched or added when you save.
         </p>
       )}
