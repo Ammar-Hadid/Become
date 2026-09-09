@@ -30,7 +30,7 @@ export default async function Page({
       <Link href="/entrepreneurship/interactions" className="business-back">
         ← Interactions
       </Link>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">The session is already saved</p>
           <h2>Keep what actually happened.</h2>

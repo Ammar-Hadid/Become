@@ -86,11 +86,3 @@ export function distributeMoney(
 
 export const positivePart = (value: bigint) => (value > 0n ? value : 0n);
 export const minMoney = (a: bigint, b: bigint) => (a < b ? a : b);
-
-export function supportedCurrencyOptions() {
-  const names = new Intl.DisplayNames(["en"], { type: "currency" });
-  return [...currencies].map((code) => ({
-    id: code,
-    name: `${code} · ${names.of(code) ?? code}`,
-  }));
-}

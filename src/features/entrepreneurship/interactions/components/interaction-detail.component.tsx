@@ -54,7 +54,7 @@ export async function InteractionDetail({
       <Link href="/entrepreneurship/interactions" className="business-back">
         ← Interactions
       </Link>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">
             {record.voidedAt ? "Withdrawn · " : ""}
@@ -88,7 +88,7 @@ export async function InteractionDetail({
         </div>
       </header>
       <div className="business-detail-grid">
-        <div>
+        <div className="business-detail-main">
           <section className="business-detail-section">
             <div className="business-row-heading">
               <h3>What happened</h3>{" "}
@@ -166,7 +166,7 @@ export async function InteractionDetail({
             </div>
             {replies.length ? (
               replies.map((reply) => (
-                <article key={reply.id} className="business-detail-section">
+                <article key={reply.id} className="business-record-row">
                   <p className="business-meta">
                     {businessDate(reply.occurredAt)}
                   </p>
@@ -204,28 +204,30 @@ export async function InteractionDetail({
           )}
         </div>
         <aside className="business-aside">
-          <p className="eyebrow">Context at the time</p>
-          {revision.companyId && (
-            <Link
-              className="business-text-link mt-lg inline-block"
-              href={`/entrepreneurship/market/companies/${revision.companyId}`}
-            >
-              {revision.companySnapshot}
-            </Link>
-          )}
-          <p className="mt-lg">
-            {revision.nicheSnapshot ?? "No niche recorded"}
-          </p>
-          <p className="mt-lg">
-            {participants.length
-              ? participants
-                  .map(
-                    (p) =>
-                      `${p.name}${p.role ? ` (${p.role})` : ""}${p.email ? ` · ${p.email}` : ""}`,
-                  )
-                  .join(", ")
-              : "No participants recorded"}
-          </p>
+          <section className="business-aside-section">
+            <p className="eyebrow">Context at the time</p>
+            {revision.companyId && (
+              <Link
+                className="business-text-link mt-lg inline-block"
+                href={`/entrepreneurship/market/companies/${revision.companyId}`}
+              >
+                {revision.companySnapshot}
+              </Link>
+            )}
+            <p className="mt-lg">
+              {revision.nicheSnapshot ?? "No niche recorded"}
+            </p>
+            <p className="mt-lg">
+              {participants.length
+                ? participants
+                    .map(
+                      (p) =>
+                        `${p.name}${p.role ? ` (${p.role})` : ""}${p.email ? ` · ${p.email}` : ""}`,
+                    )
+                    .join(", ")
+                : "No participants recorded"}
+            </p>
+          </section>
           <section className="business-detail-section mt-xl">
             <h3>Next actions</h3>
             <FollowUpForm target={{ interactionId: id }} />

@@ -96,7 +96,7 @@ export function SubMenu({
     () =>
       Array.from(
         menuRef.current?.querySelectorAll<HTMLElement>(
-          '[role="menuitem"]:not([aria-disabled="true"]):not(:disabled)',
+          '[role^="menuitem"]:not([aria-disabled="true"]):not(:disabled)',
         ) ?? [],
       ),
     [],

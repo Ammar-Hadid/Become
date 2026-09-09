@@ -1,6 +1,7 @@
+import { currencySchema } from "@/lib/money/schemas/currency.schema";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
-import { normalizeCurrency, parseMoney } from "@/lib/money/utils/money.util";
+import { parseMoney } from "@/lib/money/utils/money.util";
 import { FinanceError } from "@/features/finance/types/finance.types";
 export async function lockCurrencyPolicy(
   tx: Prisma.TransactionClient,
@@ -25,7 +26,7 @@ export async function saveFinanceReserve(
   let currency: string;
   let protectedReserveMinor: bigint | null;
   try {
-    currency = normalizeCurrency(inputCurrency);
+    currency = currencySchema.parse(inputCurrency);
     protectedReserveMinor =
       reserve.trim() === "" ? null : parseMoney(reserve, currency);
   } catch (error) {

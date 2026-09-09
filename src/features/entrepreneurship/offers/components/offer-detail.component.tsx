@@ -63,7 +63,7 @@ export async function OfferDetail({
       <Link className="business-back" href="/entrepreneurship/offers">
         ← Offers
       </Link>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">
             {offer.company.name} · {humanize(status)}
@@ -97,7 +97,7 @@ export async function OfferDetail({
       {offer.events.some(
         (event) => event.kind === "ACCEPTED" && !event.retractedAt,
       ) && (
-        <section className="business-detail-section">
+        <section className="business-zone business-continuation-zone">
           <h3>Continue into work</h3>
           <p>
             {offer.continuationChoice
@@ -110,7 +110,7 @@ export async function OfferDetail({
         </section>
       )}
       <div className="business-detail-grid">
-        <div>
+        <div className="business-detail-main">
           <section className="business-offer-quote">
             <p className="eyebrow">
               {acceptance
@@ -234,29 +234,32 @@ export async function OfferDetail({
               <FollowUpRecord key={followUp.id} record={followUp} />
             ))}
           </section>
-          <p className="eyebrow">For this company</p>
-          <Link
-            className="business-text-link mt-lg inline-block"
-            href={`/entrepreneurship/market/companies/${offer.companyId}`}
-          >
-            {offer.company.name}
-          </Link>
-          <section className="business-detail-section mt-xl">
-            <h3>Problems addressed</h3>
-            {quote.problems.length ? (
-              quote.problems.map(({ problem }) => (
-                <p key={problem.id}>
-                  <Link
-                    className="business-text-link"
-                    href={`/entrepreneurship/problems/${problem.id}`}
-                  >
-                    {problem.title}
-                  </Link>
-                </p>
-              ))
-            ) : (
-              <p>No problem linked.</p>
-            )}
+          <section className="business-aside-section">
+            <p className="eyebrow">For this company</p>
+            <Link
+              className="business-text-link mt-lg inline-block"
+              href={`/entrepreneurship/market/companies/${offer.companyId}`}
+            >
+              {offer.company.name}
+            </Link>
+            <div className="business-aside-divider">
+              <h3>Problems addressed</h3>
+              {quote.problems.length ? (
+                <div className="business-related-list">
+                  {quote.problems.map(({ problem }) => (
+                    <Link
+                      key={problem.id}
+                      className="business-text-link"
+                      href={`/entrepreneurship/problems/${problem.id}`}
+                    >
+                      {problem.title}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p>No problem linked.</p>
+              )}
+            </div>
           </section>
         </aside>
       </div>

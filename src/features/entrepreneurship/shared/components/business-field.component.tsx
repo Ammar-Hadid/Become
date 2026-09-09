@@ -1,4 +1,28 @@
 import { useId, type ReactNode } from "react";
+
+export function BusinessFormSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="business-form-section">
+      <header className="business-form-section-heading">
+        <p className="eyebrow">{eyebrow}</p>
+        <h3>{title}</h3>
+        {description && <p>{description}</p>}
+      </header>
+      <div className="business-form-section-body">{children}</div>
+    </section>
+  );
+}
+
 export function BusinessField({
   label,
   name,
@@ -26,7 +50,7 @@ export function BusinessField({
     "aria-describedby": hint ? `${id}-hint` : undefined,
   };
   return (
-    <div>
+    <div className="business-form-field">
       <label htmlFor={id} className="field-label">
         {label}
         {!required && (
@@ -65,7 +89,7 @@ export function BusinessSelect({
 }) {
   const id = useId();
   return (
-    <div>
+    <div className="business-form-field">
       <label className="field-label" htmlFor={id}>
         {label}
       </label>

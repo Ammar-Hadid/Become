@@ -5,6 +5,7 @@ import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import {
   BusinessField,
+  BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import {
@@ -30,19 +31,25 @@ export function StartExplorationForm() {
           if (result.id) router.push(explorationHref(result.id));
         }}
       >
-        <BusinessField
-          name="name"
-          label="Market name"
-          required
-          hint="For example, Dentists or independent barbers."
-        />
-        <BusinessField
-          name="scope"
-          label="What are you exploring?"
-          multiline
-          hint="The people, workflow or question you want to understand."
-        />
-        <p className="business-hint">
+        <BusinessFormSection
+          eyebrow="Starting point"
+          title="Name the corner of the market"
+          description="Specific curiosity gives the exploration a useful boundary."
+        >
+          <BusinessField
+            name="name"
+            label="Market name"
+            required
+            hint="For example, Dentists or independent barbers."
+          />
+          <BusinessField
+            name="scope"
+            label="What are you exploring?"
+            multiline
+            hint="The people, workflow or question you want to understand."
+          />
+        </BusinessFormSection>
+        <p className="business-form-note">
           A new market starts with an empty workspace. To revisit a market
           you’ve already explored, open it below and resume.
         </p>
@@ -63,8 +70,8 @@ export function ExplorationDirectionForm({
   return (
     <RecordDialog
       icon={false}
-      title={active ? "Choose your next direction" : "Resume exploration"}
-      triggerLabel={active ? "Pause or stop" : "Resume exploration"}
+      title="Choose your next direction"
+      triggerLabel={active ? "Review direction" : "Resume exploration"}
       eyebrow="A deliberate decision"
       variant="secondary"
       description="Keep what you learned, even when you change course."
@@ -75,23 +82,39 @@ export function ExplorationDirectionForm({
         closeOnSuccess
       >
         <input type="hidden" name="expectedUpdatedAt" value={updatedAt} />
-        <BusinessSelect
-          label="Next direction"
-          name="direction"
-          value={active ? "PAUSED" : "EXPLORING"}
+        <BusinessFormSection
+          eyebrow="Decision"
+          title="Choose the next direction"
+          description="The rationale stays in the exploration’s decision trail."
         >
-          <option value="PAUSED">Pause for now</option>
-          <option value="STOPPED">Stop exploring</option>
-          <option value="PURSUING">Pursue this market</option>
-          <option value="EXPLORING">Continue exploring</option>
-        </BusinessSelect>
-        <BusinessField
-          label="Why this decision?"
-          name="rationale"
-          multiline
-          required
-        />
-        <p className="business-hint">
+          <BusinessSelect
+            label="Next direction"
+            name="direction"
+            value="EXPLORING"
+          >
+            <option value="EXPLORING">
+              {direction === "EXPLORING"
+                ? "Continue exploring"
+                : direction === "PURSUING"
+                  ? "Return to exploration"
+                  : "Resume exploring"}
+            </option>
+            {active && <option value="PAUSED">Pause for now</option>}
+            {direction !== "PURSUING" && (
+              <option value="PURSUING">Pursue this market</option>
+            )}
+            {direction !== "STOPPED" && (
+              <option value="STOPPED">Stop exploring</option>
+            )}
+          </BusinessSelect>
+          <BusinessField
+            label="Why this decision?"
+            name="rationale"
+            multiline
+            required
+          />
+        </BusinessFormSection>
+        <p className="business-form-note">
           Your records stay available. Resuming continues this exploration’s
           history.
         </p>

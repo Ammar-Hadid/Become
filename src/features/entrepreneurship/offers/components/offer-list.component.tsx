@@ -25,7 +25,7 @@ export async function OfferList({
   ]);
   return (
     <>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">From understanding to an offer</p>
           <h2>Something worth saying yes to.</h2>
@@ -35,73 +35,81 @@ export async function OfferList({
         </div>
         <OfferForm companies={options.companies} problems={options.problems} />
       </header>
-      <div className="business-row-heading">
-        <h3>{archived ? "Archived offers" : "Current offers"}</h3>
-        <Link
-          className="business-text-link"
-          scroll={false}
-          href={
-            archived
-              ? "/entrepreneurship/offers"
-              : "/entrepreneurship/offers?archived=true"
-          }
-        >
-          {archived ? "View current" : "View archived"}
-        </Link>
-      </div>
-      {data.records.length ? (
-        <div className="business-offer-list">
-          {data.records.map((offer) => {
-            const { quote, status, acceptance } = offerPresentation(
-              offer.revisions,
-              offer.events,
-            );
-            return (
-              <Link
-                className="business-offer-row"
-                href={`/entrepreneurship/offers/${offer.id}`}
-                key={offer.id}
-              >
-                <div>
-                  <p className="business-meta">
-                    {offer.company.name} · {humanize(status)}
-                    {acceptance && status !== "ACCEPTED"
-                      ? " · acceptance retained"
-                      : ""}
-                  </p>
-                  <h3>{quote.title}</h3>
-                  <p>{quote.scope}</p>
-                </div>
-                <div>
-                  <strong>{quoteLabel(quote)}</strong>
-                  <span className="business-hint">
-                    {acceptance ? "Accepted terms" : "Quoted terms"}
-                  </span>
-                </div>
-                <ArrowUpRight aria-hidden="true" />
-              </Link>
-            );
-          })}
+      <section
+        className={`business-zone business-zone--ledger${archived ? "business-zone--archived" : ""}`}
+      >
+        <div className="business-row-heading">
+          <div>
+            <p className="eyebrow">Commercial record</p>
+            <h3>{archived ? "Archived offers" : "Current offers"}</h3>
+          </div>
+          <Link
+            className="business-text-link"
+            scroll={false}
+            href={
+              archived
+                ? "/entrepreneurship/offers"
+                : "/entrepreneurship/offers?archived=true"
+            }
+          >
+            {archived ? "View current" : "View archived"}
+          </Link>
         </div>
-      ) : (
-        <div className="business-empty">
-          <FileText aria-hidden="true" />
-          <h3>Give the solution a shape.</h3>
-          <p>
-            Start with a company, a useful scope and a quote. An unspecified
-            price can stay unknown.
-          </p>
-        </div>
-      )}
-      {data.next && (
-        <Link
-          className="business-text-link"
-          scroll={false}
-          href={`?cursor=${data.next}${archived ? "&archived=true" : ""}`}
-        >
-          More offers →
-        </Link>
-      )}
+        {data.records.length ? (
+          <div className="business-offer-list">
+            {data.records.map((offer) => {
+              const { quote, status, acceptance } = offerPresentation(
+                offer.revisions,
+                offer.events,
+              );
+              return (
+                <Link
+                  className={`business-offer-row${archived ? "business-record--archived" : ""}`}
+                  href={`/entrepreneurship/offers/${offer.id}`}
+                  key={offer.id}
+                >
+                  <div className="business-offer-copy">
+                    <p className="business-meta">{offer.company.name}</p>
+                    <h3>{quote.title}</h3>
+                    <p>{quote.scope}</p>
+                  </div>
+                  <div className="business-offer-terms">
+                    <span className="business-status-badge">
+                      {humanize(status)}
+                      {acceptance && status !== "ACCEPTED"
+                        ? " · acceptance retained"
+                        : ""}
+                    </span>
+                    <strong>{quoteLabel(quote)}</strong>
+                    <span className="business-hint">
+                      {acceptance ? "Accepted terms" : "Quoted terms"}
+                    </span>
+                  </div>
+                  <ArrowUpRight aria-hidden="true" />
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="business-empty">
+            <FileText aria-hidden="true" />
+            <h3>Give the solution a shape.</h3>
+            <p>
+              Start with a company, a useful scope and a quote. An unspecified
+              price can stay unknown.
+            </p>
+          </div>
+        )}
+        {data.next && (
+          <Link
+            className="business-text-link"
+            scroll={false}
+            href={`?cursor=${data.next}${archived ? "&archived=true" : ""}`}
+          >
+            More offers →
+          </Link>
+        )}
+      </section>
     </>
   );
 }

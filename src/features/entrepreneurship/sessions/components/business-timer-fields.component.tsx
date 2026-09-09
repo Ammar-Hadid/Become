@@ -30,11 +30,11 @@ export function BusinessTimerFields({
     };
   }, []);
   return (
-    <details>
-      <summary className="text-body text-text-secondary cursor-pointer">
+    <details className="border-border bg-surface-input rounded-control p-lg border">
+      <summary className="text-body text-text-secondary cursor-pointer font-medium">
         Company & niche · optional
       </summary>
-      <div className="gap-lg pt-lg grid">
+      <div className="border-border gap-lg mt-lg pt-lg grid border-t">
         {!options ? (
           <p className="text-body-sm text-text-muted">
             {failed

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { getMediaStorage } from "../../src/lib/storage/services/media-storage.service";
 import { prisma } from "../../src/lib/db/adapters/prisma.adapter";
 
 // Call only for IDs returned by sign-up requests made by this test's own page.
@@ -11,8 +12,16 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     throw new Error("Browser fixture cleanup requires local PostgreSQL.");
   if (!(await prisma.user.findFirst({ where: { id, email } }))) return;
   const where = { userId: id };
+  const media = await prisma.seasonMedia.findMany({
+    where,
+    select: { storageKey: true },
+  });
   await prisma.$transaction(
     async (tx) => {
+      await tx.userSeason.deleteMany({ where });
+      await tx.experiment.updateMany({ where, data: { repeatedFromId: null } });
+      await tx.experiment.deleteMany({ where });
+      await tx.goal.deleteMany({ where });
       await tx.problemAssessmentEvidence.deleteMany({ where });
       await tx.problemAssessment.deleteMany({ where });
       await tx.problemEvidence.deleteMany({ where });
@@ -52,4 +61,5 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     },
     { timeout: 15000 },
   );
+  for (const file of media) await getMediaStorage().remove(file.storageKey);
 }

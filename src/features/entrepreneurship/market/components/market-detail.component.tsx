@@ -76,7 +76,7 @@ export async function MarketDetail({
       <Link href="/entrepreneurship/market" className="business-back">
         ← Market
       </Link>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">
             {record.archivedAt ? "Archived · " : ""}
@@ -115,7 +115,7 @@ export async function MarketDetail({
         </div>
       </header>
       <div className="business-detail-grid">
-        <div>
+        <div className="business-detail-main">
           <section className="business-detail-section">
             <h3>{company ? "Context" : "Exploration scope"}</h3>
             <p className="business-prose">
@@ -178,10 +178,7 @@ export async function MarketDetail({
                   <DirectionForm id={id} direction={niche.direction} />
                 </div>
                 {niche.decisions.map((decision) => (
-                  <article
-                    key={decision.id}
-                    className="business-detail-section"
-                  >
+                  <article key={decision.id} className="business-record-row">
                     <p className="business-meta">
                       {businessDate(decision.createdAt)} ·{" "}
                       {humanize(decision.direction)}
@@ -192,17 +189,18 @@ export async function MarketDetail({
               </section>
               <section className="business-detail-section">
                 <h3>Companies in this niche</h3>
-                {niche.companies.map(({ company: item }) => (
-                  <p key={item.id}>
+                <div className="business-related-list">
+                  {niche.companies.map(({ company: item }) => (
                     <Link
+                      key={item.id}
                       className="business-text-link"
                       href={`/entrepreneurship/market/companies/${item.id}`}
                     >
                       {item.name}
                       {item.archivedAt ? " · archived" : ""}
                     </Link>
-                  </p>
-                ))}
+                  ))}
+                </div>
               </section>
             </>
           )}
@@ -217,20 +215,22 @@ export async function MarketDetail({
               ))}
             </section>
           )}
-          <p className="eyebrow">At a glance</p>
-          <p className="mt-lg">Added {businessDate(record.createdAt)}</p>
-          {company && (
-            <>
-              <p className="mt-lg">
-                {company.niches.map((link) => link.niche.name).join(" · ") ||
-                  "No niche linked"}
-              </p>
-              <p className="mt-lg">
-                A company is context. Conversations and observations hold what
-                you actually learned.
-              </p>
-            </>
-          )}
+          <section className="business-aside-section">
+            <p className="eyebrow">At a glance</p>
+            <p className="mt-lg">Added {businessDate(record.createdAt)}</p>
+            {company && (
+              <>
+                <p className="mt-lg">
+                  {company.niches.map((link) => link.niche.name).join(" · ") ||
+                    "No niche linked"}
+                </p>
+                <p className="mt-lg">
+                  A company is context. Conversations and observations hold what
+                  you actually learned.
+                </p>
+              </>
+            )}
+          </section>
         </aside>
       </div>
     </>

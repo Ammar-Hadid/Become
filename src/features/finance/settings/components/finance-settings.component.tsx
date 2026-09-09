@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Tags, UsersRound } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -19,12 +20,11 @@ export async function FinanceSettings({ userId }: { userId: string }) {
       closeOnSuccess
     >
       <div className="finance-form-grid">
-        <FinanceField
+        <CurrencySelect
           label="Currency"
           name="currency"
           defaultValue="EUR"
           required
-          maxLength={3}
         />
         <FinanceField
           label="Protected reserve"

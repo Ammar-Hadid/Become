@@ -1,9 +1,10 @@
+import { currencySchema } from "@/lib/money/schemas/currency.schema";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { FinanceError } from "@/features/finance/types/finance.types";
 import { savingsGoalSchema } from "@/features/finance/savings/schemas/savings-goal.schema";
 import { lockCurrencyPolicy } from "@/features/finance/settings/services/finance-policy.service";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
-import { normalizeCurrency, parseMoney } from "@/lib/money/utils/money.util";
+import { parseMoney } from "@/lib/money/utils/money.util";
 
 export async function saveSavingsGoal(
   userId: string,
@@ -55,7 +56,7 @@ export async function rebalanceSavings(
   inputCurrency: string,
   entries: { id: string; amount: string }[],
 ) {
-  const currency = normalizeCurrency(inputCurrency);
+  const currency = currencySchema.parse(inputCurrency);
   if (new Set(entries.map((entry) => entry.id)).size !== entries.length)
     throw new FinanceError("A goal can only appear once.");
   await prisma.$transaction(async (tx) => {

@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
@@ -18,7 +19,6 @@ import { getFinancialLedger } from "@/features/finance/transactions/queries/fina
 import { TransactionForm } from "@/features/finance/transactions/components/transaction-form.component";
 import {
   FinanceEmptyState,
-  FinanceField,
   FinancePageHeader,
   FinanceSelect,
   FinanceSection,
@@ -209,12 +209,11 @@ export async function TransactionsPage({
               </option>
             ))}
           </FinanceSelect>
-          <FinanceField
+          <CurrencySelect
             name="currency"
             label="Currency"
-            placeholder="Any"
+            emptyLabel="Any currency"
             defaultValue={filters.currency ?? ""}
-            maxLength={3}
           />
           <button type="submit">Apply filters</button>
           {hasFilters && <Link href="/finance/transactions">Clear</Link>}

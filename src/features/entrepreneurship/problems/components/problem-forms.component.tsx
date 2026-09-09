@@ -7,6 +7,7 @@ import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
 import {
   BusinessField,
+  BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
@@ -44,29 +45,40 @@ export function ProblemForm({ niches }: { niches: BusinessOption[] }) {
         }}
       >
         <CaptureKey />
-        <BusinessField label="Problem title" name="title" required />
-        <BusinessField
-          label="What do you believe is happening?"
-          name="initialStatement"
-          multiline
-          required
-        />
-        <BusinessSelect label="Where did this start?" name="origin">
-          <option value="USER_HYPOTHESIS">My hypothesis</option>
-          <option value="OBSERVATION_LED">Prompted by an observation</option>
-        </BusinessSelect>
-        <BusinessSelect
-          label="Niche · optional"
-          name="nicheId"
-          value={exploration?.archived ? "" : (exploration?.id ?? "")}
+        <BusinessFormSection
+          eyebrow="The claim"
+          title="A belief worth testing"
+          description="State it clearly enough that evidence could change your mind."
         >
-          <option value="">No niche</option>
-          {niches.map((niche) => (
-            <option value={niche.id} key={niche.id}>
-              {niche.name}
-            </option>
-          ))}
-        </BusinessSelect>
+          <BusinessField label="Problem title" name="title" required />
+          <BusinessField
+            label="What do you believe is happening?"
+            name="initialStatement"
+            multiline
+            required
+          />
+        </BusinessFormSection>
+        <BusinessFormSection
+          eyebrow="Boundary"
+          title="Where the belief belongs"
+        >
+          <BusinessSelect label="Where did this start?" name="origin">
+            <option value="USER_HYPOTHESIS">My hypothesis</option>
+            <option value="OBSERVATION_LED">Prompted by an observation</option>
+          </BusinessSelect>
+          <BusinessSelect
+            label="Niche · optional"
+            name="nicheId"
+            value={exploration?.archived ? "" : (exploration?.id ?? "")}
+          >
+            <option value="">No niche</option>
+            {niches.map((niche) => (
+              <option value={niche.id} key={niche.id}>
+                {niche.name}
+              </option>
+            ))}
+          </BusinessSelect>
+        </BusinessFormSection>
       </RecordForm>
     </RecordDialog>
   );
@@ -183,81 +195,97 @@ function ObservationFields({
           <p className="business-hint">Observed in {exploration.name}.</p>
         </>
       )}
-      <BusinessField
-        label="Statement or behavior"
-        name="statement"
-        multiline
-        required
-      />
-      <div className="gap-lg grid grid-cols-2">
-        <BusinessSelect label="Kind" name="kind">
-          <option value="CUSTOMER_STATEMENT">Customer statement</option>
-          <option value="OBSERVED_BEHAVIOR">Observed behavior</option>
-          <option value="INTEREST">Interest</option>
-          <option value="COMMITMENT">Commitment</option>
-          <option value="CONTEXT">Context</option>
-        </BusinessSelect>
-        <BusinessSelect label="Wording" name="wordingMode">
-          <option value="PARAPHRASE">Paraphrase</option>
-          <option value="QUOTE">Exact quote</option>
-        </BusinessSelect>
-      </div>
-      <BusinessField
-        label="Date observed"
-        name="observedAt"
-        type="date"
-        value={businessToday()}
-        required
-      />
-      <ReusableEntityCombobox
-        label="Company"
-        entityName="company"
-        idFieldName="companyId"
-        queryFieldName="companyName"
-        options={companies}
-        searchAction={searchCompaniesAction}
-        deferCreation
-        placeholder="Find or add a company…"
-      />
-      <label className="field-label">
-        Source
-        <select
-          className="text-input mt-sm"
-          name="sourceKind"
-          value={source}
-          onChange={(event) => setSource(event.target.value)}
-        >
-          <option value="DIRECT_OBSERVATION">I observed this directly</option>
-          <option value="INTERACTION">A recorded interaction</option>
-          <option value="PUBLIC_SOURCE">A public source</option>
-        </select>
-      </label>
-      {source === "PUBLIC_SOURCE" && (
+      <BusinessFormSection
+        eyebrow="Observation"
+        title="What you saw or heard"
+        description="Keep the source words separate from your interpretation."
+      >
         <BusinessField
-          label="Source URL"
-          name="sourceUrl"
-          type="url"
+          label="Statement or behavior"
+          name="statement"
+          multiline
           required
         />
+        <div className="gap-lg grid grid-cols-2">
+          <BusinessSelect label="Kind" name="kind">
+            <option value="CUSTOMER_STATEMENT">Customer statement</option>
+            <option value="OBSERVED_BEHAVIOR">Observed behavior</option>
+            <option value="INTEREST">Interest</option>
+            <option value="COMMITMENT">Commitment</option>
+            <option value="CONTEXT">Context</option>
+          </BusinessSelect>
+          <BusinessSelect label="Wording" name="wordingMode">
+            <option value="PARAPHRASE">Paraphrase</option>
+            <option value="QUOTE">Exact quote</option>
+          </BusinessSelect>
+        </div>
+        <BusinessField
+          label="Date observed"
+          name="observedAt"
+          type="date"
+          value={businessToday()}
+          required
+        />
+        <ReusableEntityCombobox
+          label="Company"
+          entityName="company"
+          idFieldName="companyId"
+          queryFieldName="companyName"
+          options={companies}
+          searchAction={searchCompaniesAction}
+          deferCreation
+          placeholder="Find or add a company…"
+        />
+      </BusinessFormSection>
+      <BusinessFormSection eyebrow="Traceability" title="Where it came from">
+        <label className="field-label">
+          Source
+          <select
+            className="text-input mt-sm"
+            name="sourceKind"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="DIRECT_OBSERVATION">I observed this directly</option>
+            <option value="INTERACTION">A recorded interaction</option>
+            <option value="PUBLIC_SOURCE">A public source</option>
+          </select>
+        </label>
+        {source === "PUBLIC_SOURCE" && (
+          <BusinessField
+            label="Source URL"
+            name="sourceUrl"
+            type="url"
+            required
+          />
+        )}
+        {source === "INTERACTION" && (
+          <BusinessSelect
+            label="Source interaction"
+            name="interaction"
+            required
+          >
+            <option value="">Choose the interaction</option>
+            {interactions.map((item) => (
+              <option key={item.id} value={`${item.id}:${item.revisionId}`}>
+                {item.name}
+              </option>
+            ))}
+          </BusinessSelect>
+        )}
+        <BusinessField
+          label="Source excerpt or context"
+          name="sourceDescription"
+          multiline
+          required
+          hint="Keep the relevant words, or describe where and how you observed the behavior."
+        />
+      </BusinessFormSection>
+      {problemId && (
+        <BusinessFormSection eyebrow="Meaning" title="Your interpretation">
+          <EvidenceInterpretationFields />
+        </BusinessFormSection>
       )}
-      {source === "INTERACTION" && (
-        <BusinessSelect label="Source interaction" name="interaction" required>
-          <option value="">Choose the interaction</option>
-          {interactions.map((item) => (
-            <option key={item.id} value={`${item.id}:${item.revisionId}`}>
-              {item.name}
-            </option>
-          ))}
-        </BusinessSelect>
-      )}
-      <BusinessField
-        label="Source excerpt or context"
-        name="sourceDescription"
-        multiline
-        required
-        hint="Keep the relevant words, or describe where and how you observed the behavior."
-      />
-      {problemId && <EvidenceInterpretationFields />}
     </>
   );
 }
@@ -310,26 +338,39 @@ export function AssessmentForm({
         submitLabel="Record judgment"
       >
         <CaptureKey />
-        <BusinessSelect label="Assessment" name="state">
-          <option value="INVESTIGATING">Investigating</option>
-          <option value="SUPPORTED_FOR_SCOPE">Supported for this scope</option>
-          <option value="INCONCLUSIVE">Inconclusive</option>
-          <option value="REJECTED">Rejected</option>
-        </BusinessSelect>
-        <BusinessField
-          label="Scope of this judgment"
-          name="scope"
-          multiline
-          required
-        />
-        <BusinessField label="Reasoning" name="rationale" multiline required />
-        <BusinessField
-          label="Assessment date"
-          name="assessedAt"
-          type="date"
-          value={businessToday()}
-          required
-        />
+        <BusinessFormSection
+          eyebrow="Judgment"
+          title="What the evidence suggests"
+          description="Make the scope and reasoning as explicit as the conclusion."
+        >
+          <BusinessSelect label="Assessment" name="state">
+            <option value="INVESTIGATING">Investigating</option>
+            <option value="SUPPORTED_FOR_SCOPE">
+              Supported for this scope
+            </option>
+            <option value="INCONCLUSIVE">Inconclusive</option>
+            <option value="REJECTED">Rejected</option>
+          </BusinessSelect>
+          <BusinessField
+            label="Scope of this judgment"
+            name="scope"
+            multiline
+            required
+          />
+          <BusinessField
+            label="Reasoning"
+            name="rationale"
+            multiline
+            required
+          />
+          <BusinessField
+            label="Assessment date"
+            name="assessedAt"
+            type="date"
+            value={businessToday()}
+            required
+          />
+        </BusinessFormSection>
         <fieldset>
           <legend className="field-label">
             Sources used for this judgment

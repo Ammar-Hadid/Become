@@ -17,6 +17,8 @@ import { DomainIcon } from "@/features/domains/components/domain-icon.component"
 import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
 import type { SessionListItem } from "@/features/sessions/types/session.types";
+import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
+import type { SeasonView } from "@/features/seasons/types/season.types";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import {
@@ -33,6 +35,7 @@ export function Dashboard({
   initialData,
   recentSessions,
   businessAttention = [],
+  seasonDirection,
 }: {
   userName: string;
   season: string;
@@ -41,6 +44,7 @@ export function Dashboard({
   initialData: DashboardData;
   recentSessions: SessionListItem[];
   businessAttention?: { id: string; text: string; href: string }[];
+  seasonDirection?: SeasonView;
 }) {
   const [data, setData] = useState(initialData);
   const [pending, startTransition] = useTransition();
@@ -172,6 +176,8 @@ export function Dashboard({
           <ChevronRight className="text-text-muted ml-auto size-4" />
         </button>
       )}
+
+      {seasonDirection && <SeasonHomeCard season={seasonDirection} />}
 
       <div className="border-border mt-4xl gap-lg pb-2xl flex flex-col border-b sm:flex-row sm:items-end sm:justify-between">
         <div>

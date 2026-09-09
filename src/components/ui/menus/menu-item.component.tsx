@@ -7,17 +7,30 @@ export const menuItemProps = {
   role: "menuitem" as const,
 };
 
+type MenuItemRole = "menuitem" | "menuitemcheckbox" | "menuitemradio";
+type MenuItemRenderProps = {
+  className: string;
+  role: MenuItemRole;
+  "aria-checked"?: boolean;
+};
+
 type MenuItemProps = {
+  checked?: boolean;
   children?: ReactNode;
   className?: string;
   href?: string;
   icon?: ReactNode;
   label?: string;
   onSelect?: MouseEventHandler<HTMLElement>;
-  render?: (props: typeof menuItemProps) => ReactNode;
-} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "onClick">;
+  render?: (props: MenuItemRenderProps) => ReactNode;
+  role?: MenuItemRole;
+} & Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "onClick" | "role"
+>;
 
 export function MenuItem({
+  checked,
   children,
   className,
   href,
@@ -25,11 +38,13 @@ export function MenuItem({
   label,
   onSelect,
   render,
+  role = menuItemProps.role,
   ...buttonProps
 }: MenuItemProps) {
-  const itemProps = {
-    ...menuItemProps,
+  const itemProps: MenuItemRenderProps = {
     className: cn(menuItemProps.className, className),
+    role,
+    ...(role === "menuitem" ? {} : { "aria-checked": Boolean(checked) }),
   };
   if (render) return render(itemProps);
 
@@ -45,7 +60,8 @@ export function MenuItem({
       <Link
         href={href}
         className={itemProps.className}
-        role={menuItemProps.role}
+        role={itemProps.role}
+        aria-checked={itemProps["aria-checked"]}
         aria-label={label}
         onClick={onSelect as MouseEventHandler<HTMLAnchorElement>}
       >
@@ -59,7 +75,8 @@ export function MenuItem({
       {...buttonProps}
       type={buttonProps.type ?? "button"}
       className={itemProps.className}
-      role={menuItemProps.role}
+      role={itemProps.role}
+      aria-checked={itemProps["aria-checked"]}
       aria-label={label}
       onClick={onSelect as MouseEventHandler<HTMLButtonElement>}
     >

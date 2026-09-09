@@ -13,7 +13,10 @@ const tabs = [
 export function ExplorationNavigation({ nicheId }: { nicheId: string }) {
   const path = usePathname();
   return (
-    <nav className="business-navigation exploration-navigation" aria-label="Exploration navigation">
+    <nav
+      className="business-navigation exploration-navigation"
+      aria-label="Exploration navigation"
+    >
       {tabs.map(([suffix, label]) => {
         const href = explorationHref(nicheId, suffix);
         const active = suffix ? path.startsWith(href) : path === href;

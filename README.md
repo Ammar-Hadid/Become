@@ -1,6 +1,6 @@
 # Become
 
-Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phase 1: Foundation**, **Phase 2: Engineering**, and **Phase 3: Finance**.
+Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–5: Foundation, Engineering, Finance, Entrepreneurship, and Seasons & Direction**.
 
 ## What Phase 1 includes
 
@@ -40,7 +40,7 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-CRM, generic goals/experiments, reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
+Automatic COTS discovery (Phase 5.5), rich reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
 
 ## Stack
 
@@ -190,7 +190,7 @@ database-independent.
 ## Core business rules
 
 - PostgreSQL timestamps are canonical UTC instants; calendar interpretation uses `APP_TIMEZONE`.
-- Seasons are derived fixed quarters, never stored as redundant records.
+- Season dates are derived fixed quarters; user-owned opening, identity and closing records attach to those quarters without replacing calendar calculations.
 - A partial unique PostgreSQL index guarantees only one active product session per user.
 - A product `Session` is distinct from Better Auth's `AuthSession`.
 - An activity must belong to the selected domain and that domain must belong to the authenticated user.
@@ -265,3 +265,20 @@ primary walkthrough, history decisions, screenshots and known verification limit
 [Current development state](docs/development/CURRENT_STATE.md) summarizes what is
 implemented across domains. Run the local database suites with
 `RUN_BUSINESS_INTEGRATION=1 RUN_FINANCE_INTEGRATION=1 pnpm test`.
+
+## Seasons and Direction (Phase 5)
+
+Open `/direction` for the current season, independent goals, experiments, and the
+chapter library. Opening is optional and resumable. Source-qualified progress is
+computed by the backend; goals retain their horizons across season boundaries.
+Manual character images and quotes use private filesystem storage.
+
+Development media lives in gitignored `.data/become/media/seasons/`. For a future
+production installation, configure `BECOME_DATA_DIR=/srv/data/become` (an absolute,
+persistent path outside the deployment) and give the application account ownership.
+Back up that root together with PostgreSQL. Images are never stored in PostgreSQL
+or served from a public uploads directory. No VPS access is needed for local work.
+
+[Phase 5 architecture and invariants](docs/decisions/PHASE_5.md) documents measurement
+qualification, lifecycle history, media limits and the Phase 5.5 boundary. Run local
+Phase 5 database tests with `RUN_DIRECTION_INTEGRATION=1 pnpm test`.

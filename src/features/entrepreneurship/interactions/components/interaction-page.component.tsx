@@ -16,7 +16,7 @@ export async function InteractionPage({
   const options = await getInteractionOptions(userId, nicheId);
   return (
     <>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">The conversation, kept</p>
           <h2>Reality has a voice.</h2>
@@ -27,29 +27,37 @@ export async function InteractionPage({
         </div>
         <InteractionForm {...options} />
       </header>
-      <div className="business-row-heading">
-        <form className="business-filter">
-          <label className="sr-only" htmlFor="interaction-kind">
-            Interaction kind
-          </label>
-          <select
-            name="kind"
-            id="interaction-kind"
-            className="text-input"
-            defaultValue={query.kind ?? ""}
-          >
-            <option value="">All interactions</option>
-            {interactionKinds.map((kind) => (
-              <option key={kind} value={kind}>
-                {humanize(kind)}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Filter</button>
-        </form>
-        <BatchOutreachForm companies={options.companies} />
-      </div>
-      <InteractionJournal userId={userId} nicheId={nicheId} {...query} />
+      <section className="business-zone business-zone--ledger">
+        <div className="business-row-heading business-toolbar-heading">
+          <div>
+            <p className="eyebrow">Chronological record</p>
+            <h3>Interaction journal</h3>
+          </div>
+          <div className="business-actions">
+            <form className="business-filter">
+              <label className="sr-only" htmlFor="interaction-kind">
+                Interaction kind
+              </label>
+              <select
+                name="kind"
+                id="interaction-kind"
+                className="text-input"
+                defaultValue={query.kind ?? ""}
+              >
+                <option value="">All interactions</option>
+                {interactionKinds.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {humanize(kind)}
+                  </option>
+                ))}
+              </select>
+              <button type="submit">Filter</button>
+            </form>
+            <BatchOutreachForm companies={options.companies} />
+          </div>
+        </div>
+        <InteractionJournal userId={userId} nicheId={nicheId} {...query} />
+      </section>
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { archiveBusinessRecordAction } from "@/features/entrepreneurship/shared/actions/archive-business-record.action";
 export function ArchiveBusinessRecord({
@@ -30,10 +31,9 @@ export function ArchiveBusinessRecord({
           </button>
         )}
       >
-        <button
-          role="menuitem"
+        <MenuItem
           disabled={pending}
-          onClick={() =>
+          onSelect={() =>
             start(async () => {
               try {
                 setNotice(null);
@@ -54,7 +54,7 @@ export function ArchiveBusinessRecord({
           }
         >
           {archived ? "Restore" : "Archive"} {kind}
-        </button>
+        </MenuItem>
       </SubMenu>
       {notice && (
         <p role="status" className="business-hint">

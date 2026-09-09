@@ -27,7 +27,7 @@ export async function ExplorationOverview({
   ]);
   return (
     <>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">The exploration so far</p>
           <h2>What are you learning?</h2>
@@ -35,27 +35,35 @@ export async function ExplorationOverview({
         </div>
         {!niche?.archivedAt && <InteractionForm {...options} />}
       </header>
-      <div className="business-facts exploration-facts">
-        {(
-          [
-            ["Companies", summary.companies, "/market"],
-            ["Interactions", summary.interactions, "/interactions"],
-            ["Problems", summary.problems, "/problems"],
-            ["Offers", summary.offers, "/offers"],
-          ] as const
-        ).map(([label, count, path]) => (
-          <Link href={`/entrepreneurship${path}`} key={label}>
-            <strong>{count}</strong>
-            <span>{label}</span>
-          </Link>
-        ))}
-      </div>
-      <p className="business-hint mb-2xl">
-        {summary.contacted} companies contacted · {summary.conversations}{" "}
-        conversations recorded
-      </p>
+      <section className="business-zone business-summary-zone">
+        <div className="business-row-heading">
+          <div>
+            <p className="eyebrow">Exploration pulse</p>
+            <h3>The work you have kept</h3>
+          </div>
+          <p className="business-hint">
+            {summary.contacted} companies contacted · {summary.conversations}{" "}
+            conversations recorded
+          </p>
+        </div>
+        <div className="business-facts exploration-facts">
+          {(
+            [
+              ["Companies", summary.companies, "/market"],
+              ["Interactions", summary.interactions, "/interactions"],
+              ["Problems", summary.problems, "/problems"],
+              ["Offers", summary.offers, "/offers"],
+            ] as const
+          ).map(([label, count, path]) => (
+            <Link href={`/entrepreneurship${path}`} key={label}>
+              <strong>{count}</strong>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
       <div className="business-overview-grid">
-        <section>
+        <section className="business-zone business-zone--primary">
           <div className="business-row-heading">
             <h3>From the market</h3>
             <Link
@@ -104,7 +112,7 @@ export async function ExplorationOverview({
           )}
         </aside>
       </div>
-      <section className="business-detail-section">
+      <section className="business-zone">
         <div className="business-row-heading">
           <div>
             <h3>Time behind the exploration</h3>
@@ -118,7 +126,7 @@ export async function ExplorationOverview({
         </div>
         {signals.sessions.length ? (
           signals.sessions.map((s) => (
-            <p key={s.id} className="business-detail-section">
+            <article key={s.id} className="business-record-row">
               <Link
                 href={`/sessions?session=${s.id}`}
                 className="business-text-link"
@@ -129,7 +137,7 @@ export async function ExplorationOverview({
                 {businessDate(s.startedAt)}
                 {!s.endedAt ? " · running" : ""}
               </span>
-            </p>
+            </article>
           ))
         ) : (
           <p className="business-inline-empty">
@@ -137,21 +145,28 @@ export async function ExplorationOverview({
           </p>
         )}
       </section>
-      <section className="business-detail-section">
-        <h3>Direction & decisions</h3>
-        {niche?.decisions.map((d) => (
-          <article className="business-detail-section" key={d.id}>
-            <p className="business-meta">
-              {businessDate(d.createdAt)} · {humanize(d.direction)}
-            </p>
-            <p className="business-prose">{d.rationale}</p>
-            {d.scopeSnapshot && (
-              <p className="business-hint">
-                Scope at the time: {d.scopeSnapshot}
+      <section className="business-zone">
+        <div className="business-row-heading">
+          <div>
+            <p className="eyebrow">Decision trail</p>
+            <h3>Direction & decisions</h3>
+          </div>
+        </div>
+        <div className="business-record-list">
+          {niche?.decisions.map((d) => (
+            <article className="business-record-row" key={d.id}>
+              <p className="business-meta">
+                {businessDate(d.createdAt)} · {humanize(d.direction)}
               </p>
-            )}
-          </article>
-        ))}
+              <p className="business-prose">{d.rationale}</p>
+              {d.scopeSnapshot && (
+                <p className="business-hint">
+                  Scope at the time: {d.scopeSnapshot}
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
       </section>
     </>
   );

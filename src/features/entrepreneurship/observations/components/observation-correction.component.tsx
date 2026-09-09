@@ -1,7 +1,10 @@
 "use client";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { BusinessField } from "@/features/entrepreneurship/shared/components/business-field.component";
+import {
+  BusinessField,
+  BusinessFormSection,
+} from "@/features/entrepreneurship/shared/components/business-field.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
 import { correctObservationAction } from "@/features/entrepreneurship/observations/actions/observation.action";
 export function ObservationCorrection({
@@ -31,40 +34,47 @@ export function ObservationCorrection({
         submitLabel="Save correction"
       >
         <CaptureKey />
-        <p className="business-hint">Previously recorded: {statement}</p>
-        <BusinessField
-          label="Statement or behavior"
-          name="statement"
-          multiline
-          required
-          value={statement}
-        />
-        <BusinessField
-          label="Source excerpt or context"
-          name="sourceDescription"
-          multiline
-          required
-          value={sourceDescription}
-        />
-        <BusinessField
-          label="Date observed"
-          name="observedAt"
-          type="date"
-          required
-          value={date}
-        />
-        <BusinessField
-          label="Reason for correction"
-          name="correctionReason"
-          multiline
-          required
-        />
-        <label className="business-hint gap-sm flex">
-          <input type="checkbox" name="meaningUnchanged" />
-          Only wording changed. The source meaning and interpretation are
-          unchanged.
-        </label>
-        <p className="business-hint">
+        <BusinessFormSection
+          eyebrow="Recorded source"
+          title="Correct the source words"
+          description={`Previously recorded: ${statement}`}
+        >
+          <BusinessField
+            label="Statement or behavior"
+            name="statement"
+            multiline
+            required
+            value={statement}
+          />
+          <BusinessField
+            label="Source excerpt or context"
+            name="sourceDescription"
+            multiline
+            required
+            value={sourceDescription}
+          />
+          <BusinessField
+            label="Date observed"
+            name="observedAt"
+            type="date"
+            required
+            value={date}
+          />
+        </BusinessFormSection>
+        <BusinessFormSection eyebrow="Audit trail" title="Explain the change">
+          <BusinessField
+            label="Reason for correction"
+            name="correctionReason"
+            multiline
+            required
+          />
+          <label className="business-choice-row">
+            <input type="checkbox" name="meaningUnchanged" />
+            Only wording changed. The source meaning and interpretation are
+            unchanged.
+          </label>
+        </BusinessFormSection>
+        <p className="business-form-note">
           If the source or company itself was wrong, withdraw this observation
           and record the correct source separately.
         </p>

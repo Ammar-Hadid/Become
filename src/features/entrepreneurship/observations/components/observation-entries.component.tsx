@@ -79,7 +79,7 @@ export function ObservationEntries({
     };
   }, [entries, problems]);
   return (
-    <div ref={root} className="space-y-lg">
+    <div ref={root} className="business-form-collection">
       <input
         type="hidden"
         name="observations"

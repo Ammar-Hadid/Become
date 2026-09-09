@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
@@ -70,12 +71,11 @@ export async function AccountsPage({ userId }: { userId: string }) {
             </option>
           ))}
         </FinanceSelect>
-        <FinanceField
+        <CurrencySelect
           name="currency"
           label="Currency"
           defaultValue="EUR"
           required
-          maxLength={3}
         />
       </div>
       <label className="finance-checkbox-row">

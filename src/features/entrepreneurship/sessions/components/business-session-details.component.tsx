@@ -8,22 +8,31 @@ export function BusinessSessionDetails({
   session: SessionDetailItem;
 }) {
   return (
-    <section>
-      <h3 className="eyebrow mb-sm">Entrepreneurship context</h3>
-      <p className="text-body text-text-secondary">
-        {session.businessCompanySnapshot ?? "No company recorded"} ·{" "}
-        {session.businessNicheSnapshot ?? "No niche recorded"}
-      </p>
-      <p className="text-body text-text-muted mt-sm">
-        {humanize(session.entrepreneurshipActivityKind ?? "UNKNOWN")} · captured
-        for this session
-      </p>
-      <p className="text-body-sm text-text-muted mt-lg">
+    <section className="border-border bg-surface-input rounded-panel p-xl border">
+      <p className="eyebrow">Entrepreneurship context</p>
+      <div className="border-border mt-lg gap-md pt-lg grid border-t">
+        <div>
+          <p className="text-body-sm text-text-muted">
+            Company and exploration
+          </p>
+          <p className="text-body text-text-secondary mt-xs">
+            {session.businessCompanySnapshot ?? "No company recorded"} ·{" "}
+            {session.businessNicheSnapshot ?? "No niche recorded"}
+          </p>
+        </div>
+        <div>
+          <p className="text-body-sm text-text-muted">Activity</p>
+          <p className="text-body text-text-secondary mt-xs">
+            {humanize(session.entrepreneurshipActivityKind ?? "UNKNOWN")}
+          </p>
+        </div>
+      </div>
+      <p className="text-body-sm text-text-muted border-border mt-lg pt-lg border-t">
         Session time does not itself record customer contact or a receipt.
       </p>
       {session.endedAt && (
         <Link
-          className="text-link mt-lg inline-block"
+          className="text-link mt-lg inline-flex"
           href={`/entrepreneurship/interactions/capture?session=${encodeURIComponent(session.id)}`}
         >
           Log an interaction from this session →

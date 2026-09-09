@@ -4,8 +4,12 @@ import { MoreHorizontal, Check } from "lucide-react";
 import { DateTime } from "luxon";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
+import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
-import { BusinessField } from "@/features/entrepreneurship/shared/components/business-field.component";
+import {
+  BusinessField,
+  BusinessFormSection,
+} from "@/features/entrepreneurship/shared/components/business-field.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
 import {
   saveFollowUpAction,
@@ -36,25 +40,31 @@ export function FollowUpForm({
         submitLabel="Save follow-up"
       >
         <CaptureKey />
-        <BusinessField
-          label="Next action"
-          name="title"
-          value={record?.title}
-          required
-        />
-        <BusinessField
-          label="Due date"
-          name="dueOn"
-          type="date"
-          value={
-            record?.dueOn
-              ? DateTime.fromJSDate(new Date(record.dueOn), {
-                  zone: "UTC",
-                }).toISODate()
-              : ""
-          }
-          hint="Leave it undated if you haven’t chosen when."
-        />
+        <BusinessFormSection
+          eyebrow="Commitment"
+          title="The next chosen step"
+          description="A due date is optional until you truly choose one."
+        >
+          <BusinessField
+            label="Next action"
+            name="title"
+            value={record?.title}
+            required
+          />
+          <BusinessField
+            label="Due date"
+            name="dueOn"
+            type="date"
+            value={
+              record?.dueOn
+                ? DateTime.fromJSDate(new Date(record.dueOn), {
+                    zone: "UTC",
+                  }).toISODate()
+                : ""
+            }
+            hint="Leave it undated if you haven’t chosen when."
+          />
+        </BusinessFormSection>
       </RecordForm>
     </RecordDialog>
   );
@@ -131,13 +141,12 @@ export function FollowUpRecord({
           )}
         >
           <FollowUpForm target={target} record={record} />
-          <button
-            role="menuitem"
+          <MenuItem
             disabled={pending}
-            onClick={() => resolve(resolved ? "REOPEN" : "CANCEL")}
+            onSelect={() => resolve(resolved ? "REOPEN" : "CANCEL")}
           >
             {resolved ? "Reopen" : "Cancel follow-up"}
-          </button>
+          </MenuItem>
         </SubMenu>
       </div>
     </article>

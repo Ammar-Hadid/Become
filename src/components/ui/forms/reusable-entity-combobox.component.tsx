@@ -13,7 +13,11 @@ import type { RecordFormState } from "@/components/ui/forms/record-form.types";
 import { normalizeReusableEntityName } from "@/lib/validation/utils/canonical-name.util";
 import { useRecordFormNestedPending } from "@/components/ui/forms/record-form.component";
 
-export type ReusableEntityOption = { id: string; name: string };
+export type ReusableEntityOption = {
+  id: string;
+  name: string;
+  description?: string;
+};
 
 export function ReusableEntityCombobox({
   label,
@@ -29,6 +33,7 @@ export function ReusableEntityCombobox({
   searchAction,
   selectedOptions,
   onSelectionChange,
+  onSelectedOptionChange,
   onQueryChange,
   queryValue,
   optional = true,
@@ -36,6 +41,7 @@ export function ReusableEntityCombobox({
 }: {
   selectedOptions?: ReusableEntityOption[];
   onSelectionChange?: (options: ReusableEntityOption[]) => void;
+  onSelectedOptionChange?: (option: ReusableEntityOption | null) => void;
   onQueryChange?: (query: string) => void;
   queryValue?: string;
   optional?: boolean;
@@ -154,6 +160,7 @@ export function ReusableEntityCombobox({
     }
     setQuery(option.name);
     setSelectedId(option.id);
+    onSelectedOptionChange?.(option);
     setError(null);
     setOpen(false);
     setActiveIndex(0);
@@ -286,6 +293,7 @@ export function ReusableEntityCombobox({
         onChange={(event) => {
           setQuery(event.target.value);
           setSelectedId("");
+          onSelectedOptionChange?.(null);
           setError(null);
           setActiveIndex(0);
           setOpen(true);
@@ -302,7 +310,7 @@ export function ReusableEntityCombobox({
         >
           {matches.map((option, index) => (
             <button
-              className={`rounded-control px-md py-sm text-body flex w-full text-left hover:bg-white/5 ${
+              className={`rounded-control px-md py-sm text-body flex w-full flex-col text-left hover:bg-white/5 ${
                 index === activeIndex ? "bg-white/5" : ""
               }`}
               id={`${listboxId}-option-${index}`}
@@ -313,7 +321,12 @@ export function ReusableEntityCombobox({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(option)}
             >
-              {option.name}
+              <span>{option.name}</span>
+              {option.description && (
+                <span className="text-body-sm text-text-muted mt-xs">
+                  {option.description}
+                </span>
+              )}
             </button>
           ))}
           {canCreate && (

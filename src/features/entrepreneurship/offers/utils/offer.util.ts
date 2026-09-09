@@ -1,14 +1,11 @@
-import {
-  formatMoney,
-  normalizeCurrency,
-  parseMoney,
-} from "@/lib/money/utils/money.util";
+import { currencySchema } from "@/lib/money/schemas/currency.schema";
+import { formatMoney, parseMoney } from "@/lib/money/utils/money.util";
 export function quoteMoney(
   amount: string | null | undefined,
   currency: string,
 ) {
   if (!amount?.trim()) return { priceMinor: null, currency: null };
-  const code = normalizeCurrency(currency);
+  const code = currencySchema.parse(currency);
   const priceMinor = parseMoney(amount, code);
   if (priceMinor < 0n) throw new Error("A quoted price cannot be negative.");
   return { priceMinor, currency: code };

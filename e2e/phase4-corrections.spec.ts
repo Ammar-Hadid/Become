@@ -146,18 +146,20 @@ test("company and accepted offer connect existing work and explicitly attribute 
     .toBe(2);
   await page.goto(`/entrepreneurship/offers/${offer.id}`);
   await page.getByRole("button", { name: "Revise terms", exact: true }).click();
-  const currency = page.getByRole("combobox", {
-    name: "Currency",
-    exact: true,
-  });
-  await currency.fill("madeup");
-  await expect(
-    page.getByRole("listbox", { name: "Currency options" }).getByRole("option"),
-  ).toHaveCount(0);
-  await expect(page.locator('input[name="currency"]')).toHaveValue("");
-  await currency.fill("Euro");
-  await page.getByRole("option", { name: "EUR · Euro", exact: true }).click();
-  await expect(page.locator('input[name="currency"]')).toHaveValue("EUR");
+  const currency = page.getByRole("button", { name: "Currency", exact: true });
+  await currency.click();
+  const currencies = page.getByRole("menu", { name: "Currency", exact: true });
+  await expect(currencies.getByRole("menuitemradio")).toHaveCount(5);
+  await currencies
+    .getByRole("menuitemradio", { name: "CAD · Canadian dollar", exact: true })
+    .click();
+  await expect(page.locator('select[name="currency"]')).toHaveValue("CAD");
+  await expect(currency).toBeFocused();
+  await currency.press("ArrowDown");
+  await page
+    .getByRole("menuitemradio", { name: "EUR · Euro", exact: true })
+    .press("Enter");
+  await expect(page.locator('select[name="currency"]')).toHaveValue("EUR");
   await page
     .getByRole("button", { name: "Close Create a new revision" })
     .click();

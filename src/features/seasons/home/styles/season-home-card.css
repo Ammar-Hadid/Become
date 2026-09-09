@@ -1,0 +1,85 @@
+.season-home {
+  margin-top: var(--spacing-3xl);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-2xl);
+}
+
+.season-home > header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.season-home > header h2 {
+  margin-top: var(--spacing-xs);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  font-weight: 560;
+}
+
+.season-home > header > a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-home > header svg {
+  width: 15px;
+  height: 15px;
+}
+
+.season-home-reading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  padding: 0 var(--spacing-sm);
+}
+
+.season-home-reading > svg {
+  width: 17px;
+  height: 17px;
+  color: var(--color-primary);
+}
+
+.season-home-reading > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.season-home-reading strong {
+  overflow: hidden;
+  font-weight: 570;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.season-home-reading small {
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.season-home-reading > a {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+@media (max-width: 639px) {
+  .season-home > header {
+    align-items: flex-start;
+  }
+
+  .season-home > header > a {
+    flex: 0 0 auto;
+  }
+}

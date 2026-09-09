@@ -13,7 +13,7 @@ export function OfferRevisionComparison({
 }) {
   if (revisions.length < 2) return null;
   return (
-    <details className="business-disclosure">
+    <details className="business-disclosure business-revision-comparison">
       <summary>Earlier quoted terms · {revisions.length - 1}</summary>
       <div>
         {revisions.slice(0, -1).map((next, i) => {
@@ -41,7 +41,7 @@ export function OfferRevisionComparison({
             ],
           ];
           return (
-            <article key={next.id}>
+            <article className="business-revision-card" key={next.id}>
               <h3>
                 Revision {prior.version} → {next.version}
               </h3>
@@ -62,32 +62,54 @@ export function OfferRevisionComparison({
               {fields
                 .filter(([, a, b]) => a !== b)
                 .map(([label, a, b]) => (
-                  <div className="business-detail-section" key={label}>
+                  <div className="business-revision-change" key={label}>
                     <h4>{label}</h4>
-                    <p className="business-prose">
-                      <strong>Previous: </strong>
-                      {a || "Not specified"}
-                    </p>
-                    <p className="business-prose">
-                      <strong>Revised: </strong>
-                      {b || "Not specified"}
-                    </p>
+                    <div className="business-revision-values">
+                      <div className="business-revision-value business-revision-value--previous">
+                        <p className="eyebrow">Previous</p>
+                        <p className="business-prose">{a || "Not specified"}</p>
+                      </div>
+                      <div className="business-revision-value business-revision-value--revised">
+                        <p className="eyebrow">Revised</p>
+                        <p className="business-prose">{b || "Not specified"}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
-              {[prior, next].map((revision) => (
-                <details key={revision.id}>
+              {[prior, next].map((revision, revisionIndex) => (
+                <details
+                  className={`business-nested-disclosure business-nested-disclosure--${revisionIndex === 0 ? "previous" : "revised"}`}
+                  key={revision.id}
+                >
                   <summary>
                     Complete terms · revision {revision.version}
                   </summary>
-                  <h4>{revision.title}</h4>
-                  <p>{quoteLabel(revision)}</p>
-                  <p className="business-prose">{revision.scope}</p>
-                  <p className="business-prose">
-                    {revision.terms || "No additional terms"}
-                  </p>
-                  {revision.expiresOn && (
-                    <p>Expires {businessDate(revision.expiresOn)}</p>
-                  )}
+                  <dl className="business-revision-terms">
+                    <div>
+                      <dt>Offer</dt>
+                      <dd>{revision.title}</dd>
+                    </div>
+                    <div>
+                      <dt>Price</dt>
+                      <dd>{quoteLabel(revision)}</dd>
+                    </div>
+                    <div className="business-revision-term--wide">
+                      <dt>Scope</dt>
+                      <dd>{revision.scope}</dd>
+                    </div>
+                    <div className="business-revision-term--wide">
+                      <dt>Terms</dt>
+                      <dd>{revision.terms || "No additional terms"}</dd>
+                    </div>
+                    <div>
+                      <dt>Expiry</dt>
+                      <dd>
+                        {revision.expiresOn
+                          ? businessDate(revision.expiresOn)
+                          : "No expiry"}
+                      </dd>
+                    </div>
+                  </dl>
                 </details>
               ))}
             </article>

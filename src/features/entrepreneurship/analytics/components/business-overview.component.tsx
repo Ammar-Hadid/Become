@@ -43,7 +43,7 @@ export async function BusinessOverview({
     data.facts.time.find((t) => t.kind === "PREPARATION")?.seconds ?? 0;
   return (
     <>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">Direction, grounded</p>
           <h2>Closer to the people. Clearer on the problem.</h2>
@@ -54,8 +54,8 @@ export async function BusinessOverview({
         </div>
         <InteractionForm {...options} />
       </header>
-      <div className="business-overview-grid">
-        <section>
+      <div className="business-overview-grid business-dashboard-grid">
+        <section className="business-zone business-zone--primary">
           <div className="business-row-heading">
             <h3>
               <Compass aria-hidden="true" />
@@ -137,7 +137,7 @@ export async function BusinessOverview({
           )}
         </aside>
       </div>
-      <section className="business-market-voice">
+      <section className="business-market-voice business-zone">
         <div className="business-row-heading">
           <h3>
             <Quote aria-hidden="true" />
@@ -178,7 +178,7 @@ export async function BusinessOverview({
           </p>
         )}
       </section>
-      <section>
+      <section className="business-zone business-period-zone">
         <div className="business-row-heading">
           <div>
             <h3>

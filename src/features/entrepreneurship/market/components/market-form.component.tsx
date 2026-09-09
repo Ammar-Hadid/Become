@@ -5,6 +5,7 @@ import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import {
   BusinessField,
+  BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import {
@@ -56,55 +57,70 @@ export function MarketForm({
             value={record.updatedAt?.toISOString() ?? ""}
           />
         )}
-        <BusinessField label="Name" name="name" value={record?.name} required />
-        {kind === "company" ? (
-          <>
-            <BusinessField
-              label="Website"
-              name="website"
-              type="url"
-              value={record?.website}
-            />
-            <BusinessField
-              label="Context & notes"
-              name="notes"
-              multiline
-              value={record?.notes}
-            />
-            {niches.length > 0 && (
-              <fieldset>
-                <legend className="field-label">Niches · optional</legend>
-                <div className="business-checks">
-                  {niches.map((niche) => (
-                    <label key={niche.id}>
-                      <input
-                        type="checkbox"
-                        name="nicheIds"
-                        value={niche.id}
-                        defaultChecked={
-                          record
-                            ? record.niches?.some(
-                                (link) => link.nicheId === niche.id,
-                              )
-                            : exploration?.id === niche.id
-                        }
-                      />
-                      {niche.name}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            )}
-          </>
-        ) : (
+        <BusinessFormSection
+          eyebrow={kind === "company" ? "Company context" : "Exploration"}
+          title={kind === "company" ? "The company" : "The market boundary"}
+          description={
+            kind === "company"
+              ? "Keep identity and useful context together."
+              : "Name the people or workflow you want to understand."
+          }
+        >
           <BusinessField
-            label="What are you exploring?"
-            name="scope"
-            multiline
-            value={record?.scope}
-            hint="Describe the people, setting or workflow. This is your exploration scope, not a proven problem."
+            label="Name"
+            name="name"
+            value={record?.name}
+            required
           />
-        )}
+          {kind === "company" ? (
+            <>
+              <BusinessField
+                label="Website"
+                name="website"
+                type="url"
+                value={record?.website}
+              />
+              <BusinessField
+                label="Context & notes"
+                name="notes"
+                multiline
+                value={record?.notes}
+              />
+              {niches.length > 0 && (
+                <fieldset>
+                  <legend className="field-label">Niches · optional</legend>
+                  <div className="business-checks">
+                    {niches.map((niche) => (
+                      <label key={niche.id}>
+                        <input
+                          type="checkbox"
+                          name="nicheIds"
+                          value={niche.id}
+                          defaultChecked={
+                            record
+                              ? record.niches?.some(
+                                  (link) => link.nicheId === niche.id,
+                                )
+                              : exploration?.id === niche.id
+                          }
+                        />
+                        {niche.name}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+            </>
+          ) : (
+            <BusinessField
+              label="What are you exploring?"
+              name="scope"
+              multiline
+              value={record?.scope}
+              hint="Describe the people, setting or workflow. This is your exploration scope, not a proven problem."
+            />
+          )}
+        </BusinessFormSection>
       </RecordForm>
     </RecordDialog>
   );
@@ -124,18 +140,20 @@ export function DirectionForm({
       variant="quiet"
     >
       <RecordForm action={changeDirectionAction.bind(null, id)} closeOnSuccess>
-        <BusinessSelect label="Direction" name="direction" value={direction}>
-          <option value="EXPLORING">Exploring</option>
-          <option value="PURSUING">Pursuing</option>
-          <option value="PAUSED">Paused</option>
-          <option value="STOPPED">Stopped</option>
-        </BusinessSelect>
-        <BusinessField
-          label="Why this change?"
-          name="rationale"
-          multiline
-          required
-        />
+        <BusinessFormSection eyebrow="Decision" title="Change the direction">
+          <BusinessSelect label="Direction" name="direction" value={direction}>
+            <option value="EXPLORING">Exploring</option>
+            <option value="PURSUING">Pursuing</option>
+            <option value="PAUSED">Paused</option>
+            <option value="STOPPED">Stopped</option>
+          </BusinessSelect>
+          <BusinessField
+            label="Why this change?"
+            name="rationale"
+            multiline
+            required
+          />
+        </BusinessFormSection>
       </RecordForm>
     </RecordDialog>
   );

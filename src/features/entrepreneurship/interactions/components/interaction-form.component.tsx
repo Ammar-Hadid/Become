@@ -12,6 +12,7 @@ import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
 import {
   BusinessField,
+  BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import {
@@ -89,47 +90,53 @@ export function CaptureFields({
           value={prefill.sourceSessionId}
         />
       )}
-      <div className="gap-lg grid grid-cols-2">
-        <BusinessSelect
-          label="What happened?"
-          name="kind"
-          value={
-            value?.kind ?? (respondsTo ? "REPLY_RECEIVED" : "CONVERSATION")
-          }
-        >
-          {interactionKinds.map((kind) => (
-            <option key={kind} value={kind}>
-              {humanize(kind)}
-            </option>
-          ))}
-        </BusinessSelect>
+      <BusinessFormSection
+        eyebrow="Essential record"
+        title="The event"
+        description="Start with what happened, when, and who it involved."
+      >
+        <div className="gap-lg grid grid-cols-2">
+          <BusinessSelect
+            label="What happened?"
+            name="kind"
+            value={
+              value?.kind ?? (respondsTo ? "REPLY_RECEIVED" : "CONVERSATION")
+            }
+          >
+            {interactionKinds.map((kind) => (
+              <option key={kind} value={kind}>
+                {humanize(kind)}
+              </option>
+            ))}
+          </BusinessSelect>
+          <BusinessField
+            label="Date"
+            name="occurredAt"
+            type="date"
+            required
+            value={value?.date ?? prefill?.date ?? businessToday()}
+          />
+        </div>
         <BusinessField
-          label="Date"
-          name="occurredAt"
-          type="date"
+          label="Summary"
+          name="summary"
+          multiline
           required
-          value={value?.date ?? prefill?.date ?? businessToday()}
+          value={value?.summary ?? prefill?.summary}
         />
-      </div>
-      <BusinessField
-        label="Summary"
-        name="summary"
-        multiline
-        required
-        value={value?.summary ?? prefill?.summary}
-      />
-      <ReusableEntityCombobox
-        label="Company"
-        entityName="company"
-        idFieldName="companyId"
-        queryFieldName="companyName"
-        options={companies}
-        initialId={value?.companyId ?? companyId}
-        initialName={value?.companyName ?? companyName}
-        searchAction={searchCompaniesAction}
-        deferCreation
-        placeholder="Find or add a company…"
-      />
+        <ReusableEntityCombobox
+          label="Company"
+          entityName="company"
+          idFieldName="companyId"
+          queryFieldName="companyName"
+          options={companies}
+          initialId={value?.companyId ?? companyId}
+          initialName={value?.companyName ?? companyName}
+          searchAction={searchCompaniesAction}
+          deferCreation
+          placeholder="Find or add a company…"
+        />
+      </BusinessFormSection>
       <details className="business-disclosure" open={value ? true : undefined}>
         <summary>Context, participants & notes</summary>
         <div>
@@ -214,8 +221,11 @@ export function CaptureFields({
         </>
       )}
       {value && (
-        <>
-          <div className="business-hint">
+        <BusinessFormSection
+          eyebrow="Correction"
+          title="Protect the historical record"
+        >
+          <div className="business-form-note">
             <strong>Correcting the recorded event</strong>
             <p>Current summary: {value.summary}</p>
             <p>
@@ -229,11 +239,11 @@ export function CaptureFields({
             multiline
             required
           />
-          <label className="business-hint gap-sm flex">
+          <label className="business-choice-row">
             <input type="checkbox" name="meaningUnchanged" />
             Summary edits only correct wording; the source meaning is unchanged.
           </label>
-        </>
+        </BusinessFormSection>
       )}
     </>
   );

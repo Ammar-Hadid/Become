@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
-import { normalizeCurrency, parseMoney } from "@/lib/money/utils/money.util";
+import { parseMoney } from "@/lib/money/utils/money.util";
 
 export const financeName = z.string().trim().min(1, "Enter a name.").max(120);
 export const optionalId = z
@@ -18,17 +18,7 @@ export const financeNotes = z
   .optional()
   .nullable()
   .transform((value) => value || null);
-export const currencySchema = z.string().transform((value, context) => {
-  try {
-    return normalizeCurrency(value);
-  } catch {
-    context.addIssue({
-      code: "custom",
-      message: "Choose a valid ISO currency.",
-    });
-    return z.NEVER;
-  }
-});
+export { currencySchema } from "@/lib/money/schemas/currency.schema";
 export function moneyValue(
   value: string,
   currency: string,

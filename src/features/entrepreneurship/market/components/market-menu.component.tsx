@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { archiveMarketAction } from "@/features/entrepreneurship/market/actions/market.action";
 export function MarketMenu({
@@ -25,10 +26,9 @@ export function MarketMenu({
           </button>
         )}
       >
-        <button
-          role="menuitem"
+        <MenuItem
           disabled={pending}
-          onClick={() =>
+          onSelect={() =>
             start(async () => {
               const result = await archiveMarketAction(kind, id, archived);
               setError(result.error);
@@ -36,7 +36,7 @@ export function MarketMenu({
           }
         >
           {archived ? "Restore" : "Archive"} {kind}
-        </button>
+        </MenuItem>
       </SubMenu>
       {error && (
         <p role="alert" className="form-error">

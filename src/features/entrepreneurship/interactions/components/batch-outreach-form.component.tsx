@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { BusinessFormSection } from "@/features/entrepreneurship/shared/components/business-field.component";
 import {
   batchOutreachAction,
   searchCompaniesAction,
@@ -92,23 +93,33 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
           ),
         )}
       />
-      <ReusableEntityCombobox
-        label="Find recipients"
-        optional={false}
-        entityName="company"
-        idFieldName="companyIds"
-        queryFieldName="recipientSearch"
-        options={companies}
-        searchAction={searchCompaniesAction}
-        selectedOptions={selected}
-        onSelectionChange={setSelected}
-        placeholder="Search all active companies…"
-      />
-      <p className="field-label">
-        Companies actually contacted · {selected.length} selected
-      </p>
-      <fieldset className="space-y-lg">
-        <legend>Shared defaults</legend>
+      <BusinessFormSection
+        eyebrow="Recipients"
+        title="Who you actually contacted"
+        description="Select only companies that received this outreach."
+      >
+        <ReusableEntityCombobox
+          label="Find recipients"
+          optional={false}
+          entityName="company"
+          idFieldName="companyIds"
+          queryFieldName="recipientSearch"
+          options={companies}
+          searchAction={searchCompaniesAction}
+          selectedOptions={selected}
+          onSelectionChange={setSelected}
+          placeholder="Search all active companies…"
+        />
+        <p className="business-hint">
+          {selected.length} {selected.length === 1 ? "company" : "companies"}{" "}
+          selected
+        </p>
+      </BusinessFormSection>
+      <BusinessFormSection
+        eyebrow="Shared record"
+        title="Defaults for every message"
+        description="You can override any field for an individual company below."
+      >
         {(["occurredAt", "channel", "summary", "notes"] as const).map(
           (name) => (
             <div key={name}>
@@ -128,12 +139,12 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
             </div>
           ),
         )}
-      </fieldset>
+      </BusinessFormSection>
       {selected.map((company) => {
         const own = overrides[company.id] ?? {};
         const effective = { ...shared, ...own };
         return (
-          <article key={company.id} className="business-detail-section">
+          <article key={company.id} className="business-form-record">
             <h3>{company.name}</h3>
             <p className="business-meta">
               {effective.occurredAt} · {humanize(effective.channel)} ·{" "}
@@ -190,7 +201,7 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
           </article>
         );
       })}
-      <label className="business-hint gap-sm flex">
+      <label className="business-choice-row business-choice-row--confirm">
         <input type="checkbox" name="confirmedSent" required />I actually sent
         this message to each selected company. This records outreach already
         sent; it does not send messages.

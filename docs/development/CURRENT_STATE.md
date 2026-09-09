@@ -1,7 +1,7 @@
 # Current development state
 
-Phases 1–3 and the Phase 4 Entrepreneurship implementation are present. Current
-Phase 4 work is on `feature/phase-4`, uncommitted, alongside preserved timer,
+Phases 1–5 are present, including Entrepreneurship and Seasons & Direction.
+Work remains on `feature/phase-4`, uncommitted, alongside preserved timer,
 Engineering, Finance and shared motion work. The repository is authoritative for
 what exists; the master specification also describes future work.
 
@@ -24,6 +24,10 @@ what exists; the master specification also describes future work.
   Finance-owned receipt attribution, optional Session context, and an overview
   scoped to the chosen niche, market observations and the next chosen action.
   See [niche-first implementation](PHASE_4_NICHE_FIRST.md) for lifecycle semantics.
+- Direction: fixed-quarter opening/identity/closing, canonical goals, seasonal roles,
+  exact source-qualified criteria, dated manual judgments, independent experiments,
+  meaningful history, private filesystem media, manual quotes and chapter library.
+  See [Phase 5 decisions](../decisions/PHASE_5.md).
 - Business attention is available on Home; Finance also surfaces receipt attribution
   that needs review. Legacy Entrepreneurship domain links redirect to the dedicated
   workspace and preserve query parameters.
@@ -51,7 +55,8 @@ business allocations are separate dimensions of one payment, never additive mone
 - Completed Session timing is not generally editable or deletable.
 - No Contact directory, email sending, campaigns, AI evidence judgments, invoicing,
   subscription billing, projected recurring revenue, acquisition ROI or business
-  effective hourly rate. No Phase 5 work.
+  effective hourly rate. Automatic COTS discovery belongs to Phase 5.5; rich
+  seasonal reviews, recurring-commitment compliance, and later phases remain deferred.
 - No guessed historical business categorization or automatic validation labels.
 - Global reference catalog synchronization remains an explicit developer operation.
 - Balance reconciliation is an observed anchor; missing anchors mean unknown.

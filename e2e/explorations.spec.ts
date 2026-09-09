@@ -171,7 +171,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     fullPage: true,
   });
   await page
-    .getByRole("button", { name: "Pause or stop", exact: true })
+    .getByRole("button", { name: "Review direction", exact: true })
     .click();
   await page
     .getByRole("combobox", { name: "Next direction" })
@@ -272,4 +272,100 @@ test("explorations keep a fresh workspace, relational history and contextual cap
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+});
+
+test("direction review offers contextual choices and preserves explicit continue decisions", async ({
+  page,
+}) => {
+  await page.goto("/sign-in");
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  const email = `direction-e2e-${randomUUID()}@example.com`;
+  await page.getByTestId("name-input").fill("Disposable direction QA");
+  await page.getByTestId("email-input").fill(email);
+  await page
+    .getByTestId("password-input")
+    .fill("become-disposable-exploration-password");
+  await page.getByTestId("auth-submit").click();
+  await expect(page).toHaveURL("/");
+  await page.goto("/entrepreneurship");
+  const path = await startExploration(page, "Direction review");
+  const nicheId = path.split("/").at(-1)!;
+  const initialDecisions = await prisma.nicheDecision.count({
+    where: { nicheId },
+  });
+  const cases = [
+    {
+      current: "EXPLORING",
+      next: "EXPLORING",
+      labels: [
+        "Continue exploring",
+        "Pause for now",
+        "Pursue this market",
+        "Stop exploring",
+      ],
+    },
+    {
+      current: "EXPLORING",
+      next: "PAUSED",
+      labels: [
+        "Continue exploring",
+        "Pause for now",
+        "Pursue this market",
+        "Stop exploring",
+      ],
+    },
+    {
+      current: "PAUSED",
+      next: "PURSUING",
+      labels: ["Resume exploring", "Pursue this market", "Stop exploring"],
+    },
+    {
+      current: "PURSUING",
+      next: "STOPPED",
+      labels: ["Return to exploration", "Pause for now", "Stop exploring"],
+    },
+    {
+      current: "STOPPED",
+      next: "EXPLORING",
+      labels: ["Resume exploring", "Pursue this market"],
+    },
+  ];
+  for (const [index, step] of cases.entries()) {
+    const active = ["EXPLORING", "PURSUING"].includes(step.current);
+    await page
+      .getByRole("button", {
+        name: active ? "Review direction" : "Resume exploration",
+        exact: true,
+      })
+      .click();
+    const dialog = page.getByRole("dialog", {
+      name: "Choose your next direction",
+    });
+    await expect(dialog).toBeVisible();
+    const select = dialog.getByRole("combobox", { name: "Next direction" });
+    await expect(select.locator("option")).toHaveText(step.labels);
+    await expect(select).toHaveValue("EXPLORING");
+    await select.selectOption(step.next);
+    const rationale = `Decision ${index}: ${step.current} to ${step.next}`;
+    await dialog
+      .getByRole("textbox", { name: "Why this decision?" })
+      .fill(rationale);
+    await dialog.getByRole("button", { name: "Save direction" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText(rationale, { exact: true })).toBeVisible();
+    const niche = await prisma.niche.findUniqueOrThrow({
+      where: { id: nicheId },
+    });
+    expect(niche.direction).toBe(step.next);
+    expect(await prisma.nicheDecision.count({ where: { nicheId } })).toBe(
+      initialDecisions + index + 1,
+    );
+    expect(
+      await prisma.nicheDecision.count({
+        where: { nicheId, direction: step.next, rationale },
+      }),
+    ).toBe(1);
+  }
 });

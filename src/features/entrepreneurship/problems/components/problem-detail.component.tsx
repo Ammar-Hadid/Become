@@ -77,7 +77,7 @@ export async function ProblemDetail({
       <Link className="business-back" href="/entrepreneurship/problems">
         ← Problems
       </Link>
-      <header className="business-section-heading">
+      <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">
             {humanize(problem.origin)} · {problem.nicheSnapshot ?? "No niche"}
@@ -114,14 +114,14 @@ export async function ProblemDetail({
           />
         </div>
       </header>
-      <section className="business-original-claim">
+      <section className="business-original-claim business-focus-statement">
         <p className="eyebrow">
           Original belief · {businessDate(problem.formulatedAt)}
         </p>
         <p>{problem.initialStatement}</p>
         <span className="business-hint">This is the claim being examined.</span>
       </section>
-      <section className="business-detail-section">
+      <section className="business-zone business-evidence-zone">
         <div className="business-row-heading">
           <div>
             <h3>Evidence, with its source</h3>
@@ -281,8 +281,14 @@ export async function ProblemDetail({
           </div>
         )}
       </section>
-      <section className="business-detail-section">
-        <h3>Judgments over time</h3>
+      <section className="business-zone business-judgment-zone">
+        <div className="business-row-heading">
+          <div>
+            <p className="eyebrow">Decision trail</p>
+            <h3>Judgments over time</h3>
+          </div>
+          <span className="business-count">{problem.assessments.length}</span>
+        </div>
         {problem.assessments.length ? (
           problem.assessments.map((assessment) => {
             const changed = assessment.basis.some(

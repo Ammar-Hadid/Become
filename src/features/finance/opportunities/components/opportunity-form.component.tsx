@@ -1,4 +1,5 @@
 "use client";
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import { useRouter } from "next/navigation";
 import { FinanceForm } from "@/features/finance/components/finance-form.component";
 import {
@@ -121,10 +122,9 @@ export function OpportunityForm({
             Expected compensation stays prospective. It never counts as received
             income.
           </p>
-          <FinanceField
+          <CurrencySelect
             label="Expected currency"
             name="expectedCurrency"
-            maxLength={3}
             defaultValue={initial.expectedCurrency ?? ""}
           />
         </div>

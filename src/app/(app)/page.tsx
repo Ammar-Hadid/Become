@@ -6,6 +6,7 @@ import { getRecentSessions } from "@/features/sessions/queries/session.query";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { getSeasonForDate } from "@/lib/dates/utils/period.util";
+import { getSeasonView } from "@/features/seasons/queries/season.query";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -14,11 +15,13 @@ export default async function HomePage() {
   if (!now.isValid)
     throw new Error(`Invalid application timezone: ${APP_TIMEZONE}`);
   const season = getSeasonForDate(now);
-  const [dashboard, recentSessions, businessAttention] = await Promise.all([
-    getDashboardData(user.id, "week", now),
-    getRecentSessions(user.id, 8),
-    getBusinessAttention(user.id),
-  ]);
+  const [dashboard, recentSessions, businessAttention, seasonDirection] =
+    await Promise.all([
+      getDashboardData(user.id, "week", now),
+      getRecentSessions(user.id, 8),
+      getBusinessAttention(user.id),
+      getSeasonView(user.id),
+    ]);
   const seasonProgress =
     (now.diff(season.start, "seconds").seconds /
       season.end.diff(season.start, "seconds").seconds) *
@@ -33,6 +36,7 @@ export default async function HomePage() {
       initialData={dashboard}
       recentSessions={recentSessions}
       businessAttention={businessAttention}
+      seasonDirection={seasonDirection}
     />
   );
 }

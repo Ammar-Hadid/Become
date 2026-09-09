@@ -3,7 +3,7 @@
 import type { FinanceWorkOptions } from "@/features/finance/sessions/types/finance-session.types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Home, LogOut, Menu, Settings, X } from "lucide-react";
+import { Clock3, Compass, Home, LogOut, Menu, Settings, X } from "lucide-react";
 import { useRef, useState, ViewTransition } from "react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
@@ -83,6 +83,25 @@ export function AppShell({
               </ViewTransition>
             )}
             <Home /> Home
+          </Link>
+          <Link
+            className={cn(
+              "nav-link",
+              pathname.startsWith("/direction") && "active",
+            )}
+            href="/direction"
+            onClick={() => setMobileOpen(false)}
+          >
+            {pathname.startsWith("/direction") && (
+              <ViewTransition
+                name={indicatorName}
+                share="motion-guide"
+                default="none"
+              >
+                <span className="nav-link-indicator" aria-hidden="true" />
+              </ViewTransition>
+            )}
+            <Compass /> Direction
           </Link>
           <Link
             className={cn("nav-link", pathname === "/sessions" && "active")}
@@ -257,10 +276,10 @@ export function AppShell({
             <TimerTrigger compact />
           </div>
           <Link
-            href="/sessions"
-            className={cn(pathname === "/sessions" && "active")}
+            href="/direction"
+            className={cn(pathname.startsWith("/direction") && "active")}
           >
-            {pathname === "/sessions" && (
+            {pathname.startsWith("/direction") && (
               <ViewTransition
                 name="quick-navigation-indicator"
                 share="motion-guide"
@@ -269,8 +288,8 @@ export function AppShell({
                 <span className="mobile-bottom-nav-indicator" aria-hidden />
               </ViewTransition>
             )}
-            <Clock3 />
-            <span>Sessions</span>
+            <Compass />
+            <span>Direction</span>
           </Link>
         </nav>
       </div>

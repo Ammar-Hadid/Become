@@ -8,7 +8,7 @@ export function SessionInteractionCapture(
 ) {
   const router = useRouter();
   return (
-    <div className="max-w-page w-full">
+    <div className="business-form-surface max-w-page w-full">
       <RecordForm
         action={logInteractionAction}
         submitLabel="Save actual interaction"

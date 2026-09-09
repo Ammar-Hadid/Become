@@ -51,7 +51,7 @@ export async function MarketPage({
     <MarketFilters initial={params.toString()}>
       {!nicheId && (
         <>
-          <header className="business-section-heading">
+          <header className="business-section-heading business-page-heading">
             <div>
               <p className="eyebrow">The field</p>
               <h2>Know the people behind the market.</h2>
@@ -61,7 +61,10 @@ export async function MarketPage({
               </p>
             </div>
           </header>
-          <section className="business-niches" aria-label="Niches">
+          <section
+            className={`business-niches business-zone business-zone--primary${nicheArchived ? "business-zone--archived" : ""}`}
+            aria-label="Niches"
+          >
             <div className="business-row-heading">
               <h3>
                 <Compass aria-hidden="true" />
@@ -84,7 +87,7 @@ export async function MarketPage({
                   <Link
                     key={niche.id}
                     href={`/entrepreneurship/market/niches/${niche.id}`}
-                    className="business-niche"
+                    className={`business-niche${nicheArchived ? "business-record--archived" : ""}`}
                   >
                     <span className="business-kicker">
                       {humanize(niche.direction)}
@@ -108,7 +111,9 @@ export async function MarketPage({
           </section>
         </>
       )}
-      <section>
+      <section
+        className={`business-zone business-zone--ledger business-market-companies${archived ? "business-zone--archived" : ""}`}
+      >
         <div className="business-row-heading">
           <h3>
             Companies{" "}
@@ -133,7 +138,7 @@ export async function MarketPage({
               {data.companies.map((company) => (
                 <Link
                   key={company.id}
-                  className="business-company-row"
+                  className={`business-company-row${archived ? "business-record--archived" : ""}`}
                   href={`/entrepreneurship/market/companies/${company.id}`}
                 >
                   <span className="business-monogram" aria-hidden="true">

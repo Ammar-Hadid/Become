@@ -1,3 +1,4 @@
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -43,12 +44,11 @@ export async function SavingsPage({ userId }: { userId: string }) {
         required
       />
       <div className="finance-form-grid">
-        <FinanceField
+        <CurrencySelect
           label="Currency"
           name="currency"
           defaultValue="EUR"
           required
-          maxLength={3}
         />
         <FinanceField
           label="Target cost"

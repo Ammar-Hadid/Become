@@ -1,3 +1,4 @@
+import { currencySchema } from "@/lib/money/schemas/currency.schema";
 import { z } from "zod";
 import { optionalText } from "@/features/entrepreneurship/market/schemas/market.schema";
 import {
@@ -13,7 +14,7 @@ export const quoteSchema = z.object({
   terms: optionalText(),
   priceBasis: z.enum(["FIXED", "HOURLY", "PER_UNIT", "RECURRING"]),
   amount: optionalText(40),
-  currency: z.string().trim().default("EUR"),
+  currency: currencySchema.default("EUR"),
   unitLabel: optionalText(120),
   intervalUnit: z.enum(["DAY", "WEEK", "MONTH", "YEAR"]).optional(),
   intervalCount: z.coerce.number().int().positive().max(120).optional(),

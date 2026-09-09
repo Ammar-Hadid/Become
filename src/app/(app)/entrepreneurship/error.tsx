@@ -1,7 +1,7 @@
 "use client";
 export default function Error({ reset }: { reset: () => void }) {
   return (
-    <div className="business-empty">
+    <div className="business-empty business-zone">
       <h2>These records couldn’t be loaded.</h2>
       <p>Your saved work is still there.</p>
       <button

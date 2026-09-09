@@ -1,8 +1,7 @@
 "use client";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { WorkSourceChoiceFields } from "@/features/entrepreneurship/market/components/company-work-source.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
-import { supportedCurrencyOptions } from "@/lib/money/utils/money.util";
+import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import { ObservationEntries } from "@/features/entrepreneurship/observations/components/observation-entries.component";
 import { useState } from "react";
 import { useBusinessRouter as useRouter } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
@@ -11,6 +10,7 @@ import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
 import {
   BusinessField,
+  BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import {
@@ -56,93 +56,95 @@ function QuoteFields({
           <p className="business-hint">Offer context: {exploration.name}.</p>
         </>
       )}
-      {companyId ? (
-        <input type="hidden" name="companyId" value={companyId} />
-      ) : (
-        <BusinessSelect label="Company" name="companyId" required>
-          <option value="">Choose a company</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </BusinessSelect>
-      )}
-      <BusinessField
-        label="Offer title"
-        name="title"
-        value={initial?.title}
-        required
-      />
-      <BusinessField
-        label="Scope & deliverables"
-        name="scope"
-        multiline
-        value={initial?.scope}
-        required
-      />
-      <label className="field-label">
-        Pricing basis
-        <select
-          className="text-input mt-sm"
-          name="priceBasis"
-          value={basis}
-          onChange={(event) => setBasis(event.target.value)}
-        >
-          <option value="FIXED">Fixed quote</option>
-          <option value="HOURLY">Hourly quote</option>
-          <option value="PER_UNIT">Per-unit quote</option>
-          <option value="RECURRING">Recurring quote</option>
-        </select>
-      </label>
-      <div className="gap-lg grid grid-cols-2">
+      <BusinessFormSection
+        eyebrow="Value"
+        title="What you are offering"
+        description="Keep the promise and its boundary together."
+      >
+        {companyId ? (
+          <input type="hidden" name="companyId" value={companyId} />
+        ) : (
+          <BusinessSelect label="Company" name="companyId" required>
+            <option value="">Choose a company</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </BusinessSelect>
+        )}
         <BusinessField
-          label="Amount"
-          name="amount"
-          value={initial?.amount}
-          hint="Blank = unknown. Zero = free."
-        />
-        <ReusableEntityCombobox
-          label="Currency"
-          entityName="currency"
-          idFieldName="currency"
-          queryFieldName="currencySearch"
-          options={supportedCurrencyOptions()}
-          initialId={initial?.currency ?? "EUR"}
-          optional={false}
-          required
-          placeholder="Find a supported currency…"
-        />
-      </div>
-      {basis === "PER_UNIT" && (
-        <BusinessField
-          label="Unit"
-          name="unitLabel"
-          value={initial?.unitLabel}
+          label="Offer title"
+          name="title"
+          value={initial?.title}
           required
         />
-      )}
-      {basis === "RECURRING" && (
+        <BusinessField
+          label="Scope & deliverables"
+          name="scope"
+          multiline
+          value={initial?.scope}
+          required
+        />
+      </BusinessFormSection>
+      <BusinessFormSection
+        eyebrow="Terms"
+        title="How the quote works"
+        description="Unknown and free are different; the amount can stay blank."
+      >
+        <label className="field-label">
+          Pricing basis
+          <select
+            className="text-input mt-sm"
+            name="priceBasis"
+            value={basis}
+            onChange={(event) => setBasis(event.target.value)}
+          >
+            <option value="FIXED">Fixed quote</option>
+            <option value="HOURLY">Hourly quote</option>
+            <option value="PER_UNIT">Per-unit quote</option>
+            <option value="RECURRING">Recurring quote</option>
+          </select>
+        </label>
         <div className="gap-lg grid grid-cols-2">
           <BusinessField
-            label="Every"
-            name="intervalCount"
-            type="number"
-            value={String(initial?.intervalCount ?? 1)}
+            label="Amount"
+            name="amount"
+            value={initial?.amount}
+            hint="Blank = unknown. Zero = free."
+          />
+          <CurrencySelect name="currency" defaultValue={initial?.currency ?? "EUR"} required />
+        </div>
+        {basis === "PER_UNIT" && (
+          <BusinessField
+            label="Unit"
+            name="unitLabel"
+            value={initial?.unitLabel}
             required
           />
-          <BusinessSelect
-            label="Interval"
-            name="intervalUnit"
-            value={initial?.intervalUnit ?? "MONTH"}
-          >
-            <option value="DAY">Day(s)</option>
-            <option value="WEEK">Week(s)</option>
-            <option value="MONTH">Month(s)</option>
-            <option value="YEAR">Year(s)</option>
-          </BusinessSelect>
-        </div>
-      )}
+        )}
+        {basis === "RECURRING" && (
+          <div className="gap-lg grid grid-cols-2">
+            <BusinessField
+              label="Every"
+              name="intervalCount"
+              type="number"
+              value={String(initial?.intervalCount ?? 1)}
+              required
+            />
+            <BusinessSelect
+              label="Interval"
+              name="intervalUnit"
+              value={initial?.intervalUnit ?? "MONTH"}
+            >
+              <option value="DAY">Day(s)</option>
+              <option value="WEEK">Week(s)</option>
+              <option value="MONTH">Month(s)</option>
+              <option value="YEAR">Year(s)</option>
+            </BusinessSelect>
+          </div>
+        )}
+      </BusinessFormSection>
       <details className="business-disclosure">
         <summary>Terms, expiry & related problems</summary>
         <div>
@@ -235,59 +237,73 @@ export function OfferEventForm({
           </>
         )}
 
-        <BusinessSelect label="Quoted revision" name="offerRevisionId" required>
-          {revisions.map((revision) => (
-            <option key={revision.id} value={revision.id}>
-              {revision.name}
-            </option>
-          ))}
-        </BusinessSelect>
-        <BusinessSelect label="Event" name="kind">
-          {[
-            "PROPOSED",
-            "ACCEPTED",
-            "REJECTED",
-            "WITHDRAWN",
-            "EXPIRED",
-            "SUPERSEDED",
-            "CANCELLED",
-          ].map((kind) => (
-            <option key={kind} value={kind}>
-              {humanize(kind)}
-            </option>
-          ))}
-        </BusinessSelect>
-        <BusinessField
-          label="Date"
-          name="occurredAt"
-          type="date"
-          value={businessToday()}
-          required
-        />
-        <BusinessField
-          label="Source or reason"
-          name="sourceDescription"
-          multiline
-          required
-        />
-        <BusinessSelect
-          label="Source interaction · optional"
-          name="interaction"
+        <BusinessFormSection
+          eyebrow="Outcome"
+          title="The event that happened"
+          description="Tie the outcome to the terms and source that actually existed."
         >
-          <option value="">Recorded manually</option>
-          {interactions.map((interaction) => (
-            <option
-              key={interaction.id}
-              value={`${interaction.id}:${interaction.revisionId}`}
-            >
-              {interaction.name}
-            </option>
-          ))}
-        </BusinessSelect>
+          <BusinessSelect
+            label="Quoted revision"
+            name="offerRevisionId"
+            required
+          >
+            {revisions.map((revision) => (
+              <option key={revision.id} value={revision.id}>
+                {revision.name}
+              </option>
+            ))}
+          </BusinessSelect>
+          <div className="gap-lg grid grid-cols-2">
+            <BusinessSelect label="Event" name="kind">
+              {[
+                "PROPOSED",
+                "ACCEPTED",
+                "REJECTED",
+                "WITHDRAWN",
+                "EXPIRED",
+                "SUPERSEDED",
+                "CANCELLED",
+              ].map((kind) => (
+                <option key={kind} value={kind}>
+                  {humanize(kind)}
+                </option>
+              ))}
+            </BusinessSelect>
+            <BusinessField
+              label="Date"
+              name="occurredAt"
+              type="date"
+              value={businessToday()}
+              required
+            />
+          </div>
+          <BusinessField
+            label="Source or reason"
+            name="sourceDescription"
+            multiline
+            required
+          />
+          <BusinessSelect
+            label="Source interaction · optional"
+            name="interaction"
+          >
+            <option value="">Recorded manually</option>
+            {interactions.map((interaction) => (
+              <option
+                key={interaction.id}
+                value={`${interaction.id}:${interaction.revisionId}`}
+              >
+                {interaction.name}
+              </option>
+            ))}
+          </BusinessSelect>
+          <p className="business-hint">
+            Recording an outcome alone creates no observation.
+          </p>
+        </BusinessFormSection>
         <p className="business-hint">
           If you add an observation, select its source interaction above or
-          describe what you directly saw or heard in the source field. Recording
-          an outcome alone creates no observation.
+          describe what you directly saw or heard in the source field.
         </p>
         <ObservationEntries problems={problems} />
       </RecordForm>

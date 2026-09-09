@@ -14,7 +14,7 @@ export function InteractionParticipants({
     initial.map((p) => ({ ...p, key: crypto.randomUUID() })),
   );
   return (
-    <div className="space-y-lg">
+    <div className="business-form-collection">
       <input
         type="hidden"
         name="participants"
@@ -30,7 +30,7 @@ export function InteractionParticipants({
         Who was involved? These are snapshots for this interaction.
       </p>
       {rows.map((row, i) => (
-        <fieldset key={row.key} className="space-y-sm">
+        <fieldset key={row.key} className="business-form-record">
           <legend>Participant {i + 1}</legend>
           <div className="gap-lg grid sm:grid-cols-2">
             {(["name", "role", "email"] as const).map((field) => (
