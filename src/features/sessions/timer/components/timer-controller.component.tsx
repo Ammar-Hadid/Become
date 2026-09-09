@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { BusinessTimerFields } from "@/features/entrepreneurship/sessions/components/business-timer-fields.component";
 import { EngineeringTimerFields } from "@/features/engineering/sessions/components/engineering-timer-fields.component";
 import { FinanceTimerFields } from "@/features/finance/sessions/components/finance-timer-fields.component";
 import type {
@@ -7,6 +9,9 @@ import type {
   FinanceWorkOptions,
 } from "@/features/finance/sessions/types/finance-session.types";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
+import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
+import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import {
   ArrowLeft,
   Check,
@@ -23,12 +28,17 @@ import {
   ENGINEERING_EVIDENCE_TYPE_OPTIONS,
   getEngineeringContextLabel,
 } from "@/features/engineering/constants/engineering.constants";
+import { rememberEngineeringEvidenceArrival } from "@/features/engineering/evidence/utils/engineering-evidence-motion.util";
 import type {
   EngineeringContextValue,
   EngineeringEvidenceTypeValue,
   EngineeringProjectOption,
 } from "@/features/engineering/types/engineering.types";
-import type { DomainOption } from "@/features/sessions/types/session.types";
+import type {
+  DomainOption,
+  SessionDetailItem,
+} from "@/features/sessions/types/session.types";
+import { SESSION_RESOLUTION_STORAGE_KEY } from "@/features/sessions/constants/session-motion.constants";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import { formatDuration } from "@/lib/dates/utils/period.util";
@@ -50,7 +60,7 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
           window.dispatchEvent(new Event("become:stop-timer"));
         }}
         className={cn(
-          "group border-primary/30 bg-primary-subtle hover:border-primary/60 flex items-center rounded-full border text-left transition-colors",
+          "group border-primary/30 bg-primary-subtle hover:border-primary/60 duration-fast ease-move flex items-center rounded-full border text-left transition-[color,border-color,background-color,transform] active:translate-y-px active:scale-[0.99] motion-reduce:transform-none",
           compact ? "size-12 justify-center" : "gap-md px-md w-full py-2.5",
         )}
         aria-label={`Stop ${activeSession.activityType.name} timer`}
@@ -59,7 +69,6 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
         data-elapsed-seconds={elapsedSeconds}
       >
         <span className="bg-primary text-on-primary relative flex size-8 shrink-0 items-center justify-center rounded-full">
-          <span className="bg-primary absolute inset-0 animate-ping rounded-full opacity-15" />
           <Square className="size-3 fill-current" />
         </span>
         {!compact && (
@@ -99,13 +108,25 @@ export function TimerController({
 }: TimerControllerProps) {
   const router = useRouter();
   const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const resolutionTimerRef = useRef<number | null>(null);
+  const [resolvedSession, setResolvedSession] =
+    useState<SessionDetailItem | null>(null);
+  const [business, setBusiness] = useState({ businessCompanyId: "", businessNicheId: "" });
+  const [completionBusiness, setCompletionBusiness] = useState({ businessCompanyId: "", businessNicheId: "" });
+  const [captureSessionId, setCaptureSessionId] = useState<string | null>(null);
   const [finance, setFinance] = useState<FinanceSessionInput>({
     workSourceId: "",
     incomeOpportunityId: "",
     financeCompensationType: "UNKNOWN",
   });
-  const { activeSession, elapsedSeconds } = useActiveTimer();
-  const [mode, setMode] = useState<"closed" | "start" | "stop">("closed");
+  const { activeSession, elapsedSeconds, confirmCompletion } = useActiveTimer();
+  const displayedSession = resolvedSession ?? activeSession;
+  const [mode, setMode] = useState<"start" | "stop">("start");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [resolutionState, setResolutionState] = useState<"idle" | "confirmed">(
+    "idle",
+  );
   const [selectedDomainId, setSelectedDomainId] = useState(
     domains[0]?.id ?? "",
   );
@@ -130,6 +151,14 @@ export function TimerController({
   const [evidenceDetails, setEvidenceDetails] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogPresence = usePresence(dialogOpen);
+
+  useModalLayer({
+    open: dialogOpen,
+    containerRef: dialogRef,
+    initialFocusRef: closeButtonRef,
+    onClose: () => setDialogOpen(false),
+  });
 
   const selectedDomain = useMemo(
     () =>
@@ -156,14 +185,54 @@ export function TimerController({
   }, [activeSession, engineeringProjects]);
 
   useEffect(() => {
-    const start = () => setMode("start");
+    const start = (event: Event) => {
+      if (activeSession) {
+        window.dispatchEvent(new Event("become:stop-timer"));
+        return;
+      }
+      const workspace = /^\/entrepreneurship\/explorations\/([^/]+)/.exec(window.location.pathname)?.[1];
+      const nicheId = (event as CustomEvent<{ businessNicheId?: string }>).detail?.businessNicheId ?? workspace ?? "";
+      if (nicheId) {
+        const domain = domains.find((item) => item.slug === "entrepreneurship");
+        if (domain) {
+          setSelectedDomainId(domain.id);
+          setSelectedActivityId(domain.activityTypes[0]?.id ?? "");
+        }
+      }
+      if (resolutionTimerRef.current !== null) {
+        window.clearTimeout(resolutionTimerRef.current);
+        resolutionTimerRef.current = null;
+      }
+      setOutcome("");
+      setNotes("");
+      setIncludeEvidence(false);
+      setEvidenceTitle("");
+      setEvidenceDetails("");
+      setResolvedSession(null);
+      setError(null);
+      setResolutionState("idle");
+      setCaptureSessionId(null);
+      setBusiness({ businessCompanyId: "", businessNicheId: nicheId });
+      setMode("start");
+      setDialogOpen(true);
+    };
     const stop = () => {
+      if (!activeSession) return;
+      if (resolutionTimerRef.current !== null) {
+        window.clearTimeout(resolutionTimerRef.current);
+        resolutionTimerRef.current = null;
+      }
+      setResolvedSession(null);
+      setError(null);
+      setResolutionState("idle");
       setCompletionContext(
         (activeSession?.engineeringContext as EngineeringContextValue | null) ??
           "",
       );
       setCompletionProjectId(activeSession?.engineeringProject?.id ?? "");
+      setCompletionBusiness({ businessCompanyId: activeSession.businessCompanyId ?? "", businessNicheId: activeSession.businessNicheId ?? "" });
       setMode("stop");
+      setDialogOpen(true);
     };
     window.addEventListener("become:start-timer", start);
     window.addEventListener("become:stop-timer", stop);
@@ -171,40 +240,15 @@ export function TimerController({
       window.removeEventListener("become:start-timer", start);
       window.removeEventListener("become:stop-timer", stop);
     };
-  }, [activeSession]);
+  }, [activeSession, domains]);
 
   useEffect(() => {
-    if (mode === "closed") return;
-    const previouslyFocused = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const focusable = () => [
-      ...(dialogRef.current?.querySelectorAll<HTMLElement>(
-        "button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])",
-      ) ?? []),
-    ];
-    focusable()[0]?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMode("closed");
-      if (event.key !== "Tab") return;
-      const elements = focusable();
-      const first = elements[0];
-      const last = elements.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
+    return () => {
+      if (resolutionTimerRef.current !== null) {
+        window.clearTimeout(resolutionTimerRef.current);
       }
     };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      window.removeEventListener("keydown", closeOnEscape);
-      document.body.style.overflow = previousOverflow;
-      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
-    };
-  }, [mode]);
+  }, []);
 
   async function startTimer() {
     if (!selectedDomain || !selectedActivityId) return;
@@ -214,6 +258,7 @@ export function TimerController({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        ...(selectedDomain.slug === "entrepreneurship" ? { businessCompanyId: business.businessCompanyId || null, businessNicheId: business.businessNicheId || null } : {}),
         domainId: selectedDomain.id,
         activityTypeId: selectedActivityId,
         engineeringContext: isEngineering ? engineeringContext || null : null,
@@ -243,55 +288,104 @@ export function TimerController({
     });
     setEngineeringContext("");
     setEngineeringProjectId("");
-    setMode("closed");
+    setDialogOpen(false);
     router.refresh();
   }
 
   async function stopTimer() {
-    if (!activeSession) return;
+    if (!activeSession || pending || resolutionState === "confirmed") return;
     setPending(true);
     setError(null);
-    const response = await fetch(`/api/sessions/${activeSession.id}/complete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        outcome,
-        notes,
-        ...(activeSession.domain.slug === "engineering"
-          ? {
-              engineeringContext: completionContext || null,
-              engineeringProjectId: completionProjectId || null,
-              engineeringEvidence: includeEvidence
-                ? {
-                    type: evidenceType,
-                    title: evidenceTitle,
-                    details: evidenceDetails,
-                  }
-                : null,
-            }
-          : {}),
-      }),
-    });
-    const body = (await response.json()) as { error?: string };
-    setPending(false);
-    if (!response.ok)
-      return setError(body.error ?? "Could not stop the timer.");
-    setOutcome("");
-    setNotes("");
-    setIncludeEvidence(false);
-    setEvidenceTitle("");
-    setEvidenceDetails("");
-    setMode("closed");
-    router.refresh();
+    try {
+      const response = await fetch(
+        `/api/sessions/${activeSession.id}/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            outcome,
+            notes,
+            ...(activeSession.domain.slug === "entrepreneurship" && (completionBusiness.businessCompanyId !== (activeSession.businessCompanyId ?? "") || completionBusiness.businessNicheId !== (activeSession.businessNicheId ?? "")) ? { businessCompanyId: completionBusiness.businessCompanyId || null, businessNicheId: completionBusiness.businessNicheId || null } : {}),
+            ...(activeSession.domain.slug === "engineering"
+              ? {
+                  engineeringContext: completionContext || null,
+                  engineeringProjectId: completionProjectId || null,
+                  engineeringEvidence: includeEvidence
+                    ? {
+                        type: evidenceType,
+                        title: evidenceTitle,
+                        details: evidenceDetails,
+                      }
+                    : null,
+                }
+              : {}),
+          }),
+        },
+      );
+      const body = (await response.json()) as {
+        error?: string;
+        sessionId?: string;
+        evidenceId?: string | null;
+        session?: SessionDetailItem;
+      };
+      if (!response.ok)
+        return setError(body.error ?? "Could not stop the timer.");
+      if (!body.session?.endedAt || body.session.id !== activeSession.id) {
+        throw new Error("Missing completed session in response.");
+      }
+      confirmCompletion(body.session);
+      setResolvedSession(body.session);
+      if (body.sessionId) {
+        try {
+          window.sessionStorage.setItem(
+            SESSION_RESOLUTION_STORAGE_KEY,
+            JSON.stringify({
+              sessionId: body.sessionId,
+              confirmedAt: Date.now(),
+            }),
+          );
+        } catch {
+          // The confirmation itself does not depend on motion storage.
+        }
+      }
+      if (body.evidenceId && includeEvidence && evidenceTitle.trim()) {
+        rememberEngineeringEvidenceArrival(evidenceTitle.trim());
+      }
+
+      setResolutionState("confirmed");
+      // Refresh secondary data immediately; timer truth no longer waits for it.
+      router.refresh();
+      resolutionTimerRef.current = window.setTimeout(() => {
+        setOutcome("");
+        setNotes("");
+        setIncludeEvidence(false);
+        setEvidenceTitle("");
+        setEvidenceDetails("");
+        setDialogOpen(false);
+        if (body.session?.domain.slug === "entrepreneurship") setCaptureSessionId(body.session.id);
+        setResolutionState("idle");
+        resolutionTimerRef.current = null;
+      }, MOTION_DURATION_MS.emphasis);
+    } catch {
+      setError(
+        "Could not confirm the save. Please try again; a saved session will not be completed twice.",
+      );
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
     <>
-      {mode !== "closed" && (
+      {captureSessionId && <aside className="business-completion-note" aria-label="Session saved"><p>Session saved. Something worth keeping?</p><Link href={`/entrepreneurship/interactions/capture?session=${encodeURIComponent(captureSessionId)}`} onClick={() => setCaptureSessionId(null)}>Log an interaction</Link><button onClick={() => setCaptureSessionId(null)}>Not now</button></aside>}
+      {dialogPresence.isPresent && (
         <div
           className="dialog-backdrop"
+          data-state={dialogPresence.presenceState}
+          aria-hidden={!dialogOpen}
+          onAnimationEnd={dialogPresence.onPresenceAnimationEnd}
           role="presentation"
-          onMouseDown={() => setMode("closed")}
+          onMouseDown={() => setDialogOpen(false)}
         >
           <section
             ref={dialogRef}
@@ -299,6 +393,7 @@ export function TimerController({
             aria-modal="true"
             aria-labelledby="timer-dialog-title"
             className="timer-dialog"
+            data-resolution={resolutionState}
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-7 flex items-start justify-between">
@@ -318,8 +413,9 @@ export function TimerController({
                 </h2>
               </div>
               <button
+                ref={closeButtonRef}
                 className="icon-button"
-                onClick={() => setMode("closed")}
+                onClick={() => setDialogOpen(false)}
                 aria-label="Close dialog"
               >
                 <X className="size-4" />
@@ -376,6 +472,7 @@ export function TimerController({
                     <ChevronRight className="size-4 rotate-90" />
                   </span>
                 </label>
+                {selectedDomain?.slug === "entrepreneurship" && <BusinessTimerFields value={business} onChange={setBusiness} />}
                 <FinanceTimerFields
                   kind={financeKind}
                   options={financeOptions}
@@ -423,33 +520,45 @@ export function TimerController({
                   {pending ? "Starting…" : "Start focus session"}
                 </Button>
               </div>
-            ) : activeSession ? (
+            ) : displayedSession ? (
               <div className="space-y-2xl">
                 <div className="stop-summary">
                   <div className="gap-md flex items-center">
-                    <span className="bg-primary-subtle text-primary flex size-9 items-center justify-center rounded-full">
-                      <Clock3 className="size-4" />
+                    <span
+                      className={cn(
+                        "session-resolution-mark",
+                        resolutionState === "confirmed" && "is-confirmed",
+                      )}
+                    >
+                      {resolutionState === "confirmed" ? (
+                        <Check className="size-4" />
+                      ) : (
+                        <Clock3 className="size-4" />
+                      )}
                     </span>
                     <div>
                       <p className="text-body font-medium">
-                        {activeSession.activityType.name}
+                        {displayedSession.activityType.name}
                       </p>
                       <p className="dialog-supporting-text text-text-muted">
-                        {activeSession.domain.name}
-                        {activeSession.engineeringContext
-                          ? ` · ${getEngineeringContextLabel(activeSession.engineeringContext)}`
+                        {displayedSession.domain.name}
+                        {displayedSession.engineeringContext
+                          ? ` · ${getEngineeringContextLabel(displayedSession.engineeringContext)}`
                           : ""}
-                        {activeSession.engineeringProject
-                          ? ` · ${activeSession.engineeringProject.name}`
+                        {displayedSession.engineeringProject
+                          ? ` · ${displayedSession.engineeringProject.name}`
                           : ""}
                       </p>
                     </div>
                   </div>
                   <span className="timer-numerals text-primary text-xl font-semibold">
-                    {formatDuration(elapsedSeconds)}
+                    {formatDuration(
+                      resolvedSession?.durationSeconds ?? elapsedSeconds,
+                    )}
                   </span>
                 </div>
-                {activeSession.domain.slug === "engineering" && (
+                {displayedSession.domain.slug === "entrepreneurship" && <BusinessTimerFields value={completionBusiness} onChange={setCompletionBusiness} />}
+                {displayedSession.domain.slug === "engineering" && (
                   <EngineeringTimerFields
                     completion
                     context={completionContext}
@@ -475,7 +584,7 @@ export function TimerController({
                     data-testid="session-outcome"
                   />
                 </label>
-                {activeSession.domain.slug === "engineering" && (
+                {displayedSession.domain.slug === "engineering" && (
                   <div className="engineering-evidence-capture">
                     <button
                       type="button"
@@ -569,7 +678,7 @@ export function TimerController({
                   <Button
                     variant="ghost"
                     size="lg"
-                    onClick={() => setMode("closed")}
+                    onClick={() => setDialogOpen(false)}
                     className="px-lg"
                   >
                     <ArrowLeft className="size-4" />
@@ -581,14 +690,23 @@ export function TimerController({
                     onClick={stopTimer}
                     disabled={
                       pending ||
-                      (activeSession.domain.slug === "engineering" &&
+                      resolutionState === "confirmed" ||
+                      (displayedSession.domain.slug === "engineering" &&
                         (!completionContext ||
                           (includeEvidence && !evidenceTitle.trim())))
                     }
                     data-testid="confirm-stop-timer"
                   >
-                    <Square className="size-3 fill-current" />{" "}
-                    {pending ? "Saving…" : "Stop & save"}
+                    {resolutionState === "confirmed" ? (
+                      <Check className="size-4" />
+                    ) : (
+                      <Square className="size-3 fill-current" />
+                    )}{" "}
+                    {resolutionState === "confirmed"
+                      ? "Session saved"
+                      : pending
+                        ? "Saving…"
+                        : "Stop & save"}
                   </Button>
                 </div>
               </div>

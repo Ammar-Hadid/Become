@@ -22,7 +22,7 @@ export const Menu = forwardRef<
       className={cn("menu", `menu--${placement}`, className)}
       role="menu"
       aria-label={label}
-      hidden={!open}
+      aria-hidden={!open}
     >
       {children}
     </div>

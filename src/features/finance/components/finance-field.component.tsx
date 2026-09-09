@@ -3,6 +3,7 @@ import type {
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/styles/utils/class-name.util";
 
 export function FinanceField({
@@ -24,14 +25,22 @@ export function FinanceField({
 export function FinanceSelect({
   label,
   children,
+  className,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
   return (
     <label className="flex min-w-0 flex-col items-start">
       <span className="field-label">{label}</span>
-      <select className="text-input" aria-label={label} {...props}>
-        {children}
-      </select>
+      <span className="select-wrap">
+        <select
+          className={cn("finance-select", className)}
+          aria-label={label}
+          {...props}
+        >
+          {children}
+        </select>
+        <ChevronDown aria-hidden="true" size={16} />
+      </span>
     </label>
   );
 }

@@ -13,7 +13,15 @@
   box-shadow:
     0 18px 40px rgba(0, 0, 0, 0.3),
     0 2px 8px rgba(0, 0, 0, 0.24);
-  animation: menu-in var(--duration-fast) var(--ease-standard);
+}
+
+.menu[data-state="open"] {
+  animation: menu-in var(--duration-fast) var(--ease-enter);
+}
+
+.menu[data-state="closed"] {
+  pointer-events: none;
+  animation: menu-out var(--duration-feedback) var(--ease-exit) both;
 }
 
 .menu--top-stretch {
@@ -27,6 +35,7 @@
   top: calc(100% + var(--spacing-sm));
   right: 0;
   width: max-content;
+  max-width: calc(100vw - 1rem);
   min-width: 13.5rem;
   transform-origin: top right;
 }
@@ -73,5 +82,12 @@
   from {
     opacity: 0;
     transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes menu-out {
+  to {
+    transform: translateY(2px) scale(0.99);
+    opacity: 0;
   }
 }

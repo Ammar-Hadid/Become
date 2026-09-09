@@ -15,6 +15,8 @@ export async function financeMutation(
   try {
     const result = await run(user.id);
     revalidatePath("/finance", "layout");
+    revalidatePath("/entrepreneurship", "layout");
+    revalidatePath("/");
     revalidatePath("/settings", "layout");
     return {
       error: null,

@@ -1,3 +1,4 @@
+import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { NextResponse } from "next/server";
 import { completeSession } from "@/features/sessions/lifecycle/services/complete-session.service";
 import { completeSessionSchema } from "@/features/sessions/schemas/session.schema";
@@ -21,7 +22,8 @@ export async function POST(
     );
 
   const { id } = await context.params;
-  const result = await completeSession(user.id, id, parsed.data);
+  const result = await completeSession(user.id, id, parsed.data).catch((error) => { if (error instanceof BusinessError) return { status: "invalid-business" as const, error: error.message }; throw error; });
+  if (result.status === "invalid-business") return NextResponse.json({ error: result.error }, { status: 400 });
   if (result.status === "not-found")
     return NextResponse.json(
       { error: "Active session not found." },
@@ -42,5 +44,10 @@ export async function POST(
       { error: "Choose an Engineering context." },
       { status: 400 },
     );
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    sessionId: result.sessionId,
+    evidenceId: result.evidenceId,
+    session: result.session,
+  });
 }

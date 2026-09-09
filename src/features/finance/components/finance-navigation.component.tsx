@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ViewTransition } from "react";
 import {
   CalendarClock,
   Landmark,
@@ -29,16 +30,31 @@ export function FinanceNavigation() {
   const pathname = usePathname();
   return (
     <nav aria-label="Finance navigation" className="finance-navigation">
-      {links.map(([href, label, Icon]) => (
-        <Link
-          key={href}
-          href={href}
-          aria-current={isCurrent(pathname, href) ? "page" : undefined}
-        >
-          <Icon aria-hidden="true" />
-          {label}
-        </Link>
-      ))}
+      {links.map(([href, label, Icon]) => {
+        const current = isCurrent(pathname, href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={current ? "page" : undefined}
+          >
+            <Icon aria-hidden="true" />
+            {label}
+            {current && (
+              <ViewTransition
+                name="finance-navigation-indicator"
+                share="motion-guide"
+                default="none"
+              >
+                <span
+                  className="finance-navigation-indicator"
+                  aria-hidden="true"
+                />
+              </ViewTransition>
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

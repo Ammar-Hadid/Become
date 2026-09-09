@@ -1,4 +1,6 @@
+import { businessSessionValues } from "@/features/entrepreneurship/sessions/services/business-session.service";
 import type { CompleteSessionInput } from "@/features/sessions/schemas/session.schema";
+import { toSessionDetailItem } from "@/features/sessions/mappers/session.mapper";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 
 export async function completeSession(
@@ -7,11 +9,26 @@ export async function completeSession(
   input: CompleteSessionInput,
 ) {
   return prisma.$transaction(async (transaction) => {
+    const include = {
+      domain: true,
+      activityType: true,
+      engineeringProject: true,
+      engineeringEvidence: { orderBy: { occurredAt: "desc" } },
+    } as const;
     const session = await transaction.session.findFirst({
-      where: { id: sessionId, userId, endedAt: null },
-      include: { domain: true },
+      where: { id: sessionId, userId },
+      include,
     });
     if (!session) return { status: "not-found" } as const;
+    // A retry must return the original completion, including its end time.
+    if (session.endedAt) {
+      return {
+        status: "completed",
+        sessionId,
+        evidenceId: null,
+        session: toSessionDetailItem(session),
+      } as const;
+    }
 
     const isEngineering = session.domain.slug === "engineering";
     const hasEngineeringInput =
@@ -43,9 +60,14 @@ export async function completeSession(
       if (!project) return { status: "project-not-found" } as const;
     }
 
+    const business = input.businessCompanyId !== undefined || input.businessNicheId !== undefined
+      ? await businessSessionValues(userId, session.domain.slug === "entrepreneurship", session.activityType.slug, { businessCompanyId: input.businessCompanyId === undefined ? session.businessCompanyId : input.businessCompanyId, businessNicheId: input.businessNicheId === undefined ? session.businessNicheId : input.businessNicheId }, transaction) : {};
     const result = await transaction.session.updateMany({
       where: { id: sessionId, userId, endedAt: null },
       data: {
+        ...business,
+        // Completing old recovered timers must not reinterpret their activity.
+        entrepreneurshipActivityKind: session.entrepreneurshipActivityKind,
         endedAt: new Date(),
         outcome: input.outcome,
         notes: input.notes,
@@ -53,10 +75,9 @@ export async function completeSession(
         engineeringProjectId: isEngineering ? engineeringProjectId : null,
       },
     });
-    if (result.count === 0) return { status: "not-found" } as const;
-
-    if (isEngineering && input.engineeringEvidence) {
-      await transaction.engineeringEvidence.create({
+    let evidenceId: string | null = null;
+    if (result.count > 0 && isEngineering && input.engineeringEvidence) {
+      const evidence = await transaction.engineeringEvidence.create({
         data: {
           userId,
           sessionId,
@@ -65,9 +86,20 @@ export async function completeSession(
           details: input.engineeringEvidence.details,
           occurredAt: new Date(),
         },
+        select: { id: true },
       });
+      evidenceId = evidence.id;
     }
 
-    return { status: "completed" } as const;
+    const completed = await transaction.session.findFirstOrThrow({
+      where: { id: sessionId, userId, endedAt: { not: null } },
+      include,
+    });
+    return {
+      status: "completed",
+      sessionId,
+      evidenceId,
+      session: toSessionDetailItem(completed),
+    } as const;
   });
 }

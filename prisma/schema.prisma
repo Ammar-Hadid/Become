@@ -46,6 +46,15 @@ enum TechnologyCategory {
 }
 
 model User {
+  businessOffers Offer[]
+  businessReceiptAllocations BusinessReceiptAllocation[]
+  businessInteractions Interaction[]
+  businessObservations Observation[]
+  businessProblems Problem[]
+  businessFollowUps FollowUp[]
+  businessCompanies Company[]
+  businessNiches Niche[]
+  businessCaptures BusinessCapture[]
   id                  String                            @id @default(cuid())
   name                String
   email               String                            @unique
@@ -82,6 +91,279 @@ model User {
   paymentAllocations PaymentSessionAllocation[]
 
   @@map("user")
+}
+
+model Company {
+  businessSessions Session[] @relation("BusinessSessionCompany")
+  offers Offer[]
+  receiptAllocations BusinessReceiptAllocation[]
+  workSources CompanyWorkSource[]
+  interactionRevisions InteractionRevision[]
+  observationRevisions ObservationRevision[]
+  followUps FollowUp[]
+  id String @id @default(cuid())
+  userId String
+  name String
+  normalizedName String
+  website String?
+  notes String?
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  niches CompanyNiche[]
+  @@unique([id, userId])
+  @@unique([userId, normalizedName])
+  @@index([userId, createdAt, id])
+  @@map("company")
+}
+
+model Niche {
+  businessSessions Session[] @relation("BusinessSessionNiche")
+  interactionRevisions InteractionRevision[]
+  observationRevisions ObservationRevision[]
+  problems Problem[]
+  id String @id @default(cuid())
+  userId String
+  name String
+  normalizedName String
+  scope String?
+  direction String @default("EXPLORING")
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companies CompanyNiche[]
+  decisions NicheDecision[]
+  offers OfferNiche[]
+  @@unique([id, userId])
+  @@unique([userId, normalizedName])
+  @@map("niche")
+}
+
+model Interaction {
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  voidedAt DateTime?
+  voidReason String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions InteractionRevision[] @relation("InteractionHistory")
+  replies InteractionRevision[] @relation("ReplyTarget")
+  followUps FollowUp[]
+  @@unique([id, userId])
+  @@index([userId, createdAt, id])
+  @@map("interaction")
+}
+
+model InteractionRevision {
+  sourceSessionId String?
+  sourceSession Session? @relation(fields: [sourceSessionId, userId], references: [id, userId], onDelete: Restrict)
+  offerEvents OfferEvent[]
+  id String @id @default(cuid())
+  userId String
+  interactionId String
+  version Int
+  companyId String?
+  nicheId String?
+  companySnapshot String?
+  nicheSnapshot String?
+  respondsToInteractionId String?
+  kind String
+  channel String
+  occurredAt DateTime
+  datePrecision String @default("DAY")
+  summary String
+  notes String?
+  participants Json @default("[]")
+  correctionReason String?
+  materialChange Boolean @default(false)
+  createdAt DateTime @default(now())
+  interaction Interaction @relation("InteractionHistory", fields: [interactionId, userId], references: [id, userId], onDelete: Cascade)
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  niche Niche? @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  respondsTo Interaction? @relation("ReplyTarget", fields: [respondsToInteractionId, userId], references: [id, userId], onDelete: Restrict)
+  observations ObservationRevision[]
+  @@unique([interactionId, version])
+  @@unique([id, interactionId, userId])
+  @@unique([id, userId])
+  @@index([userId, occurredAt, id])
+  @@index([companyId, occurredAt])
+  @@map("interaction_revision")
+}
+
+model Observation {
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  voidedAt DateTime?
+  voidReason String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions ObservationRevision[]
+  evidence ProblemEvidence[] @relation("LogicalObservationEvidence")
+  @@unique([id, userId])
+  @@map("observation")
+}
+
+model ObservationRevision {
+  id String @id @default(cuid())
+  userId String
+  observationId String
+  version Int
+  kind String
+  wordingMode String
+  statement String
+  observedAt DateTime
+  companyId String?
+  nicheId String?
+  companySnapshot String?
+  nicheSnapshot String?
+  sourceKind String
+  interactionId String?
+  interactionRevisionId String?
+  sourceUrl String?
+  sourceDescription String
+  correctionReason String?
+  materialChange Boolean @default(false)
+  createdAt DateTime @default(now())
+  observation Observation @relation(fields: [observationId, userId], references: [id, userId], onDelete: Cascade)
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  niche Niche? @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  interactionRevision InteractionRevision? @relation(fields: [interactionRevisionId, interactionId, userId], references: [id, interactionId, userId], onDelete: Restrict)
+  evidence ProblemEvidence[] @relation("ObservationVersionEvidence")
+  @@unique([observationId, version])
+  @@unique([id, observationId, userId])
+  @@map("observation_revision")
+}
+
+model Problem {
+  offerRevisions OfferRevisionProblem[]
+  id String @id @default(cuid())
+  userId String
+  title String
+  initialStatement String
+  origin String
+  formulatedAt DateTime @default(now())
+  nicheId String?
+  nicheSnapshot String?
+  notes String?
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  niche Niche? @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  evidence ProblemEvidence[]
+  assessments ProblemAssessment[]
+  @@unique([id, userId])
+  @@index([userId, createdAt, id])
+  @@map("problem")
+}
+
+model ProblemEvidence {
+  receiptSnapshot Json?
+  receiptAllocationId String?
+  receiptAllocation BusinessReceiptAllocation? @relation(fields: [receiptAllocationId, userId], references: [id, userId], onDelete: Restrict)
+  id String @id @default(cuid())
+  userId String
+  problemId String
+  observationId String?
+  observationRevisionId String?
+  stance String
+  explanation String
+  confirmedAt DateTime @default(now())
+  withdrawnAt DateTime?
+  withdrawalReason String?
+  createdAt DateTime @default(now())
+  problem Problem @relation(fields: [problemId, userId], references: [id, userId], onDelete: Cascade)
+  observation Observation? @relation("LogicalObservationEvidence", fields: [observationId, userId], references: [id, userId], onDelete: Restrict)
+  observationRevision ObservationRevision? @relation("ObservationVersionEvidence", fields: [observationRevisionId, observationId, userId], references: [id, observationId, userId], onDelete: Restrict)
+  assessmentBasis ProblemAssessmentEvidence[]
+  @@unique([id, problemId, userId])
+  @@index([problemId, withdrawnAt])
+  @@map("problem_evidence")
+}
+
+model ProblemAssessment {
+  id String @id @default(cuid())
+  userId String
+  problemId String
+  state String
+  scope String
+  rationale String
+  assessedAt DateTime
+  createdAt DateTime @default(now())
+  problem Problem @relation(fields: [problemId, userId], references: [id, userId], onDelete: Cascade)
+  basis ProblemAssessmentEvidence[]
+  @@unique([id, problemId, userId])
+  @@index([problemId, assessedAt])
+  @@map("problem_assessment")
+}
+
+model ProblemAssessmentEvidence {
+  userId String
+  problemId String
+  assessmentId String
+  evidenceId String
+  assessment ProblemAssessment @relation(fields: [assessmentId, problemId, userId], references: [id, problemId, userId], onDelete: Cascade)
+  evidence ProblemEvidence @relation(fields: [evidenceId, problemId, userId], references: [id, problemId, userId], onDelete: Restrict)
+  @@id([assessmentId, evidenceId])
+  @@map("problem_assessment_evidence")
+}
+
+model FollowUp {
+  offerId String?
+  offer Offer? @relation(fields: [offerId, userId], references: [id, userId], onDelete: Restrict)
+  id String @id @default(cuid())
+  userId String
+  companyId String?
+  interactionId String?
+  title String
+  dueOn DateTime? @db.Date
+  completedAt DateTime?
+  cancelledAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  interaction Interaction? @relation(fields: [interactionId, userId], references: [id, userId], onDelete: Restrict)
+  @@unique([id, userId])
+  @@index([userId, dueOn, completedAt])
+  @@map("follow_up")
+}
+
+model CompanyNiche {
+  userId String
+  companyId String
+  nicheId String
+  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Cascade)
+  niche Niche @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([companyId, nicheId])
+  @@map("company_niche")
+}
+
+model NicheDecision {
+  id String @id @default(cuid())
+  userId String
+  nicheId String
+  direction String
+  rationale String
+  scopeSnapshot String?
+  createdAt DateTime @default(now())
+  niche Niche @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Cascade)
+  @@index([nicheId, createdAt])
+  @@map("niche_decision")
+}
+
+// One key represents one explicit submission, not deduplication of similar facts.
+model BusinessCapture {
+  id String @id
+  userId String
+  fingerprint String
+  resultId String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([id, userId])
+  @@map("business_capture")
 }
 
 model AuthSession {
@@ -174,6 +456,14 @@ model ActivityType {
 }
 
 model Session {
+  entrepreneurshipActivityKind String?
+  businessCompanyId String?
+  businessNicheId String?
+  businessCompanySnapshot String?
+  businessNicheSnapshot String?
+  businessCompany Company? @relation("BusinessSessionCompany", fields: [businessCompanyId, userId], references: [id, userId], onDelete: Restrict)
+  businessNiche Niche? @relation("BusinessSessionNiche", fields: [businessNicheId, userId], references: [id, userId], onDelete: Restrict)
+  businessInteractionRevisions InteractionRevision[]
   id                           String                     @id @default(cuid())
   userId                       String
   domainId                     String
@@ -392,6 +682,7 @@ model Counterparty {
 }
 
 model FinancialTransaction {
+  businessReceiptAllocations BusinessReceiptAllocation[]
   id                           String                         @id @default(cuid())
   userId                       String
   type                         FinancialTransactionType
@@ -607,6 +898,7 @@ enum IncomeOpportunityChannel {
 }
 
 model WorkSource {
+  businessCompanies CompanyWorkSource[]
   id                      String                  @id @default(cuid())
   userId                  String
   name                    String                  @db.VarChar(120)
@@ -624,6 +916,139 @@ model WorkSource {
   @@unique([id, userId])
   @@index([userId, archivedAt])
   @@map("work_source")
+}
+
+model Offer {
+  niches OfferNiche[]
+  id String @id @default(cuid())
+  userId String
+  companyId String
+  archivedAt DateTime?
+  continuationChoice String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  revisions OfferRevision[]
+  events OfferEvent[]
+  followUps FollowUp[]
+  @@unique([id, userId])
+  @@unique([id, companyId, userId])
+  @@index([userId, createdAt, id])
+  @@map("offer")
+}
+
+model OfferNiche {
+  userId String
+  offerId String
+  nicheId String
+  nicheSnapshot String
+  createdAt DateTime @default(now())
+  offer Offer @relation(fields: [offerId, userId], references: [id, userId], onDelete: Cascade)
+  niche Niche @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([offerId, nicheId])
+  @@index([userId, nicheId])
+  @@map("offer_niche")
+}
+
+model OfferRevision {
+  id String @id @default(cuid())
+  userId String
+  offerId String
+  companyId String
+  version Int
+  title String
+  scope String
+  terms String?
+  companySnapshot String
+  priceBasis String
+  priceMinor BigInt?
+  currency String?
+  unitLabel String?
+  intervalUnit String?
+  intervalCount Int?
+  expiresOn DateTime? @db.Date
+  proposedAt DateTime?
+  createdAt DateTime @default(now())
+  offer Offer @relation(fields: [offerId, companyId, userId], references: [id, companyId, userId], onDelete: Cascade)
+  problems OfferRevisionProblem[]
+  events OfferEvent[]
+  receipts BusinessReceiptAllocation[]
+  @@unique([offerId, version])
+  @@unique([id, offerId, userId])
+  @@unique([id, companyId, userId])
+  @@map("offer_revision")
+}
+
+model OfferRevisionProblem {
+  userId String
+  offerId String
+  offerRevisionId String
+  problemId String
+  revision OfferRevision @relation(fields: [offerRevisionId, offerId, userId], references: [id, offerId, userId], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([offerRevisionId, problemId])
+  @@map("offer_revision_problem")
+}
+
+model OfferEvent {
+  id String @id @default(cuid())
+  userId String
+  offerId String
+  offerRevisionId String
+  kind String
+  occurredAt DateTime
+  sourceDescription String
+  interactionId String?
+  interactionRevisionId String?
+  retractedAt DateTime?
+  retractionReason String?
+  createdAt DateTime @default(now())
+  offer Offer @relation(fields: [offerId, userId], references: [id, userId], onDelete: Cascade)
+  revision OfferRevision @relation(fields: [offerRevisionId, offerId, userId], references: [id, offerId, userId], onDelete: Cascade)
+  interactionRevision InteractionRevision? @relation(fields: [interactionRevisionId, interactionId, userId], references: [id, interactionId, userId], onDelete: Restrict)
+  @@unique([id, userId])
+  @@index([offerId, occurredAt])
+  @@map("offer_event")
+}
+
+model CompanyWorkSource {
+  userId String
+  companyId String
+  workSourceId String
+  createdAt DateTime @default(now())
+  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Cascade)
+  workSource WorkSource @relation(fields: [workSourceId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([companyId, workSourceId])
+  @@map("company_work_source")
+}
+
+model BusinessReceiptAllocation {
+  sourceChangedAt DateTime?
+  id String @id @default(cuid())
+  userId String
+  transactionId String?
+  originalTransactionId String
+  companyId String
+  offerRevisionId String?
+  amountMinor BigInt
+  currencySnapshot String
+  occurredAtSnapshot DateTime
+  companySnapshot String
+  note String?
+  confirmedAt DateTime @default(now())
+  needsReviewAt DateTime?
+  withdrawnAt DateTime?
+  withdrawalReason String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction FinancialTransaction? @relation(fields: [transactionId, userId], references: [id, userId], onDelete: Restrict)
+  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  offerRevision OfferRevision? @relation(fields: [offerRevisionId, companyId, userId], references: [id, companyId, userId], onDelete: Restrict)
+  evidence ProblemEvidence[]
+  @@unique([id, userId])
+  @@index([transactionId, withdrawnAt])
+  @@index([userId, companyId, withdrawnAt])
+  @@map("business_receipt_allocation")
 }
 
 model IncomeOpportunity {

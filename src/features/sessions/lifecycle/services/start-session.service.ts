@@ -1,3 +1,4 @@
+import { businessSessionValues } from "@/features/entrepreneurship/sessions/services/business-session.service";
 import { Prisma } from "@/generated/prisma/client";
 import type { StartSessionInput } from "@/features/sessions/schemas/session.schema";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -21,6 +22,7 @@ export async function startSession(userId: string, input: StartSessionInput) {
     input,
   );
 
+  const business = await businessSessionValues(userId, activity.domain.slug === "entrepreneurship", activity.slug, input);
   const isEngineering = activity.domain.slug === "engineering";
   if (isEngineering && !input.engineeringContext) {
     return { status: "engineering-context-required" } as const;
@@ -50,6 +52,7 @@ export async function startSession(userId: string, input: StartSessionInput) {
       data: {
         userId,
         ...finance,
+        ...business,
         domainId: input.domainId,
         activityTypeId: input.activityTypeId,
         engineeringContext: isEngineering ? input.engineeringContext : null,

@@ -1,0 +1,223 @@
+"use client";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { useState } from "react";
+import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
+import { RecordForm } from "@/components/ui/forms/record-form.component";
+import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import {
+  batchOutreachAction,
+  searchCompaniesAction,
+} from "@/features/entrepreneurship/interactions/actions/interaction.action";
+import { channels } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
+import {
+  businessToday,
+  humanize,
+} from "@/features/entrepreneurship/shared/utils/business.util";
+import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
+type Values = {
+  summary: string;
+  channel: string;
+  occurredAt: string;
+  notes: string;
+};
+function BatchFields({ companies }: { companies: BusinessOption[] }) {
+  const exploration = useExploration();
+  const [key] = useState(() => crypto.randomUUID());
+  const [selected, setSelected] = useState<BusinessOption[]>([]);
+  const [shared, setShared] = useState<Values>({
+    summary: "",
+    channel: "EMAIL",
+    occurredAt: businessToday(),
+    notes: "",
+  });
+  const [overrides, setOverrides] = useState<Record<string, Partial<Values>>>(
+    {},
+  );
+  const field = (
+    name: keyof Values,
+    label: string,
+    value: string,
+    onChange: (v: string) => void,
+  ) => (
+    <label className="field-label">
+      {label}
+      {name === "channel" ? (
+        <select
+          className="text-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {channels.map((c) => (
+            <option key={c} value={c}>
+              {humanize(c)}
+            </option>
+          ))}
+        </select>
+      ) : name === "occurredAt" ? (
+        <input
+          className="text-input"
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <textarea
+          className="text-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </label>
+  );
+  return (
+    <>
+      <input type="hidden" name="captureKey" value={key} />
+      {exploration && !exploration.archived && (
+        <>
+          <input type="hidden" name="nicheId" value={exploration.id} />
+          <p className="business-hint">
+            These sent messages were part of {exploration.name}. Only include
+            recipients contacted in this exploration.
+          </p>
+        </>
+      )}
+      <input
+        name="overrides"
+        type="hidden"
+        value={JSON.stringify(
+          Object.fromEntries(
+            Object.entries(overrides).filter(([id]) =>
+              selected.some((c) => c.id === id),
+            ),
+          ),
+        )}
+      />
+      <ReusableEntityCombobox
+        label="Find recipients"
+        optional={false}
+        entityName="company"
+        idFieldName="companyIds"
+        queryFieldName="recipientSearch"
+        options={companies}
+        searchAction={searchCompaniesAction}
+        selectedOptions={selected}
+        onSelectionChange={setSelected}
+        placeholder="Search all active companies…"
+      />
+      <p className="field-label">
+        Companies actually contacted · {selected.length} selected
+      </p>
+      <fieldset className="space-y-lg">
+        <legend>Shared defaults</legend>
+        {(["occurredAt", "channel", "summary", "notes"] as const).map(
+          (name) => (
+            <div key={name}>
+              {field(
+                name,
+                {
+                  occurredAt: "Date sent",
+                  channel: "Channel",
+                  summary: "Shared summary",
+                  notes: "Shared notes · optional",
+                }[name],
+                shared[name],
+                (value) =>
+                  setShared((current) => ({ ...current, [name]: value })),
+              )}
+              <input type="hidden" name={name} value={shared[name]} />
+            </div>
+          ),
+        )}
+      </fieldset>
+      {selected.map((company) => {
+        const own = overrides[company.id] ?? {};
+        const effective = { ...shared, ...own };
+        return (
+          <article key={company.id} className="business-detail-section">
+            <h3>{company.name}</h3>
+            <p className="business-meta">
+              {effective.occurredAt} · {humanize(effective.channel)} ·{" "}
+              {Object.keys(own).length ? "Customized" : "Shared defaults"}
+            </p>
+            <p className="business-prose">
+              {effective.summary || "Summary needed"}
+            </p>
+            <p className="business-hint">{effective.notes || "No notes"}</p>
+            <details className="business-disclosure">
+              <summary>Customize {company.name}</summary>
+              <div>
+                {(["occurredAt", "channel", "summary", "notes"] as const).map(
+                  (name) => (
+                    <div className="space-y-sm" key={name}>
+                      <label className="business-hint">
+                        <input
+                          type="checkbox"
+                          checked={Object.hasOwn(own, name)}
+                          onChange={(e) =>
+                            setOverrides((current) => {
+                              const values = { ...current[company.id] };
+                              if (e.target.checked) values[name] = shared[name];
+                              else delete values[name];
+                              return { ...current, [company.id]: values };
+                            })
+                          }
+                        />{" "}
+                        Override {name === "occurredAt" ? "date" : name} for{" "}
+                        {company.name}
+                      </label>
+                      {Object.hasOwn(own, name) ? (
+                        field(
+                          name,
+                          `${company.name} · ${name === "occurredAt" ? "Date sent" : humanize(name)}`,
+                          own[name] ?? "",
+                          (value) =>
+                            setOverrides((current) => ({
+                              ...current,
+                              [company.id]: {
+                                ...current[company.id],
+                                [name]: value,
+                              },
+                            })),
+                        )
+                      ) : (
+                        <p className="business-hint">Use shared value</p>
+                      )}
+                    </div>
+                  ),
+                )}
+              </div>
+            </details>
+          </article>
+        );
+      })}
+      <label className="business-hint gap-sm flex">
+        <input type="checkbox" name="confirmedSent" required />I actually sent
+        this message to each selected company. This records outreach already
+        sent; it does not send messages.
+      </label>
+    </>
+  );
+}
+export function BatchOutreachForm({
+  companies,
+}: {
+  companies: BusinessOption[];
+}) {
+  return (
+    <RecordDialog
+      eyebrow="Manual record"
+      triggerLabel="Record batch outreach"
+      title="Record messages already sent"
+      variant="secondary"
+      description="One shared summary, one actual event per company. This records outreach; it doesn’t send messages."
+    >
+      <RecordForm
+        action={batchOutreachAction}
+        closeOnSuccess
+        submitLabel="Record sent outreach"
+      >
+        <BatchFields companies={companies} />
+      </RecordForm>
+    </RecordDialog>
+  );
+}

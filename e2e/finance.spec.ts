@@ -709,25 +709,22 @@ async function save(form: Locator, button: string, expectSaved = true) {
   await form.getByRole("button", { name: button, exact: true }).click();
   await expect
     .poll(
-      async () => {
-        if ((await form.count()) === 0 || !(await form.isVisible())) {
-          return "complete";
-        }
-        if (expectSaved) {
-          const status = form.getByRole("status");
-          return (await status.count()) > 0 &&
-            (await status.textContent()) === "Saved."
-            ? "complete"
-            : "pending";
-        }
-        const submit = form.getByRole("button", {
-          name: button,
-          exact: true,
-        });
-        return (await submit.count()) === 0 || (await submit.isEnabled())
-          ? "complete"
-          : "pending";
-      },
+      () =>
+        form.evaluateAll((forms, expectSaved) => {
+          // A successful save may remove the dialog between separate locator reads.
+          // Read visibility, status and submit state in one browser snapshot.
+          const form = forms[0];
+          if (!form || !form.getClientRects().length) return "complete";
+          if (expectSaved)
+            return form.querySelector('[role="status"]')?.textContent ===
+              "Saved."
+              ? "complete"
+              : "pending";
+          const submit = form.querySelector<HTMLButtonElement>(
+            'button[type="submit"]',
+          );
+          return !submit || !submit.disabled ? "complete" : "pending";
+        }, expectSaved),
       { timeout: 20_000 },
     )
     .toBe("complete");

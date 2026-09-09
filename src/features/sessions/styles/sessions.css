@@ -19,6 +19,7 @@
 }
 
 .session-row {
+  position: relative;
   display: flex;
   width: 100%;
   min-height: 74px;
@@ -32,6 +33,23 @@
   transition:
     background var(--duration-fast) var(--ease-standard),
     padding var(--duration-fast) var(--ease-standard);
+}
+
+.session-row[data-motion-arrival="resolved"] {
+  animation: session-record-resolve var(--duration-signature) var(--ease-enter);
+}
+
+.session-row[data-motion-arrival="resolved"]::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--color-primary);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: session-record-line var(--duration-emphasis) var(--ease-enter) both;
 }
 
 .session-row-link {
@@ -86,7 +104,15 @@
   display: flex;
   justify-content: flex-end;
   background: rgba(0, 0, 0, 0.52);
-  animation: fade-in 0.16s var(--ease-standard);
+}
+
+.session-details-backdrop[data-state="open"] {
+  animation: fade-in var(--duration-fast) var(--ease-enter);
+}
+
+.session-details-backdrop[data-state="closed"] {
+  pointer-events: none;
+  animation: fade-out var(--duration-standard) var(--ease-exit) both;
 }
 
 .session-details-drawer {
@@ -97,7 +123,14 @@
   background: var(--color-surface);
   padding: var(--spacing-3xl);
   box-shadow: -30px 0 100px rgba(0, 0, 0, 0.52);
-  animation: drawer-in 0.22s var(--ease-standard);
+}
+
+.session-details-backdrop[data-state="open"] .session-details-drawer {
+  animation: drawer-in var(--duration-spatial) var(--ease-enter);
+}
+
+.session-details-backdrop[data-state="closed"] .session-details-drawer {
+  animation: drawer-out var(--duration-standard) var(--ease-exit) both;
 }
 
 .session-details-header {
@@ -179,7 +212,15 @@
   background: rgba(0, 0, 0, 0.72);
   padding: var(--spacing-xl);
   backdrop-filter: blur(6px);
-  animation: fade-in 0.16s var(--ease-standard);
+}
+
+.dialog-backdrop[data-state="open"] {
+  animation: fade-in var(--duration-fast) var(--ease-enter);
+}
+
+.dialog-backdrop[data-state="closed"] {
+  pointer-events: none;
+  animation: fade-out var(--duration-fast) var(--ease-exit) both;
 }
 
 .timer-dialog {
@@ -191,7 +232,14 @@
   background: var(--color-surface);
   padding: 28px;
   box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6);
-  animation: dialog-in var(--duration-standard) var(--ease-standard);
+}
+
+.dialog-backdrop[data-state="open"] .timer-dialog {
+  animation: dialog-in var(--duration-standard) var(--ease-enter);
+}
+
+.dialog-backdrop[data-state="closed"] .timer-dialog {
+  animation: dialog-out var(--duration-feedback) var(--ease-exit) both;
 }
 
 .domain-picker {
@@ -235,8 +283,45 @@
   padding: 17px var(--spacing-2xs);
 }
 
+.session-resolution-mark {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.session-resolution-mark::before {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid currentColor;
+  border-right-color: transparent;
+  border-radius: inherit;
+  content: "";
+}
+
+.session-resolution-mark.is-confirmed {
+  animation: session-resolution-settle var(--duration-emphasis)
+    var(--ease-enter) both;
+}
+
+.session-resolution-mark.is-confirmed::before {
+  animation: session-resolution-ring var(--duration-emphasis) var(--ease-enter)
+    both;
+}
+
 @keyframes fade-in {
   from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
     opacity: 0;
   }
 }
@@ -248,9 +333,54 @@
   }
 }
 
+@keyframes dialog-out {
+  to {
+    transform: translateY(4px) scale(0.99);
+    opacity: 0;
+  }
+}
+
 @keyframes drawer-in {
   from {
     transform: translateX(24px);
+  }
+}
+
+@keyframes drawer-out {
+  to {
+    transform: translateX(18px);
+  }
+}
+
+@keyframes session-resolution-ring {
+  to {
+    transform: rotate(120deg) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes session-resolution-settle {
+  40% {
+    box-shadow: 0 0 0 6px rgba(232, 168, 62, 0.08);
+    transform: scale(0.94);
+  }
+}
+
+@keyframes session-record-resolve {
+  0%,
+  35% {
+    background: rgba(232, 168, 62, 0.045);
+  }
+}
+
+@keyframes session-record-line {
+  55%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  100% {
+    opacity: 0;
   }
 }
 
@@ -273,3 +403,9 @@
     padding: var(--spacing-2xl) var(--spacing-xl) 96px;
   }
 }
+
+.business-completion-note { position:fixed; bottom:var(--spacing-xl); right:var(--spacing-xl); z-index:40; display:flex; align-items:center; flex-wrap:wrap; gap:var(--spacing-lg); max-width:calc(100vw - 32px); padding:var(--spacing-lg) var(--spacing-xl); border:1px solid var(--color-border); border-radius:var(--radius-panel); background:var(--color-surface-elevated); font-size:var(--text-body); box-shadow:0 8px 30px #0006; animation:dialog-in var(--duration-standard) var(--ease-enter); }
+.business-completion-note p { color:var(--color-text-secondary); }
+.business-completion-note a { color:var(--color-primary); }
+.business-completion-note button { color:var(--color-text-muted); cursor:pointer; min-height:36px; }
+@media(max-width:600px) { .business-completion-note { bottom:100px; } }

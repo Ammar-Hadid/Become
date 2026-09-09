@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Landmark } from "lucide-react";
+import { ViewTransition } from "react";
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   return (
@@ -19,11 +20,16 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
             <Landmark aria-hidden="true" />
             <span>
               <strong>Finance</strong>
-              <small>Money and category preferences</small>
             </span>
           </Link>
         </nav>
-        <div className="settings-content">{children}</div>
+        <ViewTransition
+          name="settings-content"
+          share="motion-data-recompose"
+          default="none"
+        >
+          <div className="settings-content">{children}</div>
+        </ViewTransition>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, ViewTransition } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -32,6 +32,7 @@ export function Dashboard({
   seasonProgress,
   initialData,
   recentSessions,
+  businessAttention = [],
 }: {
   userName: string;
   season: string;
@@ -39,16 +40,24 @@ export function Dashboard({
   seasonProgress: number;
   initialData: DashboardData;
   recentSessions: SessionListItem[];
+  businessAttention?: { id: string; text: string; href: string }[];
 }) {
   const [data, setData] = useState(initialData);
   const [pending, startTransition] = useTransition();
+  const [requestedTimeframe, setRequestedTimeframe] =
+    useState<Timeframe | null>(null);
   const { activeSession, elapsedSeconds } = useActiveTimer();
 
   function selectTimeframe(timeframe: Timeframe) {
     if (timeframe === data.timeframe) return;
+    setRequestedTimeframe(timeframe);
     startTransition(async () => {
-      const response = await fetch(`/api/dashboard?timeframe=${timeframe}`);
-      if (response.ok) setData((await response.json()) as DashboardData);
+      try {
+        const response = await fetch(`/api/dashboard?timeframe=${timeframe}`);
+        if (response.ok) setData((await response.json()) as DashboardData);
+      } finally {
+        setRequestedTimeframe(null);
+      }
     });
   }
 
@@ -81,6 +90,7 @@ export function Dashboard({
           aria-hidden="true"
         />
       </header>
+      {businessAttention.length > 0 && <section className="border-border border-y py-xl my-2xl"><div className="flex items-center justify-between gap-lg"><h2 className="eyebrow">Entrepreneurship · chosen actions & source review</h2><Link href="/entrepreneurship" className="text-body text-text-muted">View domain →</Link></div><ul className="mt-lg grid gap-md">{businessAttention.slice(0, 3).map((item) => <li key={item.id}><Link className="text-body text-text-secondary hover:text-text-primary" href={item.href}>{item.text}</Link></li>)}</ul></section>}
 
       {activeSession ? (
         <button
@@ -169,88 +179,111 @@ export function Dashboard({
           {TIMEFRAMES.map((timeframe) => (
             <button
               key={timeframe}
-              className={cn(data.timeframe === timeframe && "active")}
+              className={cn(
+                "motion-selection-control",
+                (requestedTimeframe ?? data.timeframe) === timeframe &&
+                  "active",
+              )}
               onClick={() => selectTimeframe(timeframe)}
               disabled={pending}
+              aria-pressed={
+                (requestedTimeframe ?? data.timeframe) === timeframe
+              }
             >
-              {timeframe[0].toUpperCase() + timeframe.slice(1)}
+              {(requestedTimeframe ?? data.timeframe) === timeframe && (
+                <ViewTransition
+                  name="dashboard-timeframe-indicator"
+                  share="motion-guide"
+                  default="none"
+                >
+                  <span className="motion-selection-guide" aria-hidden />
+                </ViewTransition>
+              )}
+              <span>{timeframe[0].toUpperCase() + timeframe.slice(1)}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <section
-        className={cn("dashboard-analytics", pending && "opacity-60")}
-        aria-busy={pending}
+      <ViewTransition
+        key={data.timeframe}
+        name="dashboard-analytics"
+        share="motion-data-recompose"
+        default="none"
       >
-        <div className="border-border py-3xl lg:pr-4xl min-w-0 border-b lg:border-r lg:border-b-0">
-          <div className="mb-lg flex items-center justify-between">
-            <div>
-              <h2 className="section-title">Rhythm</h2>
-              <p className="section-description">
-                {data.periodLabel} · {data.activeDays} active{" "}
-                {data.activeDays === 1 ? "day" : "days"}
-              </p>
+        <section
+          className={cn("dashboard-analytics", pending && "is-pending")}
+          aria-busy={pending}
+        >
+          <div className="border-border py-3xl lg:pr-4xl min-w-0 border-b lg:border-r lg:border-b-0">
+            <div className="mb-lg flex items-center justify-between">
+              <div>
+                <h2 className="section-title">Rhythm</h2>
+                <p className="section-description">
+                  {data.periodLabel} · {data.activeDays} active{" "}
+                  {data.activeDays === 1 ? "day" : "days"}
+                </p>
+              </div>
+              <Clock3 className="text-text-muted size-4" />
             </div>
-            <Clock3 className="text-text-muted size-4" />
+            <TimeBarChart data={data.chart} />
           </div>
-          <TimeBarChart data={data.chart} />
-        </div>
 
-        <div className="py-3xl lg:pl-4xl">
-          <div className="mb-7 flex items-center justify-between">
-            <div>
-              <h2 className="section-title">Direction</h2>
-              <p className="section-description">
-                Allocation across your domains
-              </p>
+          <div className="py-3xl lg:pl-4xl">
+            <div className="mb-7 flex items-center justify-between">
+              <div>
+                <h2 className="section-title">Direction</h2>
+                <p className="section-description">
+                  Allocation across your domains
+                </p>
+              </div>
+              <span className="dashboard-context text-text-muted">
+                {formatDuration(data.todaySeconds, true)} today
+              </span>
             </div>
-            <span className="dashboard-context text-text-muted">
-              {formatDuration(data.todaySeconds, true)} today
-            </span>
-          </div>
-          <div className="space-y-xl">
-            {data.domains.map((domain) => {
-              const share = data.totalSeconds
-                ? (domain.seconds / data.totalSeconds) * 100
-                : 0;
-              return (
-                <Link
-                  href={getDomainHref(domain.slug)}
-                  className="domain-metric group"
-                  key={domain.id}
-                >
-                  <span
-                    className="domain-metric-icon"
-                    style={{ color: domain.color }}
+            <div className="space-y-xl">
+              {data.domains.map((domain) => {
+                const share = data.totalSeconds
+                  ? (domain.seconds / data.totalSeconds) * 100
+                  : 0;
+                return (
+                  <Link
+                    href={getDomainHref(domain.slug)}
+                    className="domain-metric group"
+                    key={domain.id}
                   >
-                    <DomainIcon slug={domain.slug} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="gap-lg flex items-center justify-between">
-                      <span className="text-body font-medium">
-                        {domain.name}
+                    <span
+                      className="domain-metric-icon"
+                      style={{ color: domain.color }}
+                    >
+                      <DomainIcon slug={domain.slug} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="gap-lg flex items-center justify-between">
+                        <span className="text-body font-medium">
+                          {domain.name}
+                        </span>
+                        <span className="timer-numerals text-body">
+                          {formatDuration(domain.seconds, true)}
+                        </span>
                       </span>
-                      <span className="timer-numerals text-body">
-                        {formatDuration(domain.seconds, true)}
+                      <span className="metric-track">
+                        <span
+                          style={{
+                            width: `${Math.max(share, domain.seconds ? 2 : 0)}%`,
+                            backgroundColor: domain.color,
+                          }}
+                        />
                       </span>
                     </span>
-                    <span className="metric-track">
-                      <span
-                        style={{
-                          width: `${Math.max(share, domain.seconds ? 2 : 0)}%`,
-                          backgroundColor: domain.color,
-                        }}
-                      />
-                    </span>
-                  </span>
-                  <ArrowUpRight className="text-text-muted size-4 opacity-0 transition-opacity group-hover:opacity-100" />
-                </Link>
-              );
-            })}
+                    <ArrowUpRight className="text-text-muted size-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ViewTransition>
 
       <section className="border-border bg-border mt-lg grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-3">
         <div className="signal-cell">

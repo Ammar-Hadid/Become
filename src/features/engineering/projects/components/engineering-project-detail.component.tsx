@@ -1,5 +1,6 @@
 import { ExternalLink, Pencil, RotateCcw, Archive } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
 import { EngineeringEvidenceList } from "@/features/engineering/evidence/components/engineering-evidence-list.component";
 import { EngineeringTechnologyStack } from "@/features/engineering/technologies/components/engineering-technology-stack.component";
@@ -25,7 +26,13 @@ export function EngineeringProjectDetailView({
       <header className="page-header">
         <div>
           <p className="eyebrow mb-md">Engineering project</p>
-          <h1>{project.name}</h1>
+          <ViewTransition
+            name={`engineering-project-${project.id}`}
+            share="motion-carry"
+            default="none"
+          >
+            <h1>{project.name}</h1>
+          </ViewTransition>
           <p className="page-description text-text-secondary mt-sm max-w-copy">
             {project.description ||
               "A body of Engineering work, connected to time and evidence."}

@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useId,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import {
   type RefObject,
 } from "react";
 import { Menu, type MenuPlacement } from "@/components/ui/menus/menu.component";
+import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 
 type SubMenuContextValue = {
@@ -56,6 +58,39 @@ export function SubMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const menuPresence = usePresence(open);
+
+  useLayoutEffect(() => {
+    if (!open || placement !== "bottom-end") return;
+    const place = () => {
+      const menu = menuRef.current;
+      const trigger = triggerRef.current;
+      if (!menu || !trigger) return;
+      menu.style.translate = "";
+      const bounds = menu.getBoundingClientRect();
+      const anchor = trigger.getBoundingClientRect();
+      const margin = 8;
+      const dx =
+        bounds.left < margin
+          ? margin - bounds.left
+          : bounds.right > innerWidth - margin
+            ? innerWidth - margin - bounds.right
+            : 0;
+      const dy =
+        bounds.bottom > innerHeight - margin &&
+        anchor.top >= bounds.height + margin
+          ? anchor.top - bounds.bottom - margin
+          : 0;
+      menu.style.translate = `${dx}px ${dy}px`;
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, placement]);
 
   const menuItems = useCallback(
     () =>
@@ -71,7 +106,11 @@ export function SubMenu({
     (restoreFocus = false) => {
       setOpen(false);
       onOpenChange?.(false);
-      if (restoreFocus) triggerRef.current?.focus();
+      if (restoreFocus) {
+        window.requestAnimationFrame(() =>
+          triggerRef.current?.focus({ preventScroll: true }),
+        );
+      }
     },
     [onOpenChange],
   );
@@ -119,7 +158,9 @@ export function SubMenu({
       onBlur={(event) => {
         if (
           open &&
-          !rootRef.current?.contains(event.relatedTarget as Node | null)
+          event.relatedTarget &&
+          !rootRef.current?.querySelector("dialog[open]") &&
+          !rootRef.current?.contains(event.relatedTarget)
         )
           close();
       }}
@@ -139,39 +180,45 @@ export function SubMenu({
           }
         },
       })}
-      <Menu
-        ref={menuRef}
-        id={menuId}
-        label={label}
-        open={open}
-        placement={placement}
-        className={menuClassName}
-        onClickCapture={(event) => {
-          if (
-            closeOnSelect &&
-            (event.target as Element).closest('[role="menuitem"]')
-          )
-            close();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Tab") return;
-          const items = menuItems();
-          const current = items.indexOf(document.activeElement as HTMLElement);
-          let next = current;
-          if (event.key === "ArrowDown") next = (current + 1) % items.length;
-          else if (event.key === "ArrowUp")
-            next = (current - 1 + items.length) % items.length;
-          else if (event.key === "Home") next = 0;
-          else if (event.key === "End") next = items.length - 1;
-          else return;
-          event.preventDefault();
-          items[next]?.focus();
-        }}
-      >
-        <SubMenuContext.Provider value={{ close }}>
-          {children}
-        </SubMenuContext.Provider>
-      </Menu>
+      {menuPresence.isPresent && (
+        <Menu
+          ref={menuRef}
+          id={menuId}
+          label={label}
+          open={open}
+          placement={placement}
+          className={menuClassName}
+          data-state={menuPresence.presenceState}
+          onAnimationEnd={menuPresence.onPresenceAnimationEnd}
+          onClickCapture={(event) => {
+            if (
+              closeOnSelect &&
+              (event.target as Element).closest('[role="menuitem"]')
+            )
+              close();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Tab") return;
+            const items = menuItems();
+            const current = items.indexOf(
+              document.activeElement as HTMLElement,
+            );
+            let next = current;
+            if (event.key === "ArrowDown") next = (current + 1) % items.length;
+            else if (event.key === "ArrowUp")
+              next = (current - 1 + items.length) % items.length;
+            else if (event.key === "Home") next = 0;
+            else if (event.key === "End") next = items.length - 1;
+            else return;
+            event.preventDefault();
+            items[next]?.focus();
+          }}
+        >
+          <SubMenuContext.Provider value={{ close }}>
+            {children}
+          </SubMenuContext.Provider>
+        </Menu>
+      )}
     </div>
   );
 }

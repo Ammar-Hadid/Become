@@ -45,6 +45,8 @@ export async function getFinanceAttention(userId: string) {
       }),
     ]);
   const items: FinanceAttention[] = [];
+  const businessReceipts = await prisma.businessReceiptAllocation.findMany({ where: { userId, withdrawnAt: null, needsReviewAt: { not: null }, transactionId: { not: null } }, take: 10, orderBy: { needsReviewAt: "asc" } });
+  for (const receipt of businessReceipts) items.push({ id: `business-receipt-${receipt.id}`, priority: 2, text: `${receipt.companySnapshot}: receipt attribution needs review.`, href: `/finance/transactions/${receipt.transactionId}` });
   for (const account of position) {
     if (account.balanceMinor === null)
       items.push({

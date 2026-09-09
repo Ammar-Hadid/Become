@@ -16,6 +16,16 @@
   color: var(--color-text-primary);
 }
 
+.icon-button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-button:active {
+    transform: none;
+  }
+}
+
 .field-label {
   display: block;
   margin-bottom: 9px;
@@ -72,11 +82,13 @@ textarea.text-input--textarea-lg {
   display: flex;
   min-height: var(--spacing-input-height-md);
   align-items: center;
-  padding: 0 var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-xl) 0 var(--spacing-md);
 }
 
 .select-wrap select {
-  width: 100%;
+  min-width: 0;
+  flex: 1;
   cursor: pointer;
   appearance: none;
   background: transparent;
@@ -85,6 +97,7 @@ textarea.text-input--textarea-lg {
 }
 
 .select-wrap svg {
+  flex: 0 0 auto;
   color: var(--color-text-muted);
 }
 

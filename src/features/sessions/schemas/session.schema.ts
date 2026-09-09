@@ -18,6 +18,8 @@ export const startSessionSchema = z.object({
   workSourceId: z.string().min(1).nullable().optional(),
   incomeOpportunityId: z.string().min(1).nullable().optional(),
   financeCompensationType: compensationSchema.nullable().optional(),
+  businessCompanyId: z.string().min(1).nullable().optional(),
+  businessNicheId: z.string().min(1).nullable().optional(),
   engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
   engineeringProjectId: z.string().min(1).nullable().optional(),
   description: optionalText,
@@ -26,6 +28,8 @@ export const startSessionSchema = z.object({
 export const completeSessionSchema = z.object({
   outcome: optionalText,
   notes: optionalText,
+  businessCompanyId: z.string().min(1).nullable().optional(),
+  businessNicheId: z.string().min(1).nullable().optional(),
   engineeringContext: z.enum(ENGINEERING_CONTEXT_VALUES).nullable().optional(),
   engineeringProjectId: z.string().min(1).nullable().optional(),
   engineeringEvidence: z

@@ -165,6 +165,7 @@ export async function OpportunitiesPage({ userId }: { userId: string }) {
               return (
                 <article
                   key={source.id}
+                  id={`work-source-${source.id}`}
                   className={source.archivedAt ? "is-archived" : ""}
                 >
                   <span className="finance-source-avatar">

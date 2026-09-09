@@ -40,7 +40,13 @@ export function EngineeringProjectForm({
     : "/engineering/projects";
 
   return (
-    <form ref={formRef} action={formAction} className="engineering-form">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="engineering-form"
+      aria-busy={pending}
+      data-pending={pending || undefined}
+    >
       <div className="engineering-form-grid">
         <label className="engineering-form-wide block">
           <span className="field-label">Project name</span>

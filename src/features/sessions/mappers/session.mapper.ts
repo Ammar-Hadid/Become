@@ -15,6 +15,11 @@ export function toSessionListItem(
 
   return {
     id: session.id,
+    businessCompanyId: session.businessCompanyId,
+    businessNicheId: session.businessNicheId,
+    businessCompanySnapshot: session.businessCompanySnapshot,
+    businessNicheSnapshot: session.businessNicheSnapshot,
+    entrepreneurshipActivityKind: session.entrepreneurshipActivityKind,
     financeActivityKind: session.financeActivityKind,
     financeCompensationType: session.financeCompensationType,
     workSourceId: session.workSourceId,

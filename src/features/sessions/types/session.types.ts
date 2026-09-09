@@ -21,6 +21,11 @@ export type DomainOption = {
 };
 
 export type SessionListItem = {
+  businessCompanyId?: string | null;
+  businessNicheId?: string | null;
+  businessCompanySnapshot?: string | null;
+  businessNicheSnapshot?: string | null;
+  entrepreneurshipActivityKind?: string | null;
   financeActivityKind?: FinanceActivityKind | null;
   financeCompensationType?: FinanceCompensationType | null;
   workSourceId?: string | null;
@@ -59,6 +64,8 @@ export type ActiveSessionData = SessionListItem;
 export type ActiveTimerState = {
   activeSession: ActiveSessionData | null;
   elapsedSeconds: number;
+  completedSessions: Readonly<Record<string, SessionDetailItem>>;
+  confirmCompletion: (session: SessionDetailItem) => void;
 };
 
 export type SessionWithRelations = Prisma.SessionGetPayload<{

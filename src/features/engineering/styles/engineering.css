@@ -64,6 +64,14 @@
   letter-spacing: -0.06em;
 }
 
+.engineering-form-grid {
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.engineering-form[data-pending="true"] .engineering-form-grid {
+  opacity: 0.74;
+}
+
 .engineering-signal-grid {
   display: grid;
   margin-top: var(--spacing-lg);
@@ -75,7 +83,7 @@
   gap: 1px;
 }
 
-.engineering-signal-grid>div {
+.engineering-signal-grid > div {
   display: grid;
   min-height: 138px;
   align-content: center;
@@ -122,7 +130,7 @@
   grid-column: 1 / -1;
 }
 
-.engineering-breakdown .metric-track>span {
+.engineering-breakdown .metric-track > span {
   background: var(--color-primary);
 }
 
@@ -138,7 +146,7 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.engineering-evidence-counts>div {
+.engineering-evidence-counts > div {
   padding: var(--spacing-xl) 0;
 }
 
@@ -165,7 +173,7 @@
   gap: var(--spacing-sm);
 }
 
-.engineering-project-preview>a {
+.engineering-project-preview > a {
   display: block;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
@@ -174,7 +182,7 @@
   transition: var(--duration-fast) var(--ease-standard);
 }
 
-.engineering-project-preview>a:hover {
+.engineering-project-preview > a:hover {
   border-color: #3a3f49;
   background: var(--color-surface-elevated);
 }
@@ -246,7 +254,7 @@ a.engineering-record-row:hover {
   font-weight: 550;
 }
 
-.engineering-record-heading>span {
+.engineering-record-heading > span {
   font-size: var(--text-label);
   color: var(--color-text-muted);
 }
@@ -281,7 +289,7 @@ a.engineering-record-row:hover {
   padding-bottom: var(--spacing-xl);
 }
 
-.engineering-evidence-ledger-heading>p {
+.engineering-evidence-ledger-heading > p {
   padding-bottom: 1px;
   font-size: var(--text-meta);
   color: var(--color-text-muted);
@@ -297,7 +305,7 @@ a.engineering-record-row:hover {
   gap: var(--spacing-xl);
 }
 
-.engineering-evidence-year+.engineering-evidence-year {
+.engineering-evidence-year + .engineering-evidence-year {
   margin-top: var(--spacing-3xl);
 }
 
@@ -339,12 +347,12 @@ a.engineering-record-row:hover {
   content: "";
 }
 
-.engineering-evidence-timeline>li {
+.engineering-evidence-timeline > li {
   position: relative;
   border-bottom: 1px solid var(--color-border);
 }
 
-.engineering-evidence-entry details {
+.engineering-evidence-entry-state {
   position: relative;
 }
 
@@ -356,15 +364,16 @@ a.engineering-record-row:hover {
   grid-template-columns: 52px 38px minmax(0, 1fr) 34px;
   align-items: center;
   gap: var(--spacing-lg);
+  width: 100%;
+  border: 0;
+  background: transparent;
   padding: var(--spacing-xl) var(--spacing-xs);
+  color: inherit;
   list-style: none;
+  text-align: left;
   transition:
     background var(--duration-fast) var(--ease-standard),
     padding var(--duration-fast) var(--ease-standard);
-}
-
-.engineering-evidence-summary::-webkit-details-marker {
-  display: none;
 }
 
 .engineering-evidence-summary:hover {
@@ -465,7 +474,7 @@ a.engineering-record-row:hover {
   color: var(--color-text-muted);
 }
 
-.engineering-evidence-summary-meta>span {
+.engineering-evidence-summary-meta > span {
   display: inline-flex;
   min-width: 0;
   align-items: center;
@@ -496,26 +505,74 @@ a.engineering-record-row:hover {
 }
 
 .engineering-evidence-summary:hover .engineering-evidence-disclosure,
-.engineering-evidence-entry details[open] .engineering-evidence-disclosure {
+.engineering-evidence-entry-state[data-state="open"]
+  .engineering-evidence-disclosure {
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);
 }
 
-.engineering-evidence-entry details[open] .engineering-evidence-disclosure {
+.engineering-evidence-entry-state[data-state="open"]
+  .engineering-evidence-disclosure {
   transform: rotate(180deg);
 }
 
-.engineering-evidence-entry details[open] {
+.engineering-evidence-entry-state[data-state="open"] {
   background: rgba(255, 255, 255, 0.014);
 }
 
 .engineering-evidence-expanded {
-  padding: 0 52px var(--spacing-3xl) 122px;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--duration-spatial) var(--ease-move),
+    opacity var(--duration-feedback) var(--ease-exit);
+}
+
+.engineering-evidence-entry-state[data-state="open"]
+  .engineering-evidence-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--duration-spatial) var(--ease-move),
+    opacity var(--duration-fast) var(--ease-enter);
+}
+
+.engineering-evidence-expanded-clip {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 52px 0 122px;
 }
 
 .engineering-evidence-expanded-inner {
   max-width: var(--container-copy);
-  animation: evidence-reveal var(--duration-standard) var(--ease-standard);
+  padding-bottom: var(--spacing-3xl);
+}
+
+.engineering-evidence-timeline > li[data-motion-arrival="new"]::after {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 25px;
+  width: 1px;
+  height: 58px;
+  background: var(--color-primary);
+  content: "";
+  transform: scaleY(0);
+  transform-origin: top;
+  animation: evidence-trace var(--duration-emphasis) var(--ease-enter) both;
+}
+
+.engineering-evidence-timeline
+  > li[data-motion-arrival="new"]
+  .engineering-evidence-entry {
+  animation: evidence-record-arrive var(--duration-signature) var(--ease-enter);
+}
+
+.engineering-evidence-timeline
+  > li[data-motion-arrival="new"]
+  .engineering-evidence-type-icon {
+  animation: evidence-node-settle var(--duration-emphasis) var(--ease-enter);
 }
 
 .engineering-evidence-narrative {
@@ -523,7 +580,7 @@ a.engineering-record-row:hover {
   padding-left: var(--spacing-xl);
 }
 
-.engineering-evidence-narrative>p:last-child {
+.engineering-evidence-narrative > p:last-child {
   margin-top: var(--spacing-md);
   overflow-wrap: anywhere;
   font-size: var(--text-body-lg);
@@ -532,7 +589,7 @@ a.engineering-record-row:hover {
   color: var(--color-text-primary);
 }
 
-.engineering-evidence-narrative>.engineering-evidence-no-details {
+.engineering-evidence-narrative > .engineering-evidence-no-details {
   font-style: italic;
   color: var(--color-text-muted);
 }
@@ -546,7 +603,7 @@ a.engineering-record-row:hover {
   padding-top: var(--spacing-xl);
 }
 
-.engineering-evidence-facts>div {
+.engineering-evidence-facts > div {
   min-width: 0;
 }
 
@@ -626,7 +683,7 @@ a.engineering-record-row:hover {
   border-bottom: 1px solid var(--color-border);
 }
 
-.engineering-evidence-empty>span {
+.engineering-evidence-empty > span {
   display: grid;
   width: 42px;
   height: 42px;
@@ -636,7 +693,7 @@ a.engineering-record-row:hover {
   color: var(--color-primary);
 }
 
-.engineering-evidence-empty>span svg {
+.engineering-evidence-empty > span svg {
   width: 18px;
 }
 
@@ -653,20 +710,37 @@ a.engineering-record-row:hover {
   color: var(--color-text-muted);
 }
 
-.engineering-evidence-empty>a {
+.engineering-evidence-empty > a {
   grid-column: 2;
   justify-self: start;
 }
 
-@keyframes evidence-reveal {
-  from {
-    transform: translateY(-4px);
-    opacity: 0;
+@keyframes evidence-trace {
+  55%,
+  100% {
+    transform: scaleY(1);
   }
 
-  to {
-    transform: translateY(0);
-    opacity: 1;
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes evidence-record-arrive {
+  0%,
+  35% {
+    background: rgba(232, 168, 62, 0.055);
+  }
+}
+
+@keyframes evidence-node-settle {
+  from {
+    box-shadow: 0 0 0 0 rgba(232, 168, 62, 0.3);
+    transform: scale(0.92);
+  }
+
+  55% {
+    box-shadow: 0 0 0 6px rgba(232, 168, 62, 0.08);
   }
 }
 
@@ -712,8 +786,8 @@ a.engineering-record-row:hover {
   margin: var(--spacing-xl) 0;
 }
 
-.engineering-selected-technologies>span,
-.engineering-technology-stack>span {
+.engineering-selected-technologies > span,
+.engineering-technology-stack > span {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
@@ -750,7 +824,7 @@ a.engineering-record-row:hover {
   position: relative;
 }
 
-.engineering-tech-combobox>svg {
+.engineering-tech-combobox > svg {
   position: absolute;
   top: 50%;
   left: var(--spacing-lg);
@@ -792,7 +866,7 @@ a.engineering-record-row:hover {
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
 }
 
-.engineering-tech-options>button {
+.engineering-tech-options > button {
   display: flex;
   width: 100%;
   align-items: center;
@@ -802,12 +876,12 @@ a.engineering-record-row:hover {
   text-align: left;
 }
 
-.engineering-tech-options>button:hover,
-.engineering-tech-options>button.active {
+.engineering-tech-options > button:hover,
+.engineering-tech-options > button.active {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.engineering-tech-options>button>svg {
+.engineering-tech-options > button > svg {
   width: 17px;
   flex: 0 0 auto;
   color: var(--color-primary);
@@ -824,7 +898,7 @@ a.engineering-record-row:hover {
 }
 
 .engineering-tech-options small,
-.engineering-tech-options>p,
+.engineering-tech-options > p,
 .engineering-field-help {
   font-size: var(--text-meta);
   color: var(--color-text-muted);
@@ -834,7 +908,7 @@ a.engineering-record-row:hover {
   margin-top: var(--spacing-xs);
 }
 
-.engineering-tech-options>p {
+.engineering-tech-options > p {
   padding: var(--spacing-lg);
 }
 
@@ -851,7 +925,7 @@ a.engineering-record-row:hover {
   border-bottom: 1px solid var(--color-border);
 }
 
-.engineering-project-facts>div {
+.engineering-project-facts > div {
   padding: var(--spacing-2xl) 0;
 }
 
@@ -904,7 +978,7 @@ a.engineering-record-row:hover {
   margin-top: var(--spacing-3xl);
 }
 
-.engineering-project-notes>p:last-child {
+.engineering-project-notes > p:last-child {
   line-height: 1.65;
   white-space: pre-wrap;
   color: var(--color-text-secondary);
@@ -1012,8 +1086,12 @@ a.engineering-record-row:hover {
     gap: var(--spacing-xs) var(--spacing-md);
   }
 
-  .engineering-evidence-expanded {
-    padding: 0 0 var(--spacing-3xl) 44px;
+  .engineering-evidence-expanded-clip {
+    padding: 0 0 0 44px;
+  }
+
+  .engineering-evidence-timeline > li[data-motion-arrival="new"]::after {
+    left: 15px;
   }
 
   .engineering-evidence-narrative {
@@ -1030,7 +1108,7 @@ a.engineering-record-row:hover {
     grid-template-columns: 36px minmax(0, 1fr);
   }
 
-  .engineering-evidence-empty>span {
+  .engineering-evidence-empty > span {
     width: 36px;
     height: 36px;
   }
@@ -1043,7 +1121,7 @@ a.engineering-record-row:hover {
     gap: var(--spacing-md);
   }
 
-  .engineering-evidence-ledger-heading>p {
+  .engineering-evidence-ledger-heading > p {
     padding-bottom: 0;
   }
 }

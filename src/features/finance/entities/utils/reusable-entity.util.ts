@@ -1,3 +1,1 @@
-export function normalizeReusableEntityName(name: string) {
-  return name.trim().normalize("NFKC").toLocaleLowerCase("en");
-}
+export { normalizeReusableEntityName } from "@/lib/validation/utils/canonical-name.util";

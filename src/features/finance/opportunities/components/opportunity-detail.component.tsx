@@ -168,7 +168,8 @@ export async function OpportunityDetail({
         </div>
       )}
 
-      <section className="finance-opportunity-overview">
+      <section className="finance-opportunity-overview mb-3xl">
+
         <article className="finance-opportunity-value">
           <span className="finance-panel-icon">
             <CircleDollarSign aria-hidden="true" />
@@ -187,6 +188,7 @@ export async function OpportunityDetail({
             Only money explicitly received and connected to this opportunity.
           </small>
         </article>
+
         <article className="finance-opportunity-value">
           <span className="finance-panel-icon finance-panel-icon--violet">
             <Sparkles aria-hidden="true" />
@@ -203,6 +205,7 @@ export async function OpportunityDetail({
           </strong>
           <small>An expectation only. It never counts as actual income.</small>
         </article>
+
       </section>
 
       <FinanceSection
@@ -211,14 +214,16 @@ export async function OpportunityDetail({
       >
         <ol className="finance-opportunity-timeline">
           {milestones.map(([label, value], index) => (
-            <li key={label}>
-              <span>
+            <li key={label} className="flex items-center!">
+
+              <span className="border">
                 {index === milestones.length - 1 ? (
                   <CheckCircle2 aria-hidden="true" />
                 ) : (
                   <CircleDot aria-hidden="true" />
                 )}
               </span>
+
               <div>
                 <strong>{label}</strong>
                 <time dateTime={value.toISOString()}>
@@ -227,10 +232,13 @@ export async function OpportunityDetail({
                     .toFormat("d LLL yyyy, HH:mm")}
                 </time>
               </div>
+
             </li>
           ))}
         </ol>
       </FinanceSection>
+
+
 
       {!opportunity.archivedAt && (
         <FinanceSection

@@ -1,46 +1,66 @@
 # Current development state
 
-Phase 2: Engineering is implemented on `feature/phase-2`.
+Phases 1–3 and the Phase 4 Entrepreneurship implementation are present. Current
+Phase 4 work is on `feature/phase-4`, uncommitted, alongside preserved timer,
+Engineering, Finance and shared motion work. The repository is authoritative for
+what exists; the master specification also describes future work.
 
 ## Available now
 
-- Phase 1 authentication, domains, timer recovery, session history, and calendar-aware analytics
-- Engineering projects with required context, lifecycle state, dates, archive/restore, repository URL, nullable `liveUrl`, and optional reusable technology stacks
-- Curated global technologies plus normalized user-owned custom technologies
-- Developer-owned built-in catalog with explicit, atomic `pnpm db:sync-reference` synchronization through Prisma seeding
-- Optional project selection on Engineering sessions
-- Required, session-owned Engineering context: Uni, Internship, Personal, or Professional
-- Engineering evidence linked to a session, project, both, or neither where appropriate
-- Engineering overview analytics by timeframe, project, activity, context, active day, and evidence type
-- Project-associated technology time, explicitly presented as overlapping project metadata rather than direct session attribution
-- Distinct projects worked on in the selected timeframe, grouped by project context separately from Session-context time
-- Unsaved-change confirmation for modified project create/edit forms
-- Responsive project, evidence, timer, and session-detail experiences
+- Foundation: local authentication, domains, recoverable timer, session history,
+  session details, and calendar-aware analytics.
+- Engineering: projects, context, reusable technologies, evidence, archive/restore,
+  and time/evidence analytics. Project technologies describe current project
+  metadata; Session context remains historical and is never inferred retroactively.
+- Finance: accounts and observed balance reconciliation, actual transactions,
+  categories/counterparties, recurring expenses and occurrence confirmation,
+  savings goals and expense attribution, WorkSources, income opportunities,
+  Paid Work session attribution and confirmed effective-rate analytics.
+- Entrepreneurship: niche-first workspaces with current/past explorations and
+  secondary global history, shared companies, explicit offer–niche participation,
+  atomic interaction capture, manual batch outreach, explicit replies, sourced
+  observations, Problem evidence and scoped assessments, recurring or one-off
+  offer quotations and actual outcomes, chosen follow-ups, WorkSource continuation,
+  Finance-owned receipt attribution, optional Session context, and an overview
+  scoped to the chosen niche, market observations and the next chosen action.
+  See [niche-first implementation](PHASE_4_NICHE_FIRST.md) for lifecycle semantics.
+- Business attention is available on Home; Finance also surfaces receipt attribution
+  that needs review. Legacy Entrepreneurship domain links redirect to the dedicated
+  workspace and preserve query parameters.
 
-Session context is the historical source of truth. It is never inferred from a
-project, so context remains valid when there is no project and cannot be changed
-retroactively by editing a project. Selecting a project when starting a session
-prefills that project's context only as an editable convenience.
+## Truth and history
 
-Technologies are attached only to projects. A session never asks for or stores a
-technology, keeping timer capture lightweight and preventing claims that the
-available data cannot support. Phase 2 analytics use each project's current
-technology stack; they do not snapshot that stack onto historical sessions.
+The timer applies the authoritative completion response immediately. Retrying a
+completion returns the original result and does not duplicate side effects.
+Entrepreneurship Session company, niche and activity categories are snapshots.
+Old sessions remain unknown where context was never recorded. Completion offers
+an optional separate interaction capture; time spent never creates contact facts.
+
+Evidence points to an exact source version. Material corrections can require
+review; editorial labels and unrelated notes do not. Historical assessments keep
+the evidence considered at the time. Company memberships and WorkSource links are
+current relationships, rather than a general temporal database.
+
+Quoted prices, acceptance and actual received money are distinct. Monthly/yearly
+quotes never generate income. Finance owns business receipt allocations and locks
+the underlying transaction for allocation, relevant edit and deletion. Session and
+business allocations are separate dimensions of one payment, never additive money.
 
 ## Intentional boundaries
 
-- Pre-Phase-2 Engineering sessions keep a null context rather than receiving a guessed value.
-- Projects created before required project context are backfilled as Personal and can be corrected through the edit form; no Session values are used to infer that backfill.
-- Only active, non-archived projects appear in the timer selector; archived projects remain attached to historical sessions.
-- Project-context analytics use each project's current context and count a distinct project only when a linked Session overlaps the selected timeframe; project context is not snapshotted per Session.
-- Completed sessions are not editable or deletable yet.
-- Finance and later product phases are not implemented.
+- Completed Session timing is not generally editable or deletable.
+- No Contact directory, email sending, campaigns, AI evidence judgments, invoicing,
+  subscription billing, projected recurring revenue, acquisition ROI or business
+  effective hourly rate. No Phase 5 work.
+- No guessed historical business categorization or automatic validation labels.
+- Global reference catalog synchronization remains an explicit developer operation.
+- Balance reconciliation is an observed anchor; missing anchors mean unknown.
+  Recurring-expense posting is the user's scheduled assumption, not bank verification.
 
-## Verification
+## Verification and implementation notes
 
-- Prisma schema validation and client generation
-- Phase 2 migration applied to local PostgreSQL
-- TypeScript, ESLint, and deterministic unit tests
-- Next.js production build with webpack
-- Engineering Playwright journey on desktop, tablet, and mobile
-- Existing timer and session-detail Playwright regressions in Chromium
+See [Phase 4 delivery and verification](../decisions/PHASE_4.md) for exact passed,
+skipped and unresolved checks, screenshots, and the primary user walkthrough.
+Finance's existing contract remains [PHASE_3_FINANCE.md](../product/PHASE_3_FINANCE.md).
+The shared [motion system](../design/MOTION_SYSTEM.md) governs local reveals,
+navigation guidance, state changes and reduced-motion behavior.

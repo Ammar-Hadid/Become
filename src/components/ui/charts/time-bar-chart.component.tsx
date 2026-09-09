@@ -24,6 +24,7 @@ export function TimeBarChart({
           />
           <Tooltip
             cursor={{ fill: "rgba(255,255,255,0.025)" }}
+            isAnimationActive={false}
             content={({ active, payload, label }) =>
               active && payload?.[0] ? (
                 <div className="chart-tooltip">
@@ -42,7 +43,7 @@ export function TimeBarChart({
             fill="#E8A83E"
             radius={[4, 4, 1, 1]}
             maxBarSize={34}
-            animationDuration={500}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>

@@ -1,3 +1,4 @@
+import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { NextResponse } from "next/server";
 import { startSessionSchema } from "@/features/sessions/schemas/session.schema";
 import { startSession } from "@/features/sessions/lifecycle/services/start-session.service";
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   const result = await startSession(user.id, parsed.data).catch((error) => {
-    if (error instanceof FinanceError)
+    if (error instanceof FinanceError || error instanceof BusinessError)
       return { status: "invalid-finance" as const, error: error.message };
     throw error;
   });

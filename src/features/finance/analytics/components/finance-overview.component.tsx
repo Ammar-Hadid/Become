@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { DateTime } from "luxon";
+import { ViewTransition } from "react";
 import {
   AlertCircle,
-  ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   BriefcaseBusiness,
   CalendarClock,
   CheckCircle2,
@@ -22,9 +21,8 @@ import {
   getPeriod,
   getPreviousPeriod,
   isTimeframe,
-  TIMEFRAMES,
 } from "@/lib/dates/utils/period.util";
-import { formatMoney } from "@/lib/money/utils/money.util";
+import { formatMoney, moneyDecimal } from "@/lib/money/utils/money.util";
 import {
   getFinancialPosition,
   sumPosition,
@@ -32,6 +30,12 @@ import {
 import { getFinanceAttention } from "@/features/finance/analytics/queries/finance-attention.query";
 import { getCashFlow } from "@/features/finance/analytics/queries/cash-flow.query";
 import { getFinanceWork } from "@/features/finance/analytics/queries/finance-work.query";
+import {
+  formatCashMovementBucketDate,
+  getCashMovementBuckets,
+} from "@/features/finance/analytics/utils/cash-movement-buckets.util";
+import { CashMovementChart } from "@/features/finance/analytics/components/cash-movement-chart.component";
+import { FinancePeriodControl } from "@/features/finance/analytics/components/finance-period-control.component";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
 import {
   FinanceEmptyState,
@@ -71,6 +75,7 @@ export async function FinanceOverview({
       : "month",
   );
   const previous = getPreviousPeriod(period);
+  const cashBuckets = getCashMovementBuckets(period);
   const [
     position,
     attention,
@@ -82,6 +87,7 @@ export async function FinanceOverview({
     categories,
     startPosition,
     endPosition,
+    cashTimeline,
   ] = await Promise.all([
     getFinancialPosition(userId),
     getFinanceAttention(userId),
@@ -100,6 +106,15 @@ export async function FinanceOverview({
     getFinancialPosition(
       userId,
       DateTime.min(now, period.end).toUTC().toJSDate(),
+    ),
+    Promise.all(
+      cashBuckets.map((bucket) =>
+        getCashFlow(userId, {
+          ...period,
+          start: bucket.start,
+          end: bucket.end,
+        }),
+      ),
     ),
   ]);
 
@@ -418,189 +433,182 @@ export async function FinanceOverview({
       <FinanceSection
         title="Cash movement"
         description="Money entering and leaving your accounts. Transfers stay visible but never masquerade as income or spending."
+        className="finance-cash-movement-section"
         action={
-          <form className="finance-period-control">
-            <label>
-              <span className="sr-only">Period</span>
-              <select name="timeframe" defaultValue={period.timeframe}>
-                {TIMEFRAMES.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="sr-only">Date</span>
-              <input
-                type="date"
-                name="date"
-                defaultValue={reference.toISODate()!}
-                max={now.toISODate()!}
-              />
-            </label>
-            <button type="submit">View</button>
-          </form>
+          <FinancePeriodControl
+            key={`${period.timeframe}-${reference.toISODate()}`}
+            timeframe={period.timeframe}
+            date={reference.toISODate()!}
+            maxDate={now.toISODate()!}
+          />
         }
       >
-        <p className="finance-period-caption">
-          {period.label} <span>compared with {previous.label}</span>
-        </p>
-        {!currencies.length ? (
-          <FinanceEmptyState
-            icon={<ReceiptText aria-hidden="true" />}
-            title="No money moved in this period"
-            description="When you record income, an expense or a transfer, the pattern will take shape here."
-            action={
-              <Link className="finance-panel-link" href="/finance/transactions">
-                Open transactions <ArrowRight aria-hidden="true" />
-              </Link>
-            }
-          />
-        ) : (
-          <div className="finance-cash-list">
-            {currencies.map((currency) => {
-              const current = cash.totals.get(currency) ?? {
-                income: 0n,
-                expense: 0n,
-                transfer: 0n,
-                earnedWork: 0n,
-                businessRevenue: 0n,
-              };
-              const prior = priorCash.totals.get(currency);
-              const before = startSavings.get(currency);
-              const after = endSavings.get(currency);
-              const net = current.income - current.expense;
-              const scale =
-                current.income > current.expense
-                  ? current.income
-                  : current.expense;
-              return (
-                <article className="finance-cash-card" key={currency}>
-                  <header>
-                    <div>
-                      <span>{currency}</span>
-                      <p>Net external cash flow</p>
-                    </div>
-                    <strong
-                      className={
-                        "finance-number " +
-                        (net >= 0n ? "is-positive" : "is-negative")
-                      }
-                    >
-                      {net > 0n && "+"}
-                      {formatMoney(net, currency)}
-                    </strong>
-                  </header>
-                  <div className="finance-flow-comparison">
-                    <div>
-                      <span>
-                        <ArrowDownRight aria-hidden="true" /> In
-                      </span>
-                      <strong className="finance-number">
-                        {formatMoney(current.income, currency)}
-                      </strong>
-                      <i
-                        className="is-positive"
-                        style={{ width: percent(current.income, scale) + "%" }}
+        <ViewTransition
+          key={`${period.timeframe}-${reference.toISODate()}`}
+          name="finance-cash-movement"
+          share="motion-data-recompose"
+          default="none"
+        >
+          <div className="finance-cash-movement-data">
+            <p className="finance-period-caption">
+              {period.label} <span>compared with {previous.label}</span>
+            </p>
+            {!currencies.length ? (
+              <FinanceEmptyState
+                icon={<ReceiptText aria-hidden="true" />}
+                title="No money moved in this period"
+                description="When you record income, an expense or a transfer, the pattern will take shape here."
+                action={
+                  <Link
+                    className="finance-panel-link"
+                    href="/finance/transactions"
+                  >
+                    Open transactions <ArrowRight aria-hidden="true" />
+                  </Link>
+                }
+              />
+            ) : (
+              <div className="finance-cash-list">
+                {currencies.map((currency) => {
+                  const current = cash.totals.get(currency) ?? {
+                    income: 0n,
+                    expense: 0n,
+                    transfer: 0n,
+                    earnedWork: 0n,
+                    businessRevenue: 0n,
+                  };
+                  const prior = priorCash.totals.get(currency);
+                  const before = startSavings.get(currency);
+                  const after = endSavings.get(currency);
+                  const net = current.income - current.expense;
+                  const chartData = cashBuckets.map((bucket, index) => {
+                    const bucketTotal =
+                      cashTimeline[index].totals.get(currency);
+                    const moneyInMinor = bucketTotal?.income ?? 0n;
+                    const moneyOutMinor = bucketTotal?.expense ?? 0n;
+
+                    return {
+                      label: bucket.label,
+                      dateLabel: formatCashMovementBucketDate(
+                        bucket,
+                        period.timeframe,
+                      ),
+                      moneyIn: Number(moneyDecimal(moneyInMinor, currency)),
+                      moneyOut: -Number(moneyDecimal(moneyOutMinor, currency)),
+                      moneyInMinor: moneyInMinor.toString(),
+                      moneyOutMinor: moneyOutMinor.toString(),
+                    };
+                  });
+                  return (
+                    <article className="finance-cash-card" key={currency}>
+                      <header>
+                        <div>
+                          <span>{currency}</span>
+                          <p>Net external cash flow</p>
+                        </div>
+                        <strong
+                          className={
+                            "finance-number " +
+                            (net >= 0n ? "is-positive" : "is-negative")
+                          }
+                        >
+                          {net > 0n && "+"}
+                          {formatMoney(net, currency)}
+                        </strong>
+                      </header>
+                      <CashMovementChart
+                        currency={currency}
+                        data={chartData}
+                        moneyInTotal={current.income.toString()}
+                        moneyOutTotal={current.expense.toString()}
                       />
-                    </div>
-                    <div>
-                      <span>
-                        <ArrowUpRight aria-hidden="true" /> Out
-                      </span>
-                      <strong className="finance-number">
-                        {formatMoney(current.expense, currency)}
-                      </strong>
-                      <i
-                        className="is-negative"
-                        style={{ width: percent(current.expense, scale) + "%" }}
-                      />
-                    </div>
-                  </div>
-                  <div className="finance-cash-context">
-                    <p>
-                      Internal transfers{" "}
-                      <strong className="finance-number">
-                        {formatMoney(current.transfer, currency)}
-                      </strong>
-                    </p>
-                    <p>
-                      Savings changed{" "}
-                      <strong className="finance-number">
-                        {before === undefined ||
-                        after === undefined ||
-                        before === null ||
-                        after === null
-                          ? "Unavailable"
-                          : formatMoney(after - before, currency)}
-                      </strong>
-                    </p>
-                    <p>
-                      Inflow vs prior{" "}
-                      <strong className="finance-number">
-                        {formatMoney(
-                          current.income - (prior?.income ?? 0n),
-                          currency,
-                        )}
-                      </strong>
-                    </p>
-                  </div>
-                  <details className="finance-details">
-                    <summary>Where it came from and went</summary>
-                    <div className="finance-details-body finance-breakdown-grid">
-                      <div>
-                        <h3>Money in</h3>
-                        {cash.groups
-                          .filter(
-                            (group) =>
-                              group.currency === currency &&
-                              group.type === "INCOME",
-                          )
-                          .map((group) => (
-                            <p key={group.inflowKind}>
-                              <span>
-                                {humanize(group.inflowKind ?? "Other")}
-                              </span>
-                              <strong className="finance-number">
-                                {formatMoney(
-                                  group._sum.amountMinor ?? 0n,
-                                  currency,
-                                )}
-                              </strong>
-                            </p>
-                          ))}
+                      <div className="finance-cash-context">
+                        <p>
+                          Internal transfers{" "}
+                          <strong className="finance-number">
+                            {formatMoney(current.transfer, currency)}
+                          </strong>
+                        </p>
+                        <p>
+                          Savings changed{" "}
+                          <strong className="finance-number">
+                            {before === undefined ||
+                            after === undefined ||
+                            before === null ||
+                            after === null
+                              ? "Unavailable"
+                              : formatMoney(after - before, currency)}
+                          </strong>
+                        </p>
+                        <p>
+                          Inflow vs prior{" "}
+                          <strong className="finance-number">
+                            {formatMoney(
+                              current.income - (prior?.income ?? 0n),
+                              currency,
+                            )}
+                          </strong>
+                        </p>
                       </div>
-                      <div>
-                        <h3>Money out</h3>
-                        {cash.groups
-                          .filter(
-                            (group) =>
-                              group.currency === currency &&
-                              group.type === "EXPENSE",
-                          )
-                          .map((group) => (
-                            <p key={group.expenseCategoryId ?? "none"}>
-                              <span>
-                                {categories.find(
-                                  (category) =>
-                                    category.id === group.expenseCategoryId,
-                                )?.name ?? "Uncategorized"}
-                              </span>
-                              <strong className="finance-number">
-                                {formatMoney(
-                                  group._sum.amountMinor ?? 0n,
-                                  currency,
-                                )}
-                              </strong>
-                            </p>
-                          ))}
-                      </div>
-                    </div>
-                  </details>
-                </article>
-              );
-            })}
+                      <details className="finance-details">
+                        <summary>Where it came from and went</summary>
+                        <div className="finance-details-body finance-breakdown-grid">
+                          <div>
+                            <h3>Money in</h3>
+                            {cash.groups
+                              .filter(
+                                (group) =>
+                                  group.currency === currency &&
+                                  group.type === "INCOME",
+                              )
+                              .map((group) => (
+                                <p key={group.inflowKind}>
+                                  <span>
+                                    {humanize(group.inflowKind ?? "Other")}
+                                  </span>
+                                  <strong className="finance-number">
+                                    {formatMoney(
+                                      group._sum.amountMinor ?? 0n,
+                                      currency,
+                                    )}
+                                  </strong>
+                                </p>
+                              ))}
+                          </div>
+                          <div>
+                            <h3>Money out</h3>
+                            {cash.groups
+                              .filter(
+                                (group) =>
+                                  group.currency === currency &&
+                                  group.type === "EXPENSE",
+                              )
+                              .map((group) => (
+                                <p key={group.expenseCategoryId ?? "none"}>
+                                  <span>
+                                    {categories.find(
+                                      (category) =>
+                                        category.id === group.expenseCategoryId,
+                                    )?.name ?? "Uncategorized"}
+                                  </span>
+                                  <strong className="finance-number">
+                                    {formatMoney(
+                                      group._sum.amountMinor ?? 0n,
+                                      currency,
+                                    )}
+                                  </strong>
+                                </p>
+                              ))}
+                          </div>
+                        </div>
+                      </details>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </ViewTransition>
       </FinanceSection>
 
       <FinanceSection

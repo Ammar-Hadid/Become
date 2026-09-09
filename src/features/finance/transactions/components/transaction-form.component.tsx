@@ -41,6 +41,7 @@ export type TransactionFormValues = {
   notes?: string | null;
 };
 export function TransactionForm({
+  businessReturnPath,
   accounts,
   categories,
   counterparties,
@@ -50,6 +51,7 @@ export function TransactionForm({
   workOptions,
   closeOnSuccess = false,
 }: {
+  businessReturnPath?: string;
   accounts: AccountOption[];
   categories: ExpenseCategoryOption[];
   counterparties: CounterpartyOption[];
@@ -260,6 +262,11 @@ export function TransactionForm({
           <Link href={`/finance/transactions/${paymentId}`}>
             Payment saved. Review payment details.
           </Link>
+          {businessReturnPath && (
+            <Link className="ml-lg" href={businessReturnPath}>
+              Return to attribute receipt ↗
+            </Link>
+          )}
         </p>
       )}
     </>

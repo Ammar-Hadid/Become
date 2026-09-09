@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { BusinessReceipts } from "@/features/finance/business-receipts/components/business-receipts.component";
+import { isBusinessReceipt } from "@/features/finance/business-receipts/services/business-receipt.service";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
@@ -201,6 +203,8 @@ export async function TransactionDetail({
           />
         </FinanceSection>
       )}
+
+      {isBusinessReceipt(record) && <BusinessReceipts userId={userId} transactionId={id} amountMinor={record.amountMinor} currency={record.currency} />}
 
       {record.type === "EXPENSE" && (
         <FinanceSection

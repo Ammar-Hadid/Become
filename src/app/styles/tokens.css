@@ -3,7 +3,7 @@
 
   /* Brand */
   --color-primary: #e8a83e;
-  --color-primary-muted: rgba(232, 168, 62, .25);
+  --color-primary-muted: rgba(232, 168, 62, 0.25);
   --color-primary-hover: #f0b64d;
   --color-primary-subtle: #2a2114;
   --color-on-primary: #17110a;
@@ -75,7 +75,14 @@
   --radius-dialog: 1.25rem;
 
   /* ===== Motion ===== */
-  --ease-standard: ease;
-  --duration-fast: 150ms;
-  --duration-standard: 200ms;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-move: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: var(--ease-move);
+  --duration-feedback: 90ms;
+  --duration-fast: 140ms;
+  --duration-standard: 180ms;
+  --duration-spatial: 240ms;
+  --duration-emphasis: 360ms;
+  --duration-signature: 650ms;
 }

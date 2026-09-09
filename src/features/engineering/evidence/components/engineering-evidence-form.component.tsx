@@ -10,6 +10,7 @@ import {
   createEngineeringEvidenceAction,
   updateEngineeringEvidenceAction,
 } from "@/features/engineering/evidence/actions/engineering-evidence.action";
+import { rememberEngineeringEvidenceArrival } from "@/features/engineering/evidence/utils/engineering-evidence-motion.util";
 import type { EngineeringFormState } from "@/features/engineering/projects/actions/engineering-project.action";
 import type {
   EngineeringEvidenceListItem,
@@ -50,7 +51,19 @@ export function EngineeringEvidenceForm({
     : DateTime.now().setZone(APP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm");
 
   return (
-    <form action={formAction} className="engineering-form">
+    <form
+      action={formAction}
+      className="engineering-form"
+      aria-busy={pending}
+      data-pending={pending || undefined}
+      onSubmit={(event) => {
+        if (evidence) return;
+        const title = new FormData(event.currentTarget).get("title");
+        if (typeof title === "string" && title.trim()) {
+          rememberEngineeringEvidenceArrival(title.trim());
+        }
+      }}
+    >
       <div className="engineering-form-grid">
         <label className="block">
           <span className="field-label">Evidence type</span>

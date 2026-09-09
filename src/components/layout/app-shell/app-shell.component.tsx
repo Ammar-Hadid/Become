@@ -4,10 +4,12 @@ import type { FinanceWorkOptions } from "@/features/finance/sessions/types/finan
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Clock3, Home, LogOut, Menu, Settings, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState, ViewTransition } from "react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
+import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
+import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import type { EngineeringProjectOption } from "@/features/engineering/types/engineering.types";
@@ -42,6 +44,18 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileDrawerRef = useRef<HTMLElement>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileNavigationPresence = usePresence(mobileOpen);
+
+  useModalLayer({
+    open: mobileOpen,
+    containerRef: mobileDrawerRef,
+    initialFocusRef: mobileCloseRef,
+    returnFocusRef: mobileTriggerRef,
+    onClose: () => setMobileOpen(false),
+  });
 
   async function signOut() {
     await authClient.signOut();
@@ -49,7 +63,7 @@ export function AppShell({
     router.refresh();
   }
 
-  const navigation = (
+  const renderNavigation = (indicatorName: string) => (
     <>
       <nav className="mt-4xl flex-1" aria-label="Primary navigation">
         <div className="nav-section" data-testid="nav-section-overview">
@@ -59,6 +73,15 @@ export function AppShell({
             href="/"
             onClick={() => setMobileOpen(false)}
           >
+            {pathname === "/" && (
+              <ViewTransition
+                name={indicatorName}
+                share="motion-guide"
+                default="none"
+              >
+                <span className="nav-link-indicator" aria-hidden="true" />
+              </ViewTransition>
+            )}
             <Home /> Home
           </Link>
           <Link
@@ -66,6 +89,15 @@ export function AppShell({
             href="/sessions"
             onClick={() => setMobileOpen(false)}
           >
+            {pathname === "/sessions" && (
+              <ViewTransition
+                name={indicatorName}
+                share="motion-guide"
+                default="none"
+              >
+                <span className="nav-link-indicator" aria-hidden="true" />
+              </ViewTransition>
+            )}
             <Clock3 /> Sessions
           </Link>
         </div>
@@ -73,19 +105,26 @@ export function AppShell({
           <p className="nav-label">Domains</p>
           {domains.map((domain) => {
             const href = getDomainHref(domain.slug);
+            const current =
+              pathname === href ||
+              (["engineering", "finance"].includes(domain.slug) &&
+                pathname.startsWith(`${href}/`));
             return (
               <Link
                 key={domain.id}
-                className={cn(
-                  "nav-link",
-                  (pathname === href ||
-                    (["engineering", "finance"].includes(domain.slug) &&
-                      pathname.startsWith(`${href}/`))) &&
-                    "active",
-                )}
+                className={cn("nav-link", current && "active")}
                 href={href}
                 onClick={() => setMobileOpen(false)}
               >
+                {current && (
+                  <ViewTransition
+                    name={indicatorName}
+                    share="motion-guide"
+                    default="none"
+                  >
+                    <span className="nav-link-indicator" aria-hidden="true" />
+                  </ViewTransition>
+                )}
                 <DomainIcon slug={domain.slug} /> {domain.name}
               </Link>
             );
@@ -137,7 +176,7 @@ export function AppShell({
       <div className="bg-background text-text-primary min-h-screen">
         <aside className="sidebar hidden lg:flex">
           <BrandMark />
-          {navigation}
+          {renderNavigation("primary-navigation-indicator-desktop")}
           <div className="mt-xl">
             <TimerTrigger />
           </div>
@@ -146,6 +185,7 @@ export function AppShell({
         <header className="mobile-header lg:hidden">
           <BrandMark />
           <button
+            ref={mobileTriggerRef}
             className="icon-button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation"
@@ -154,18 +194,23 @@ export function AppShell({
           </button>
         </header>
 
-        {mobileOpen && (
+        {mobileNavigationPresence.isPresent && (
           <div
-            className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+            className="mobile-navigation-layer fixed inset-0 z-50 bg-black/60 lg:hidden"
+            data-state={mobileNavigationPresence.presenceState}
+            aria-hidden={!mobileOpen}
+            onAnimationEnd={mobileNavigationPresence.onPresenceAnimationEnd}
             onMouseDown={() => setMobileOpen(false)}
           >
             <aside
+              ref={mobileDrawerRef}
               className="mobile-drawer"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <div className="flex items-center justify-between">
                 <BrandMark />
                 <button
+                  ref={mobileCloseRef}
                   className="icon-button"
                   onClick={() => setMobileOpen(false)}
                   aria-label="Close navigation"
@@ -173,7 +218,7 @@ export function AppShell({
                   <X className="size-5" />
                 </button>
               </div>
-              {navigation}
+              {renderNavigation("primary-navigation-indicator-mobile")}
             </aside>
           </div>
         )}
@@ -196,6 +241,15 @@ export function AppShell({
           data-testid="mobile-bottom-nav"
         >
           <Link href="/" className={cn(pathname === "/" && "active")}>
+            {pathname === "/" && (
+              <ViewTransition
+                name="quick-navigation-indicator"
+                share="motion-guide"
+                default="none"
+              >
+                <span className="mobile-bottom-nav-indicator" aria-hidden />
+              </ViewTransition>
+            )}
             <Home />
             <span>Home</span>
           </Link>
@@ -206,6 +260,15 @@ export function AppShell({
             href="/sessions"
             className={cn(pathname === "/sessions" && "active")}
           >
+            {pathname === "/sessions" && (
+              <ViewTransition
+                name="quick-navigation-indicator"
+                share="motion-guide"
+                default="none"
+              >
+                <span className="mobile-bottom-nav-indicator" aria-hidden />
+              </ViewTransition>
+            )}
             <Clock3 />
             <span>Sessions</span>
           </Link>

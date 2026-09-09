@@ -247,3 +247,21 @@ Run `pnpm test:finance:integration` against local PostgreSQL after applying
 migrations. It creates isolated test users, exercises actual foreign keys and
 concurrent allocation/recurrence mutations, and cleans up fixtures. Finance
 Playwright tests likewise clean up their own users. No bank credentials are used.
+
+## Entrepreneurship (Phase 4)
+
+Open `/entrepreneurship` to start or continue a niche exploration. Each workspace
+has Overview, Companies, Interactions, Problems and Offers; new records and timers
+inherit its context. Pause/stop decisions retain the exploration under past history.
+Global history remains available at `/entrepreneurship/history`. Timer activity
+never invents contact, and proposed or accepted offers never create income.
+
+[Niche-first behavior and verification](docs/development/PHASE_4_NICHE_FIRST.md)
+describes contextual scoping, the small additive offer-context migration, and
+current/past exploration semantics.
+
+[Phase 4 implementation and verification](docs/decisions/PHASE_4.md) contains the
+primary walkthrough, history decisions, screenshots and known verification limits.
+[Current development state](docs/development/CURRENT_STATE.md) summarizes what is
+implemented across domains. Run the local database suites with
+`RUN_BUSINESS_INTEGRATION=1 RUN_FINANCE_INTEGRATION=1 pnpm test`.

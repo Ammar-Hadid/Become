@@ -1,3 +1,6 @@
+import { lockFinancialTransaction } from "@/features/finance/transactions/services/transaction-lock.service";
+export { lockFinancialTransaction } from "@/features/finance/transactions/services/transaction-lock.service";
+import { validateBusinessReceiptEdit, withdrawDeletedReceipt } from "@/features/finance/business-receipts/services/business-receipt.service";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { transactionSchema } from "@/features/finance/transactions/schemas/financial-transaction.schema";
@@ -121,6 +124,7 @@ export async function saveFinancialTransaction(
       const old = await tx.financialTransaction.findUniqueOrThrow({
         where: { id, userId },
       });
+      await validateBusinessReceiptEdit(tx, userId, old, data);
       const paymentSum = await tx.paymentSessionAllocation.aggregate({
         where: { userId, transactionId: id },
         _sum: { amountMinor: true },
@@ -176,16 +180,6 @@ export async function saveFinancialTransaction(
     return { id: record.id };
   });
 }
-export async function lockFinancialTransaction(
-  tx: Prisma.TransactionClient,
-  userId: string,
-  id: string,
-) {
-  const rows = await tx.$queryRaw<
-    { id: string }[]
-  >`SELECT id FROM financial_transaction WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE`;
-  if (!rows.length) throw new FinanceError("Transaction not found.");
-}
 export async function deleteFinancialTransaction(userId: string, id: string) {
   await prisma.$transaction(async (tx) => {
     await lockFinancialTransaction(tx, userId, id);
@@ -201,6 +195,7 @@ export async function deleteFinancialTransaction(userId: string, id: string) {
       },
       data: { completionNeedsReviewAt: new Date() },
     });
+    await withdrawDeletedReceipt(tx, userId, id);
     await tx.financialTransaction.delete({ where: { id, userId } });
     if (record.recurringExpenseOccurrenceId)
       await tx.recurringExpenseOccurrence.update({

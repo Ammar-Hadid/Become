@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FinanceForm } from "@/features/finance/components/finance-form.component";
 import {
   FinanceField,
@@ -63,6 +64,18 @@ export function WorkSourceForm({
         name="notes"
         defaultValue={initial?.notes ?? ""}
       />
+      <p className="finance-form-note">
+        After saving, to connect this WorkSource to a company, open{" "}
+        <Link
+          className="business-text-link"
+          href="/entrepreneurship/market"
+          target="_blank"
+        >
+          Market ↗
+        </Link>
+        , choose the company, then “Create / Link WorkSource” → “Link an
+        existing WorkSource”.
+      </p>
       <p className="finance-form-note">
         This becomes available when recording paid-work sessions and linking
         received income.
