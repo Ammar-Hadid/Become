@@ -1775,14 +1775,14 @@
   color: var(--color-text-muted);
 }
 
-.direction-search input {
+.direction-search-input input {
   min-width: 0;
   min-height: var(--spacing-input-height-md);
   flex: 1;
   outline: none;
 }
 
-.direction-search input::placeholder {
+.direction-search-input input::placeholder {
   color: #4f535c;
 }
 
@@ -1846,6 +1846,9 @@
 }
 
 .direction-archive-toggle input {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 1rem;
   accent-color: var(--color-primary);
 }
 
@@ -2635,8 +2638,7 @@
   white-space: nowrap;
 }
 
-.season-media-thumb strong svg,
-.season-quote-row > span svg {
+.season-media-thumb strong svg {
   width: 14px;
   height: 14px;
   color: var(--color-primary);
@@ -2654,7 +2656,7 @@
 }
 
 .season-media-thumb > button,
-.season-quote-row > button {
+.season-quote-actions > button {
   display: grid;
   width: 34px;
   height: 34px;
@@ -2665,24 +2667,25 @@
 }
 
 .season-media-thumb > button:hover,
-.season-quote-row > button:hover {
+.season-quote-actions > button:hover {
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text-primary);
 }
 
 .season-media-thumb > button:last-child:hover,
-.season-quote-row > button:last-child:hover {
+.season-quote-actions > button:last-child:hover {
   color: var(--color-danger);
 }
 
 .season-media-thumb > button svg,
-.season-quote-row > button svg {
+.season-quote-actions > button svg {
   width: 15px;
   height: 15px;
 }
 
 .season-quote-row {
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   padding: var(--spacing-md);
 }
 
@@ -2692,13 +2695,54 @@
   color: var(--color-primary);
 }
 
-.season-quote-row > span {
+.season-quote-content {
+  gap: var(--spacing-sm);
+}
+
+.season-quote-footer,
+.season-quote-details,
+.season-quote-actions {
+  display: flex;
+  align-items: center;
+}
+
+.season-quote-footer {
+  min-width: 0;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.season-quote-details {
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.season-quote-row .season-quote-details small {
+  margin-top: 0;
+}
+
+.season-quote-featured {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: var(--spacing-xs);
   color: var(--color-primary);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
+  white-space: nowrap;
+}
+
+.season-quote-featured svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.season-quote-actions {
+  flex: 0 0 auto;
+  gap: var(--spacing-2xs);
 }
 
 .season-file-input {
@@ -3159,6 +3203,44 @@
 
   .direction-search--filters > button {
     width: 100%;
+  }
+
+  .direction-goal-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .direction-goal-badges {
+    justify-content: flex-start;
+  }
+
+  .season-quote-row {
+    gap: var(--spacing-lg);
+    background:
+      linear-gradient(110deg, var(--direction-glow), transparent 7rem),
+      var(--color-surface);
+    padding: var(--spacing-lg);
+  }
+
+  .season-quote-row > svg {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--color-primary-muted);
+    border-radius: 50%;
+    background: var(--color-primary-subtle);
+    padding: 7px;
+  }
+
+  .season-quote-row blockquote {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .season-quote-footer {
+    align-items: flex-end;
   }
 
   .season-closing-card {

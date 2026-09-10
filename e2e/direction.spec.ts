@@ -131,6 +131,129 @@ test("the season card keeps its responsive layout on a cold Home load", async ({
   await expectStyledHomeSeasonCard(page);
 });
 
+test("goal library controls and summaries stay readable on narrow mobile screens", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await createDisposableDirectionUser(page);
+
+  const goalTitle = "Turn skill into real-world proof";
+  await page.goto("/direction/goals/new");
+  await page
+    .getByRole("textbox", { name: "Goal", exact: true })
+    .fill(goalTitle);
+  await page.getByRole("button", { name: "Create goal" }).click();
+  await expect(page.getByRole("heading", { name: goalTitle })).toBeVisible();
+  await page.goto(`/direction/goals?search=${encodeURIComponent(goalTitle)}`);
+
+  const archiveCheckbox = page.getByRole("checkbox", { name: "Archived" });
+  await expect(archiveCheckbox).toBeVisible();
+  const checkboxSize = await archiveCheckbox.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { height: bounds.height, width: bounds.width };
+  });
+  expect(checkboxSize).toEqual({ height: 16, width: 16 });
+
+  const summary = page.getByRole("link", { name: new RegExp(goalTitle) });
+  await expect(summary).toBeVisible();
+  const summaryLayout = await summary.evaluate((element) => {
+    const titleRow = element.querySelector<HTMLElement>(
+      ".direction-goal-title-row",
+    );
+    const title = titleRow?.querySelector<HTMLElement>("h3");
+    const bounds = element.getBoundingClientRect();
+    const titleBounds = title?.getBoundingClientRect();
+
+    return {
+      flexDirection: titleRow ? getComputedStyle(titleRow).flexDirection : null,
+      overflowsViewport: element.scrollWidth > element.clientWidth,
+      summaryWidth: bounds.width,
+      titleWidth: titleBounds?.width ?? 0,
+    };
+  });
+
+  expect(summaryLayout.flexDirection).toBe("column");
+  expect(summaryLayout.overflowsViewport).toBe(false);
+  expect(summaryLayout.titleWidth).toBeGreaterThan(
+    summaryLayout.summaryWidth * 0.6,
+  );
+});
+
+test("featured season quotes expand into a readable mobile card", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await createDisposableDirectionUser(page);
+  await page.goto("/direction");
+  await page.getByRole("link", { name: "Open your season" }).click();
+
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "What matters most alongside everything else?",
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Whose qualities belong in this chapter?",
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Begin this season" }).click();
+
+  const quoteText =
+    "The only thing standing between you and outrageous success is continuous progress.";
+  await page.getByRole("button", { name: "Add quote" }).click();
+  await page
+    .getByRole("textbox", { name: "Quote or paraphrase" })
+    .fill(quoteText);
+  await page
+    .getByRole("textbox", { name: "Attribution — optional" })
+    .fill("Dan Waldschmidt");
+  await page.getByRole("button", { name: "Save quote" }).click();
+
+  const quoteCard = page.locator(".season-quote-row").filter({
+    hasText: quoteText,
+  });
+  await expect(quoteCard).toBeVisible();
+  const layout = await quoteCard.evaluate((element) => {
+    const quote = element.querySelector<HTMLElement>("blockquote");
+    const featured = element.querySelector<HTMLElement>(
+      ".season-quote-featured",
+    );
+    const star = featured?.querySelector<SVGElement>("svg");
+    const quoteBounds = quote?.getBoundingClientRect();
+    const featuredBounds = featured?.getBoundingClientRect();
+    const starBounds = star?.getBoundingClientRect();
+
+    return {
+      featuredAlignment:
+        featuredBounds && starBounds
+          ? Math.abs(
+              featuredBounds.top +
+                featuredBounds.height / 2 -
+                (starBounds.top + starBounds.height / 2),
+            )
+          : null,
+      overflows: element.scrollWidth > element.clientWidth,
+      quoteHeight: quoteBounds?.height ?? 0,
+      quoteLineHeight: quote
+        ? Number.parseFloat(getComputedStyle(quote).lineHeight)
+        : 0,
+      quoteWhiteSpace: quote ? getComputedStyle(quote).whiteSpace : null,
+    };
+  });
+
+  expect(layout.quoteWhiteSpace).toBe("normal");
+  expect(layout.quoteHeight).toBeGreaterThan(layout.quoteLineHeight * 2);
+  expect(layout.featuredAlignment).not.toBeNull();
+  expect(layout.featuredAlignment!).toBeLessThanOrEqual(1);
+  expect(layout.overflows).toBe(false);
+});
+
 test("returning from a cancelled goal keeps the current season version", async ({
   page,
 }) => {

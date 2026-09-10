@@ -6,7 +6,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
-  ChevronRight,
   Clock3,
   Play,
   Sparkles,
@@ -72,110 +71,140 @@ export function Dashboard({
 
   return (
     <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <div className="dashboard-context text-text-muted mb-lg gap-md flex flex-wrap items-center">
-            <span className="season-pill">
-              <span className="bg-primary size-1.5 rounded-full" />
-              {season}
+      <section className="dashboard-hero" aria-labelledby="dashboard-greeting">
+        <div className="dashboard-hero-meta">
+          <div className="dashboard-season-context">
+            <span className="dashboard-hero-kicker">
+              <span className="dashboard-status-dot" aria-hidden="true" />
+              <span className="dashboard-hero-kicker-label">
+                Current season
+              </span>
             </span>
-            <span>Week {weekNumber}</span>
+            <strong>{season}</strong>
           </div>
-          <h1>
-            {greeting}, {userName.split(" ")[0]}.
-          </h1>
-          <p className="page-description text-text-secondary mt-sm max-w-copy">
-            A quiet view of where your attention is going—and what it is
-            producing.
-          </p>
+          <div className="dashboard-week-context">
+            <span>Week</span>
+            <strong className="timer-numerals">
+              {String(weekNumber).padStart(2, "0")}
+            </strong>
+          </div>
         </div>
-        <div
-          className="hidden h-11 w-[132px] shrink-0 sm:block"
-          aria-hidden="true"
-        />
-      </header>
-      {businessAttention.length > 0 && (
-        <section className="border-border py-xl my-2xl border-y">
-          <div className="gap-lg flex items-center justify-between">
-            <h2 className="eyebrow">
-              Entrepreneurship · chosen actions & source review
-            </h2>
-            <Link
-              href="/entrepreneurship"
-              className="text-body text-text-muted"
-            >
-              View domain →
-            </Link>
-          </div>
-          <ul className="mt-lg gap-md grid">
-            {businessAttention.slice(0, 3).map((item) => (
-              <li key={item.id}>
-                <Link
-                  className="text-body text-text-secondary hover:text-text-primary"
-                  href={item.href}
-                >
-                  {item.text}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
-      {activeSession ? (
-        <button
-          className="active-session-hero"
-          onClick={() => window.dispatchEvent(new Event("become:stop-timer"))}
-          data-testid="dashboard-active-session"
-          data-session-id={activeSession.id}
-          data-elapsed-seconds={elapsedSeconds}
-        >
-          <div className="gap-lg flex min-w-0 items-center">
-            <span className="active-orbit">
-              <span />
+        <header className="dashboard-hero-heading">
+          <h1 id="dashboard-greeting">
+            <span>{greeting},</span>{" "}
+            <span className="dashboard-hero-name">
+              {userName.split(" ")[0]}.
             </span>
-            <div className="min-w-0 text-left">
-              <p className="eyebrow text-primary">In focus now</p>
-              <p className="text-h5 mt-xs truncate font-medium">
-                {activeSession.description || activeSession.activityType.name}
-              </p>
-              <p className="active-session-meta text-text-secondary mt-xs">
-                {activeSession.domain.name} · {activeSession.activityType.name}
-              </p>
-            </div>
-          </div>
-          <div className="gap-lg flex shrink-0 items-center">
-            <div className="hidden text-right sm:block">
-              <p
-                className="timer-numerals text-primary text-h3 font-semibold"
-                data-testid="dashboard-active-session-time"
-              >
-                {formatDuration(elapsedSeconds)}
-              </p>
-              <p className="active-session-meta text-text-muted mt-xs">
-                Tap to complete
-              </p>
-            </div>
-            <span className="bg-primary text-on-primary flex size-10 items-center justify-center rounded-full">
-              <ArrowRight className="size-4" />
-            </span>
-          </div>
-        </button>
-      ) : (
-        <button
-          className="empty-focus-strip cursor-pointer"
-          onClick={() => window.dispatchEvent(new Event("become:start-timer"))}
+          </h1>
+          <p className="page-description">
+            See where your attention is going—and what it is producing.
+          </p>
+        </header>
+
+        <div
+          className={cn(
+            "dashboard-hero-workspace",
+            businessAttention.length === 0 &&
+              "dashboard-hero-workspace--focus-only",
+          )}
         >
-          <span className="bg-primary-subtle text-primary flex size-12 items-center justify-center rounded-full">
-            <Play className="size-4 fill-current" />
-          </span>
-          <span className="text-left">
-            <strong>Ready when you are.</strong>
-            <small>Start a focused session</small>
-          </span>
-          <ChevronRight className="text-text-muted ml-auto size-4" />
-        </button>
-      )}
+          {businessAttention.length > 0 && (
+            <div className="dashboard-priority">
+              <div className="dashboard-priority-heading">
+                <div>
+                  <p className="eyebrow">Next move</p>
+                  <h2>Entrepreneurship</h2>
+                </div>
+                <Link
+                  href="/entrepreneurship"
+                  className="dashboard-domain-link"
+                  aria-label="Open Entrepreneurship"
+                >
+                  <span className="dashboard-domain-link-label">
+                    Open domain
+                  </span>
+                  <ArrowUpRight aria-hidden="true" />
+                </Link>
+              </div>
+              <p className="dashboard-priority-scope">
+                Chosen actions & source review
+              </p>
+              <ul className="dashboard-priority-list">
+                {businessAttention.slice(0, 3).map((item, index) => (
+                  <li key={item.id}>
+                    <Link href={item.href}>
+                      <span className="dashboard-priority-index timer-numerals">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span>{item.text}</span>
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {activeSession ? (
+            <button
+              className="dashboard-focus-action dashboard-focus-action--active"
+              onClick={() =>
+                window.dispatchEvent(new Event("become:stop-timer"))
+              }
+              data-testid="dashboard-active-session"
+              data-session-id={activeSession.id}
+              data-elapsed-seconds={elapsedSeconds}
+            >
+              <span className="active-orbit" aria-hidden="true">
+                <span />
+              </span>
+              <span className="dashboard-focus-copy">
+                <span className="eyebrow text-primary">In focus now</span>
+                <strong>
+                  {activeSession.description || activeSession.activityType.name}
+                </strong>
+                <small>
+                  {activeSession.domain.name} ·{" "}
+                  {activeSession.activityType.name}
+                </small>
+              </span>
+              <span className="dashboard-focus-end">
+                <strong
+                  className="timer-numerals"
+                  data-testid="dashboard-active-session-time"
+                >
+                  {formatDuration(elapsedSeconds)}
+                </strong>
+                <span>
+                  Complete <ArrowRight aria-hidden="true" />
+                </span>
+              </span>
+            </button>
+          ) : (
+            <button
+              className="dashboard-focus-action"
+              onClick={() =>
+                window.dispatchEvent(new Event("become:start-timer"))
+              }
+            >
+              <span className="dashboard-focus-marker" aria-hidden="true">
+                <Play />
+              </span>
+              <span className="dashboard-focus-copy">
+                <span className="eyebrow">Focus session</span>
+                <strong>Ready when you are.</strong>
+                <small>Clear the noise and begin a focused block.</small>
+              </span>
+              <span className="dashboard-focus-end">
+                <span>
+                  Begin <ArrowRight aria-hidden="true" />
+                </span>
+              </span>
+            </button>
+          )}
+        </div>
+      </section>
 
       {seasonDirection && <SeasonHomeCard season={seasonDirection} />}
 
