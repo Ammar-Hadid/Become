@@ -1,0 +1,19 @@
+import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { TransactionsPage } from "@/features/finance/transactions/components/transactions-page.component";
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    company?: string;
+    offer?: string;
+    cursor?: string;
+    type?: string;
+    currency?: string;
+    account?: string;
+  }>;
+}) {
+  const user = await getCurrentUser();
+  return user ? (
+    <TransactionsPage userId={user.id} filters={await searchParams} />
+  ) : null;
+}

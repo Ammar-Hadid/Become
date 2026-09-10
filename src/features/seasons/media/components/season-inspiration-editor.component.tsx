@@ -369,34 +369,40 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
           {season.quotes.map((item) => (
             <article className="season-quote-row" key={item.id}>
               <Quote aria-hidden="true" />
-              <div>
+              <div className="season-quote-content">
                 <blockquote>“{item.text}”</blockquote>
-                <small>
-                  {item.attribution || "Attribution unknown"} ·{" "}
-                  {item.kind.toLowerCase()}
-                </small>
+                <footer className="season-quote-footer">
+                  <div className="season-quote-details">
+                    <small>
+                      {item.attribution || "Attribution unknown"} ·{" "}
+                      {item.kind.toLowerCase()}
+                    </small>
+                    {item.featured && (
+                      <span className="season-quote-featured">
+                        <Star aria-hidden="true" /> Featured
+                      </span>
+                    )}
+                  </div>
+                  <div className="season-quote-actions">
+                    <button
+                      type="button"
+                      aria-label="Edit quote"
+                      disabled={pending || mode !== null}
+                      onClick={() => openQuote(item)}
+                    >
+                      <Pencil aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Retire quote"
+                      disabled={pending || mode !== null}
+                      onClick={() => void retire("quote", item.id)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </button>
+                  </div>
+                </footer>
               </div>
-              {item.featured && (
-                <span>
-                  <Star aria-hidden="true" /> Featured
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label="Edit quote"
-                disabled={pending || mode !== null}
-                onClick={() => openQuote(item)}
-              >
-                <Pencil aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label="Retire quote"
-                disabled={pending || mode !== null}
-                onClick={() => void retire("quote", item.id)}
-              >
-                <Trash2 aria-hidden="true" />
-              </button>
             </article>
           ))}
         </div>
