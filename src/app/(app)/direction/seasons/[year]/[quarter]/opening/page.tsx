@@ -7,8 +7,10 @@ import { seasonIdentitySchema } from "@/features/seasons/schemas/season.schema";
 
 export default async function SeasonOpeningPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ year: string; quarter: string }>;
+  searchParams: Promise<{ arrival?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -22,5 +24,5 @@ export default async function SeasonOpeningPage({
     getSeasonView(user.id, identity.data.year, identity.data.quarter),
     getDirectionOptions(user.id, "goal"),
   ]);
-  return <SeasonOpening season={season} goalOptions={goals.items} />;
+  return <SeasonOpening season={season} goalOptions={goals.items} arrival={(await searchParams).arrival === "season"} />;
 }

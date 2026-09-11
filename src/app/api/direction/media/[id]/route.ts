@@ -20,7 +20,16 @@ export async function GET(
         status: 404,
         headers: { "Cache-Control": "private, no-store" },
       });
-    const bytes = await getMediaStorage().read(media.storageKey);
+    const storageKey =
+      new URL(request.url).searchParams.get("size") === "preview"
+        ? media.previewStorageKey
+        : media.storageKey;
+    if (!storageKey)
+      return new Response(null, {
+        status: 404,
+        headers: { "Cache-Control": "private, no-store" },
+      });
+    const bytes = await getMediaStorage().read(storageKey);
     return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": "image/webp",

@@ -102,4 +102,6 @@
   --duration-spatial: 240ms;
   --duration-emphasis: 360ms;
   --duration-signature: 650ms;
+  --delay-pending-visual: 300ms;
+  --duration-pending-cycle: 1600ms;
 }

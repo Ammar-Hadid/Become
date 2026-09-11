@@ -5,6 +5,7 @@ import "@/features/seasons/posters/styles/season-poster.css";
 import type { SeasonView } from "@/features/seasons/types/season.types";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import { SeasonPosterImage } from "@/features/seasons/posters/components/season-poster-image.component";
+import { SeasonQuoteExcerpt } from "@/features/seasons/media/components/season-quote-excerpt.component";
 
 function posterTitle(season: SeasonView) {
   if (season.closingCard) {
@@ -42,8 +43,8 @@ export function SeasonPoster({
   const media = season.closingCard?.media ?? season.media;
   const quotes = season.closingCard?.quotes ?? season.quotes;
   const character = season.closingCard?.character ?? season.character;
-  const poster = media.find((item) => item.poster) ?? media[0];
-  const quote = quotes.find((item) => item.featured) ?? quotes[0];
+  const poster = media.find((item) => item.poster);
+  const quote = quotes.find((item) => item.featured);
   const standards = character.standards.slice(0, 2);
   const content = (
     <ViewTransition
@@ -61,7 +62,11 @@ export function SeasonPoster({
             <span aria-hidden="true">·</span>
             <span>{season.calendar.timeLabel}</span>
           </div>
-          <p className="eyebrow">Character of the season</p>
+          <p className="eyebrow">
+            {season.cotsIdentity?.subjectKind === "PERSON"
+              ? "Person of the season"
+              : "Character of the season"}
+          </p>
           {character.name && (
             <p className="season-poster-character">
               <strong>{character.name}</strong>
@@ -78,19 +83,7 @@ export function SeasonPoster({
             </ul>
           )}
           {quote && variant !== "archive" && (
-            <blockquote>
-              <p>“{quote.text}”</p>
-              <cite>
-                {quote.attribution || "Attribution unknown"}
-                {quote.kind !== "EXACT" && (
-                  <span>
-                    {" "}
-                    ·{" "}
-                    {quote.kind === "PARAPHRASE" ? "Paraphrase" : "Unverified"}
-                  </span>
-                )}
-              </cite>
-            </blockquote>
+            <SeasonQuoteExcerpt quote={quote} />
           )}
           {href && (
             <span className="season-poster-link">

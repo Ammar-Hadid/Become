@@ -10,6 +10,9 @@ export type SeasonStandard = {
   criterionId?: string;
 };
 export type SeasonCharacter = {
+  sourceCategory?:
+    | import("@/features/seasons/discovery/types/cots-discovery.types").CotsCategory
+    | null;
   name: string;
   sourceWork: string;
   adaptation: string;
@@ -36,6 +39,12 @@ export type Provenance = {
   attributionVerified: boolean;
 };
 export type SeasonMediaView = {
+  previewHref?: string | null;
+  hasAlpha?: boolean;
+  useId?: string;
+  secondary?: boolean;
+  loading?: boolean;
+  cadence?: boolean;
   id: string;
   href: string;
   alt: string;
@@ -48,6 +57,7 @@ export type SeasonMediaView = {
   provenance: Provenance;
 };
 export type SeasonQuoteView = {
+  rotation?: boolean;
   id: string;
   text: string;
   attribution: string;
@@ -102,6 +112,11 @@ export type SeasonClosingCard = {
   outcomes: SeasonCapturedOutcome[];
 };
 export type SeasonView = SeasonDraft & {
+  cotsIdentity:
+    | import("@/features/seasons/discovery/types/cots-discovery.types").CotsIdentityView
+    | null;
+  openingDeferred: boolean;
+  presentation: import("@/features/seasons/discovery/types/cots-discovery.types").SeasonPresentation;
   id: string | null;
   year: number;
   quarter: number;

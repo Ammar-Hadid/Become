@@ -2,10 +2,13 @@
 
 import {
   Check,
+  History,
   ImagePlus,
+  MoreHorizontal,
   Pencil,
   Quote,
   Save,
+  Search,
   Star,
   Trash2,
   X,
@@ -20,6 +23,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/buttons/button.component";
+import { MenuItem } from "@/components/ui/menus/menu-item.component";
+import { SubMenu } from "@/components/ui/menus/submenu.component";
 import {
   confirmRecordFormDiscard,
   useRecordFormGuard,
@@ -40,8 +45,11 @@ import type {
   SeasonQuoteView,
   SeasonView,
 } from "@/features/seasons/types/season.types";
+import { CotsCollectionDiscovery } from "@/features/seasons/discovery/components/cots-collection-discovery.component";
+import { CotsReusePicker } from "@/features/seasons/discovery/components/cots-reuse-picker.component";
+import { useCotsCollection } from "@/features/seasons/discovery/hooks/use-cots-collection.hook";
 
-type EditorMode = "image" | "quote" | null;
+type EditorMode = "image" | "quote" | "discover" | "reuse" | null;
 
 function GuardedInspirationForm({
   children,
@@ -110,7 +118,13 @@ async function fileFingerprint(file: File) {
   ).join("");
 }
 
-export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
+export function SeasonInspirationEditor({
+  season,
+  compact = false,
+}: {
+  season: SeasonView;
+  compact?: boolean;
+}) {
   const router = useRouter();
   const versionRef = useRef(season.version);
   const [mode, setMode] = useState<EditorMode>(null);
@@ -127,6 +141,15 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
   const [quoteKind, setQuoteKind] =
     useState<SeasonQuoteDraft["kind"]>("UNKNOWN");
   const runStable = useStableOperation();
+  const {
+    loadingCollection,
+    pendingAction: collectionPendingAction,
+    error: collectionError,
+    reuseImage,
+    updateMediaPreferences,
+    updateQuotePreferences,
+  } = useCotsCollection(season.year, season.quarter);
+  const busy = pending || Boolean(collectionPendingAction);
 
   useEffect(() => {
     versionRef.current = season.version;
@@ -247,38 +270,30 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
     );
   }
 
-  async function retire(kind: "image" | "quote", id: string) {
-    setPending(true);
+  async function saveMediaPreferences(
+    id: string,
+    preferences: Parameters<typeof updateMediaPreferences>[1],
+  ) {
     setError(null);
-    if (kind === "image") {
-      const identity = {
-        type: "SAVE_SEASON_MEDIA" as const,
-        year: season.year,
-        quarter: season.quarter,
-        expectedVersion: versionRef.current,
-        mediaId: id,
-        retire: true as const,
-      };
-      acceptResult(
-        await runStable(identity, (operationKey) =>
-          sendDirectionCommand({ ...identity, operationKey }),
-        ),
-      );
-      return;
+    const saved = await updateMediaPreferences(id, preferences);
+    if (saved) {
+      router.refresh();
+      return true;
     }
-    const identity = {
-      type: "SAVE_SEASON_QUOTE" as const,
-      year: season.year,
-      quarter: season.quarter,
-      expectedVersion: versionRef.current,
-      quoteId: id,
-      retire: true as const,
-    };
-    acceptResult(
-      await runStable(identity, (operationKey) =>
-        sendDirectionCommand({ ...identity, operationKey }),
-      ),
-    );
+    return false;
+  }
+
+  async function saveQuotePreferences(
+    id: string,
+    preferences: Parameters<typeof updateQuotePreferences>[1],
+  ) {
+    setError(null);
+    const saved = await updateQuotePreferences(id, preferences);
+    if (saved) {
+      router.refresh();
+      return true;
+    }
+    return false;
   }
 
   const imageProvenance = manualProvenance(editingMedia?.provenance);
@@ -287,38 +302,80 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
   return (
     <section
       className="season-inspiration"
+      data-compact={compact || undefined}
       aria-labelledby="season-inspiration-title"
     >
       <header>
         <div>
-          <p className="eyebrow">Make it personal</p>
+          <p className="eyebrow">
+            {compact ? "Your inspiration is saved" : "Make it personal"}
+          </p>
           <h2 id="season-inspiration-title">
-            Imagery and words for this chapter
+            {compact
+              ? `Continue personalizing ${season.cotsIdentity?.displayName ?? "this inspiration"}`
+              : "Approved collection"}
           </h2>
           <p>
-            Keep one poster, up to two alternate images, and a small set of
-            quotes you can source honestly.
+            {compact
+              ? "Add to the collection while the rest of the opening waits for you."
+              : "Keep the images and words that still feel true to this chapter. Their original source details stay with them."}
           </p>
         </div>
         <div>
           <Button
             type="button"
             variant="secondary"
-            disabled={pending || mode !== null || season.media.length >= 3}
-            onClick={() => openImage()}
+            disabled={busy || mode !== null || !season.cotsIdentity}
+            onClick={() => setMode("discover")}
           >
-            <ImagePlus aria-hidden="true" /> Add image
+            <Search aria-hidden="true" /> Discover more
           </Button>
+          <SubMenu
+            label="Add manually"
+            placement="bottom-end"
+            trigger={(props) => (
+              <button
+                {...props}
+                className="season-collection-menu-trigger"
+                disabled={busy || mode !== null}
+              >
+                <ImagePlus aria-hidden="true" /> Add manually
+              </button>
+            )}
+          >
+            <MenuItem
+              icon={<ImagePlus />}
+              disabled={season.media.length >= 24}
+              onSelect={() => openImage()}
+            >
+              Add an image
+            </MenuItem>
+            <MenuItem
+              icon={<Quote />}
+              disabled={season.quotes.length >= 48}
+              onSelect={() => openQuote()}
+            >
+              Add words
+            </MenuItem>
+          </SubMenu>
           <Button
             type="button"
             variant="ghost"
-            disabled={pending || mode !== null || season.quotes.length >= 12}
-            onClick={() => openQuote()}
+            disabled={busy || mode !== null || !season.cotsIdentity}
+            onClick={() => setMode("reuse")}
           >
-            <Quote aria-hidden="true" /> Add quote
+            <History aria-hidden="true" /> Reuse from a past season
           </Button>
         </div>
       </header>
+
+      {(season.media.length >= 22 || season.quotes.length >= 44) && (
+        <p className="season-collection-limit" role="status">
+          {season.media.length} of 24 images · {season.quotes.length} of 48 text
+          items. Retire something you no longer need to keep the season quick to
+          load and easy to curate.
+        </p>
+      )}
 
       {(season.media.length > 0 || season.quotes.length > 0) && (
         <div className="season-inspiration-library">
@@ -348,22 +405,73 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
                   {item.provenance.credit || item.alt || "Decorative image"}
                 </small>
               </div>
-              <button
-                type="button"
-                aria-label="Edit image details"
-                disabled={pending || mode !== null}
-                onClick={() => openImage(item)}
+              <SubMenu
+                label={`Manage ${item.alt || "season image"}`}
+                placement="bottom-end"
+                trigger={(props) => (
+                  <button
+                    {...props}
+                    aria-label={`Manage ${item.alt || "season image"}`}
+                    disabled={busy || mode !== null || loadingCollection}
+                  >
+                    <MoreHorizontal aria-hidden="true" />
+                  </button>
+                )}
               >
-                <Pencil aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label="Retire image"
-                disabled={pending || mode !== null}
-                onClick={() => void retire("image", item.id)}
-              >
-                <Trash2 aria-hidden="true" />
-              </button>
+                <MenuItem icon={<Pencil />} onSelect={() => openImage(item)}>
+                  Adjust details and crop
+                </MenuItem>
+                {!item.poster && (
+                  <MenuItem
+                    icon={<Star />}
+                    onSelect={() =>
+                      void saveMediaPreferences(item.id, { poster: true })
+                    }
+                  >
+                    Set as poster
+                  </MenuItem>
+                )}
+                <MenuItem
+                  icon={item.secondary ? <Check /> : <ImagePlus />}
+                  onSelect={() =>
+                    void saveMediaPreferences(item.id, {
+                      secondary: !item.secondary,
+                    })
+                  }
+                >
+                  {item.secondary
+                    ? "Remove from Home"
+                    : "Use on Home sometimes"}
+                </MenuItem>
+                <MenuItem
+                  icon={item.loading ? <Check /> : <ImagePlus />}
+                  onSelect={() =>
+                    void saveMediaPreferences(item.id, {
+                      loading: !item.loading,
+                    })
+                  }
+                >
+                  {item.loading ? "Remove from loading" : "Use during loading"}
+                </MenuItem>
+                <MenuItem
+                  icon={item.cadence ? <Check /> : <ImagePlus />}
+                  onSelect={() =>
+                    void saveMediaPreferences(item.id, {
+                      cadence: !item.cadence,
+                    })
+                  }
+                >
+                  {item.cadence ? "Remove from check-ins" : "Use in check-ins"}
+                </MenuItem>
+                <MenuItem
+                  icon={<Trash2 />}
+                  onSelect={() =>
+                    void saveMediaPreferences(item.id, { retire: true })
+                  }
+                >
+                  Retire from this season
+                </MenuItem>
+              </SubMenu>
             </article>
           ))}
           {season.quotes.map((item) => (
@@ -383,29 +491,87 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
                       </span>
                     )}
                   </div>
-                  <div className="season-quote-actions">
-                    <button
-                      type="button"
-                      aria-label="Edit quote"
-                      disabled={pending || mode !== null}
-                      onClick={() => openQuote(item)}
+                  <SubMenu
+                    label={`Manage quote by ${item.attribution || "unknown attribution"}`}
+                    placement="bottom-end"
+                    trigger={(props) => (
+                      <button
+                        {...props}
+                        aria-label="Manage quote"
+                        disabled={busy || mode !== null || loadingCollection}
+                      >
+                        <MoreHorizontal aria-hidden="true" />
+                      </button>
+                    )}
+                  >
+                    <MenuItem
+                      icon={<Pencil />}
+                      onSelect={() => openQuote(item)}
                     >
-                      <Pencil aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Retire quote"
-                      disabled={pending || mode !== null}
-                      onClick={() => void retire("quote", item.id)}
+                      Edit wording and source
+                    </MenuItem>
+                    {!item.featured && (
+                      <MenuItem
+                        icon={<Star />}
+                        onSelect={() =>
+                          void saveQuotePreferences(item.id, { featured: true })
+                        }
+                      >
+                        Feature on poster
+                      </MenuItem>
+                    )}
+                    <MenuItem
+                      icon={item.rotation ? <Check /> : <Quote />}
+                      onSelect={() =>
+                        void saveQuotePreferences(item.id, {
+                          rotation: !item.rotation,
+                        })
+                      }
                     >
-                      <Trash2 aria-hidden="true" />
-                    </button>
-                  </div>
+                      {item.rotation
+                        ? "Remove from daily rotation"
+                        : "Add to daily rotation"}
+                    </MenuItem>
+                    <MenuItem
+                      icon={<Trash2 />}
+                      onSelect={() =>
+                        void saveQuotePreferences(item.id, { retire: true })
+                      }
+                    >
+                      Retire from this season
+                    </MenuItem>
+                  </SubMenu>
                 </footer>
               </div>
             </article>
           ))}
         </div>
+      )}
+
+      {mode === "discover" && (
+        <CotsCollectionDiscovery
+          season={season}
+          onClose={() => setMode(null)}
+        />
+      )}
+
+      {mode === "reuse" && (
+        <CotsReusePicker
+          season={season}
+          pending={busy}
+          onClose={() => setMode(null)}
+          onReuse={async (mediaId, poster) => {
+            const saved = await reuseImage(mediaId, poster);
+            if (saved) router.refresh();
+            return Boolean(saved);
+          }}
+        />
+      )}
+
+      {collectionError && mode !== "discover" && (
+        <p className="season-form-error" role="alert">
+          {collectionError}
+        </p>
       )}
 
       {mode === "image" && (
@@ -513,7 +679,7 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
             </label>
             <label>
               <span className="field-label">
-                Source title <span>— optional</span>
+                Source title or detail <span>— optional</span>
               </span>
               <input
                 className="text-input"
@@ -645,7 +811,7 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
             </label>
             <label className="direction-field-wide">
               <span className="field-label">
-                Source URL {quoteKind !== "EXACT" && <span>— optional</span>}
+                Source URL <span>— optional</span>
               </span>
               <input
                 className="text-input"
@@ -653,7 +819,6 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
                 name="sourceUrl"
                 defaultValue={quoteProvenance.sourceUrl}
                 maxLength={2000}
-                required={quoteKind === "EXACT"}
               />
             </label>
             <label className="season-check-field">
@@ -671,7 +836,6 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
                 type="checkbox"
                 name="attributionVerified"
                 defaultChecked={quoteProvenance.attributionVerified}
-                required={quoteKind === "EXACT"}
               />
               <span>
                 {quoteKind === "EXACT"
@@ -682,9 +846,10 @@ export function SeasonInspirationEditor({ season }: { season: SeasonView }) {
           </div>
           {quoteKind === "EXACT" && (
             <p className="direction-field-hint">
-              <Check aria-hidden="true" /> Exact quotes need an attribution,
-              source URL, and your verification. Choose paraphrase or unknown if
-              any part is uncertain.
+              <Check aria-hidden="true" /> Exact wording needs an attribution
+              plus a source title/detail or URL. A printed edition, episode, or
+              interview is valid evidence. Verification remains a separate
+              statement you make only after checking it.
             </p>
           )}
           {error && (

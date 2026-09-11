@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { filesystemMediaStorage } from "@/lib/storage/adapters/filesystem-media.adapter";
 import { deleteDisposableBrowserUser } from "../../../../../e2e/utils/disposable-user.util";
@@ -30,6 +30,7 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
     },
   };
   beforeEach(async () => {
+    vi.stubEnv("COTS_MAX_IMAGES", "3");
     if (
       !["localhost", "127.0.0.1", "[::1]"].includes(
         new URL(process.env.DATABASE_URL!).hostname,
@@ -51,6 +52,7 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
   });
   afterEach(async () => {
     if (userId) await deleteDisposableBrowserUser(userId, email);
+    vi.unstubAllEnvs();
   });
   const raster = () =>
     sharp({
@@ -121,7 +123,7 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
         },
         bytes,
       ),
-    ).rejects.toThrow("three");
+    ).rejects.toThrow("3 images");
     expect(
       await prisma.seasonMedia.count({
         where: { userId, poster: true, retiredAt: null },
@@ -140,7 +142,7 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
       }),
     ).rejects.toThrow("changed");
   });
-  it("does not present unverified words as an exact quote", async () => {
+  it("keeps exact wording separate from source verification and accepts offline evidence", async () => {
     const input = {
       ...identity,
       expectedVersion: 1,
@@ -153,13 +155,12 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
         provenance: metadata.provenance,
       },
     };
-    await expect(saveSeasonQuote(userId, input)).rejects.toThrow(
-      "Exact quotes",
-    );
-    await saveSeasonQuote(userId, {
-      ...input,
-      draft: { ...input.draft, kind: "UNKNOWN" },
-    });
+    await expect(saveSeasonQuote(userId, { ...input, draft: { ...input.draft, provenance: { ...metadata.provenance, sourceTitle: "" } } })).rejects.toThrow("Exact wording");
+    await saveSeasonQuote(userId, input);
     expect(await prisma.seasonQuote.count({ where: { userId } })).toBe(1);
+    const quote = await prisma.seasonQuote.findFirstOrThrow({ where: { userId } });
+    expect(quote.kind).toBe("EXACT");
+    expect(quote.rotation).toBe(false);
+    expect(quote.provenance).toMatchObject({ attributionVerified: false, evidence: "UNRESOLVED" });
   });
 });

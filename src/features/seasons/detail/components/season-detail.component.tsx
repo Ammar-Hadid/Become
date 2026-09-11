@@ -84,13 +84,18 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
       )}
 
       {!season.openingCompletedAt ? (
-        <section className="season-unopened-note">
-          <span aria-hidden="true" />
-          <p>
-            Your goals, experiments, and chosen standards will gather here as
-            the chapter takes shape.
-          </p>
-        </section>
+        <>
+          <section className="season-unopened-note">
+            <span aria-hidden="true" />
+            <p>
+              Your goals, experiments, and chosen standards will gather here as
+              the chapter takes shape.
+            </p>
+          </section>
+          {!season.closedAt && season.cotsIdentity && (
+            <SeasonInspirationEditor season={season} compact />
+          )}
+        </>
       ) : (
         <>
           {!season.closedAt && (

@@ -1,5 +1,6 @@
 import { seasonCalendar } from "@/features/seasons/utils/season-calendar.util";
 import { z } from "zod";
+import { getCotsIdentity } from "@/features/seasons/discovery/queries/cots-collection.query";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
   seasonDraftSchema,
@@ -72,10 +73,39 @@ export async function saveSeason(userId: string, input: unknown) {
           `character.standards.${standard.key}.criterionId`,
         );
     }
+    const activeIdentity = old
+      ? await getCotsIdentity(userId, old.id, tx)
+      : null;
+    if (old?.closedAt) throw new DirectionError("This season is closed.");
+    if (
+      c.complete &&
+      old &&
+      (await tx.seasonCotsSelection.count({
+        where: {
+          userId,
+          seasonId: old.id,
+          desiredPoster: true,
+          status: { in: ["SELECTED", "PENDING", "IMPORTING", "FAILED"] },
+        },
+      }))
+    )
+      throw new DirectionError(
+        "Your chosen poster is still pending. Wait and retry, or explicitly begin with your current poster.",
+      );
     const data = {
       ...c.draft,
       answers: jsonValue(c.draft.answers),
-      character: jsonValue(c.draft.character),
+      character: jsonValue(
+        activeIdentity
+          ? {
+              ...c.draft.character,
+              name: activeIdentity.view.displayName,
+              sourceCategory: activeIdentity.view.sourceCategory,
+              sourceWork: activeIdentity.view.sourceWork,
+              adaptation: activeIdentity.view.adaptation,
+            }
+          : c.draft.character,
+      ),
       openingCompletedAt:
         old?.openingCompletedAt ?? (c.complete ? new Date() : null),
     };

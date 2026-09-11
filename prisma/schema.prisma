@@ -1145,6 +1145,11 @@ model UserSeason {
   quotes SeasonQuote[]
   milestones SeasonMilestone[]
   changes SeasonChange[]
+  cotsIdentities SeasonCotsIdentity[]
+  cotsCandidates SeasonCotsCandidate[]
+  cotsSelections SeasonCotsSelection[]
+  mediaUses SeasonMediaUse[]
+  openingDeferredAt DateTime?
   @@unique([userId, year, quarter])
   @@unique([id, userId])
   @@map("user_season")
@@ -1180,6 +1185,8 @@ model SeasonMedia {
   userId String
   seasonId String
   storageKey String @unique
+  previewStorageKey String?
+  hasAlpha Boolean @default(false)
   mimeType String
   byteSize Int
   contentHash String
@@ -1193,6 +1200,7 @@ model SeasonMedia {
   provenance Json
   retiredAt DateTime?
   createdAt DateTime @default(now())
+  uses SeasonMediaUse[]
   season UserSeason @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
   @@unique([id, userId])
   @@index([userId, seasonId, retiredAt])
@@ -1207,6 +1215,8 @@ model SeasonQuote {
   attribution String
   kind String
   featured Boolean @default(false)
+  identityId String?
+  rotation Boolean @default(false)
   provenance Json
   retiredAt DateTime?
   createdAt DateTime @default(now())
@@ -1214,6 +1224,113 @@ model SeasonQuote {
   @@unique([id, userId])
   @@index([userId, seasonId, retiredAt])
   @@map("season_quote")
+}
+
+model SeasonCotsIdentity {
+  id String @id @default(cuid())
+  userId String
+  seasonId String
+  displayName String
+  subjectKind String @default("UNKNOWN")
+  revision Int @default(1)
+  selectionRevision Int @default(0)
+  active Boolean @default(true)
+  savedAt DateTime @default(now())
+  season UserSeason @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
+  contexts SeasonCotsContext[]
+  @@unique([id, userId])
+  @@index([seasonId, active])
+  @@map("season_cots_identity")
+}
+
+model SeasonCotsContext {
+  id String @id @default(cuid())
+  userId String
+  identityId String
+  revision Int
+  category String
+  registryVersion Int @default(1)
+  sourceWork String @default("")
+  adaptation String @default("")
+  language String @default("en")
+  sourceEntityId String?
+  createdAt DateTime @default(now())
+  identity SeasonCotsIdentity @relation(fields: [identityId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([identityId, revision])
+  @@unique([id, userId])
+  @@map("season_cots_context")
+}
+
+model SeasonCotsCandidate {
+  id String @id @default(cuid())
+  userId String
+  seasonId String
+  identityId String
+  contextId String
+  provider String
+  sourceKey String
+  kind String
+  snapshot Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  season UserSeason @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([userId, identityId, contextId, sourceKey])
+  @@index([userId, expiresAt])
+  @@map("season_cots_candidate")
+}
+
+model SeasonCotsSelection {
+  id String @id @default(cuid())
+  userId String
+  seasonId String
+  identityId String
+  contextId String
+  candidateId String
+  snapshot Json
+  status String @default("SELECTED")
+  desiredPoster Boolean @default(false)
+  leaseToken String?
+  leaseUntil DateTime?
+  storageKey String?
+  mediaId String?
+  quoteId String?
+  error String?
+  attempts Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  season UserSeason @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([userId, identityId, candidateId])
+  @@index([userId, status, leaseUntil])
+  @@map("season_cots_selection")
+}
+
+model SeasonMediaUse {
+  id String @id @default(cuid())
+  userId String
+  seasonId String
+  mediaId String
+  identityId String?
+  focalX Float @default(0.5)
+  focalY Float @default(0.5)
+  poster Boolean @default(false)
+  secondary Boolean @default(true)
+  loading Boolean @default(true)
+  cadence Boolean @default(true)
+  retiredAt DateTime?
+  createdAt DateTime @default(now())
+  season UserSeason @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
+  media SeasonMedia @relation(fields: [mediaId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([seasonId, mediaId, identityId])
+  @@index([userId, seasonId, identityId, retiredAt])
+  @@map("season_media_use")
+}
+
+model CotsProviderCounter {
+  key String @id
+  count Int @default(0)
+  resetAt DateTime
+  cooldownUntil DateTime?
+  @@map("cots_provider_counter")
 }
 
 model SeasonChange {
