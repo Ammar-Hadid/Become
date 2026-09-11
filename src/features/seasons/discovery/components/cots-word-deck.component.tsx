@@ -21,6 +21,7 @@ export function CotsWordDeck({
   discovering,
   onToggle,
   onRetry,
+  onRetryDiscovery,
   onLoadMore,
 }: {
   page: CotsCandidatePage | null;
@@ -29,12 +30,20 @@ export function CotsWordDeck({
   discovering: boolean;
   onToggle: (candidate: CotsCandidateView, selected: boolean) => void;
   onRetry: (selectionId: string) => void;
+  onRetryDiscovery: () => void;
   onLoadMore: () => void;
 }) {
   const selectionByRef = new Map(
     selections
       .filter(({ candidate }) => candidate.form !== "IMAGE")
       .map((selection) => [selection.candidate.candidateRef, selection]),
+  );
+  const retryableDiscoveryFailure = Boolean(
+    page &&
+    !page.items.length &&
+    page.sources.some(({ status }) =>
+      ["THROTTLED", "UNAVAILABLE"].includes(status),
+    ),
   );
 
   return (
@@ -118,6 +127,36 @@ export function CotsWordDeck({
                   </Button>
                 )}
               </footer>
+              {!isSourceLink && (
+                <details className="cots-source-details cots-word-source-details">
+                  <summary>Source details</summary>
+                  <dl>
+                    <div>
+                      <dt>Provider</dt>
+                      <dd>{candidate.provider}</dd>
+                    </div>
+                    {candidate.sourceWork && (
+                      <div>
+                        <dt>Work</dt>
+                        <dd>{candidate.sourceWork}</dd>
+                      </div>
+                    )}
+                    {candidate.sourceDetail && (
+                      <div>
+                        <dt>Evidence</dt>
+                        <dd>{candidate.sourceDetail}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <a
+                    href={candidate.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open source <ExternalLink aria-hidden="true" />
+                  </a>
+                </details>
+              )}
               {!candidate.importable && !isSourceLink && (
                 <p className="cots-card-note">
                   {candidate.unavailableReason ||
@@ -160,6 +199,26 @@ export function CotsWordDeck({
         <p className="cots-word-end">
           <Check aria-hidden="true" /> You’ve reached the end of this source.
         </p>
+      )}
+      {page?.exhausted && !page.items.length && (
+        <div className="cots-word-empty">
+          <p>
+            {retryableDiscoveryFailure
+              ? "The quote sources did not complete this search."
+              : "No matching words were found in the current sources."}
+          </p>
+          {retryableDiscoveryFailure && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={discovering}
+              onClick={onRetryDiscovery}
+            >
+              <RotateCcw aria-hidden="true" />
+              {discovering ? "Retrying…" : "Retry search"}
+            </Button>
+          )}
+        </div>
       )}
       {page?.sources.some(({ status }) => status !== "AVAILABLE") && (
         <div className="cots-source-notices" aria-label="Source availability">

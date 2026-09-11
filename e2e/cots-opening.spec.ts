@@ -22,14 +22,28 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
 }, testInfo) => {
   test.setTimeout(120_000);
   const browserErrors: string[] = [];
+  let candidateSelectionRequest: Record<string, unknown> | null = null;
+  const discoveryPreview = await sharp({
+    create: {
+      width: 48,
+      height: 60,
+      channels: 4,
+      background: { r: 53, g: 65, b: 83, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
   page.on("pageerror", (error) => browserErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") browserErrors.push(message.text());
   });
+  await page.route("**/api/direction/cots/preview/**", async (route) => {
+    await route.fulfill({ contentType: "image/png", body: discoveryPreview });
+  });
   await page.route("**/api/direction/cots", async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
-      const body = request.postDataJSON() as { action?: string };
+      const body = request.postDataJSON() as Record<string, unknown>;
       if (body.action === "SUGGEST_IDENTITY") {
         await route.fulfill({
           contentType: "application/json",
@@ -37,6 +51,93 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
             items: [],
             status: "No exact match found. Your name still works.",
           }),
+        });
+        return;
+      }
+      if (body.action === "DISCOVER" && body.kind === "IMAGE") {
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            identityRevision: body.identityRevision,
+            discoveryRevision: body.discoveryRevision,
+            queryKey: "image-interaction-fixture",
+            items: [
+              {
+                candidateRef: "image-interaction-candidate",
+                provider: "fixture",
+                externalId: "fixture-image",
+                form: "IMAGE",
+                title: "Synthetic interaction preview",
+                previewHref:
+                  "/api/direction/cots/preview/image-interaction-candidate",
+                width: 600,
+                height: 750,
+                text: null,
+                speaker: null,
+                sourceUrl: "https://example.com/source",
+                sourceWork: "Attack on Titan",
+                sourceDetail: "Synthetic interaction source",
+                credit: "Fixture artist",
+                license: null,
+                evidence: "PROVIDER",
+                language: "en",
+                importable: true,
+                unavailableReason: null,
+              },
+            ],
+            nextCursor: null,
+            exhausted: true,
+            sources: [
+              { provider: "fixture", status: "AVAILABLE", message: "" },
+            ],
+          }),
+        });
+        return;
+      }
+      if (body.action === "DISCOVER" && body.kind === "TEXT") {
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            identityRevision: body.identityRevision,
+            discoveryRevision: body.discoveryRevision,
+            queryKey: "quote-interaction-fixture",
+            items: [
+              {
+                candidateRef: "quote-interaction-candidate",
+                provider: "wikiquote",
+                externalId: "fixture-quote",
+                form: "QUOTATION",
+                title: "Levi Ackerman",
+                previewHref: null,
+                width: null,
+                height: null,
+                text: "A synthetic quotation for interaction testing.",
+                speaker: "Levi Ackerman",
+                sourceUrl: "https://example.com/quote-source",
+                sourceWork: "Attack on Titan",
+                sourceDetail: "Synthetic source revision 1",
+                credit: null,
+                license: null,
+                evidence: "COMMUNITY",
+                language: "en",
+                importable: true,
+                unavailableReason: null,
+              },
+            ],
+            nextCursor: null,
+            exhausted: true,
+            sources: [
+              { provider: "wikiquote", status: "AVAILABLE", message: "" },
+            ],
+          }),
+        });
+        return;
+      }
+      if (body.action === "SELECT") {
+        candidateSelectionRequest = body;
+        await route.fulfill({
+          contentType: "application/json",
+          body: "null",
         });
         return;
       }
@@ -113,6 +214,23 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
       name: "What feels like Levi Ackerman to you?",
     }),
   ).toBeVisible();
+  const suggestion = page
+    .locator(".cots-image-card")
+    .filter({ hasText: "Synthetic interaction preview" });
+  await suggestion.getByText("Source details", { exact: true }).click();
+  await expect(
+    suggestion.getByRole("link", { name: "Open source" }),
+  ).toBeVisible();
+  await suggestion
+    .getByRole("button", { name: "Select Synthetic interaction preview" })
+    .click();
+  await expect
+    .poll(() => candidateSelectionRequest)
+    .toMatchObject({
+      action: "SELECT",
+      candidateRef: "image-interaction-candidate",
+      selected: true,
+    });
   const imagePath = testInfo.outputPath("cots-alpha-anchor.png");
   await sharp({
     create: {
@@ -145,6 +263,23 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   await expect(
     page.getByRole("heading", { name: "Which words hold the standard?" }),
   ).toBeVisible();
+  const quoteSuggestion = page
+    .locator(".cots-word-card")
+    .filter({ hasText: "A synthetic quotation for interaction testing." });
+  await quoteSuggestion.getByText("Source details", { exact: true }).click();
+  await expect(
+    quoteSuggestion.getByRole("link", { name: "Open source" }),
+  ).toBeVisible();
+  await quoteSuggestion
+    .getByRole("button", { name: "Keep in this chapter" })
+    .click();
+  await expect
+    .poll(() => candidateSelectionRequest)
+    .toMatchObject({
+      action: "SELECT",
+      candidateRef: "quote-interaction-candidate",
+      selected: true,
+    });
   await page.getByRole("button", { name: "Add words manually" }).click();
   const wordsForm = page.locator('[data-cots-manual="text"]');
   await wordsForm

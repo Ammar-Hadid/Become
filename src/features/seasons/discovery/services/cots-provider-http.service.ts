@@ -55,6 +55,7 @@ export async function providerJson(
     headers?: Record<string, string>;
     limit?: number;
     windowMs?: number;
+    redirects?: "same-origin" | "same-origin-preserve-query";
   } = {},
 ): Promise<unknown> {
   await reserveProviderRequest(
@@ -69,15 +70,46 @@ export async function providerJson(
   if (provider === "animechan")
     await reserveProviderRequest("animechan:day", 90, 86_400_000);
   try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      redirect: "error",
-      signal: AbortSignal.timeout(10_000),
-      headers: {
-        "User-Agent": "Become/1.0 (personal COTS discovery)",
-        ...options.headers,
-      },
-    });
+    const signal = AbortSignal.timeout(10_000);
+    let requestUrl = url;
+    let response: Response | null = null;
+    for (let redirects = 0; redirects <= 2; redirects++) {
+      response = await fetch(requestUrl, {
+        cache: "no-store",
+        redirect: "manual",
+        signal,
+        headers: {
+          "User-Agent": "Become/1.0 (personal COTS discovery)",
+          ...options.headers,
+        },
+      });
+      if (![301, 302, 303, 307, 308].includes(response.status)) break;
+      const location = response.headers.get("location");
+      await response.body?.cancel();
+      if (!options.redirects || !location || redirects === 2)
+        throw new CotsProviderError(
+          "UNAVAILABLE",
+          "This source returned an unusable redirect.",
+        );
+      const nextUrl = new URL(location, requestUrl);
+      if (
+        nextUrl.origin !== requestUrl.origin ||
+        nextUrl.username ||
+        nextUrl.password
+      )
+        throw new CotsProviderError(
+          "UNAVAILABLE",
+          "This source redirected outside its trusted origin.",
+        );
+      if (options.redirects === "same-origin-preserve-query" && !nextUrl.search)
+        nextUrl.search = requestUrl.search;
+      requestUrl = nextUrl;
+    }
+    if (!response)
+      throw new CotsProviderError(
+        "UNAVAILABLE",
+        "This source did not return a response.",
+      );
     if (response.status === 429) {
       const raw = response.headers.get("retry-after") ?? "";
       const seconds = /^\d+$/.test(raw)

@@ -8,7 +8,7 @@ import {
   ImageOff,
   RotateCcw,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
 import type {
   CotsCandidatePage,
@@ -31,29 +31,65 @@ function ImageCandidateCard({
   candidate,
   selection,
   pending,
+  loadImmediately,
   tabIndex,
   onFocus,
   onKeyMove,
   onToggle,
   onRetry,
-  suppressPointerSelection,
   buttonRef,
 }: {
   candidate: CotsCandidateView;
   selection?: CotsSelectionView;
   pending: boolean;
+  loadImmediately: boolean;
   tabIndex: number;
   onFocus: () => void;
   onKeyMove: (direction: -1 | 1) => void;
   onToggle: () => void;
   onRetry: () => void;
-  suppressPointerSelection: () => boolean;
   buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const frameRef = useRef<HTMLSpanElement>(null);
   const selected = Boolean(selection);
   const status = selectionLabel(selection);
   const locked = selection && selection.status !== "SELECTED";
+  const supportsLargePreview =
+    candidate.provider === "zerochan" && Boolean(candidate.previewHref);
+  const [largePreview, setLargePreview] = useState(
+    supportsLargePreview && loadImmediately,
+  );
+  const previewHref = candidate.previewHref
+    ? `${candidate.previewHref}${candidate.previewHref.includes("?") ? "&" : "?"}${largePreview ? "size=large" : "size=thumbnail"}`
+    : null;
+  const [previewLoad, setPreviewLoad] = useState<{
+    href: string | null;
+    state: "loading" | "ready" | "failed" | "missing";
+  }>({
+    href: previewHref,
+    state: previewHref ? "loading" : "missing",
+  });
+  const previewState =
+    previewLoad.href === previewHref
+      ? previewLoad.state
+      : previewHref
+        ? "loading"
+        : "missing";
+
+  useEffect(() => {
+    if (!supportsLargePreview || largePreview || !frameRef.current) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setLargePreview(true);
+        observer.disconnect();
+      },
+      { rootMargin: "160px" },
+    );
+    observer.observe(frameRef.current);
+    return () => observer.disconnect();
+  }, [largePreview, supportsLargePreview]);
 
   return (
     <article
@@ -69,32 +105,54 @@ function ImageCandidateCard({
         disabled={!candidate.importable || pending || Boolean(locked)}
         tabIndex={tabIndex}
         onFocus={onFocus}
-        onClick={(event) => {
-          if (event.detail > 0 && suppressPointerSelection()) return;
-          onToggle();
-        }}
+        onClick={onToggle}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
             event.preventDefault();
             onKeyMove(event.key === "ArrowLeft" ? -1 : 1);
-          } else if (event.key === "Enter") {
-            event.preventDefault();
-            if (detailsRef.current) detailsRef.current.open = true;
-            detailsRef.current
-              ?.querySelector<HTMLElement>("summary")
-              ?.focus({ preventScroll: true });
           }
         }}
       >
-        <span className="cots-image-frame">
-          {candidate.previewHref ? (
-            // Discovery previews may be remote; originals are imported only
-            // after explicit confirmation by the authenticated server route.
+        <span
+          ref={frameRef}
+          className="cots-image-frame"
+          aria-busy={previewState === "loading" || undefined}
+        >
+          {previewHref && previewState !== "failed" ? (
+            // Discovery renditions stay behind the authenticated candidate route;
+            // full originals are imported only after explicit confirmation.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={candidate.previewHref} alt={candidate.title} />
-          ) : (
+            <img
+              key={previewHref}
+              className={previewState === "ready" ? "is-loaded" : undefined}
+              src={previewHref}
+              alt={candidate.title}
+              loading={loadImmediately ? "eager" : "lazy"}
+              fetchPriority={loadImmediately ? "high" : "auto"}
+              decoding="async"
+              draggable={false}
+              onLoad={() =>
+                setPreviewLoad({ href: previewHref, state: "ready" })
+              }
+              onError={() =>
+                setPreviewLoad({ href: previewHref, state: "failed" })
+              }
+            />
+          ) : null}
+          {previewState !== "ready" && (
             <span className="cots-image-missing" aria-hidden="true">
-              <ImageOff />
+              {previewState === "loading" ? (
+                <span>Loading preview…</span>
+              ) : (
+                <>
+                  <ImageOff />
+                  <span>
+                    {previewState === "failed"
+                      ? "Preview unavailable"
+                      : "No preview available"}
+                  </span>
+                </>
+              )}
             </span>
           )}
           {selected && (
@@ -127,7 +185,7 @@ function ImageCandidateCard({
           <RotateCcw aria-hidden="true" /> Retry import
         </button>
       )}
-      <details ref={detailsRef} className="cots-source-details">
+      <details className="cots-source-details">
         <summary>Source details</summary>
         <dl>
           <div>
@@ -170,6 +228,7 @@ export function CotsImageRail({
   discovering,
   onToggle,
   onRetry,
+  onRetryDiscovery,
   onLoadMore,
 }: {
   page: CotsCandidatePage | null;
@@ -178,11 +237,18 @@ export function CotsImageRail({
   discovering: boolean;
   onToggle: (candidate: CotsCandidateView, selected: boolean) => void;
   onRetry: (selectionId: string) => void;
+  onRetryDiscovery: () => void;
   onLoadMore: () => void;
 }) {
   const railRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const dragRef = useRef({ pointerId: -1, x: 0, scrollLeft: 0, moved: false });
+  const dragRef = useRef({
+    pointerId: -1,
+    x: 0,
+    y: 0,
+    scrollLeft: 0,
+    moved: false,
+  });
   const suppressClickRef = useRef(false);
   const [focusIndex, setFocusIndex] = useState(0);
   const selectionByRef = useMemo(
@@ -193,6 +259,13 @@ export function CotsImageRail({
           .map((selection) => [selection.candidate.candidateRef, selection]),
       ),
     [selections],
+  );
+  const retryableDiscoveryFailure = Boolean(
+    page &&
+    !page.items.length &&
+    page.sources.some(({ status }) =>
+      ["THROTTLED", "UNAVAILABLE"].includes(status),
+    ),
   );
 
   const scroll = (direction: -1 | 1) => {
@@ -251,23 +324,40 @@ export function CotsImageRail({
       <div
         ref={railRef}
         className="cots-image-rail"
+        onClickCapture={(event) => {
+          if (!suppressClickRef.current) return;
+          suppressClickRef.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
         onPointerDown={(event) => {
           if (event.pointerType === "touch") return;
+          suppressClickRef.current = false;
           dragRef.current = {
             pointerId: event.pointerId,
             x: event.clientX,
+            y: event.clientY,
             scrollLeft: event.currentTarget.scrollLeft,
             moved: false,
           };
-          event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
           const drag = dragRef.current;
           if (drag.pointerId !== event.pointerId) return;
-          const delta = event.clientX - drag.x;
-          if (Math.abs(delta) > 6) drag.moved = true;
-          if (drag.moved)
-            event.currentTarget.scrollLeft = drag.scrollLeft - delta;
+          const deltaX = event.clientX - drag.x;
+          const deltaY = event.clientY - drag.y;
+          if (
+            !drag.moved &&
+            Math.abs(deltaX) > 6 &&
+            Math.abs(deltaX) > Math.abs(deltaY)
+          ) {
+            drag.moved = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }
+          if (drag.moved) {
+            event.preventDefault();
+            event.currentTarget.scrollLeft = drag.scrollLeft - deltaX;
+          }
         }}
         onPointerUp={(event) => {
           if (dragRef.current.pointerId !== event.pointerId) return;
@@ -275,9 +365,14 @@ export function CotsImageRail({
           dragRef.current.pointerId = -1;
           if (event.currentTarget.hasPointerCapture(event.pointerId))
             event.currentTarget.releasePointerCapture(event.pointerId);
+          if (suppressClickRef.current)
+            window.setTimeout(() => {
+              suppressClickRef.current = false;
+            }, 0);
         }}
         onPointerCancel={() => {
           dragRef.current.pointerId = -1;
+          suppressClickRef.current = false;
         }}
       >
         {page?.items.map((candidate, index) => {
@@ -288,16 +383,12 @@ export function CotsImageRail({
               candidate={candidate}
               selection={selection}
               pending={pendingCandidateRefs.has(candidate.candidateRef)}
+              loadImmediately={index < 4}
               tabIndex={index === focusIndex ? 0 : -1}
               onFocus={() => setFocusIndex(index)}
               onKeyMove={(direction) => focus(index + direction)}
               onToggle={() => onToggle(candidate, !selection)}
               onRetry={() => selection && onRetry(selection.id)}
-              suppressPointerSelection={() => {
-                const suppressed = suppressClickRef.current;
-                suppressClickRef.current = false;
-                return suppressed;
-              }}
               buttonRef={(node) => {
                 buttonRefs.current[index] = node;
               }}
@@ -329,8 +420,25 @@ export function CotsImageRail({
         )}
         {page?.exhausted && (
           <div className="cots-load-more-card">
-            <Check aria-hidden="true" />
-            <p>You’ve reached the end of this search.</p>
+            {retryableDiscoveryFailure ? (
+              <>
+                <RotateCcw aria-hidden="true" />
+                <p>The image sources did not complete this search.</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={discovering}
+                  onClick={onRetryDiscovery}
+                >
+                  {discovering ? "Retrying…" : "Retry search"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Check aria-hidden="true" />
+                <p>You’ve reached the end of this search.</p>
+              </>
+            )}
           </div>
         )}
       </div>

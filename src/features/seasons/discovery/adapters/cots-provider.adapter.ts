@@ -29,6 +29,12 @@ const queryText = (q: ProviderQuery) =>
   [q.identity.displayName, q.identity.sourceWork, q.identity.adaptation]
     .filter(Boolean)
     .join(" ");
+const normalizedProviderName = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
 function candidate(
   provider: string,
   q: ProviderQuery,
@@ -198,9 +204,15 @@ export async function fetchCotsProvider(
       await providerJson(provider, url, {
         headers: { "User-Agent": `Become/1.0 - ${username}` },
         limit: 50,
+        redirects: "same-origin-preserve-query",
       }),
     );
-    const items = array(body.items).flatMap((raw) => {
+    const rawItems = array(body.items);
+    const canonicalTag =
+      rawItems
+        .map((raw) => string(record(raw).tag))
+        .find((value) => value.trim()) || tag;
+    const items = rawItems.flatMap((raw) => {
       const row = record(raw),
         id = integer(row.id),
         original = string(row.full) || string(row.large);
@@ -210,7 +222,12 @@ export async function fetchCotsProvider(
           typeof v === "string" ? v : string(record(v).name),
         ),
       ];
-      if (!id || !foundTags.some((v) => v.toLowerCase() === tag.toLowerCase()))
+      if (
+        !id ||
+        !foundTags.some(
+          (value) => value.toLowerCase() === canonicalTag.toLowerCase(),
+        )
+      )
         return [];
       return [
         candidate(provider, q, {
@@ -220,7 +237,7 @@ export async function fetchCotsProvider(
           previewUrl: string(row.thumbnail) || undefined,
           width: integer(row.width),
           height: integer(row.height),
-          sourceDetail: `Matched character tag: ${tag}. ${foundTags.slice(0, 8).join(", ")}. Item detail is resolved on import.`,
+          sourceDetail: `Matched character tag: ${canonicalTag}. ${foundTags.slice(0, 8).join(", ")}. Item detail is resolved on import.`,
           credit: string(row.artist) || null,
         }),
       ];
@@ -349,18 +366,18 @@ export async function fetchCotsProvider(
         character = record(row.character),
         anime = record(row.anime);
       if (
-        string(character.name).toLowerCase() !==
-        q.identity.displayName.toLowerCase()
+        normalizedProviderName(string(character.name)) !==
+        normalizedProviderName(q.identity.displayName)
       )
         return [];
       const work = string(anime.name),
         alt = string(anime.altName);
-      const normalize = (v: string) =>
-        v.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
       if (
         q.identity.sourceWork &&
         ![work, alt].some(
-          (v) => normalize(v) === normalize(q.identity.sourceWork),
+          (v) =>
+            normalizedProviderName(v) ===
+            normalizedProviderName(q.identity.sourceWork),
         )
       )
         return [];

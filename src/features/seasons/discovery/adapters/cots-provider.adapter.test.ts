@@ -80,6 +80,69 @@ describe("COTS external service contracts", () => {
     ]);
     expect(result.next).toBeNull();
   });
+  it("accepts provider spelling variants that differ only by diacritics and punctuation", async () => {
+    vi.mocked(providerJson).mockResolvedValue({
+      data: [
+        {
+          content: "The choice belongs to this worldline.",
+          character: { id: 1, name: "Rintaro Okabe" },
+          anime: { name: "Steins Gate" },
+        },
+      ],
+    });
+    const result = await fetchCotsProvider("animechan", {
+      ...base,
+      identity: {
+        ...base.identity,
+        displayName: "Rintarō Okabe",
+        sourceWork: "Steins;Gate",
+      },
+    });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({
+      speaker: "Rintaro Okabe",
+      sourceWork: "Steins Gate",
+      text: "The choice belongs to this worldline.",
+    });
+  });
+  it("uses Zerochan's returned canonical tag as matching evidence", async () => {
+    vi.stubEnv("COTS_ZEROCHAN_USERNAME", "fixture-user");
+    vi.mocked(providerJson).mockResolvedValue({
+      items: [
+        {
+          id: 3718060,
+          tag: "Okabe Rintarou",
+          tags: ["Steins;Gate", "Okabe Rintarou"],
+          thumbnail: "https://s3.zerochan.net/240/10/11/3718060.avif",
+          width: 2500,
+          height: 4073,
+        },
+      ],
+    });
+    const result = await fetchCotsProvider("zerochan", {
+      ...base,
+      kind: "IMAGE",
+      identity: {
+        ...base.identity,
+        displayName: "Rintarō Okabe",
+        sourceWork: "Steins;Gate",
+      },
+    });
+    expect(result.items[0]).toMatchObject({
+      externalId: "3718060",
+      previewUrl: "https://s3.zerochan.net/240/10/11/3718060.avif",
+      sourceDetail: expect.stringContaining(
+        "Matched character tag: Okabe Rintarou",
+      ),
+    });
+    expect(providerJson).toHaveBeenCalledWith(
+      "zerochan",
+      expect.any(URL),
+      expect.objectContaining({
+        redirects: "same-origin-preserve-query",
+      }),
+    );
+  });
   it("pins deeper Wikiquote pages to the same source revision", async () => {
     vi.mocked(providerJson).mockResolvedValue({
       parse: {

@@ -23,12 +23,7 @@ import {
   cotsProviderEnabled,
 } from "@/features/seasons/discovery/config/cots-provider.config";
 import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
-import {
-  providerJson,
-  record,
-  string,
-  array,
-} from "@/features/seasons/discovery/services/cots-provider-http.service";
+import { resolveZerochanImage } from "@/features/seasons/discovery/services/cots-zerochan-image.service";
 
 export async function importCotsSelection(
   userId: string,
@@ -103,30 +98,16 @@ export async function importCotsSelection(
         !snapshot.originalUrl &&
         /^\d+$/.test(snapshot.externalId)
       ) {
-        const username = process.env.COTS_ZEROCHAN_USERNAME;
-        if (!username)
-          throw new DirectionError(
-            "Zerochan needs its identifying account username before import.",
-          );
-        const url = new URL(
-          `https://www.zerochan.net/${snapshot.externalId}?json`,
-        );
-        const detail = record(
-          await providerJson("zerochan", url, {
-            headers: { "User-Agent": `Become/1.0 - ${username}` },
-            limit: 50,
-          }),
-        );
+        const detail = await resolveZerochanImage(snapshot);
         snapshot = {
           ...snapshot,
-          originalUrl: string(detail.full) || string(detail.large),
-          credit: string(detail.artist) || snapshot.credit,
+          originalUrl: detail.originalUrl,
+          credit: detail.credit,
           sourceDetail:
-            `${snapshot.sourceDetail} · Original references: ${array(
-              detail.sources,
-            )
-              .filter((v) => typeof v === "string")
-              .join(" ")}`.slice(0, 1500),
+            `${snapshot.sourceDetail} · Original references: ${detail.references.join(" ")}`.slice(
+              0,
+              1500,
+            ),
         };
         await prisma.seasonCotsSelection.updateMany({
           where: { id: claim.id, userId, leaseToken: claim.leaseToken },
