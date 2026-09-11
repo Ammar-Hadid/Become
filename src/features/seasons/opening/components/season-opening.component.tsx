@@ -33,12 +33,30 @@ import type {
   SeasonStandard,
   SeasonView,
 } from "@/features/seasons/types/season.types";
+import { SeasonOpeningPrelude } from "@/features/seasons/opening/components/season-opening-prelude.component";
+import "@/features/seasons/opening/styles/season-opening-ritual.css";
 
 const stages = [
-  { number: 1, label: "Open the chapter" },
-  { number: 2, label: "Choose direction" },
-  { number: 3, label: "Choose your inspiration" },
-  { number: 4, label: "See the chapter" },
+  {
+    number: 1,
+    label: "Open the chapter",
+    description: "Name what deserves to cross the threshold with you.",
+  },
+  {
+    number: 2,
+    label: "Choose direction",
+    description: "Give the months ahead a clear through-line.",
+  },
+  {
+    number: 3,
+    label: "Choose your inspiration",
+    description: "Choose a standard to return to when intention is tested.",
+  },
+  {
+    number: 4,
+    label: "See the chapter",
+    description: "See the season as one whole before you step into it.",
+  },
 ] as const;
 
 function toGoalOption(goal: SeasonView["goals"][number]["goal"]): OwnedOption {
@@ -252,6 +270,7 @@ export function SeasonOpening({
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const ritualTitleRef = useRef<HTMLHeadingElement>(null);
   const initialDraft = draftFromSeason(season);
   const initialAssignment = assignmentsFromSeason(season);
   const queuedDraftFingerprint = useRef(JSON.stringify(initialDraft));
@@ -281,6 +300,10 @@ export function SeasonOpening({
     pendingCount: number;
     failedCount: number;
   } | null>(null);
+  const [preludeActive, setPreludeActive] = useState(
+    arrival && initialDraft.stage === 1,
+  );
+  const preludeWasShown = useRef(preludeActive);
   const loadedSavedVersion = useRef<number | null>(null);
   const {
     acceptReviewedVersion,
@@ -293,6 +316,17 @@ export function SeasonOpening({
     version,
   } = useSeasonDraftSave(season);
   const markSaved = useRecordFormGuard(formRef);
+
+  const completePrelude = useCallback(() => setPreludeActive(false), []);
+
+  useEffect(() => {
+    if (!preludeWasShown.current || preludeActive) return;
+    preludeWasShown.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      ritualTitleRef.current?.focus(),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [preludeActive]);
 
   const patchDraft = useCallback((patch: Partial<SeasonDraft>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -579,7 +613,7 @@ export function SeasonOpening({
     setDeferringArrival(true);
     setArrivalError(null);
     try {
-      const saved = await persist(latestDraft.current);
+      const saved = await persist(draft);
       if (saved.error) {
         setArrivalError(saved.error);
         setDeferringArrival(false);
@@ -778,519 +812,540 @@ export function SeasonOpening({
   );
 
   return (
-    <div className="season-opening" data-arrival={arrival || undefined}>
-      <header className="season-opening-header">
-        <div>
-          {arrival ? (
-            <button
-              type="button"
-              className="direction-back-link"
-              disabled={deferringArrival}
-              onClick={() => void deferAutomaticOpening()}
-            >
-              <ArrowLeft aria-hidden="true" />
-              {deferringArrival ? "Saving…" : "Not now"}
-            </button>
-          ) : (
-            <Link href="/direction" className="direction-back-link">
-              <ArrowLeft aria-hidden="true" /> Leave for now
-            </Link>
-          )}
-          <p className="eyebrow">
-            {season.calendar.label} ·{" "}
-            {arrival && draft.stage === 1
-              ? "A new season is here"
-              : "Opening ritual"}
-          </p>
-          <h1>
-            {arrival && draft.stage === 1
-              ? "The next chapter starts here."
-              : currentStage.label}
-          </h1>
-          <p>
-            {draft.stage === 1 &&
-              (arrival
-                ? "You have been waiting for this moment. Give the season a direction that feels unmistakably yours."
-                : "Name what this chapter should hold—and what it can release.")}
-            {draft.stage === 2 &&
-              "Choose a direction without forcing every outcome to share a deadline."}
-            {draft.stage === 3 &&
-              "Borrow the qualities that matter. Leave the rest with the fiction."}
-            {draft.stage === 4 &&
-              "A first look at the chapter you are beginning."}
-          </p>
-        </div>
-        <div
-          className="season-save-state"
-          data-state={reviewPending ? "saving" : state}
-          aria-live="polite"
-        >
-          {reviewPending && "Checking saved season…"}
-          {!reviewPending &&
-            state === "idle" &&
-            season.version === 0 &&
-            "Ready when you are"}
-          {!reviewPending && state === "saving" && "Saving…"}
-          {!reviewPending && state === "saved" && (
-            <>
-              <Check aria-hidden="true" /> Saved
-            </>
-          )}
-          {!reviewPending && state === "error" && "Couldn’t save"}
-          {!reviewPending && state === "conflict" && "Changed elsewhere"}
-        </div>
-      </header>
+    <main
+      className="season-opening-ritual"
+      data-arrival={arrival || undefined}
+      data-prelude={preludeActive || undefined}
+      data-stage={draft.stage}
+      data-testid="season-opening-ritual"
+    >
+      <div className="season-opening-ambient" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+
+      <div className="season-opening-exit">
+        {arrival ? (
+          <button
+            type="button"
+            disabled={deferringArrival}
+            onClick={() => void deferAutomaticOpening()}
+          >
+            {deferringArrival ? "Saving…" : "Not now"}
+          </button>
+        ) : (
+          <Link href="/direction">Leave for now</Link>
+        )}
+      </div>
 
       {arrivalError && (
-        <p className="season-review-error" role="alert">
+        <p className="season-opening-arrival-error" role="alert">
           {arrivalError}
         </p>
       )}
 
-      {arrival && draft.stage === 1 && (
-        <div className="season-arrival-mark" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
+      {preludeActive && (
+        <SeasonOpeningPrelude
+          seasonLabel={season.calendar.label}
+          onContinue={completePrelude}
+        />
       )}
 
-      <ol className="season-opening-progress" aria-label="Opening progress">
-        {stages.map((stage) => (
-          <li
-            key={stage.number}
-            data-current={draft.stage === stage.number || undefined}
+      <div className="season-opening" hidden={preludeActive}>
+        <header className="season-opening-header">
+          <div>
+            <p className="eyebrow">{season.calendar.label} · Opening ritual</p>
+            <h1 ref={ritualTitleRef} tabIndex={-1}>
+              {currentStage.label}
+            </h1>
+            <p>{currentStage.description}</p>
+          </div>
+          <div
+            className="season-save-state"
+            data-state={reviewPending ? "saving" : state}
+            aria-live="polite"
           >
-            <button
-              type="button"
-              aria-label={`${stage.number} ${stage.label}`}
-              aria-current={draft.stage === stage.number ? "step" : undefined}
-              disabled={controlsDisabled}
-              onClick={() => void moveTo(stage.number)}
+            {reviewPending && "Checking saved season…"}
+            {!reviewPending &&
+              state === "idle" &&
+              season.version === 0 &&
+              "Ready when you are"}
+            {!reviewPending && state === "saving" && "Saving…"}
+            {!reviewPending && state === "saved" && (
+              <>
+                <Check aria-hidden="true" /> Saved
+              </>
+            )}
+            {!reviewPending && state === "error" && "Couldn’t save"}
+            {!reviewPending && state === "conflict" && "Changed elsewhere"}
+          </div>
+        </header>
+
+        <p className="season-opening-mobile-progress" aria-live="polite">
+          Step {draft.stage} of {stages.length} · {currentStage.label}
+        </p>
+        <ol className="season-opening-progress" aria-label="Opening progress">
+          {stages.map((stage) => (
+            <li
+              key={stage.number}
+              data-current={draft.stage === stage.number || undefined}
+              data-complete={draft.stage > stage.number || undefined}
             >
-              <span aria-hidden="true">{stage.number}</span>
-              <span
-                className="season-opening-progress-label"
-                aria-hidden="true"
+              <button
+                type="button"
+                aria-label={`${stage.number} ${stage.label}`}
+                aria-current={draft.stage === stage.number ? "step" : undefined}
+                disabled={controlsDisabled}
+                onClick={() => void moveTo(stage.number)}
               >
-                {stage.label}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ol>
-
-      <form
-        ref={formRef}
-        onSubmit={(event) => event.preventDefault()}
-        aria-busy={reviewPending || state === "saving"}
-        inert={reviewPending}
-      >
-        <input
-          type="hidden"
-          name="seasonOpeningState"
-          value={JSON.stringify({
-            draft,
-            assignments: assignmentSnapshot.fingerprint,
-          })}
-        />
-        <section className="season-opening-stage" hidden={draft.stage !== 1}>
-          <div className="season-opening-question">
-            <p className="eyebrow">Begin with meaning</p>
-            <h2 tabIndex={-1}>What would make this chapter meaningful?</h2>
-            <p>
-              No productivity inventory. Just the few things worth carrying
-              consciously.
-            </p>
-          </div>
-          {season.previous && (
-            <aside className="season-previous">
-              <p className="eyebrow">Previously</p>
-              <Link href={season.previous.href}>{season.previous.title}</Link>
-              {season.previous.closingNote && (
-                <p>{season.previous.closingNote}</p>
-              )}
-            </aside>
-          )}
-          <div className="season-opening-fields season-opening-fields--two">
-            <label>
-              <span className="field-label">Carry forward</span>
-              <textarea
-                className="text-input"
-                value={draft.answers.carryForward}
-                onChange={(event) =>
-                  patchAnswers({ carryForward: event.target.value })
-                }
-                placeholder="A lesson, practice, relationship, or unfinished direction…"
-              />
-            </label>
-            <label>
-              <span className="field-label">Leave behind</span>
-              <textarea
-                className="text-input"
-                value={draft.answers.leaveBehind}
-                onChange={(event) =>
-                  patchAnswers({ leaveBehind: event.target.value })
-                }
-                placeholder="Something that no longer deserves to steer you…"
-              />
-            </label>
-            <label>
-              <span className="field-label">
-                This season would feel meaningful if…
-              </span>
-              <textarea
-                className="text-input"
-                value={draft.answers.meaningful}
-                onChange={(event) =>
-                  patchAnswers({ meaningful: event.target.value })
-                }
-                placeholder="One honest sentence is enough."
-              />
-            </label>
-            <label>
-              <span className="field-label">Protect</span>
-              <textarea
-                className="text-input"
-                value={draft.answers.protect}
-                onChange={(event) =>
-                  patchAnswers({ protect: event.target.value })
-                }
-                placeholder="Sleep, family, health, study, or another non-negotiable…"
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className="season-opening-stage" hidden={draft.stage !== 2}>
-          <div className="season-opening-question">
-            <p className="eyebrow">Direction, without a cage</p>
-            <h2 tabIndex={-1}>What matters most alongside everything else?</h2>
-            <p>
-              Goals keep their own dates. Their role here only explains how they
-              serve this season.
-            </p>
-          </div>
-          <div className="season-opening-fields">
-            <ReusableEntityCombobox
-              key={`primary-goal-${selectionReset}`}
-              label="Main direction"
-              entityName="goal"
-              idFieldName="primaryGoalId"
-              queryFieldName="primaryGoalSearch"
-              options={allGoalOptions}
-              initialId={primary?.id}
-              initialName={primary?.name}
-              onSelectedOptionChange={setPrimary}
-              searchAction={(query) => searchDirectionOptions("goal", query)}
-              placeholder="Search your goals…"
-            />
-            <ReusableEntityCombobox
-              label="Supporting goals"
-              entityName="goal"
-              idFieldName="supportingGoalIds"
-              queryFieldName="supportingGoalSearch"
-              options={goalOptions}
-              searchAction={(query) => searchDirectionOptions("goal", query)}
-              selectedOptions={supporting}
-              onSelectionChange={setSupporting}
-              placeholder="Add another outcome…"
-            />
-            {supporting.map((goal) => (
-              <label key={goal.id} className="season-support-note">
-                <span className="field-label">
-                  How {goal.name} supports this season — optional
+                <span aria-hidden="true">
+                  {String(stage.number).padStart(2, "0")}
                 </span>
-                <input
+                <span
+                  className="season-opening-progress-label"
+                  aria-hidden="true"
+                >
+                  {stage.label}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        <form
+          ref={formRef}
+          onSubmit={(event) => event.preventDefault()}
+          aria-busy={reviewPending || state === "saving"}
+          inert={reviewPending}
+        >
+          <input
+            type="hidden"
+            name="seasonOpeningState"
+            value={JSON.stringify({
+              draft,
+              assignments: assignmentSnapshot.fingerprint,
+            })}
+          />
+          <section className="season-opening-stage" hidden={draft.stage !== 1}>
+            <div className="season-opening-question">
+              <p className="eyebrow">At the threshold</p>
+              <h2 tabIndex={-1}>What crosses into this chapter?</h2>
+              <p>
+                Carry only what deserves a place. Leave room for what can become
+                different.
+              </p>
+            </div>
+            {season.previous && (
+              <aside className="season-previous">
+                <p className="eyebrow">Previously</p>
+                <Link href={season.previous.href}>{season.previous.title}</Link>
+                {season.previous.closingNote && (
+                  <p>{season.previous.closingNote}</p>
+                )}
+              </aside>
+            )}
+            <div className="season-opening-fields season-opening-fields--two">
+              <label>
+                <span className="field-label">Carry forward</span>
+                <textarea
                   className="text-input"
-                  value={supportNotes[goal.id] ?? ""}
+                  value={draft.answers.carryForward}
                   onChange={(event) =>
-                    setSupportNotes((current) => ({
-                      ...current,
-                      [goal.id]: event.target.value,
-                    }))
+                    patchAnswers({ carryForward: event.target.value })
                   }
+                  placeholder="A lesson, practice, relationship, or unfinished direction…"
                 />
               </label>
-            ))}
-            <button
-              className="season-create-goal"
-              type="button"
-              disabled={controlsDisabled}
-              onClick={() => void saveThenCreateGoal()}
-            >
-              <Plus aria-hidden="true" /> Create a new goal
-            </button>
-          </div>
-        </section>
+              <label>
+                <span className="field-label">Leave behind</span>
+                <textarea
+                  className="text-input"
+                  value={draft.answers.leaveBehind}
+                  onChange={(event) =>
+                    patchAnswers({ leaveBehind: event.target.value })
+                  }
+                  placeholder="Something that no longer deserves to steer you…"
+                />
+              </label>
+              <label>
+                <span className="field-label">
+                  This season would feel meaningful if…
+                </span>
+                <textarea
+                  className="text-input"
+                  value={draft.answers.meaningful}
+                  onChange={(event) =>
+                    patchAnswers({ meaningful: event.target.value })
+                  }
+                  placeholder="One honest sentence is enough."
+                />
+              </label>
+              <label>
+                <span className="field-label">Protect</span>
+                <textarea
+                  className="text-input"
+                  value={draft.answers.protect}
+                  onChange={(event) =>
+                    patchAnswers({ protect: event.target.value })
+                  }
+                  placeholder="Sleep, family, health, study, or another non-negotiable…"
+                />
+              </label>
+            </div>
+          </section>
 
-        <section className="season-opening-stage" hidden={draft.stage !== 3}>
-          <CotsOpeningWorkspace
-            season={season}
-            character={draft.character}
-            controlsDisabled={controlsDisabled}
-            goalOptions={allGoalOptions}
-            onPatchCharacter={patchCharacter}
-            onUpdateStandard={updateStandard}
-            onBackStage={() => void moveTo(2)}
-            onContinuePreview={() => void moveTo(4)}
-            onSaveAndLeave={() => void saveAndLeave()}
-          />
-        </section>
-
-        <section className="season-opening-stage" hidden={draft.stage !== 4}>
-          <div className="season-opening-question">
-            <p className="eyebrow">Your chapter</p>
-            <h2 tabIndex={-1}>Let the direction feel like yours.</h2>
-            <p>
-              You can refine the character, imagery, and quote without
-              restarting the season.
-            </p>
-          </div>
-          <div className="season-opening-fields season-opening-title-fields">
-            <label>
-              <span className="field-label">Season title — optional</span>
-              <input
-                className="text-input"
-                value={draft.title}
-                onChange={(event) => patchDraft({ title: event.target.value })}
-                placeholder={`Season ${season.quarter}`}
+          <section className="season-opening-stage" hidden={draft.stage !== 2}>
+            <div className="season-opening-question">
+              <p className="eyebrow">Direction, without a cage</p>
+              <h2 tabIndex={-1}>
+                What matters most alongside everything else?
+              </h2>
+              <p>
+                Goals keep their own dates. Their role here only explains how
+                they serve this season.
+              </p>
+            </div>
+            <div className="season-opening-fields">
+              <ReusableEntityCombobox
+                key={`primary-goal-${selectionReset}`}
+                label="Main direction"
+                entityName="goal"
+                idFieldName="primaryGoalId"
+                queryFieldName="primaryGoalSearch"
+                options={allGoalOptions}
+                initialId={primary?.id}
+                initialName={primary?.name}
+                onSelectedOptionChange={setPrimary}
+                searchAction={(query) => searchDirectionOptions("goal", query)}
+                placeholder="Search your goals…"
               />
-            </label>
-            <label>
-              <span className="field-label">Opening intention — optional</span>
-              <textarea
-                className="text-input"
-                value={draft.intention}
-                onChange={(event) =>
-                  patchDraft({ intention: event.target.value })
-                }
-                placeholder="The direction you want to remember on an ordinary Tuesday."
+              <ReusableEntityCombobox
+                label="Supporting goals"
+                entityName="goal"
+                idFieldName="supportingGoalIds"
+                queryFieldName="supportingGoalSearch"
+                options={goalOptions}
+                searchAction={(query) => searchDirectionOptions("goal", query)}
+                selectedOptions={supporting}
+                onSelectionChange={setSupporting}
+                placeholder="Add another outcome…"
               />
-            </label>
-          </div>
-          <SeasonPoster season={{ ...season, ...draft }} />
-          {season.cotsIdentity && (
-            <div className="season-preview-edit-actions">
-              <button type="button" onClick={() => void returnToCots("images")}>
-                Change artwork
-              </button>
-              <button type="button" onClick={() => void returnToCots("words")}>
-                Change words
+              {supporting.map((goal) => (
+                <label key={goal.id} className="season-support-note">
+                  <span className="field-label">
+                    How {goal.name} supports this season — optional
+                  </span>
+                  <input
+                    className="text-input"
+                    value={supportNotes[goal.id] ?? ""}
+                    onChange={(event) =>
+                      setSupportNotes((current) => ({
+                        ...current,
+                        [goal.id]: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              ))}
+              <button
+                className="season-create-goal"
+                type="button"
+                disabled={controlsDisabled}
+                onClick={() => void saveThenCreateGoal()}
+              >
+                <Plus aria-hidden="true" /> Create a new goal
               </button>
             </div>
-          )}
-          {completionGate && (
-            <aside className="cots-completion-gate" role="status">
-              <div>
-                <p className="eyebrow">
-                  {completionGate.selection.status === "FAILED"
-                    ? "Artwork needs attention"
-                    : "Artwork is still arriving"}
-                </p>
-                <h3>
-                  {completionGate.selection.candidate.title} is not ready yet.
-                </h3>
-                <p>
-                  Your current preview stays in place. You can wait for this
-                  image, choose another, or begin with the preview you see now.
-                </p>
+          </section>
+
+          <section className="season-opening-stage" hidden={draft.stage !== 3}>
+            <CotsOpeningWorkspace
+              season={season}
+              character={draft.character}
+              controlsDisabled={controlsDisabled}
+              goalOptions={allGoalOptions}
+              onPatchCharacter={patchCharacter}
+              onUpdateStandard={updateStandard}
+              onBackStage={() => void moveTo(2)}
+              onContinuePreview={() => void moveTo(4)}
+              onSaveAndLeave={() => void saveAndLeave()}
+            />
+          </section>
+
+          <section
+            className="season-opening-stage season-opening-stage--reveal"
+            hidden={draft.stage !== 4}
+          >
+            <div className="season-opening-question">
+              <p className="eyebrow">The season, assembled</p>
+              <h2 tabIndex={-1}>Let the direction feel like yours.</h2>
+              <p>
+                Give the chapter its final words. Its character and imagery can
+                keep evolving without rewriting how it began.
+              </p>
+            </div>
+            <div className="season-opening-fields season-opening-title-fields">
+              <label>
+                <span className="field-label">Season title — optional</span>
+                <input
+                  className="text-input"
+                  value={draft.title}
+                  onChange={(event) =>
+                    patchDraft({ title: event.target.value })
+                  }
+                  placeholder={`Season ${season.quarter}`}
+                />
+              </label>
+              <label>
+                <span className="field-label">
+                  Opening intention — optional
+                </span>
+                <textarea
+                  className="text-input"
+                  value={draft.intention}
+                  onChange={(event) =>
+                    patchDraft({ intention: event.target.value })
+                  }
+                  placeholder="The direction you want to remember on an ordinary Tuesday."
+                />
+              </label>
+            </div>
+            <div className="season-opening-reveal-poster">
+              <SeasonPoster season={{ ...season, ...draft }} />
+            </div>
+            {season.cotsIdentity && (
+              <div className="season-preview-edit-actions">
+                <button
+                  type="button"
+                  onClick={() => void returnToCots("images")}
+                >
+                  Change artwork
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void returnToCots("words")}
+                >
+                  Change words
+                </button>
               </div>
-              <div>
-                {completionGate.selection.status === "FAILED" ? (
+            )}
+            {completionGate && (
+              <aside className="cots-completion-gate" role="status">
+                <div>
+                  <p className="eyebrow">
+                    {completionGate.selection.status === "FAILED"
+                      ? "Artwork needs attention"
+                      : "Artwork is still arriving"}
+                  </p>
+                  <h3>
+                    {completionGate.selection.candidate.title} is not ready yet.
+                  </h3>
+                  <p>
+                    Your current preview stays in place. You can wait for this
+                    image, choose another, or begin with the preview you see
+                    now.
+                  </p>
+                </div>
+                <div>
+                  {completionGate.selection.status === "FAILED" ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={checkingCompletion}
+                      onClick={() => void retryCompletionPoster()}
+                    >
+                      Try this image again
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={checkingCompletion}
+                      onClick={() => void completeOpening()}
+                    >
+                      Check again
+                    </Button>
+                  )}
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="ghost"
                     disabled={checkingCompletion}
-                    onClick={() => void retryCompletionPoster()}
+                    onClick={() => void returnToCots("images")}
                   >
-                    Try this image again
+                    Choose another image
                   </Button>
-                ) : (
+                  <Button
+                    type="button"
+                    disabled={checkingCompletion}
+                    onClick={() => void completeOpening(true)}
+                  >
+                    Begin with current preview
+                  </Button>
+                </div>
+              </aside>
+            )}
+            {completionError && (
+              <p className="season-form-error" role="alert">
+                {completionError}
+              </p>
+            )}
+          </section>
+
+          {(result.error || Object.keys(fieldErrors).length > 0) && (
+            <div
+              className="season-form-error season-opening-conflict-banner"
+              role="alert"
+            >
+              <div className="season-form-error-copy">
+                <strong>
+                  {result.error || "Some entries need attention."}
+                </strong>
+                {Object.values(fieldErrors).length > 0 && (
+                  <ul>
+                    {Object.entries(fieldErrors).map(([key, value]) => (
+                      <li key={key}>{value}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {state === "conflict" && (
+                <button
+                  type="button"
+                  disabled={reviewPending}
+                  onClick={() => void reviewCurrentSeason(true)}
+                >
+                  <RotateCcw aria-hidden="true" />
+                  {reviewPending
+                    ? "Loading saved version…"
+                    : "Review the current saved version"}
+                </button>
+              )}
+            </div>
+          )}
+          {reviewNotice && (
+            <p className="season-review-notice" role="status">
+              {reviewNotice}
+            </p>
+          )}
+          {reviewError && (
+            <p className="season-review-error" role="alert">
+              {reviewError}
+            </p>
+          )}
+          {reviewedSeason && savedReviewDraft && savedReviewAssignment && (
+            <section
+              className="season-conflict-review"
+              aria-labelledby="season-conflict-review-title"
+            >
+              <header>
+                <div>
+                  <p className="eyebrow">Compare before saving</p>
+                  <h3 id="season-conflict-review-title">
+                    Your entries and the saved season differ.
+                  </h3>
+                </div>
+                <p>Changed: {reviewAreas.join(", ") || "season details"}.</p>
+              </header>
+              <div className="season-conflict-comparison">
+                {[
+                  {
+                    title: "Your entries",
+                    rows: localReviewFields.filter(([label]) =>
+                      changedReviewLabels.has(label),
+                    ),
+                  },
+                  {
+                    title: "Currently saved",
+                    rows: savedReviewFields.filter(([label]) =>
+                      changedReviewLabels.has(label),
+                    ),
+                  },
+                ].map((column) => (
+                  <section key={column.title}>
+                    <h4>{column.title}</h4>
+                    <dl>
+                      {column.rows.map(([label, value]) => (
+                        <div key={label}>
+                          <dt>{label}</dt>
+                          <dd>{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ))}
+              </div>
+              <p>
+                Loading the saved season replaces this form. Keeping your
+                entries lets you apply them with your next Save or Continue
+                action.
+              </p>
+              <footer>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={loadSavedVersion}
+                >
+                  Load saved version
+                </Button>
+                <Button type="button" onClick={keepEntriesAfterReview}>
+                  Keep my entries
+                </Button>
+              </footer>
+            </section>
+          )}
+          {draft.stage !== 3 && (
+            <footer className="season-opening-actions">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={controlsDisabled}
+                onClick={() => void saveAndLeave()}
+              >
+                <Save aria-hidden="true" /> Save and leave
+              </Button>
+              <div>
+                {draft.stage > 1 && (
                   <Button
                     type="button"
                     variant="secondary"
-                    disabled={checkingCompletion}
-                    onClick={() => void completeOpening()}
+                    disabled={controlsDisabled}
+                    onClick={() => void moveTo(draft.stage - 1)}
                   >
-                    Check again
+                    <ArrowLeft aria-hidden="true" /> Back
+                  </Button>
+                )}
+                {draft.stage < 4 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={controlsDisabled}
+                    onClick={() => void moveTo(draft.stage + 1, true)}
+                  >
+                    I’m not sure yet
                   </Button>
                 )}
                 <Button
                   type="button"
-                  variant="ghost"
-                  disabled={checkingCompletion}
-                  onClick={() => void returnToCots("images")}
+                  disabled={controlsDisabled || checkingCompletion}
+                  onClick={() =>
+                    void (draft.stage === 4
+                      ? completeOpening()
+                      : moveTo(Math.min(4, draft.stage + 1)))
+                  }
                 >
-                  Choose another image
-                </Button>
-                <Button
-                  type="button"
-                  disabled={checkingCompletion}
-                  onClick={() => void completeOpening(true)}
-                >
-                  Begin with current preview
+                  {draft.stage === 4
+                    ? checkingCompletion
+                      ? "Checking artwork…"
+                      : "Begin this season"
+                    : "Continue"}
+                  {draft.stage < 4 && <ArrowRight aria-hidden="true" />}
                 </Button>
               </div>
-            </aside>
-          )}
-          {completionError && (
-            <p className="season-form-error" role="alert">
-              {completionError}
-            </p>
-          )}
-        </section>
-
-        {(result.error || Object.keys(fieldErrors).length > 0) && (
-          <div
-            className="season-form-error season-opening-conflict-banner"
-            role="alert"
-          >
-            <div className="season-form-error-copy">
-              <strong>{result.error || "Some entries need attention."}</strong>
-              {Object.values(fieldErrors).length > 0 && (
-                <ul>
-                  {Object.entries(fieldErrors).map(([key, value]) => (
-                    <li key={key}>{value}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {state === "conflict" && (
-              <button
-                type="button"
-                disabled={reviewPending}
-                onClick={() => void reviewCurrentSeason(true)}
-              >
-                <RotateCcw aria-hidden="true" />
-                {reviewPending
-                  ? "Loading saved version…"
-                  : "Review the current saved version"}
-              </button>
-            )}
-          </div>
-        )}
-        {reviewNotice && (
-          <p className="season-review-notice" role="status">
-            {reviewNotice}
-          </p>
-        )}
-        {reviewError && (
-          <p className="season-review-error" role="alert">
-            {reviewError}
-          </p>
-        )}
-        {reviewedSeason && savedReviewDraft && savedReviewAssignment && (
-          <section
-            className="season-conflict-review"
-            aria-labelledby="season-conflict-review-title"
-          >
-            <header>
-              <div>
-                <p className="eyebrow">Compare before saving</p>
-                <h3 id="season-conflict-review-title">
-                  Your entries and the saved season differ.
-                </h3>
-              </div>
-              <p>Changed: {reviewAreas.join(", ") || "season details"}.</p>
-            </header>
-            <div className="season-conflict-comparison">
-              {[
-                {
-                  title: "Your entries",
-                  rows: localReviewFields.filter(([label]) =>
-                    changedReviewLabels.has(label),
-                  ),
-                },
-                {
-                  title: "Currently saved",
-                  rows: savedReviewFields.filter(([label]) =>
-                    changedReviewLabels.has(label),
-                  ),
-                },
-              ].map((column) => (
-                <section key={column.title}>
-                  <h4>{column.title}</h4>
-                  <dl>
-                    {column.rows.map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              ))}
-            </div>
-            <p>
-              Loading the saved season replaces this form. Keeping your entries
-              lets you apply them with your next Save or Continue action.
-            </p>
-            <footer>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={loadSavedVersion}
-              >
-                Load saved version
-              </Button>
-              <Button type="button" onClick={keepEntriesAfterReview}>
-                Keep my entries
-              </Button>
             </footer>
-          </section>
-        )}
-        {draft.stage !== 3 && (
-          <footer className="season-opening-actions">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={controlsDisabled}
-              onClick={() => void saveAndLeave()}
-            >
-              <Save aria-hidden="true" /> Save and leave
-            </Button>
-            <div>
-              {draft.stage > 1 && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={controlsDisabled}
-                  onClick={() => void moveTo(draft.stage - 1)}
-                >
-                  <ArrowLeft aria-hidden="true" /> Back
-                </Button>
-              )}
-              {draft.stage < 4 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={controlsDisabled}
-                  onClick={() => void moveTo(draft.stage + 1, true)}
-                >
-                  I’m not sure yet
-                </Button>
-              )}
-              <Button
-                type="button"
-                disabled={controlsDisabled || checkingCompletion}
-                onClick={() =>
-                  void (draft.stage === 4
-                    ? completeOpening()
-                    : moveTo(Math.min(4, draft.stage + 1)))
-                }
-              >
-                {draft.stage === 4
-                  ? checkingCompletion
-                    ? "Checking artwork…"
-                    : "Begin this season"
-                  : "Continue"}
-                {draft.stage < 4 && <ArrowRight aria-hidden="true" />}
-              </Button>
-            </div>
-          </footer>
-        )}
-      </form>
-    </div>
+          )}
+        </form>
+      </div>
+    </main>
   );
 }

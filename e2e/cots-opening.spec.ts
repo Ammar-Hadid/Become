@@ -49,10 +49,26 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   await expect(page).toHaveURL(
     /\/direction\/seasons\/\d+\/[1-4]\/opening\?arrival=season/,
   );
+  await expect(page.getByTestId("season-opening-ritual")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "The next chapter starts here." }),
+    page.getByText("What came before has taken its shape.", { exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Not now" })).toBeVisible();
+  await expect(page.locator(".sidebar")).toHaveCount(0);
+  await expect(page.locator(".mobile-header")).toHaveCount(0);
+  await expect(page.getByTestId("mobile-bottom-nav")).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Primary navigation" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Direction navigation" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".direction-masthead")).toHaveCount(0);
+  await expect(
+    page.locator(
+      '[data-testid="start-timer-trigger"], [data-testid="active-timer-trigger"]',
+    ),
+  ).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(
@@ -61,6 +77,15 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
     )
     .toBe(true);
 
+  await page
+    .getByRole("button", { name: "Open the chapter", exact: true })
+    .click();
+  const openingHeading = page.getByRole("heading", {
+    name: "Open the chapter",
+    exact: true,
+  });
+  await expect(openingHeading).toBeVisible();
+  await expect(openingHeading).toBeFocused();
   await page
     .getByRole("textbox", { name: "Carry forward" })
     .fill("A note saved before deferring the ritual.");
@@ -205,4 +230,53 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   expect(
     browserErrors.filter((message) => !message.includes("favicon")),
   ).toEqual([]);
+});
+
+test("the season threshold stays focused and becomes still with reduced motion", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 320, height: 720 });
+  await createDisposableCotsUser(page);
+
+  const ritual = page.getByTestId("season-opening-ritual");
+  await expect(ritual).toBeVisible();
+  await expect(page.locator(".sidebar, .mobile-header")).toHaveCount(0);
+  await expect(page.getByTestId("mobile-bottom-nav")).toHaveCount(0);
+  await expect(
+    page.locator(
+      '.direction-masthead, .direction-navigation, [data-testid="start-timer-trigger"], [data-testid="active-timer-trigger"]',
+    ),
+  ).toHaveCount(0);
+
+  const longestMotionMs = await page
+    .locator('.season-opening-prelude-lines [data-state="current"]')
+    .evaluate((element) => {
+      const toMilliseconds = (duration: string) => {
+        const value = Number.parseFloat(duration);
+        return duration.endsWith("ms") ? value : value * 1000;
+      };
+      const styles = getComputedStyle(element);
+      return Math.max(
+        ...styles.transitionDuration.split(",").map(toMilliseconds),
+        ...styles.animationDuration.split(",").map(toMilliseconds),
+      );
+    });
+  expect(longestMotionMs).toBeLessThanOrEqual(0.02);
+
+  await page
+    .getByRole("button", { name: "Open the chapter", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Open the chapter", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/Step 1 of 4/)).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    )
+    .toBe(true);
 });

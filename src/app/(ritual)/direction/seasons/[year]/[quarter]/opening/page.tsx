@@ -4,6 +4,7 @@ import { getSeasonView } from "@/features/seasons/queries/season.query";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { notFound } from "next/navigation";
 import { seasonIdentitySchema } from "@/features/seasons/schemas/season.schema";
+import "@/features/direction/styles/direction.css";
 
 export default async function SeasonOpeningPage({
   params,
@@ -24,5 +25,11 @@ export default async function SeasonOpeningPage({
     getSeasonView(user.id, identity.data.year, identity.data.quarter),
     getDirectionOptions(user.id, "goal"),
   ]);
-  return <SeasonOpening season={season} goalOptions={goals.items} arrival={(await searchParams).arrival === "season"} />;
+  return (
+    <SeasonOpening
+      season={season}
+      goalOptions={goals.items}
+      arrival={(await searchParams).arrival === "season"}
+    />
+  );
 }
