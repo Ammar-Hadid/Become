@@ -9,7 +9,6 @@ import {
   Plus,
   RotateCcw,
   Save,
-  Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
@@ -22,6 +21,13 @@ import type { OwnedOption } from "@/features/direction/types/direction.types";
 import { searchDirectionOptions } from "@/features/direction/options/utils/direction-option-client.util";
 import { SeasonPoster } from "@/features/seasons/posters/components/season-poster.component";
 import { useSeasonDraftSave } from "@/features/seasons/opening/hooks/use-season-draft-save.hook";
+import { CotsOpeningWorkspace } from "@/features/seasons/discovery/components/cots-opening-workspace.component";
+import { cotsCategory } from "@/features/seasons/discovery/constants/cots-category.constants";
+import { COTS_IMPORTS_QUEUED_EVENT } from "@/features/seasons/discovery/constants/cots-events.constants";
+import type {
+  CotsCollectionView,
+  CotsSelectionView,
+} from "@/features/seasons/discovery/types/cots-discovery.types";
 import type {
   SeasonDraft,
   SeasonStandard,
@@ -31,7 +37,7 @@ import type {
 const stages = [
   { number: 1, label: "Open the chapter" },
   { number: 2, label: "Choose direction" },
-  { number: 3, label: "Choose your character" },
+  { number: 3, label: "Choose your inspiration" },
   { number: 4, label: "See the chapter" },
 ] as const;
 
@@ -204,6 +210,10 @@ function reviewFields(
     ["Meaningful if", value(draft.answers.meaningful)],
     ["Protect", value(draft.answers.protect)],
     ["Character", value(draft.character.name)],
+    [
+      "Source category",
+      cotsCategory(draft.character.sourceCategory)?.label ?? "Not set",
+    ],
     ["Source work", value(draft.character.sourceWork)],
     ["Adaptation", value(draft.character.adaptation)],
     ["What you admire", value(draft.character.motivation)],
@@ -234,9 +244,11 @@ function reviewFields(
 export function SeasonOpening({
   season,
   goalOptions,
+  arrival = false,
 }: {
   season: SeasonView;
   goalOptions: OwnedOption[];
+  arrival?: boolean;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -260,6 +272,15 @@ export function SeasonOpening({
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewNotice, setReviewNotice] = useState<string | null>(null);
   const [selectionReset, setSelectionReset] = useState(0);
+  const [deferringArrival, setDeferringArrival] = useState(false);
+  const [arrivalError, setArrivalError] = useState<string | null>(null);
+  const [checkingCompletion, setCheckingCompletion] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [completionGate, setCompletionGate] = useState<{
+    selection: CotsSelectionView;
+    pendingCount: number;
+    failedCount: number;
+  } | null>(null);
   const loadedSavedVersion = useRef<number | null>(null);
   const {
     acceptReviewedVersion,
@@ -554,6 +575,149 @@ export function SeasonOpening({
     }
   }
 
+  async function deferAutomaticOpening() {
+    setDeferringArrival(true);
+    setArrivalError(null);
+    try {
+      const saved = await persist(latestDraft.current);
+      if (saved.error) {
+        setArrivalError(saved.error);
+        setDeferringArrival(false);
+        return;
+      }
+      const response = await fetch("/api/direction/cots", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "DEFER_OPENING",
+          year: season.year,
+          quarter: season.quarter,
+        }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (!response.ok)
+        throw new Error(
+          body?.error || "Become could not remember that choice yet.",
+        );
+      router.replace("/");
+      router.refresh();
+    } catch (cause) {
+      setArrivalError(
+        cause instanceof Error
+          ? cause.message
+          : "Become could not remember that choice yet.",
+      );
+      setDeferringArrival(false);
+    }
+  }
+
+  async function returnToCots(subview: "images" | "words") {
+    const next = { ...draft, stage: 3 };
+    const response = await persist(next);
+    if (!response.error) {
+      router.replace(
+        `/direction/seasons/${season.year}/${season.quarter}/opening?cots=${subview}`,
+        { scroll: false },
+      );
+    }
+  }
+
+  async function cotsPost(payload: Record<string, unknown>) {
+    const response = await fetch("/api/direction/cots", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        year: season.year,
+        quarter: season.quarter,
+        ...payload,
+      }),
+    });
+    const body = (await response.json().catch(() => null)) as
+      | ({
+          collection?: CotsCollectionView;
+          pendingCount?: number;
+          failedCount?: number;
+          error?: string;
+        } & Partial<CotsCollectionView>)
+      | null;
+    if (!response.ok)
+      throw new Error(body?.error || "The collection could not be checked.");
+    return body;
+  }
+
+  async function completeOpening(beginWithCurrentPoster = false) {
+    setCheckingCompletion(true);
+    setCompletionError(null);
+    try {
+      const result = await cotsPost({
+        action: "PREFLIGHT",
+        beginWithCurrentPoster,
+      });
+      const collection = result?.collection;
+      const desired = collection?.selections.find(
+        ({ desiredPoster }) => desiredPoster,
+      );
+      if (!beginWithCurrentPoster && desired && desired.status !== "READY") {
+        setCompletionGate({
+          selection: desired,
+          pendingCount: result?.pendingCount ?? 0,
+          failedCount: result?.failedCount ?? 0,
+        });
+        return;
+      }
+      setCompletionGate(null);
+      await moveTo(4);
+    } catch (cause) {
+      setCompletionError(
+        cause instanceof Error
+          ? cause.message
+          : "The collection could not be checked.",
+      );
+    } finally {
+      setCheckingCompletion(false);
+    }
+  }
+
+  async function retryCompletionPoster() {
+    if (!completionGate) return;
+    setCheckingCompletion(true);
+    setCompletionError(null);
+    try {
+      const result = await cotsPost({
+        action: "RETRY",
+        selectionId: completionGate.selection.id,
+      });
+      const collection =
+        result && "selectionRevision" in result
+          ? (result as CotsCollectionView)
+          : result?.collection;
+      const desired = collection?.selections.find(
+        ({ desiredPoster }) => desiredPoster,
+      );
+      if (desired)
+        setCompletionGate((current) =>
+          current ? { ...current, selection: desired } : current,
+        );
+      window.dispatchEvent(new Event(COTS_IMPORTS_QUEUED_EVENT));
+    } catch (cause) {
+      setCompletionError(
+        cause instanceof Error
+          ? cause.message
+          : "The image could not be queued again.",
+      );
+    } finally {
+      setCheckingCompletion(false);
+    }
+  }
+
   async function saveThenCreateGoal() {
     const response = await persist(draft);
     if (!response.error) {
@@ -614,17 +778,40 @@ export function SeasonOpening({
   );
 
   return (
-    <div className="season-opening">
+    <div className="season-opening" data-arrival={arrival || undefined}>
       <header className="season-opening-header">
         <div>
-          <Link href="/direction" className="direction-back-link">
-            <ArrowLeft aria-hidden="true" /> Leave for now
-          </Link>
-          <p className="eyebrow">{season.calendar.label} · Opening ritual</p>
-          <h1>{currentStage.label}</h1>
+          {arrival ? (
+            <button
+              type="button"
+              className="direction-back-link"
+              disabled={deferringArrival}
+              onClick={() => void deferAutomaticOpening()}
+            >
+              <ArrowLeft aria-hidden="true" />
+              {deferringArrival ? "Saving…" : "Not now"}
+            </button>
+          ) : (
+            <Link href="/direction" className="direction-back-link">
+              <ArrowLeft aria-hidden="true" /> Leave for now
+            </Link>
+          )}
+          <p className="eyebrow">
+            {season.calendar.label} ·{" "}
+            {arrival && draft.stage === 1
+              ? "A new season is here"
+              : "Opening ritual"}
+          </p>
+          <h1>
+            {arrival && draft.stage === 1
+              ? "The next chapter starts here."
+              : currentStage.label}
+          </h1>
           <p>
             {draft.stage === 1 &&
-              "Name what this chapter should hold—and what it can release."}
+              (arrival
+                ? "You have been waiting for this moment. Give the season a direction that feels unmistakably yours."
+                : "Name what this chapter should hold—and what it can release.")}
             {draft.stage === 2 &&
               "Choose a direction without forcing every outcome to share a deadline."}
             {draft.stage === 3 &&
@@ -654,6 +841,20 @@ export function SeasonOpening({
         </div>
       </header>
 
+      {arrivalError && (
+        <p className="season-review-error" role="alert">
+          {arrivalError}
+        </p>
+      )}
+
+      {arrival && draft.stage === 1 && (
+        <div className="season-arrival-mark" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      )}
+
       <ol className="season-opening-progress" aria-label="Opening progress">
         {stages.map((stage) => (
           <li
@@ -662,12 +863,18 @@ export function SeasonOpening({
           >
             <button
               type="button"
+              aria-label={`${stage.number} ${stage.label}`}
               aria-current={draft.stage === stage.number ? "step" : undefined}
               disabled={controlsDisabled}
               onClick={() => void moveTo(stage.number)}
             >
-              <span>{stage.number}</span>
-              {stage.label}
+              <span aria-hidden="true">{stage.number}</span>
+              <span
+                className="season-opening-progress-label"
+                aria-hidden="true"
+              >
+                {stage.label}
+              </span>
             </button>
           </li>
         ))}
@@ -818,210 +1025,17 @@ export function SeasonOpening({
         </section>
 
         <section className="season-opening-stage" hidden={draft.stage !== 3}>
-          <div className="season-opening-question">
-            <p className="eyebrow">Character of the season</p>
-            <h2 tabIndex={-1}>Whose qualities belong in this chapter?</h2>
-            <p>The character is inspiration, not a costume for every screen.</p>
-          </div>
-          <div className="season-opening-fields season-opening-fields--two">
-            <label>
-              <span className="field-label">Character</span>
-              <input
-                className="text-input"
-                value={draft.character.name}
-                onChange={(event) =>
-                  patchCharacter({ name: event.target.value })
-                }
-                placeholder="Character name"
-              />
-            </label>
-            <label>
-              <span className="field-label">Source work</span>
-              <input
-                className="text-input"
-                value={draft.character.sourceWork}
-                onChange={(event) =>
-                  patchCharacter({ sourceWork: event.target.value })
-                }
-                placeholder="Anime, show, film, or book"
-              />
-            </label>
-            <label>
-              <span className="field-label">Adaptation — optional</span>
-              <input
-                className="text-input"
-                value={draft.character.adaptation}
-                onChange={(event) =>
-                  patchCharacter({ adaptation: event.target.value })
-                }
-                placeholder="Series, season, actor, or version"
-              />
-            </label>
-            <label>
-              <span className="field-label">What you admire</span>
-              <textarea
-                className="text-input"
-                value={draft.character.motivation}
-                onChange={(event) =>
-                  patchCharacter({ motivation: event.target.value })
-                }
-                placeholder="Why does this character matter now?"
-              />
-            </label>
-            <label className="season-field-wide">
-              <span className="field-label">
-                What you do not want to emulate
-              </span>
-              <textarea
-                className="text-input"
-                value={draft.character.avoid}
-                onChange={(event) =>
-                  patchCharacter({ avoid: event.target.value })
-                }
-                placeholder="Keep the inspiration honest."
-              />
-            </label>
-          </div>
-          <fieldset className="season-tone">
-            <legend className="field-label">Accountability tone</legend>
-            {(["DIRECT", "HARSH", "RUTHLESS"] as const).map((tone) => (
-              <label key={tone}>
-                <input
-                  type="radio"
-                  name="tone"
-                  value={tone}
-                  checked={draft.character.tone === tone}
-                  onChange={() => patchCharacter({ tone })}
-                />
-                <span>{tone[0] + tone.slice(1).toLowerCase()}</span>
-              </label>
-            ))}
-            <p>Wording may change later. Evidence and thresholds never do.</p>
-          </fieldset>
-          <div className="season-standards-editor">
-            <div>
-              <p className="eyebrow">Traits in practice</p>
-              <h3>Make admiration observable.</h3>
-            </div>
-            {draft.character.standards.map((standard) => (
-              <div className="season-standard-editor" key={standard.key}>
-                <label>
-                  <span className="field-label">Trait</span>
-                  <input
-                    className="text-input"
-                    value={standard.trait}
-                    onChange={(event) =>
-                      updateStandard(standard.key, {
-                        trait: event.target.value,
-                      })
-                    }
-                    placeholder="Consistency"
-                  />
-                </label>
-                <label>
-                  <span className="field-label">
-                    What it means in your life
-                  </span>
-                  <input
-                    className="text-input"
-                    value={standard.behavior}
-                    onChange={(event) =>
-                      updateStandard(standard.key, {
-                        behavior: event.target.value,
-                      })
-                    }
-                    placeholder="Keep the promises I make to myself."
-                  />
-                </label>
-                <button
-                  type="button"
-                  aria-label={`Remove ${standard.trait || "trait"}`}
-                  onClick={() =>
-                    patchCharacter({
-                      standards: draft.character.standards.filter(
-                        ({ key }) => key !== standard.key,
-                      ),
-                    })
-                  }
-                >
-                  <Trash2 aria-hidden="true" />
-                </button>
-                <details className="season-standard-link">
-                  <summary>
-                    Connect this standard to a real signal{" "}
-                    <span>— optional</span>
-                  </summary>
-                  <div>
-                    <label>
-                      <span className="field-label">Goal</span>
-                      <span className="select-wrap">
-                        <select
-                          value={standard.goalId ?? ""}
-                          onChange={(event) =>
-                            updateStandard(standard.key, {
-                              goalId: event.target.value || undefined,
-                              criterionId: undefined,
-                            })
-                          }
-                        >
-                          <option value="">No linked goal</option>
-                          {allGoalOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
-                      </span>
-                    </label>
-                    {standard.goalId &&
-                    season.goals.find(({ goal }) => goal.id === standard.goalId)
-                      ?.goal.criteria.length ? (
-                      <label>
-                        <span className="field-label">Criterion</span>
-                        <span className="select-wrap">
-                          <select
-                            value={standard.criterionId ?? ""}
-                            onChange={(event) =>
-                              updateStandard(standard.key, {
-                                criterionId: event.target.value || undefined,
-                              })
-                            }
-                          >
-                            <option value="">Goal only</option>
-                            {season.goals
-                              .find(({ goal }) => goal.id === standard.goalId)
-                              ?.goal.criteria.map((criterion) => (
-                                <option key={criterion.id} value={criterion.id}>
-                                  {criterion.label}
-                                </option>
-                              ))}
-                          </select>
-                        </span>
-                      </label>
-                    ) : null}
-                  </div>
-                  <p>
-                    Linking gives this behavior context; it never changes the
-                    goal or its evidence.
-                  </p>
-                </details>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="season-add-standard"
-              onClick={() =>
-                patchCharacter({
-                  standards: [
-                    ...draft.character.standards,
-                    { key: crypto.randomUUID(), trait: "", behavior: "" },
-                  ],
-                })
-              }
-            >
-              <Plus aria-hidden="true" /> Add a trait
-            </button>
-          </div>
+          <CotsOpeningWorkspace
+            season={season}
+            character={draft.character}
+            controlsDisabled={controlsDisabled}
+            goalOptions={allGoalOptions}
+            onPatchCharacter={patchCharacter}
+            onUpdateStandard={updateStandard}
+            onBackStage={() => void moveTo(2)}
+            onContinuePreview={() => void moveTo(4)}
+            onSaveAndLeave={() => void saveAndLeave()}
+          />
         </section>
 
         <section className="season-opening-stage" hidden={draft.stage !== 4}>
@@ -1056,6 +1070,75 @@ export function SeasonOpening({
             </label>
           </div>
           <SeasonPoster season={{ ...season, ...draft }} />
+          {season.cotsIdentity && (
+            <div className="season-preview-edit-actions">
+              <button type="button" onClick={() => void returnToCots("images")}>
+                Change artwork
+              </button>
+              <button type="button" onClick={() => void returnToCots("words")}>
+                Change words
+              </button>
+            </div>
+          )}
+          {completionGate && (
+            <aside className="cots-completion-gate" role="status">
+              <div>
+                <p className="eyebrow">
+                  {completionGate.selection.status === "FAILED"
+                    ? "Artwork needs attention"
+                    : "Artwork is still arriving"}
+                </p>
+                <h3>
+                  {completionGate.selection.candidate.title} is not ready yet.
+                </h3>
+                <p>
+                  Your current preview stays in place. You can wait for this
+                  image, choose another, or begin with the preview you see now.
+                </p>
+              </div>
+              <div>
+                {completionGate.selection.status === "FAILED" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={checkingCompletion}
+                    onClick={() => void retryCompletionPoster()}
+                  >
+                    Try this image again
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={checkingCompletion}
+                    onClick={() => void completeOpening()}
+                  >
+                    Check again
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={checkingCompletion}
+                  onClick={() => void returnToCots("images")}
+                >
+                  Choose another image
+                </Button>
+                <Button
+                  type="button"
+                  disabled={checkingCompletion}
+                  onClick={() => void completeOpening(true)}
+                >
+                  Begin with current preview
+                </Button>
+              </div>
+            </aside>
+          )}
+          {completionError && (
+            <p className="season-form-error" role="alert">
+              {completionError}
+            </p>
+          )}
         </section>
 
         {(result.error || Object.keys(fieldErrors).length > 0) && (
@@ -1157,46 +1240,56 @@ export function SeasonOpening({
             </footer>
           </section>
         )}
-        <footer className="season-opening-actions">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={controlsDisabled}
-            onClick={() => void saveAndLeave()}
-          >
-            <Save aria-hidden="true" /> Save and leave
-          </Button>
-          <div>
-            {draft.stage > 1 && (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={controlsDisabled}
-                onClick={() => void moveTo(draft.stage - 1)}
-              >
-                <ArrowLeft aria-hidden="true" /> Back
-              </Button>
-            )}
-            {draft.stage < 4 && (
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={controlsDisabled}
-                onClick={() => void moveTo(draft.stage + 1, true)}
-              >
-                I’m not sure yet
-              </Button>
-            )}
+        {draft.stage !== 3 && (
+          <footer className="season-opening-actions">
             <Button
               type="button"
+              variant="ghost"
               disabled={controlsDisabled}
-              onClick={() => void moveTo(Math.min(4, draft.stage + 1))}
+              onClick={() => void saveAndLeave()}
             >
-              {draft.stage === 4 ? "Begin this season" : "Continue"}
-              {draft.stage < 4 && <ArrowRight aria-hidden="true" />}
+              <Save aria-hidden="true" /> Save and leave
             </Button>
-          </div>
-        </footer>
+            <div>
+              {draft.stage > 1 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={controlsDisabled}
+                  onClick={() => void moveTo(draft.stage - 1)}
+                >
+                  <ArrowLeft aria-hidden="true" /> Back
+                </Button>
+              )}
+              {draft.stage < 4 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={controlsDisabled}
+                  onClick={() => void moveTo(draft.stage + 1, true)}
+                >
+                  I’m not sure yet
+                </Button>
+              )}
+              <Button
+                type="button"
+                disabled={controlsDisabled || checkingCompletion}
+                onClick={() =>
+                  void (draft.stage === 4
+                    ? completeOpening()
+                    : moveTo(Math.min(4, draft.stage + 1)))
+                }
+              >
+                {draft.stage === 4
+                  ? checkingCompletion
+                    ? "Checking artwork…"
+                    : "Begin this season"
+                  : "Continue"}
+                {draft.stage < 4 && <ArrowRight aria-hidden="true" />}
+              </Button>
+            </div>
+          </footer>
+        )}
       </form>
     </div>
   );

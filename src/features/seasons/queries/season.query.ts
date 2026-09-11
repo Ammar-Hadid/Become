@@ -1,4 +1,6 @@
 import { seasonClosingCard } from "@/features/seasons/mappers/season-closing.mapper";
+import { getCotsIdentity } from "@/features/seasons/discovery/queries/cots-collection.query";
+import { seasonPresentation } from "@/features/seasons/presentation/utils/season-presentation.util";
 import type { DirectionTx } from "@/features/direction/services/direction-mutation.service";
 import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -51,6 +53,51 @@ export async function getSeasonView(
     orderBy: [{ year: "desc" }, { quarter: "desc" }],
     select: { year: true, quarter: true, title: true, closingNote: true },
   });
+  const cots = row ? await getCotsIdentity(userId, row.id, tx) : null;
+  const uses = row
+    ? await tx.seasonMediaUse.findMany({
+        where: {
+          userId,
+          seasonId: row.id,
+          identityId: cots?.row.id ?? null,
+          retiredAt: null,
+        },
+        include: { media: true },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+  const media: SeasonMediaView[] = uses.map((use) => ({
+    id: use.mediaId,
+    useId: use.id,
+    href: `/api/direction/media/${use.mediaId}`,
+    alt: use.media.alt,
+    decorative: use.media.decorative,
+    width: use.media.width,
+    height: use.media.height,
+    focalX: use.focalX,
+    focalY: use.focalY,
+    poster: use.poster,
+    previewHref: use.media.previewStorageKey
+      ? `/api/direction/media/${use.mediaId}?size=preview`
+      : null,
+    hasAlpha: use.media.hasAlpha,
+    secondary: use.secondary,
+    loading: use.loading,
+    cadence: use.cadence,
+    provenance: use.media
+      .provenance as unknown as SeasonMediaView["provenance"],
+  }));
+  const quotes: SeasonQuoteView[] = (row?.quotes ?? [])
+    .filter((q) => q.identityId === (cots?.row.id ?? null))
+    .map((q) => ({
+      id: q.id,
+      text: q.text,
+      attribution: q.attribution,
+      kind: q.kind as SeasonQuoteView["kind"],
+      featured: q.featured,
+      rotation: q.rotation,
+      provenance: q.provenance as unknown as SeasonQuoteView["provenance"],
+    }));
   const draft = emptySeasonDraft();
   const goals: SeasonView["goals"] = [];
   for (const g of row?.goals ?? []) {
@@ -110,6 +157,16 @@ export async function getSeasonView(
           : "Revisit your opening intention, the evidence you have recorded, and the time that remains.",
     };
   return {
+    cotsIdentity: cots?.view ?? null,
+    openingDeferred: Boolean(row?.openingDeferredAt),
+    presentation: seasonPresentation(
+      row?.id ?? `${identity.year}-${identity.quarter}`,
+      cots?.row.id ?? "legacy",
+      media,
+      quotes,
+      cadence?.key ?? null,
+      now,
+    ),
     ...draft,
     ...identity,
     id: row?.id ?? null,
@@ -124,26 +181,8 @@ export async function getSeasonView(
     goals,
     experiments,
     cadence,
-    media: (row?.media ?? []).map((m) => ({
-      id: m.id,
-      href: `/api/direction/media/${m.id}`,
-      alt: m.alt,
-      decorative: m.decorative,
-      width: m.width,
-      height: m.height,
-      focalX: m.focalX,
-      focalY: m.focalY,
-      poster: m.poster,
-      provenance: m.provenance as unknown as SeasonMediaView["provenance"],
-    })),
-    quotes: (row?.quotes ?? []).map((q) => ({
-      id: q.id,
-      text: q.text,
-      attribution: q.attribution,
-      kind: q.kind as SeasonQuoteView["kind"],
-      featured: q.featured,
-      provenance: q.provenance as unknown as SeasonQuoteView["provenance"],
-    })),
+    media,
+    quotes,
     closedAt: row?.closedAt?.toISOString() ?? null,
     closingNote: row?.closingNote ?? null,
     closingSnapshot: row?.closingSnapshot ?? null,

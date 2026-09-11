@@ -49,11 +49,22 @@ The CSS source of truth is `src/app/styles/tokens.css`; TypeScript timing values
 | `--duration-spatial`   |                           240ms | sheets, drawers, disclosures      |
 | `--duration-emphasis`  |                           360ms | earned local completion           |
 | `--duration-signature` |                           650ms | rare signature sequence ceiling   |
+| `--delay-pending-visual` | 300ms | delay before optional local pending artwork |
+| `--duration-pending-cycle` | 1600ms | 650ms pending sweep plus 950ms rest |
 | `--ease-enter`         | `cubic-bezier(0.16, 1, 0.3, 1)` | arriving content and layers       |
 | `--ease-exit`          |    `cubic-bezier(0.4, 0, 1, 1)` | short departures                  |
 | `--ease-move`          |    `cubic-bezier(0.2, 0, 0, 1)` | repositioning and continuity      |
 
 Use these values rather than local timing literals. A one-off value is justified only when the interaction cannot be expressed by this scale.
+
+The pending-cycle token is a narrow loading exception rather than a longer
+expressive sequence. It may be used only for the current-season Direction
+poster handoff and confirmed season-image import status, after the 300ms reveal
+delay and with an eligible READY local derivative already available. The light
+sweep travels for the existing 650ms signature duration, then rests for 950ms
+to avoid rapid flashing. Only one pending artwork loop may be visible at once.
+It stops immediately when work succeeds, fails, is cancelled, or leaves the
+screen. Reduced motion removes the sweep while retaining status and geometry.
 
 Springs are not part of the base system. Introduce a spring only for a direct-manipulation interaction whose velocity materially improves comprehension, and only after native CSS or View Transitions prove insufficient.
 

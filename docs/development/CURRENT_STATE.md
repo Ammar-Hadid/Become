@@ -1,8 +1,8 @@
 # Current development state
 
-Phases 1–5 are present, including Entrepreneurship and Seasons & Direction.
-Work remains on `feature/phase-4`, uncommitted, alongside preserved timer,
-Engineering, Finance and shared motion work. The repository is authoritative for
+Phases 1–5.5 are present, including Entrepreneurship, Seasons & Direction,
+and category-aware COTS curation. Phase 5.5 work is on `feature/COTS-search`,
+uncommitted. The repository is authoritative for
 what exists; the master specification also describes future work.
 
 ## Available now
@@ -28,6 +28,10 @@ what exists; the master specification also describes future work.
   exact source-qualified criteria, dated manual judgments, independent experiments,
   meaningful history, private filesystem media, manual quotes and chapter library.
   See [Phase 5 decisions](../decisions/PHASE_5.md).
+- COTS: explicit source category and identity context, external image/text
+  discovery, durable selections and imports, private local previews, collection
+  reuse/preferences, contextual seasonal presence, and proactive opening with
+  persistent deferral. See [Phase 5.5 setup and limits](../decisions/PHASE_5_5.md).
 - Business attention is available on Home; Finance also surfaces receipt attribution
   that needs review. Legacy Entrepreneurship domain links redirect to the dedicated
   workspace and preserve query parameters.
@@ -55,7 +59,7 @@ business allocations are separate dimensions of one payment, never additive mone
 - Completed Session timing is not generally editable or deletable.
 - No Contact directory, email sending, campaigns, AI evidence judgments, invoicing,
   subscription billing, projected recurring revenue, acquisition ROI or business
-  effective hourly rate. Automatic COTS discovery belongs to Phase 5.5; rich
+  effective hourly rate. Credentialed COTS sources require setup; rich
   seasonal reviews, recurring-commitment compliance, and later phases remain deferred.
 - No guessed historical business categorization or automatic validation labels.
 - Global reference catalog synchronization remains an explicit developer operation.

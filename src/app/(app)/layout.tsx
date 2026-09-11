@@ -1,4 +1,7 @@
 import { getFinanceWorkOptions } from "@/features/finance/queries/finance-options.query";
+import { CotsImportController } from "@/features/seasons/discovery/components/cots-import-controller.component";
+import { CotsPresentationProvider } from "@/features/seasons/presentation/components/cots-presentation-provider.component";
+import { getSeasonLoadingSnapshot } from "@/features/seasons/presentation/queries/season-loading.query";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell/app-shell.component";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
@@ -15,11 +18,13 @@ export default async function AuthenticatedLayout({
   if (!user) redirect("/sign-in");
 
   await ensureDefaultDomains(user.id);
-  const [appData, engineeringProjects, financeOptions] = await Promise.all([
-    getAppSessionData(user.id),
-    getEngineeringProjectOptions(user.id),
-    getFinanceWorkOptions(user.id),
-  ]);
+  const [appData, engineeringProjects, financeOptions, seasonLoading] =
+    await Promise.all([
+      getAppSessionData(user.id),
+      getEngineeringProjectOptions(user.id),
+      getFinanceWorkOptions(user.id),
+      getSeasonLoadingSnapshot(user.id),
+    ]);
   return (
     <AppShell
       financeOptions={financeOptions}
@@ -28,7 +33,15 @@ export default async function AuthenticatedLayout({
       activeSession={appData.activeSession}
       engineeringProjects={engineeringProjects}
     >
-      {children}
+      <CotsPresentationProvider
+        userId={user.id}
+        year={seasonLoading.year}
+        quarter={seasonLoading.quarter}
+        initialMedia={seasonLoading.media}
+      >
+        <CotsImportController />
+        {children}
+      </CotsPresentationProvider>
     </AppShell>
   );
 }

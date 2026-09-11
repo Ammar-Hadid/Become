@@ -41,6 +41,7 @@ export async function normalizeSeasonImage(input: Buffer) {
       byteSize: data.length,
       width: info.width,
       height: info.height,
+      hasAlpha: info.channels === 4,
       contentHash: createHash("sha256").update(data).digest("hex"),
     };
   } catch (error) {

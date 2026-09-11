@@ -12,9 +12,13 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     throw new Error("Browser fixture cleanup requires local PostgreSQL.");
   if (!(await prisma.user.findFirst({ where: { id, email } }))) return;
   const where = { userId: id };
-  const media = await prisma.seasonMedia.findMany({
+  const jobs = await prisma.seasonCotsSelection.findMany({
     where,
     select: { storageKey: true },
+  });
+  const media = await prisma.seasonMedia.findMany({
+    where,
+    select: { storageKey: true, previewStorageKey: true },
   });
   await prisma.$transaction(
     async (tx) => {
@@ -61,5 +65,16 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     },
     { timeout: 15000 },
   );
-  for (const file of media) await getMediaStorage().remove(file.storageKey);
+  for (const file of media) {
+    await getMediaStorage().remove(file.storageKey);
+    if (file.previewStorageKey)
+      await getMediaStorage().remove(file.previewStorageKey);
+  }
+  for (const job of jobs)
+    if (job.storageKey) {
+      await getMediaStorage().remove(job.storageKey);
+      await getMediaStorage().remove(
+        job.storageKey.replace(/\.webp$/, "-preview.webp"),
+      );
+    }
 }

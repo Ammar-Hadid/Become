@@ -17,6 +17,7 @@ import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import { SessionRow } from "@/features/sessions/components/session-row.component";
 import type { SessionListItem } from "@/features/sessions/types/session.types";
 import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
+import { SeasonOpeningArrival } from "@/features/seasons/home/components/season-opening-arrival.component";
 import type { SeasonView } from "@/features/seasons/types/season.types";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
@@ -71,6 +72,7 @@ export function Dashboard({
 
   return (
     <div className="page-shell">
+      <SeasonOpeningArrival season={seasonDirection} />
       <section className="dashboard-hero" aria-labelledby="dashboard-greeting">
         <div className="dashboard-hero-meta">
           <div className="dashboard-season-context">

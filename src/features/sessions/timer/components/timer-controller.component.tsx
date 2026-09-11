@@ -159,6 +159,15 @@ export function TimerController({
   const [error, setError] = useState<string | null>(null);
   const dialogPresence = usePresence(dialogOpen);
 
+  useEffect(() => {
+    document.documentElement.toggleAttribute(
+      "data-timer-mutation-pending",
+      pending,
+    );
+    return () =>
+      document.documentElement.removeAttribute("data-timer-mutation-pending");
+  }, [pending]);
+
   useModalLayer({
     open: dialogOpen,
     containerRef: dialogRef,

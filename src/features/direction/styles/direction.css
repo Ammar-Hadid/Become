@@ -228,6 +228,23 @@
   height: 18px;
 }
 
+.season-cadence-visual {
+  display: block;
+  width: 4.25rem;
+  height: 4.25rem;
+  overflow: hidden;
+  border: 1px solid var(--direction-line);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.season-cadence-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .season-cadence h2 {
   margin: var(--spacing-xs) 0;
   font-size: var(--text-h4);
@@ -237,6 +254,25 @@
 
 .season-cadence p:not(.eyebrow) {
   color: var(--color-text-secondary);
+}
+
+.season-cadence-quote {
+  max-width: 42rem;
+  margin-top: var(--spacing-md);
+  border-left: 1px solid var(--direction-line);
+  padding-left: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.season-cadence-quote cite {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-style: normal;
 }
 
 .season-cadence > a {
@@ -790,7 +826,7 @@
   cursor: wait;
 }
 
-.season-opening-progress button span {
+.season-opening-progress button > span:first-child {
   display: grid;
   width: 31px;
   height: 31px;
@@ -805,11 +841,15 @@
     background var(--duration-fast) var(--ease-enter);
 }
 
+.season-opening-progress-label {
+  text-align: center;
+}
+
 .season-opening-progress li[data-current] button {
   color: var(--color-text-primary);
 }
 
-.season-opening-progress li[data-current] button span {
+.season-opening-progress li[data-current] button > span:first-child {
   border-color: var(--color-primary);
   background: var(--color-primary-subtle);
   color: var(--color-primary);
@@ -2206,7 +2246,8 @@
 }
 
 .direction-lifecycle-actions > button,
-.direction-manage-trigger {
+.direction-manage-trigger,
+.season-collection-menu-trigger {
   display: inline-flex;
   min-height: var(--spacing-input-height-sm);
   cursor: pointer;
@@ -2223,7 +2264,9 @@
 
 .direction-lifecycle-actions > button:hover,
 .direction-manage-trigger:hover,
-.direction-manage-trigger[aria-expanded="true"] {
+.direction-manage-trigger[aria-expanded="true"],
+.season-collection-menu-trigger:hover,
+.season-collection-menu-trigger[aria-expanded="true"] {
   border-color: #444952;
   color: var(--color-text-primary);
 }
@@ -2231,6 +2274,29 @@
 .direction-lifecycle-actions svg {
   width: 15px;
   height: 15px;
+}
+
+.season-collection-menu-trigger svg {
+  width: 15px;
+  height: 15px;
+}
+
+.season-inspiration[data-compact] {
+  border: 1px solid var(--direction-line);
+  border-radius: var(--radius-panel);
+  background:
+    radial-gradient(circle at 8% 12%, var(--direction-glow), transparent 35%),
+    var(--color-surface);
+  padding: var(--spacing-2xl);
+}
+
+.season-collection-limit {
+  margin-top: var(--spacing-lg);
+  border-left: 2px solid var(--color-primary);
+  padding-left: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }
 
 .direction-lifecycle-form,
@@ -2603,7 +2669,7 @@
 .season-media-thumb,
 .season-quote-row {
   display: grid;
-  grid-template-columns: 5rem minmax(0, 1fr) auto auto;
+  grid-template-columns: 5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--spacing-md);
   border: 1px solid var(--color-border);
@@ -2655,8 +2721,8 @@
   white-space: nowrap;
 }
 
-.season-media-thumb > button,
-.season-quote-actions > button {
+.season-media-thumb > .submenu > button,
+.season-quote-footer > .submenu > button {
   display: grid;
   width: 34px;
   height: 34px;
@@ -2666,19 +2732,16 @@
   color: var(--color-text-muted);
 }
 
-.season-media-thumb > button:hover,
-.season-quote-actions > button:hover {
+.season-media-thumb > .submenu > button:hover,
+.season-quote-footer > .submenu > button:hover,
+.season-media-thumb > .submenu > button[aria-expanded="true"],
+.season-quote-footer > .submenu > button[aria-expanded="true"] {
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text-primary);
 }
 
-.season-media-thumb > button:last-child:hover,
-.season-quote-actions > button:last-child:hover {
-  color: var(--color-danger);
-}
-
-.season-media-thumb > button svg,
-.season-quote-actions > button svg {
+.season-media-thumb > .submenu > button svg,
+.season-quote-footer > .submenu > button svg {
   width: 15px;
   height: 15px;
 }
@@ -3108,16 +3171,14 @@
   }
 
   .season-opening-progress button {
-    overflow: hidden;
-    color: transparent;
-    white-space: nowrap;
-  }
-
-  .season-opening-progress button span {
     color: var(--color-text-muted);
   }
 
-  .season-opening-progress li[data-current] button span {
+  .season-opening-progress-label {
+    display: none;
+  }
+
+  .season-opening-progress li[data-current] button > span:first-child {
     color: var(--color-primary);
   }
 

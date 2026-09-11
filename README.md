@@ -1,6 +1,6 @@
 # Become
 
-Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–5: Foundation, Engineering, Finance, Entrepreneurship, and Seasons & Direction**.
+Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–5.5: Foundation, Engineering, Finance, Entrepreneurship, Seasons & Direction, and COTS discovery and curation**.
 
 ## What Phase 1 includes
 
@@ -40,7 +40,7 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-Automatic COTS discovery (Phase 5.5), rich reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
+COTS discovery uses category-specific external sources; credentialed adapters require setup. Rich reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
 
 ## Stack
 
@@ -282,3 +282,15 @@ or served from a public uploads directory. No VPS access is needed for local wor
 [Phase 5 architecture and invariants](docs/decisions/PHASE_5.md) documents measurement
 qualification, lifecycle history, media limits and the Phase 5.5 boundary. Run local
 Phase 5 database tests with `RUN_DIRECTION_INTEGRATION=1 pnpm test`.
+
+Phase 5.5 adds explicit Anime, TV, Movie, Game, Book, Comic and Public figure
+identity categories, onboarding image/text curation, recoverable imports, local
+previews, cross-season image reuse, and later collection preferences. The first
+eligible ordinary Home entry enters an unopened current Season's ritual directly.
+`Not now` persists deferral; Direction retains the resume path.
+
+Read [Phase 5.5 setup, contracts and limitations](docs/decisions/PHASE_5_5.md)
+before enabling providers. Copy only the desired settings from `.env.example`;
+the default paid budget is zero. After additive migrations and `prisma generate`,
+restart the local dev server to load the new generated client. Run the disposable
+local COTS database suite with `RUN_COTS_INTEGRATION=1 pnpm test`.

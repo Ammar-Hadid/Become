@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
+import { SeasonQuoteExcerpt } from "@/features/seasons/media/components/season-quote-excerpt.component";
 import { useStableOperation } from "@/features/direction/commands/hooks/use-stable-operation.hook";
 import { sendDirectionCommand } from "@/features/direction/commands/utils/direction-command-client.util";
 import type { SeasonView } from "@/features/seasons/types/season.types";
@@ -16,6 +17,12 @@ export function SeasonCadence({ season }: { season: SeasonView }) {
   const [error, setError] = useState<string | null>(null);
   const cadence = season.cadence;
   if (!cadence) return null;
+  const cadenceMedia = season.presentation.cadenceMediaId
+    ? season.media.find(({ id }) => id === season.presentation.cadenceMediaId)
+    : null;
+  const cadenceQuote = season.presentation.cadenceQuoteId
+    ? season.quotes.find(({ id }) => id === season.presentation.cadenceQuoteId)
+    : null;
 
   async function act(action: "ACKNOWLEDGE" | "SNOOZE") {
     setPending(true);
@@ -40,13 +47,35 @@ export function SeasonCadence({ season }: { season: SeasonView }) {
 
   return (
     <section className="season-cadence" aria-labelledby="season-cadence-title">
-      <span className="season-cadence-mark" aria-hidden="true">
-        <Compass />
-      </span>
+      {cadenceMedia ? (
+        <span className="season-cadence-visual">
+          {/* Authenticated local media cannot use the default optimizer. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={cadenceMedia.href}
+            alt={cadenceMedia.decorative ? "" : cadenceMedia.alt}
+            width={cadenceMedia.width}
+            height={cadenceMedia.height}
+            style={{
+              objectPosition: `${cadenceMedia.focalX * 100}% ${cadenceMedia.focalY * 100}%`,
+            }}
+          />
+        </span>
+      ) : (
+        <span className="season-cadence-mark" aria-hidden="true">
+          <Compass />
+        </span>
+      )}
       <div>
         <p className="eyebrow">A moment to return</p>
         <h2 id="season-cadence-title">{cadence.title}</h2>
         <p>{cadence.body}</p>
+        {cadenceQuote && (
+          <SeasonQuoteExcerpt
+            className="season-cadence-quote"
+            quote={cadenceQuote}
+          />
+        )}
         {error && (
           <p className="direction-inline-error" role="alert">
             {error}

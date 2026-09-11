@@ -27,6 +27,8 @@ export const manualProvenanceSchema = z
     sourceTitle: z.string().trim().max(300).default(""),
     credit: z.string().trim().max(500).default(""),
     attributionVerified: z.boolean().default(false),
+    sourceDetail: z.string().trim().max(1500).default(""),
+    language: z.string().trim().max(40).default(""),
   })
   .strict();
 export const mediaMetadataSchema = z
@@ -57,12 +59,13 @@ export const quoteDraftSchema = z
       v.kind !== "EXACT" ||
       Boolean(
         v.attribution &&
-        v.provenance.sourceUrl &&
-        v.provenance.attributionVerified,
+        (v.provenance.sourceUrl ||
+          v.provenance.sourceTitle ||
+          v.provenance.sourceDetail),
       ),
     {
       message:
-        "Exact quotes need attribution, a source URL, and your verification; otherwise choose unknown or paraphrase.",
+        "Exact wording needs attribution and a source URL or offline work/episode/edition detail. Saving does not verify the attribution.",
       path: ["kind"],
     },
   );
