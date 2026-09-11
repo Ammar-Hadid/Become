@@ -1,14 +1,31 @@
-import sharp from "sharp";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
   directionUser,
   directionFailure,
 } from "@/features/direction/services/direction-http.service";
 import { fetchPublicImage } from "@/features/seasons/discovery/services/cots-public-image.service";
-import { normalizeSeasonImage } from "@/features/seasons/media/services/season-image.service";
+import { resolveZerochanImage } from "@/features/seasons/discovery/services/cots-zerochan-image.service";
+import { normalizeSeasonImagePreview } from "@/features/seasons/media/services/season-image.service";
 import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
 export const runtime = "nodejs";
+const previewCacheMilliseconds = 15 * 60_000;
+const previewCacheSeconds = previewCacheMilliseconds / 1000;
 const cache = new Map<string, { expires: number; bytes: Buffer }>();
+
+async function fetchCandidatePreview(
+  candidate: ProviderCandidate,
+  large: boolean,
+) {
+  if (large && candidate.provider === "zerochan")
+    try {
+      const detail = await resolveZerochanImage(candidate);
+      return await fetchPublicImage(detail.largeUrl, 2 * 1024 * 1024);
+    } catch {
+      // A higher-quality rendition is optional; keep the provider thumbnail usable.
+    }
+  return fetchPublicImage(candidate.previewUrl!, 2 * 1024 * 1024);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -29,29 +46,28 @@ export async function GET(
       return new Response(null, { status: 410 });
     const snapshot = candidate.snapshot as unknown as ProviderCandidate;
     if (!snapshot.previewUrl) return new Response(null, { status: 404 });
-    const key = `${user.id}:${id}`,
+    const large =
+        snapshot.provider === "zerochan" &&
+        new URL(request.url).searchParams.get("size") === "large",
+      key = `${user.id}:${id}:${large ? "large" : "thumbnail"}`,
       cached = cache.get(key);
     let bytes = cached && cached.expires > Date.now() ? cached.bytes : null;
     if (!bytes) {
-      const normalized = await normalizeSeasonImage(
-        await fetchPublicImage(snapshot.previewUrl, 2 * 1024 * 1024),
+      bytes = await normalizeSeasonImagePreview(
+        await fetchCandidatePreview(snapshot, large),
       );
-      bytes = await sharp(normalized.bytes)
-        .resize({
-          width: 480,
-          height: 600,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .webp({ quality: 75 })
-        .toBuffer();
       if (cache.size >= 40) cache.delete(cache.keys().next().value!);
-      cache.set(key, { bytes, expires: Date.now() + 60_000 });
+      cache.set(key, {
+        bytes,
+        expires: Date.now() + previewCacheMilliseconds,
+      });
     }
     return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": "image/webp",
-        "Cache-Control": "private, no-store",
+        "Content-Length": String(bytes.length),
+        "Cache-Control": `private, max-age=${previewCacheSeconds}`,
+        Vary: "Cookie",
         "X-Content-Type-Options": "nosniff",
         "Content-Security-Policy": "default-src 'none'; sandbox",
       },

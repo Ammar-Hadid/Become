@@ -7,6 +7,10 @@ import type {
   SeasonMediaDraft,
   SeasonQuoteDraft,
 } from "@/features/direction/commands/utils/direction-command-client.util";
+import {
+  SEASON_IMAGE_ACCEPT,
+  SEASON_IMAGE_FORMAT_LABEL,
+} from "@/features/seasons/media/constants/season-image.constants";
 
 type ManualMode = "image" | "text" | null;
 
@@ -53,7 +57,7 @@ export function CotsManualEntry({
     const root = rootRef.current;
     const file = fileRef.current?.files?.[0];
     if (!root || !file) {
-      setLocalError("Choose a JPEG, PNG, or WebP image.");
+      setLocalError(`Choose a ${SEASON_IMAGE_FORMAT_LABEL} image.`);
       return;
     }
     const value = (name: string) =>
@@ -187,11 +191,11 @@ export function CotsManualEntry({
               ref={fileRef}
               className="season-file-input"
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept={SEASON_IMAGE_ACCEPT}
             />
             <small>
-              JPEG, PNG, or WebP · up to 6 MB and 12 megapixels. Become stores a
-              private normalized copy.
+              {SEASON_IMAGE_FORMAT_LABEL} · up to 6 MB and 12 megapixels. Become
+              stores a private normalized copy.
             </small>
           </label>
           <label className="direction-field-wide">

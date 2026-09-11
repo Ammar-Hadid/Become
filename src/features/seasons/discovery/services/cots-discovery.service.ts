@@ -211,9 +211,14 @@ export async function discoverCots(
       409,
     );
   if (cache.size >= 100) cache.delete(cache.keys().next().value!);
-  cache.set(cacheKey, {
-    expires: Date.now() + (result.items.length ? 15 * 60_000 : 30_000),
-    page: result,
-  });
+  if (
+    !result.sources.some(({ status }) =>
+      ["THROTTLED", "UNAVAILABLE"].includes(status),
+    )
+  )
+    cache.set(cacheKey, {
+      expires: Date.now() + (result.items.length ? 15 * 60_000 : 30_000),
+      page: result,
+    });
   return result;
 }

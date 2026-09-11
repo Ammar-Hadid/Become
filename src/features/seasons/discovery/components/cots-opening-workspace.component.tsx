@@ -784,6 +784,7 @@ export function CotsOpeningWorkspace({
               void selectCandidate(candidate, selected)
             }
             onRetry={(selectionId) => void retrySelection(selectionId)}
+            onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
           />
           <CotsManualEntry
@@ -874,6 +875,7 @@ export function CotsOpeningWorkspace({
               void selectCandidate(candidate, selected)
             }
             onRetry={(selectionId) => void retrySelection(selectionId)}
+            onRetryDiscovery={() => void discover("TEXT")}
             onLoadMore={() => void discover("TEXT", true)}
           />
           {featureableTextSelections.length > 0 && (

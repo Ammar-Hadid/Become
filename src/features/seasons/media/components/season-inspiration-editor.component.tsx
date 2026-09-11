@@ -40,6 +40,10 @@ import {
   manualProvenance,
   uploadSeasonMedia,
 } from "@/features/seasons/media/utils/season-media-client.util";
+import {
+  SEASON_IMAGE_ACCEPT,
+  SEASON_IMAGE_FORMAT_LABEL,
+} from "@/features/seasons/media/constants/season-image.constants";
 import type {
   SeasonMediaView,
   SeasonQuoteView,
@@ -211,7 +215,7 @@ export function SeasonInspirationEditor({
     const file = data.get("file");
     if (!(file instanceof File) || !file.size) {
       setPending(false);
-      setError("Choose a JPEG, PNG, or WebP image.");
+      setError(`Choose a ${SEASON_IMAGE_FORMAT_LABEL} image.`);
       return;
     }
     let contentFingerprint: string;
@@ -602,12 +606,12 @@ export function SeasonInspirationEditor({
                   className="season-file-input"
                   type="file"
                   name="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={SEASON_IMAGE_ACCEPT}
                   required
                 />
                 <small>
-                  JPEG, PNG, or WebP · up to 6 MB and 12 megapixels. Become
-                  stores a private normalized copy.
+                  {SEASON_IMAGE_FORMAT_LABEL} · up to 6 MB and 12 megapixels.
+                  Become stores a private normalized copy.
                 </small>
               </label>
             )}

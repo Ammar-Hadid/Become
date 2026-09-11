@@ -66,6 +66,21 @@ describe("public image HTTP security boundary", () => {
       expect.any(Function),
     );
   });
+  it("accepts AVIF thumbnails returned by discovery providers", async () => {
+    publicDns();
+    respond(200, { "content-type": "image/avif" }, ["fixture"]);
+    expect(await fetchPublicImage("https://images.example.com/a.avif")).toEqual(
+      Buffer.from("fixture"),
+    );
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Accept: expect.stringContaining("image/avif"),
+        }),
+      }),
+      expect.any(Function),
+    );
+  });
   it("blocks redirect destinations on private addresses", async () => {
     publicDns();
     respond(302, { location: "https://169.254.169.254/latest/meta-data/" });

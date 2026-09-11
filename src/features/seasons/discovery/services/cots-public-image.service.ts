@@ -2,6 +2,7 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { request } from "node:https";
 import { DirectionError } from "@/features/direction/services/direction-mutation.service";
+import { SEASON_IMAGE_CONTENT_TYPES } from "@/features/seasons/media/constants/season-image.constants";
 import { MAX_UPLOAD_BYTES } from "@/features/seasons/media/services/season-image.service";
 
 export function isPublicImageAddress(address: string): boolean {
@@ -106,7 +107,7 @@ export async function fetchPublicImage(
               headers: {
                 Host: url.host,
                 "User-Agent": "Become/1.0 (personal image curation)",
-                Accept: "image/jpeg,image/png,image/webp",
+                Accept: [...SEASON_IMAGE_CONTENT_TYPES].join(","),
               },
             },
             (response) => {
@@ -123,11 +124,13 @@ export async function fetchPublicImage(
                 else resolve({ redirect: location });
                 return;
               }
+              const contentType = (response.headers["content-type"] ?? "")
+                .split(";", 1)[0]
+                .trim()
+                .toLowerCase();
               if (
                 status !== 200 ||
-                !/^image\/(jpeg|png|webp)(;|$)/i.test(
-                  response.headers["content-type"] ?? "",
-                )
+                !SEASON_IMAGE_CONTENT_TYPES.has(contentType)
               ) {
                 response.destroy();
                 reject(

@@ -115,6 +115,7 @@ export function CotsCollectionDiscovery({
               void selectCandidate(candidate, selected)
             }
             onRetry={(id) => void retrySelection(id)}
+            onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
           />
           <CotsManualEntry
@@ -161,6 +162,7 @@ export function CotsCollectionDiscovery({
               void selectCandidate(candidate, selected)
             }
             onRetry={(id) => void retrySelection(id)}
+            onRetryDiscovery={() => void discover("TEXT")}
             onLoadMore={() => void discover("TEXT", true)}
           />
           <CotsManualEntry
