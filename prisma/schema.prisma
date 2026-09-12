@@ -46,6 +46,13 @@ enum TechnologyCategory {
 }
 
 model User {
+  contents Content[]
+  contentChannels Channel[]
+  ideas Idea[]
+  decisions Decision[]
+  contentMutations ContentMutation[]
+  thinkingMutations ThinkingMutation[]
+
   seasons UserSeason[]
   directionGoals Goal[]
   directionExperiments Experiment[]
@@ -123,6 +130,8 @@ model Company {
 }
 
 model Niche {
+  journalDecisions Decision[]
+
   directionCriteria DirectionCriterion[]
   businessSessions Session[] @relation("BusinessSessionNiche")
   interactionRevisions InteractionRevision[]
@@ -422,6 +431,8 @@ model Verification {
 }
 
 model Domain {
+  ideaDomains IdeaDomain[]
+
   goalDomains GoalDomain[]
   experimentDomains ExperimentDomain[]
   directionCriteria DirectionCriterion[]
@@ -466,6 +477,15 @@ model ActivityType {
 }
 
 model Session {
+  contentId String?
+  contentVariantId String?
+  contentTitleSnapshot String?
+  contentVariantSnapshot String?
+  contentActivitySnapshot String?
+  content Content? @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
+  contentVariant ContentVariant? @relation(fields: [contentVariantId, contentId, userId], references: [id, contentId, userId], onDelete: Restrict)
+  @@index([userId, contentId, startedAt])
+
   entrepreneurshipActivityKind String?
   businessCompanyId String?
   businessNicheId String?
@@ -512,6 +532,8 @@ model Session {
 }
 
 model EngineeringProject {
+  decisions Decision[]
+
   directionCriteria DirectionCriterion[]
   id            String                         @id @default(cuid())
   userId        String
@@ -1121,6 +1143,8 @@ model PaymentSessionAllocation {
 
 
 model UserSeason {
+  decisions Decision[]
+
   id String @id @default(cuid())
   userId String
   year Int
@@ -1351,6 +1375,9 @@ model SeasonChange {
 }
 
 model Goal {
+  ideaOutputs IdeaOutput[]
+  decisions Decision[]
+
   id String @id @default(cuid())
   userId String
   version Int @default(1)
@@ -1406,6 +1433,10 @@ model GoalChange {
 }
 
 model Experiment {
+  ideaOutputs IdeaOutput[]
+  decisions Decision[]
+  contentSources ExperimentContentSource[]
+
   id String @id @default(cuid())
   userId String
   version Int @default(1)
@@ -1479,6 +1510,13 @@ model ExperimentChange {
 }
 
 model DirectionCriterion {
+  contentId String?
+  channelId String?
+  contentFormat String?
+  selectedContentOnly Boolean @default(false)
+  content Content? @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
+  channel Channel? @relation(fields: [channelId, userId], references: [id, userId], onDelete: Restrict)
+
   id String @id @default(cuid())
   userId String
   goalId String?
@@ -1540,4 +1578,321 @@ model CriterionAssessment {
   @@unique([userId, operationKey])
   @@index([criterionId, createdAt])
   @@map("criterion_assessment")
+}
+
+
+model Content {
+  workspaceVersion Int @default(1)
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  title String
+  purpose String @default("")
+  audience String @default("")
+  notes String @default("")
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variants ContentVariant[]
+  sessions Session[]
+  ideas IdeaOutput[]
+  decisions Decision[]
+  criteria DirectionCriterion[]
+  experimentSources ExperimentContentSource[]
+  @@unique([id, userId])
+  @@index([userId, archivedAt, updatedAt, id])
+  @@index([userId, createdAt, id])
+  @@map("content")
+}
+
+model ContentVariant {
+  id String @id @default(cuid())
+  userId String
+  contentId String
+  version Int @default(1)
+  writingVersion Int @default(1)
+  mediaVersion Int @default(1)
+  name String
+  format String
+  stage String @default("PLANNING")
+  hook String @default("")
+  outline String @default("")
+  script String @default("")
+  productionNotes String @default("")
+  nextStep String @default("")
+  plannedOn DateTime? @db.Date
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  writingSavedAt DateTime @default(now())
+  content Content @relation(fields: [contentId, userId], references: [id, userId], onDelete: Cascade)
+  publications Publication[]
+  sessions Session[]
+  media ContentMedia[]
+  @@unique([id, userId])
+  @@unique([id, contentId, userId])
+  @@index([userId, createdAt, id])
+  @@index([contentId, createdAt, id])
+  @@map("content_variant")
+}
+
+model Channel {
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  name String
+  platform String
+  account String @default("")
+  platformLabel String @default("")
+  identity String
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications Publication[]
+  criteria DirectionCriterion[]
+  @@unique([id, userId])
+  @@unique([userId, platform, identity])
+  @@index([userId, archivedAt])
+  @@map("content_channel")
+}
+
+model Publication {
+  id String @id @default(cuid())
+  userId String
+  variantId String
+  channelId String
+  version Int @default(1)
+  publishedTitle String
+  publishedOn DateTime @db.Date
+  publishedAt DateTime?
+  url String @default("")
+  placement String @default("")
+  identityKey String
+  sourceKind String @default("MANUAL")
+  withdrawnAt DateTime?
+  withdrawalReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  variant ContentVariant @relation(fields: [variantId, userId], references: [id, userId], onDelete: Restrict)
+  channel Channel @relation(fields: [channelId, userId], references: [id, userId], onDelete: Restrict)
+  history PublicationRevision[]
+  observations PerformanceObservation[]
+  @@unique([id, userId])
+  @@unique([userId, identityKey])
+  @@index([userId, publishedOn, id])
+  @@index([variantId, publishedOn, id])
+  @@map("content_publication")
+}
+
+model PublicationRevision {
+  id String @id @default(cuid())
+  userId String
+  publicationId String
+  version Int
+  kind String
+  reason String
+  snapshot Json
+  createdAt DateTime @default(now())
+  publication Publication @relation(fields: [publicationId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([publicationId, version])
+  @@map("content_publication_revision")
+}
+
+model PerformanceObservation {
+  id String @id @default(cuid())
+  userId String
+  publicationId String
+  observedAt DateTime
+  enteredAt DateTime @default(now())
+  views BigInt?
+  likes BigInt?
+  comments BigInt?
+  note String @default("")
+  sourceKind String @default("MANUAL")
+  supersedesId String? @unique
+  correctionReason String?
+  publication Publication @relation(fields: [publicationId, userId], references: [id, userId], onDelete: Restrict)
+  supersedes PerformanceObservation? @relation("ObservationCorrections", fields: [supersedesId, publicationId, userId], references: [id, publicationId, userId], onDelete: Restrict)
+  supersededBy PerformanceObservation[] @relation("ObservationCorrections")
+  @@unique([id, publicationId, userId])
+  @@index([userId, publicationId, observedAt, id])
+  @@map("content_performance_observation")
+}
+
+model ContentMedia {
+  id String @id @default(cuid())
+  userId String
+  variantId String
+  storageKey String @unique
+  width Int
+  height Int
+  bytes Int
+  sha256 String
+  retiredAt DateTime?
+  createdAt DateTime @default(now())
+  variant ContentVariant @relation(fields: [variantId, userId], references: [id, userId], onDelete: Restrict)
+  @@unique([id, userId])
+  @@index([variantId, retiredAt])
+  @@map("content_media")
+}
+
+model ContentMutation {
+  id String @id @default(cuid())
+  userId String
+  operationKey String
+  fingerprint String
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operationKey])
+  @@map("content_mutation")
+}
+
+model Idea {
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  title String
+  notes String @default("")
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domains IdeaDomain[]
+  outputs IdeaOutput[]
+  history IdeaChange[]
+  @@unique([id, userId])
+  @@index([userId, archivedAt, createdAt, id])
+  @@map("direction_idea")
+}
+
+model IdeaDomain {
+  userId String
+  ideaId String
+  domainId String
+  idea Idea @relation(fields: [ideaId, userId], references: [id, userId], onDelete: Cascade)
+  domain Domain @relation(fields: [domainId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([ideaId, domainId])
+  @@map("direction_idea_domain")
+}
+
+model IdeaOutput {
+  id String @id @default(cuid())
+  userId String
+  ideaId String
+  contentId String?
+  goalId String?
+  experimentId String?
+  kind String
+  createdAt DateTime @default(now())
+  idea Idea @relation(fields: [ideaId, userId], references: [id, userId], onDelete: Restrict)
+  content Content? @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
+  goal Goal? @relation(fields: [goalId, userId], references: [id, userId], onDelete: Restrict)
+  experiment Experiment? @relation(fields: [experimentId, userId], references: [id, userId], onDelete: Restrict)
+  @@unique([ideaId, contentId])
+  @@unique([ideaId, goalId])
+  @@unique([ideaId, experimentId])
+  @@index([userId, createdAt])
+  @@index([ideaId, createdAt, id])
+  @@map("direction_idea_output")
+}
+
+model IdeaChange {
+  id String @id @default(cuid())
+  userId String
+  ideaId String
+  kind String
+  snapshot Json
+  createdAt DateTime @default(now())
+  idea Idea @relation(fields: [ideaId, userId], references: [id, userId], onDelete: Cascade)
+  @@index([ideaId, createdAt, id])
+  @@map("direction_idea_change")
+}
+
+model Decision {
+  id String @id @default(cuid())
+  userId String
+  version Int @default(1)
+  choice String
+  reason String
+  decidedOn DateTime @db.Date
+  context String @default("")
+  alternatives String @default("")
+  expectedOutcome String @default("")
+  reconsiderWhen String @default("")
+  reviewOn DateTime? @db.Date
+  contentId String?
+  projectId String?
+  goalId String?
+  experimentId String?
+  nicheId String?
+  seasonId String?
+  supersedesId String? @unique
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content? @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
+  project EngineeringProject? @relation(fields: [projectId, userId], references: [id, userId], onDelete: Restrict)
+  goal Goal? @relation(fields: [goalId, userId], references: [id, userId], onDelete: Restrict)
+  experiment Experiment? @relation(fields: [experimentId, userId], references: [id, userId], onDelete: Restrict)
+  niche Niche? @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  season UserSeason? @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Restrict)
+  supersedes Decision? @relation("DecisionSupersession", fields: [supersedesId, userId], references: [id, userId], onDelete: Restrict)
+  supersededBy Decision[] @relation("DecisionSupersession")
+  history DecisionChange[]
+  reflections DecisionReflection[]
+  @@unique([id, userId])
+  @@index([userId, archivedAt, decidedOn, id])
+  @@map("direction_decision")
+}
+
+model DecisionChange {
+  id String @id @default(cuid())
+  userId String
+  decisionId String
+  version Int
+  reason String
+  snapshot Json
+  createdAt DateTime @default(now())
+  decision Decision @relation(fields: [decisionId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([decisionId, version])
+  @@map("direction_decision_change")
+}
+
+model DecisionReflection {
+  id String @id @default(cuid())
+  userId String
+  decisionId String
+  assessment String
+  reflection String
+  reflectedOn DateTime @db.Date
+  createdAt DateTime @default(now())
+  decision Decision @relation(fields: [decisionId, userId], references: [id, userId], onDelete: Restrict)
+  @@index([decisionId, reflectedOn, id])
+  @@map("direction_decision_reflection")
+}
+
+model ThinkingMutation {
+  id String @id @default(cuid())
+  userId String
+  operationKey String
+  fingerprint String
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operationKey])
+  @@map("direction_thinking_mutation")
+}
+
+model ExperimentContentSource {
+  userId String
+  experimentId String
+  contentId String
+  experiment Experiment @relation(fields: [experimentId, userId], references: [id, userId], onDelete: Cascade)
+  content Content @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
+  @@id([experimentId, contentId])
+  @@map("experiment_content_source")
 }

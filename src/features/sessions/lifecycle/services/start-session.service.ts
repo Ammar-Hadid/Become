@@ -1,3 +1,5 @@
+import { lockDirection } from "@/features/direction/services/direction-mutation.service";
+import { contentSessionValues } from "@/features/content/sessions/services/content-session.service";
 import { businessSessionValues } from "@/features/entrepreneurship/sessions/services/business-session.service";
 import { Prisma } from "@/generated/prisma/client";
 import type { StartSessionInput } from "@/features/sessions/schemas/session.schema";
@@ -22,7 +24,18 @@ export async function startSession(userId: string, input: StartSessionInput) {
     input,
   );
 
-  const business = await businessSessionValues(userId, activity.domain.slug === "entrepreneurship", activity.slug, input);
+  const business = await businessSessionValues(
+    userId,
+    activity.domain.slug === "entrepreneurship",
+    activity.slug,
+    input,
+  );
+  const content = await contentSessionValues(
+    userId,
+    activity.domain.slug,
+    activity.name,
+    input,
+  );
   const isEngineering = activity.domain.slug === "engineering";
   if (isEngineering && !input.engineeringContext) {
     return { status: "engineering-context-required" } as const;
@@ -48,19 +61,31 @@ export async function startSession(userId: string, input: StartSessionInput) {
   }
 
   try {
-    const session = await prisma.session.create({
-      data: {
-        userId,
-        ...finance,
-        ...business,
-        domainId: input.domainId,
-        activityTypeId: input.activityTypeId,
-        engineeringContext: isEngineering ? input.engineeringContext : null,
-        engineeringProjectId: isEngineering ? input.engineeringProjectId : null,
-        description: input.description,
-        startedAt: new Date(),
-      },
-    });
+    const data = {
+      userId,
+      ...finance,
+      ...business,
+      ...content,
+      domainId: input.domainId,
+      activityTypeId: input.activityTypeId,
+      engineeringContext: isEngineering ? input.engineeringContext : null,
+      engineeringProjectId: isEngineering ? input.engineeringProjectId : null,
+      description: input.description,
+      startedAt: new Date(),
+    };
+    const session = input.contentId
+      ? await prisma.$transaction(async (tx) => {
+          await lockDirection(tx, userId, `content:${input.contentId}`);
+          const checked = await contentSessionValues(
+            userId,
+            activity.domain.slug,
+            activity.name,
+            input,
+            tx,
+          );
+          return tx.session.create({ data: { ...data, ...checked } });
+        })
+      : await prisma.session.create({ data });
     return { status: "created", sessionId: session.id } as const;
   } catch (error) {
     if (

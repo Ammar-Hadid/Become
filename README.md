@@ -40,7 +40,11 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-COTS discovery uses category-specific external sources; credentialed adapters require setup. Rich reviews, AI, Gmail, and YouTube pipeline features remain deferred. Finance has no bank integration or FX conversion.
+COTS discovery uses category-specific external sources; credentialed adapters require setup. Rich reviews, AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
+
+## Phase 6 work in progress
+
+This feature branch adds Content, global Ideas and a sparse Decision Journal. Content uses one creative work → versions → explicit releases → owned channels, with linked Sessions and manual dated results. Its approved scope, migration safety and acceptance status are recorded in [Phase 6 decisions](docs/decisions/PHASE_6.md). Browser acceptance is still pending; this is not a completed-release claim.
 
 ## Stack
 

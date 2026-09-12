@@ -53,6 +53,11 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
   const { activeSession, elapsedSeconds } = useActiveTimer();
 
   if (activeSession) {
+    const activity =
+      activeSession.contentActivitySnapshot || activeSession.activityType.name;
+    const context = activeSession.contentTitleSnapshot
+      ? `${activity} · ${activeSession.contentTitleSnapshot}`
+      : activity;
     return (
       <button
         onClick={(event) => {
@@ -63,7 +68,7 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
           "group border-primary/30 bg-primary-subtle hover:border-primary/60 duration-fast ease-move flex items-center rounded-full border text-left transition-[color,border-color,background-color,transform] active:translate-y-px active:scale-[0.99] motion-reduce:transform-none",
           compact ? "size-12 justify-center" : "gap-md px-md w-full py-2.5",
         )}
-        aria-label={`Stop ${activeSession.activityType.name} timer`}
+        aria-label={`Stop ${context} timer`}
         data-testid="active-timer-trigger"
         data-session-id={activeSession.id}
         data-elapsed-seconds={elapsedSeconds}
@@ -74,7 +79,7 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
         {!compact && (
           <span className="min-w-0 flex-1">
             <span className="timer-trigger-label text-text-secondary block truncate">
-              {activeSession.activityType.name}
+              {context}
             </span>
             <span className="timer-numerals text-primary text-body block font-semibold">
               {formatDuration(elapsedSeconds)}
@@ -594,7 +599,8 @@ export function TimerController({
                     </span>
                     <div>
                       <p className="text-body font-medium">
-                        {displayedSession.activityType.name}
+                        {displayedSession.contentActivitySnapshot ||
+                          displayedSession.activityType.name}
                       </p>
                       <p className="dialog-supporting-text text-text-muted">
                         {displayedSession.domain.name}
@@ -603,6 +609,12 @@ export function TimerController({
                           : ""}
                         {displayedSession.engineeringProject
                           ? ` · ${displayedSession.engineeringProject.name}`
+                          : ""}
+                        {displayedSession.contentTitleSnapshot
+                          ? ` · ${displayedSession.contentTitleSnapshot}`
+                          : ""}
+                        {displayedSession.contentVariantSnapshot
+                          ? ` · ${displayedSession.contentVariantSnapshot}`
                           : ""}
                       </p>
                     </div>

@@ -125,9 +125,7 @@ export function AppShell({
           {domains.map((domain) => {
             const href = getDomainHref(domain.slug);
             const current =
-              pathname === href ||
-              (["engineering", "finance"].includes(domain.slug) &&
-                pathname.startsWith(`${href}/`));
+              pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link
                 key={domain.id}

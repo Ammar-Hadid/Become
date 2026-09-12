@@ -12,6 +12,10 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     throw new Error("Browser fixture cleanup requires local PostgreSQL.");
   if (!(await prisma.user.findFirst({ where: { id, email } }))) return;
   const where = { userId: id };
+  const contentMedia = await prisma.contentMedia.findMany({
+    where,
+    select: { storageKey: true },
+  });
   const jobs = await prisma.seasonCotsSelection.findMany({
     where,
     select: { storageKey: true },
@@ -22,6 +26,17 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
   });
   await prisma.$transaction(
     async (tx) => {
+      await tx.ideaOutput.deleteMany({ where });
+      await tx.decisionReflection.deleteMany({ where });
+      await tx.decision.updateMany({ where, data: { supersedesId: null } });
+      await tx.decision.deleteMany({ where });
+      await tx.performanceObservation.updateMany({
+        where,
+        data: { supersedesId: null },
+      });
+      await tx.performanceObservation.deleteMany({ where });
+      await tx.publication.deleteMany({ where });
+      await tx.contentMedia.deleteMany({ where });
       await tx.userSeason.deleteMany({ where });
       await tx.experiment.updateMany({ where, data: { repeatedFromId: null } });
       await tx.experiment.deleteMany({ where });
@@ -47,6 +62,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.recurringExpenseOccurrence.deleteMany({ where });
       await tx.recurringExpense.deleteMany({ where });
       await tx.session.deleteMany({ where });
+      await tx.content.deleteMany({ where });
       await tx.companyWorkSource.deleteMany({ where });
       await tx.companyNiche.deleteMany({ where });
       await tx.nicheDecision.deleteMany({ where });
@@ -65,6 +81,8 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     },
     { timeout: 15000 },
   );
+  for (const file of contentMedia)
+    await getMediaStorage().remove(file.storageKey);
   for (const file of media) {
     await getMediaStorage().remove(file.storageKey);
     if (file.previewStorageKey)

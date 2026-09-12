@@ -5,6 +5,7 @@ import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/buttons/button.component";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
+import { Select } from "@/components/ui/forms/select.component";
 import {
   ReusableEntityCombobox,
   type ReusableEntityOption,
@@ -15,6 +16,10 @@ import { searchDirectionOptions } from "@/features/direction/options/utils/direc
 import type { CriterionEvaluation } from "@/features/direction/types/direction.types";
 
 type EvidenceType =
+  | "CONTENT"
+  | "CONTENT_PUBLICATION"
+  | "CONTENT_OBSERVATION"
+  | "DECISION"
   | "INTERACTION"
   | "SESSION"
   | "ENGINEERING_EVIDENCE"
@@ -27,12 +32,36 @@ const sourceTypes: {
   value: EvidenceType;
   label: string;
   optionKind:
+    | "content"
+    | "publication"
+    | "contentObservation"
+    | "decision"
     | "interaction"
     | "session"
     | "engineeringEvidence"
     | "transaction"
     | "offerRevision";
 }[] = [
+  {
+    value: "CONTENT",
+    label: "Creative work",
+    optionKind: "content",
+  },
+  {
+    value: "CONTENT_PUBLICATION",
+    label: "Recorded release",
+    optionKind: "publication",
+  },
+  {
+    value: "CONTENT_OBSERVATION",
+    label: "Manual content result",
+    optionKind: "contentObservation",
+  },
+  {
+    value: "DECISION",
+    label: "Decision",
+    optionKind: "decision",
+  },
   {
     value: "INTERACTION",
     label: "Conversation or outreach",
@@ -81,7 +110,8 @@ export function ManualAssessment({
   const formRef = useRef<HTMLFormElement>(null);
   const markSaved = useRecordFormGuard(formRef);
   const runStable = useStableOperation();
-  const [sourceType, setSourceType] = useState<EvidenceType>("INTERACTION");
+  const [baseVersion, setBaseVersion] = useState(ownerVersion);
+  const [sourceType, setSourceType] = useState<EvidenceType>("CONTENT");
   const [sources, setSources] = useState<AssessmentSource[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +129,7 @@ export function ManualAssessment({
     const identity = {
       type: "ASSESS_CRITERION" as const,
       criterionId: criterion.id,
-      expectedVersion: ownerVersion,
+      expectedVersion: baseVersion,
       confirmed: data.get("confirmed") === "true",
       rationale: String(data.get("rationale") ?? ""),
       assessedOn: String(data.get("assessedOn") ?? ""),
@@ -112,6 +142,7 @@ export function ManualAssessment({
     setError(result.recoveredPrevious ? null : result.error);
     setFieldErrors(result.fieldErrors ?? {});
     if (!result.error || result.recoveredPrevious) {
+      if (result.version !== undefined) setBaseVersion(result.version);
       markSaved();
       setSources([]);
       router.refresh();
@@ -166,23 +197,26 @@ export function ManualAssessment({
           />
         </label>
         <div className="direction-assessment-sources">
-          <label>
+          <div>
             <span className="field-label">Evidence source type</span>
-            <span className="select-wrap">
-              <select
-                value={sourceType}
-                onChange={(event) =>
-                  setSourceType(event.target.value as EvidenceType)
-                }
-              >
-                {sourceTypes.map((item) => (
-                  <option value={item.value} key={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
+            <Select
+              label="Evidence source type"
+              name="assessmentSourceType"
+              value={sourceType}
+              options={sourceTypes.map(({ value, label }) => ({
+                value,
+                label,
+              }))}
+              onValueChange={setSourceType}
+            />
+          </div>
+          <input
+            type="hidden"
+            name="assessmentSourcesState"
+            value={JSON.stringify(
+              sources.map(({ type, option }) => ({ type, id: option.id })),
+            )}
+          />
           <ReusableEntityCombobox
             label="Supporting records"
             entityName="source"

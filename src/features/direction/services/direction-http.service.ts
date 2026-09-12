@@ -100,8 +100,8 @@ export async function boundedBody(
   }
   return bytes;
 }
-export async function directionJson(request: Request) {
-  const bytes = await boundedBody(request, 256000);
+export async function directionJson(request: Request, maximum = 256000) {
+  const bytes = await boundedBody(request, maximum);
   try {
     return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
   } catch {

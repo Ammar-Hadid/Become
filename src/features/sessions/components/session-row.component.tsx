@@ -29,7 +29,8 @@ export function SessionRow({
     : (completedSessions[serverSession.id] ?? serverSession);
   const [resolved, setResolved] = useState(false);
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
-  const title = session.description || session.activityType.name;
+  const activity = session.contentActivitySnapshot || session.activityType.name;
+  const title = session.description || activity;
   const engineeringMetadata =
     session.domain.slug === "engineering"
       ? [
@@ -37,6 +38,14 @@ export function SessionRow({
           session.engineeringProject?.name,
         ].filter(Boolean)
       : [];
+  const contentMetadata = session.contentId
+    ? [
+        session.contentTitleSnapshot || "Untitled content",
+        session.contentVariantSnapshot,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
   const content = (
     <>
       <div
@@ -55,10 +64,11 @@ export function SessionRow({
           )}
         </div>
         <p className="session-metadata text-text-muted mt-xs truncate">
-          {session.domain.name} · {session.activityType.name}
+          {session.domain.name} · {activity}
           {engineeringMetadata.length
             ? ` · ${engineeringMetadata.join(" · ")}`
             : ""}
+          {contentMetadata ? ` · ${contentMetadata}` : ""}
           {session.outcome ? ` · ${session.outcome}` : ""}
         </p>
       </div>

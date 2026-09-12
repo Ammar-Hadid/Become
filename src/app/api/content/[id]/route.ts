@@ -1,0 +1,3 @@
+import { directionUser,directionResponse,directionFailure } from "@/features/direction/services/direction-http.service";
+import { getContentWorkspace } from "@/features/content/queries/content.query";
+export async function GET(request:Request,context:{params:Promise<{id:string}>}) {try{const u=await directionUser(request),{id}=await context.params;const row=await getContentWorkspace(u.id,id,{variantCursor:new URL(request.url).searchParams.get("variantCursor")??undefined,variantId:new URL(request.url).searchParams.get("variant")??undefined});return directionResponse(row??{error:"Content not found."},{status:row?200:404});}catch(e){return directionFailure(e);}}

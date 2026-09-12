@@ -2,6 +2,7 @@
 
 import { DateTime } from "luxon";
 import { CalendarDays, Clock3, X } from "lucide-react";
+import Link from "next/link";
 import { useId, useRef, type AnimationEvent } from "react";
 import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
 import type { MotionPresenceState } from "@/components/ui/motion/hooks/use-presence.hook";
@@ -38,6 +39,7 @@ export function SessionDetailsDrawer({
   const outcome = session.outcome?.trim();
   const notes = session.notes?.trim();
   const hasEvidence = Boolean(focus || outcome || notes || children);
+  const activity = session.contentActivitySnapshot || session.activityType.name;
 
   useModalLayer({
     open,
@@ -72,10 +74,10 @@ export function SessionDetailsDrawer({
               id={titleId}
               className="text-h3 font-semibold tracking-[-0.04em]"
             >
-              {focus || session.activityType.name}
+              {focus || activity}
             </h2>
             <p className="text-text-secondary mt-sm text-body">
-              {session.domain.name} · {session.activityType.name}
+              {session.domain.name} · {activity}
             </p>
           </div>
           <button
@@ -107,8 +109,19 @@ export function SessionDetailsDrawer({
               className="text-text-muted mt-xs text-body"
               data-testid="session-detail-activity"
             >
-              {session.activityType.name}
+              {activity}
             </p>
+            {session.contentId && (
+              <Link
+                href={`/content/${session.contentId}`}
+                className="text-primary mt-sm text-body-sm hover:text-primary-hover focus-visible:outline-primary block focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                {session.contentTitleSnapshot || "Untitled content"}
+                {session.contentVariantSnapshot
+                  ? ` · ${session.contentVariantSnapshot}`
+                  : ""}
+              </Link>
+            )}
           </div>
         </div>
 

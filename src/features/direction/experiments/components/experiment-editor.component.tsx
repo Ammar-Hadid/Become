@@ -66,6 +66,15 @@ export function ExperimentEditor({
       description: source.note ?? undefined,
     })) ?? [],
   );
+  const [contentSources, setContentSources] = useState<ReusableEntityOption[]>(
+    experiment?.evaluation.contentCohort?.sources.map((source) => ({
+      id: source.id,
+      name: source.label,
+      description: source.archived
+        ? "Archived creative work"
+        : `${source.variantCount} ${source.variantCount === 1 ? "version" : "versions"} · ${source.publicationCount} ${source.publicationCount === 1 ? "release" : "releases"}`,
+    })) ?? [],
+  );
   const [criteria, setCriteria] = useState(experiment?.criteria ?? []);
   const [criterionMode, setCriterionMode] = useState<"ALL" | "ANY">(
     experiment?.criterionMode ?? "ALL",
@@ -109,6 +118,7 @@ export function ExperimentEditor({
       setGoal(prior.goal);
       setDomains(prior.domains);
       setOutreach([]);
+      setContentSources([]);
       setCriteria([]);
       setCriterionMode("ALL");
       setPreview([]);
@@ -139,6 +149,7 @@ export function ExperimentEditor({
       criterionMode,
       criteria,
       sourceInteractionIds: outreach.map(({ id }) => id),
+      sourceContentIds: contentSources.map(({ id }) => id),
     };
   }
 
@@ -384,6 +395,26 @@ export function ExperimentEditor({
             </div>
             <div className="direction-field-wide">
               <ReusableEntityCombobox
+                label="Creative work cohort"
+                entityName="creative work"
+                idFieldName="sourceContentIds"
+                queryFieldName="contentSourceSearch"
+                options={contentSources}
+                selectedOptions={contentSources}
+                onSelectionChange={setContentSources}
+                searchAction={(query) =>
+                  searchDirectionOptions("content", query)
+                }
+                placeholder="Choose the work this experiment follows…"
+              />
+              <p className="direction-field-hint">
+                This is the exact set of creative work made for the experiment.
+                A content criterion uses it only when “Only work selected for
+                this experiment” is turned on.
+              </p>
+            </div>
+            <div className="direction-field-wide">
+              <ReusableEntityCombobox
                 label="Selected outreach records"
                 entityName="outreach record"
                 idFieldName="sourceInteractionIds"
@@ -427,7 +458,7 @@ export function ExperimentEditor({
           <p className="direction-field-hint" role="status">
             {repeatPending
               ? "Loading the previous protocol…"
-              : "Protocol, goal, and life domains are prefilled. Dates, outreach records, and evidence definitions start fresh; configure evidence for this attempt before using it to draw a conclusion."}
+              : "Protocol, goal, and life domains are prefilled. Dates, creative work, outreach records, and evidence definitions start fresh; configure evidence for this attempt before using it to draw a conclusion."}
           </p>
         )}
         {repeatError && (
