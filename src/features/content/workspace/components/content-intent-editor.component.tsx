@@ -18,7 +18,6 @@ export function ContentIntentEditor({
   onWorkspace: (workspace: ContentWorkspace) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const markSaved = useRecordFormGuard(formRef);
   const [draft, setDraft] = useState<ContentIntent>({
     title: workspace.title,
     purpose: workspace.purpose,
@@ -44,6 +43,7 @@ export function ContentIntentEditor({
       }
     },
   });
+  const markSaved = useRecordFormGuard(formRef, autosave.flush);
 
   useEffect(() => {
     if (autosave.status === "saved" && !autosave.dirty) markSaved();
@@ -116,47 +116,49 @@ export function ContentIntentEditor({
           }
         />
       </div>
-      <div className="content-intent-fields">
-        <label>
-          <span>Purpose</span>
-          <textarea
-            name="purpose"
-            value={draft.purpose}
-            onChange={(event) => update("purpose", event.target.value)}
-            placeholder="What should this change for the person who sees it?"
-            maxLength={6000}
-          />
-        </label>
-        <label>
-          <span>For</span>
-          <textarea
-            name="audience"
-            value={draft.audience}
-            onChange={(event) => update("audience", event.target.value)}
-            placeholder="Who is this for, right now?"
-            maxLength={3000}
-          />
-        </label>
+      <div className="content-intent-body">
+        <div className="content-intent-fields">
+          <label>
+            <span>Purpose</span>
+            <textarea
+              name="purpose"
+              value={draft.purpose}
+              onChange={(event) => update("purpose", event.target.value)}
+              placeholder="What should this change for the person who sees it?"
+              maxLength={6000}
+            />
+          </label>
+          <label>
+            <span>For</span>
+            <textarea
+              name="audience"
+              value={draft.audience}
+              onChange={(event) => update("audience", event.target.value)}
+              placeholder="Who is this for, right now?"
+              maxLength={3000}
+            />
+          </label>
+        </div>
+        <details
+          className="content-intent-notes"
+          open={notesOpen}
+          onToggle={(event) => setNotesOpen(event.currentTarget.open)}
+        >
+          <summary>
+            Creative notes <span>Optional</span>
+          </summary>
+          <label>
+            <span className="sr-only">Creative notes</span>
+            <textarea
+              name="notes"
+              value={draft.notes}
+              onChange={(event) => update("notes", event.target.value)}
+              placeholder="References, constraints, loose thoughts…"
+              maxLength={12000}
+            />
+          </label>
+        </details>
       </div>
-      <details
-        className="content-intent-notes"
-        open={notesOpen}
-        onToggle={(event) => setNotesOpen(event.currentTarget.open)}
-      >
-        <summary>
-          Creative notes <span>Optional</span>
-        </summary>
-        <label>
-          <span className="sr-only">Creative notes</span>
-          <textarea
-            name="notes"
-            value={draft.notes}
-            onChange={(event) => update("notes", event.target.value)}
-            placeholder="References, constraints, loose thoughts…"
-            maxLength={12000}
-          />
-        </label>
-      </details>
     </form>
   );
 }

@@ -1,4 +1,9 @@
 import type { SessionListItem } from "@/features/sessions/types/session.types";
+import type {
+  ContentScriptView,
+  ScriptDocument,
+  ScriptSummary,
+} from "@/features/content/scripts/types/content-script.types";
 
 export type ContentFormat = "LONG_FORM" | "SHORT_VERTICAL" | "OTHER";
 export type ContentStage =
@@ -13,7 +18,6 @@ export type ContentIntent = {
 export type ContentWriting = {
   hook: string;
   outline: string;
-  script: string;
   productionNotes: string;
 };
 export type ChannelDraft = {
@@ -86,6 +90,7 @@ export type PublicationView = PublicationDraft & {
   latest: { views: LatestMetric; likes: LatestMetric; comments: LatestMetric };
 };
 export type VariantView = ContentWriting & {
+  scriptSummary: ScriptSummary;
   id: string;
   contentId: string;
   version: number;
@@ -153,6 +158,7 @@ export type ContentDesk = {
     variantName: string;
     channelName: string;
     publishedOn: string;
+    thumbnailUrl: string | null;
     href: string;
   }[];
   ideas: ContentLink[];
@@ -192,6 +198,14 @@ export type ContentAnalytics = {
   }[];
 };
 export type ContentCommand =
+  | {
+      type: "SAVE_SCRIPT";
+      operationKey: string;
+      contentId: string;
+      variantId: string;
+      expectedScriptVersion: number;
+      document: ScriptDocument;
+    }
   | {
       type: "CREATE_CONTENT";
       operationKey: string;
@@ -284,6 +298,8 @@ export type ContentCommand =
       reason?: string;
     };
 export type ContentCommandResult = {
+  script?: ContentScriptView;
+  scriptVersion?: number;
   existingRelease?: {
     id: string;
     contentId: string;

@@ -48,7 +48,7 @@ function ContentAddVersionForm({
     setPending(false);
     if (result.error || !result.workspace) {
       return setError(
-        result.error ?? "The version was saved, but could not be opened.",
+        result.error ?? "The variant was saved, but could not be opened.",
       );
     }
     markSaved();
@@ -59,12 +59,12 @@ function ContentAddVersionForm({
   return (
     <form ref={formRef} className="content-dialog-form" onSubmit={submit}>
       <label className="content-form-field content-form-field--wide">
-        <span>Version name</span>
+        <span>Variant name</span>
         <input
           name="versionName"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Spanish cut, 30-second version, tutorial…"
+          placeholder="Spanish cut, 30-second cut, tutorial…"
           maxLength={120}
           required
           autoFocus
@@ -73,7 +73,7 @@ function ContentAddVersionForm({
       <div className="content-form-field content-form-field--wide">
         <span>Format</span>
         <Select
-          label="Version format"
+          label="Variant format"
           name="format"
           value={format}
           options={[
@@ -95,7 +95,7 @@ function ContentAddVersionForm({
           className="content-primary-action"
           disabled={pending}
         >
-          {pending ? "Adding…" : "Add version"}
+          {pending ? "Adding…" : "Add variant"}
         </button>
       </footer>
     </form>
@@ -108,10 +108,10 @@ export function ContentAddVersion(props: {
 }) {
   return (
     <RecordDialog
-      eyebrow="Another version"
-      triggerLabel="Add a version"
+      eyebrow="Another variant"
+      triggerLabel="Add a variant"
       title="Does the work need a different shape?"
-      description="Use another version for a different cut, language, or format. Posting the same version elsewhere is a release, not a new version."
+      description="Use another variant for a different cut, language, or format. Posting the same variant elsewhere is a release, not a new variant."
       unstyledTrigger
       className="content-add-version-trigger"
       icon={false}

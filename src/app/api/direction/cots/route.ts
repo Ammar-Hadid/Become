@@ -131,6 +131,7 @@ export async function POST(request: Request) {
           .omit({ expectedVersion: true })
           .extend({
             expectedSelectionRevision: z.number().int().min(0),
+            quoteId: z.string().max(100).optional(),
             draft: quoteDraftSchema,
           })
           .parse(input);

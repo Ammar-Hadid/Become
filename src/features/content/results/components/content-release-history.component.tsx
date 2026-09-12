@@ -45,7 +45,7 @@ export function ContentReleaseHistory({
       <header>
         <div>
           <p className="eyebrow">Release and learn</p>
-          <h2 id="releases-title">One version, every place it went.</h2>
+          <h2 id="releases-title">One variant, every place it went.</h2>
           <p>
             Each number is a lifetime reading for one release. Platform, format,
             and observation date stay visible beside it.
@@ -118,7 +118,7 @@ export function ContentReleaseHistory({
         <div className="content-release-empty">
           <span aria-hidden="true">01</span>
           <p>
-            When this version goes live, record every destination together. One
+            When this variant goes live, record every destination together. One
             release can have a URL while another waits for it.
           </p>
         </div>

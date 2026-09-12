@@ -1,9 +1,16 @@
 "use client";
-import { useEffect, useCallback, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  type RefObject,
+} from "react";
 // Multiple inline Record forms share one navigation guard, so one back gesture
 // cannot trigger several history.back calls or several confirmation prompts.
 const baselines = new Map<HTMLFormElement, string>();
 const edited = new Set<HTMLFormElement>();
+const savers = new Map<HTMLFormElement, () => Promise<boolean>>();
 const key = "__becomeRecordFormGuard";
 const serialize = (form: HTMLFormElement) => {
   const fieldsets = [
@@ -37,6 +44,27 @@ export function confirmRecordFormDiscard(scope?: ParentNode) {
     !hasDirtyRecordForms(scope) ||
     window.confirm("You have unsaved changes. Leave and discard them?")
   );
+}
+
+/** Explicit save-aware links use this before navigating away from inline drafts. */
+export async function flushRecordForms() {
+  const results = await Promise.all(
+    [...savers]
+      .filter(([form]) => form.isConnected)
+      .map(async ([form, save]) => {
+        try {
+          const saved = await save();
+          if (saved && form.isConnected) {
+            baselines.set(form, serialize(form));
+            edited.delete(form);
+          }
+          return saved;
+        } catch {
+          return false;
+        }
+      }),
+  );
+  return results.every(Boolean);
 }
 
 function install() {
@@ -91,6 +119,9 @@ function install() {
       anchor.hasAttribute("download")
     )
       return;
+    // This link's handler awaits registered autosaves, then applies the normal
+    // discard guard to any remaining manual forms.
+    if (anchor.hasAttribute("data-record-save-link")) return;
     const url = new URL(anchor.href);
     if (
       url.origin !== location.origin ||
@@ -129,7 +160,23 @@ function install() {
     document.removeEventListener("change", change);
   };
 }
-export function useRecordFormGuard(ref: RefObject<HTMLFormElement | null>) {
+export function useRecordFormGuard(
+  ref: RefObject<HTMLFormElement | null>,
+  saveBeforeLeave?: () => Promise<boolean>,
+) {
+  const latestSaver = useRef(saveBeforeLeave);
+  useLayoutEffect(() => {
+    latestSaver.current = saveBeforeLeave;
+  }, [saveBeforeLeave]);
+  const hasSaver = Boolean(saveBeforeLeave);
+  useEffect(() => {
+    const form = ref.current;
+    if (!form || !hasSaver) return;
+    savers.set(form, () => latestSaver.current?.() ?? Promise.resolve(true));
+    return () => {
+      savers.delete(form);
+    };
+  }, [ref, hasSaver]);
   useEffect(() => {
     const form = ref.current;
     if (!form) return;

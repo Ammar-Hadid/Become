@@ -11,17 +11,21 @@ import {
   SEASON_IMAGE_ACCEPT,
   SEASON_IMAGE_FORMAT_LABEL,
 } from "@/features/seasons/media/constants/season-image.constants";
+import type { SeasonQuoteView } from "@/features/seasons/types/season.types";
 
 type ManualMode = "image" | "text" | null;
 
 export function CotsManualEntry({
   disabled,
   kind,
+  editingText = null,
   onAddImage,
   onAddText,
+  onCancelTextEdit,
 }: {
   disabled: boolean;
   kind: Exclude<ManualMode, null>;
+  editingText?: SeasonQuoteView | null;
   onAddImage: (
     file: File,
     draft: SeasonMediaDraft,
@@ -30,16 +34,17 @@ export function CotsManualEntry({
   onAddText: (
     draft: SeasonQuoteDraft,
     operationKey: string,
+    quoteId?: string,
   ) => Promise<boolean>;
+  onCancelTextEdit?: () => void;
 }) {
   const [mode, setMode] = useState<ManualMode>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [decorative, setDecorative] = useState(false);
-  const [quoteKind, setQuoteKind] =
-    useState<SeasonQuoteDraft["kind"]>("UNKNOWN");
   const rootRef = useRef<HTMLElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const operationKey = useRef<string | null>(null);
+  const activeMode: ManualMode = editingText ? "text" : mode;
 
   const open = (next: Exclude<ManualMode, null>) => {
     operationKey.current = crypto.randomUUID();
@@ -51,6 +56,7 @@ export function CotsManualEntry({
     operationKey.current = null;
     setLocalError(null);
     setMode(null);
+    if (editingText) onCancelTextEdit?.();
   };
 
   async function saveImage() {
@@ -74,9 +80,7 @@ export function CotsManualEntry({
         decorative,
         focalX: 0.5,
         focalY: 0.5,
-        poster:
-          root.querySelector<HTMLInputElement>('[name="poster"]')?.checked ??
-          false,
+        poster: false,
         provenance: {
           sourceUrl: value("sourceUrl").trim(),
           sourceTitle: value("sourceTitle").trim(),
@@ -95,9 +99,9 @@ export function CotsManualEntry({
     const root = rootRef.current;
     if (!root) return;
     const value = (name: string) =>
-      root.querySelector<HTMLInputElement | HTMLTextAreaElement>(
-        `[name="${name}"]`,
-      )?.value ?? "";
+      root.querySelector<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >(`[name="${name}"]`)?.value ?? "";
     const text = value("text").trim();
     const attribution = value("attribution").trim();
     const sourceTitle = value("sourceTitle").trim();
@@ -106,37 +110,26 @@ export function CotsManualEntry({
       setLocalError("Add the words you want to keep.");
       return;
     }
-    if (quoteKind === "EXACT" && !attribution) {
-      setLocalError("An exact quote needs an attribution.");
-      return;
-    }
-    if (quoteKind === "EXACT" && !sourceTitle && !sourceUrl) {
-      setLocalError("Add a source title, edition, episode, interview, or URL.");
-      return;
-    }
     const saved = await onAddText(
       {
         text,
         attribution,
-        kind: quoteKind,
-        featured:
-          root.querySelector<HTMLInputElement>('[name="featured"]')?.checked ??
-          false,
+        kind: (value("kind") || "UNKNOWN") as SeasonQuoteDraft["kind"],
+        featured: editingText?.featured ?? false,
         provenance: {
           sourceUrl,
           sourceTitle,
           credit: value("credit").trim(),
-          attributionVerified:
-            root.querySelector<HTMLInputElement>('[name="attributionVerified"]')
-              ?.checked ?? false,
+          attributionVerified: false,
         },
       },
       operationKey.current ?? (operationKey.current = crypto.randomUUID()),
+      editingText?.id,
     );
     if (saved) close();
   }
 
-  if (!mode) {
+  if (!activeMode) {
     return (
       <div className="cots-manual-actions">
         {kind === "image" ? (
@@ -164,18 +157,20 @@ export function CotsManualEntry({
     <section
       ref={rootRef}
       className="cots-manual-entry"
-      data-cots-manual={mode}
-      aria-labelledby={`cots-manual-${mode}-title`}
+      data-cots-manual={activeMode}
+      aria-labelledby={`cots-manual-${activeMode}-title`}
     >
       <header>
         <div>
           <p className="eyebrow">
-            {mode === "image" ? "Private upload" : "Words to return to"}
+            {activeMode === "image" ? "Private upload" : "Words to return to"}
           </p>
-          <h3 id={`cots-manual-${mode}-title`}>
-            {mode === "image"
+          <h3 id={`cots-manual-${activeMode}-title`}>
+            {activeMode === "image"
               ? "Add one purposeful image."
-              : "Keep the wording and its source together."}
+              : editingText
+                ? "Edit the words and optional details."
+                : "Keep the wording and its source together."}
           </h3>
         </div>
         <button type="button" aria-label="Close manual entry" onClick={close}>
@@ -183,7 +178,7 @@ export function CotsManualEntry({
         </button>
       </header>
 
-      {mode === "image" ? (
+      {activeMode === "image" ? (
         <div className="direction-form-grid">
           <label className="direction-field-wide">
             <span className="field-label">Image</span>
@@ -214,10 +209,6 @@ export function CotsManualEntry({
               onChange={(event) => setDecorative(event.target.checked)}
             />
             <span>Decorative image; hide it from assistive technology</span>
-          </label>
-          <label className="season-check-field">
-            <input type="checkbox" name="poster" />
-            <span>Use as the season poster</span>
           </label>
           <label>
             <span className="field-label">
@@ -255,17 +246,16 @@ export function CotsManualEntry({
               className="text-input text-input--textarea-sm"
               name="text"
               maxLength={2000}
+              required
+              defaultValue={editingText?.text}
             />
           </label>
           <label>
-            <span className="field-label">Wording</span>
+            <span className="field-label">
+              Wording <span>— optional</span>
+            </span>
             <span className="select-wrap">
-              <select
-                value={quoteKind}
-                onChange={(event) =>
-                  setQuoteKind(event.target.value as SeasonQuoteDraft["kind"])
-                }
-              >
+              <select name="kind" defaultValue={editingText?.kind ?? "UNKNOWN"}>
                 <option value="UNKNOWN">Uncertain wording</option>
                 <option value="PARAPHRASE">Paraphrase</option>
                 <option value="EXACT">Exact quote</option>
@@ -274,9 +264,14 @@ export function CotsManualEntry({
           </label>
           <label>
             <span className="field-label">
-              Attribution {quoteKind !== "EXACT" && <span>— optional</span>}
+              Attribution <span>— optional</span>
             </span>
-            <input className="text-input" name="attribution" maxLength={300} />
+            <input
+              className="text-input"
+              name="attribution"
+              maxLength={300}
+              defaultValue={editingText?.attribution}
+            />
           </label>
           <label>
             <span className="field-label">
@@ -287,13 +282,19 @@ export function CotsManualEntry({
               name="sourceTitle"
               maxLength={300}
               placeholder="Episode, edition, chapter, interview…"
+              defaultValue={editingText?.provenance.sourceTitle ?? ""}
             />
           </label>
           <label>
             <span className="field-label">
               Credit <span>— optional</span>
             </span>
-            <input className="text-input" name="credit" maxLength={500} />
+            <input
+              className="text-input"
+              name="credit"
+              maxLength={500}
+              defaultValue={editingText?.provenance.credit ?? ""}
+            />
           </label>
           <label className="direction-field-wide">
             <span className="field-label">
@@ -304,22 +305,9 @@ export function CotsManualEntry({
               type="url"
               name="sourceUrl"
               maxLength={2000}
+              defaultValue={editingText?.provenance.sourceUrl ?? ""}
             />
           </label>
-          <label className="season-check-field">
-            <input type="checkbox" name="featured" />
-            <span>Feature on the poster</span>
-          </label>
-          <label className="season-check-field">
-            <input type="checkbox" name="attributionVerified" />
-            <span>I checked this wording and source.</span>
-          </label>
-          {quoteKind === "EXACT" && (
-            <p className="direction-field-hint direction-field-wide">
-              Exact wording needs an attribution plus a source title/detail or
-              URL. A printed edition, episode, or interview is valid evidence.
-            </p>
-          )}
         </div>
       )}
 
@@ -340,9 +328,12 @@ export function CotsManualEntry({
         <Button
           type="button"
           disabled={disabled}
-          onClick={() => void (mode === "image" ? saveImage() : saveText())}
+          onClick={() =>
+            void (activeMode === "image" ? saveImage() : saveText())
+          }
         >
-          <Save aria-hidden="true" /> {disabled ? "Saving…" : "Save"}
+          <Save aria-hidden="true" />{" "}
+          {disabled ? "Saving…" : editingText ? "Save changes" : "Save"}
         </Button>
       </footer>
     </section>

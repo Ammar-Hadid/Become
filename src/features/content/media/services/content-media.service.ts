@@ -81,7 +81,7 @@ export async function saveContentMedia(
           throw new DirectionError("Version not found.", undefined, 404);
         if (variant.archivedAt || variant.content.archivedAt)
           throw new DirectionError(
-            "Restore this version before changing its thumbnail.",
+            "Restore this variant before changing its thumbnail.",
           );
         requireVersion(variant.mediaVersion, c.expectedMediaVersion);
         await tx.contentMedia.updateMany({

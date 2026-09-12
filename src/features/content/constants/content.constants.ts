@@ -13,7 +13,7 @@ export const CONTENT_STAGES: Record<
   },
   RECORDING: {
     label: "Recording",
-    guidance: "Make the material this version needs.",
+    guidance: "Make the material this variant needs.",
   },
   EDITING: {
     label: "Editing",
@@ -21,7 +21,7 @@ export const CONTENT_STAGES: Record<
   },
   READY: {
     label: "Ready to release",
-    guidance: "Record a release when this version is actually live.",
+    guidance: "Record a release when this variant is actually live.",
   },
 };
 export const CONTENT_PLATFORMS = {

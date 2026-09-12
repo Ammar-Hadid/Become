@@ -449,6 +449,7 @@ describe.skipIf(!enabled)(
       const quote = await prisma.seasonQuote.findFirstOrThrow({
         where: { userId },
       });
+      expect(quote.rotation).toBe(true);
       expect(quote.provenance).toMatchObject({
         attributionVerified: false,
         evidence: "PROVIDER",

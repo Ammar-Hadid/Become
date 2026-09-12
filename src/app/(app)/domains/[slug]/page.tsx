@@ -16,14 +16,17 @@ export default async function DomainPage({
   const user = await getCurrentUser();
   if (!user) return null;
   const { slug } = await params;
-  if (["finance","entrepreneurship","youtube","content"].includes(slug)) {
+  // The retired YouTube URL is a bookmark alias only; it never renders a domain.
+  if (["finance", "entrepreneurship", "youtube", "content"].includes(slug)) {
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(await searchParams)) {
       if (typeof value === "string") query.set(key, value);
       else if (Array.isArray(value))
         value.forEach((item) => query.append(key, item));
     }
-    redirect(`/${slug==="youtube"?"content":slug}${query.size ? `?${query}` : ""}`);
+    redirect(
+      `/${slug === "youtube" ? "content" : slug}${query.size ? `?${query}` : ""}`,
+    );
   }
   if (slug === "engineering") {
     const session = (await searchParams).session;

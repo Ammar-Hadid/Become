@@ -11,8 +11,9 @@ export class RasterImageError extends Error {
 import {
   RASTER_IMAGE_DECODER_FORMATS,
   RASTER_IMAGE_FORMAT_LABEL,
+  RASTER_IMAGE_MAX_UPLOAD_BYTES as MAX_UPLOAD_BYTES,
 } from "@/lib/media/constants/raster-image.constants";
-export const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+export { MAX_UPLOAD_BYTES };
 
 async function transformRasterImage<T>(
   input: Buffer,

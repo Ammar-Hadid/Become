@@ -18,7 +18,7 @@ async function createDisposableContentUser(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-content-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).not.toHaveURL(/\/sign-in$/);
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/);
 }
 
 function waitForThinkingCommand(page: Page, type: string) {
@@ -51,6 +51,9 @@ async function chooseSelect(scope: Locator, label: string, option: string) {
     .getByRole("menu", { name: label })
     .getByRole("menuitemradio", { name: option })
     .click();
+  await expect(scope.getByRole("button", { name: label })).toContainText(
+    option,
+  );
 }
 
 async function addChannel(
@@ -81,6 +84,10 @@ async function addChannel(
     waitForContentCommand(page, "SAVE_CHANNEL"),
     dialog.getByRole("button", { name: "Save channel" }).click(),
   ]);
+  // The response precedes the form reset; wait for the saved channel in the UI.
+  await expect(
+    dialog.getByRole("group", { name: "New channel or account" }),
+  ).not.toBeVisible();
 }
 
 async function recordResults(
@@ -105,7 +112,7 @@ async function recordResults(
   await expect(dialog).not.toBeVisible();
 }
 
-test("an idea becomes one version released and measured on three channels", async ({
+test("an idea becomes one variant released and measured on three channels", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -130,7 +137,7 @@ test("an idea becomes one version released and measured on three channels", asyn
     name: "Give this idea a place to become real.",
   });
   await expect(promotion.getByText(/Nothing is created until/)).toBeVisible();
-  await chooseSelect(promotion, "First version format", "Short vertical");
+  await chooseSelect(promotion, "First variant format", "Short vertical");
   await Promise.all([
     waitForThinkingCommand(page, "PROMOTE_IDEA"),
     promotion

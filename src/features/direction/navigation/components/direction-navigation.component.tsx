@@ -9,7 +9,7 @@ import { SubMenu } from "@/components/ui/menus/submenu.component";
 
 const groups = [
   {
-    label: "Chapter",
+    label: "Season",
     links: [
       { href: "/direction", label: "Season" },
       { href: "/direction/goals", label: "Goals" },

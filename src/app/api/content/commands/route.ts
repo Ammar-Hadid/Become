@@ -7,6 +7,7 @@ import {
   directionFailure,
 } from "@/features/direction/services/direction-http.service";
 import { executeContentCommand } from "@/features/content/services/content-mutation.service";
+import { getContentScript } from "@/features/content/scripts/queries/content-script.query";
 import {
   getContentWorkspace,
   getContentChannels,
@@ -18,12 +19,13 @@ export async function POST(request: Request) {
     userId = user.id;
     input = await directionJson(request, 1_000_000);
     const result = await executeContentCommand(user.id, input);
-    const workspace = result.contentId
-      ? await getContentWorkspace(user.id, result.contentId, {
-          variantId: result.variantId,
-          publicationIds: result.publicationIds,
-        })
-      : undefined;
+    const workspace =
+      result.contentId && !result.script
+        ? await getContentWorkspace(user.id, result.contentId, {
+            variantId: result.variantId,
+            publicationIds: result.publicationIds,
+          })
+        : undefined;
     revalidatePath("/content", "layout");
     revalidatePath("/direction", "layout");
     revalidatePath("/");
@@ -46,6 +48,24 @@ export async function POST(request: Request) {
       "contentId" in input &&
       typeof input.contentId === "string"
     ) {
+      if (
+        "type" in input &&
+        input.type === "SAVE_SCRIPT" &&
+        "variantId" in input &&
+        typeof input.variantId === "string"
+      ) {
+        return directionResponse(
+          {
+            ...(await response.json()),
+            script: await getContentScript(
+              userId,
+              input.contentId,
+              input.variantId,
+            ),
+          },
+          { status: 409 },
+        );
+      }
       const workspace = await getContentWorkspace(userId, input.contentId, {
         variantId:
           "variantId" in input && typeof input.variantId === "string"

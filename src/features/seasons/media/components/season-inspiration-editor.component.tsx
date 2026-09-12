@@ -107,7 +107,7 @@ function quoteDraft(data: FormData): SeasonQuoteDraft {
       sourceUrl: String(data.get("sourceUrl") ?? ""),
       sourceTitle: String(data.get("sourceTitle") ?? ""),
       credit: String(data.get("credit") ?? ""),
-      attributionVerified: data.get("attributionVerified") === "on",
+      attributionVerified: false,
     },
   };
 }
@@ -131,6 +131,7 @@ export function SeasonInspirationEditor({
 }) {
   const router = useRouter();
   const versionRef = useRef(season.version);
+  const activeEditorAnchorRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<EditorMode>(null);
   const [editingMedia, setEditingMedia] = useState<SeasonMediaView | null>(
     null,
@@ -154,16 +155,32 @@ export function SeasonInspirationEditor({
     updateQuotePreferences,
   } = useCotsCollection(season.year, season.quarter);
   const busy = pending || Boolean(collectionPendingAction);
+  const navigationLocked = mode !== null && mode !== "discover";
 
   useEffect(() => {
     versionRef.current = season.version;
   }, [season.version]);
 
+  function showMode(nextMode: Exclude<EditorMode, null>) {
+    setMode(nextMode);
+    window.requestAnimationFrame(() =>
+      window.requestAnimationFrame(() =>
+        activeEditorAnchorRef.current?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "auto"
+            : "smooth",
+          block: "start",
+        }),
+      ),
+    );
+  }
+
   function openImage(item?: SeasonMediaView) {
     setEditingMedia(item ?? null);
     setDecorative(item?.decorative ?? false);
     setEditingQuote(null);
-    setMode("image");
+    showMode("image");
     setError(null);
     setFieldErrors({});
   }
@@ -172,7 +189,7 @@ export function SeasonInspirationEditor({
     setEditingQuote(item ?? null);
     setQuoteKind(item?.kind ?? "UNKNOWN");
     setEditingMedia(null);
-    setMode("quote");
+    showMode("quote");
     setError(null);
     setFieldErrors({});
   }
@@ -329,8 +346,8 @@ export function SeasonInspirationEditor({
           <Button
             type="button"
             variant="secondary"
-            disabled={busy || mode !== null || !season.cotsIdentity}
-            onClick={() => setMode("discover")}
+            disabled={busy || navigationLocked || !season.cotsIdentity}
+            onClick={() => showMode("discover")}
           >
             <Search aria-hidden="true" /> Discover more
           </Button>
@@ -341,7 +358,7 @@ export function SeasonInspirationEditor({
               <button
                 {...props}
                 className="season-collection-menu-trigger"
-                disabled={busy || mode !== null}
+                disabled={busy || navigationLocked}
               >
                 <ImagePlus aria-hidden="true" /> Add manually
               </button>
@@ -365,8 +382,8 @@ export function SeasonInspirationEditor({
           <Button
             type="button"
             variant="ghost"
-            disabled={busy || mode !== null || !season.cotsIdentity}
-            onClick={() => setMode("reuse")}
+            disabled={busy || navigationLocked || !season.cotsIdentity}
+            onClick={() => showMode("reuse")}
           >
             <History aria-hidden="true" /> Reuse from a past season
           </Button>
@@ -416,7 +433,7 @@ export function SeasonInspirationEditor({
                   <button
                     {...props}
                     aria-label={`Manage ${item.alt || "season image"}`}
-                    disabled={busy || mode !== null || loadingCollection}
+                    disabled={busy || navigationLocked || loadingCollection}
                   >
                     <MoreHorizontal aria-hidden="true" />
                   </button>
@@ -502,7 +519,7 @@ export function SeasonInspirationEditor({
                       <button
                         {...props}
                         aria-label="Manage quote"
-                        disabled={busy || mode !== null || loadingCollection}
+                        disabled={busy || navigationLocked || loadingCollection}
                       >
                         <MoreHorizontal aria-hidden="true" />
                       </button>
@@ -550,6 +567,14 @@ export function SeasonInspirationEditor({
             </article>
           ))}
         </div>
+      )}
+
+      {mode && (
+        <div
+          ref={activeEditorAnchorRef}
+          className="season-inspiration-active-anchor"
+          aria-hidden="true"
+        />
       )}
 
       {mode === "discover" && (
@@ -764,7 +789,9 @@ export function SeasonInspirationEditor({
               />
             </label>
             <label>
-              <span className="field-label">Source status</span>
+              <span className="field-label">
+                Source status <span>— optional</span>
+              </span>
               <span className="select-wrap">
                 <select
                   name="kind"
@@ -781,14 +808,13 @@ export function SeasonInspirationEditor({
             </label>
             <label>
               <span className="field-label">
-                Attribution {quoteKind !== "EXACT" && <span>— optional</span>}
+                Attribution <span>— optional</span>
               </span>
               <input
                 className="text-input"
                 name="attribution"
                 defaultValue={editingQuote?.attribution ?? ""}
                 maxLength={300}
-                required={quoteKind === "EXACT"}
               />
             </label>
             <label>
@@ -835,27 +861,7 @@ export function SeasonInspirationEditor({
               />
               <span>Feature on the poster</span>
             </label>
-            <label className="season-check-field">
-              <input
-                type="checkbox"
-                name="attributionVerified"
-                defaultChecked={quoteProvenance.attributionVerified}
-              />
-              <span>
-                {quoteKind === "EXACT"
-                  ? "I verified the exact wording and attribution."
-                  : "I checked this source."}
-              </span>
-            </label>
           </div>
-          {quoteKind === "EXACT" && (
-            <p className="direction-field-hint">
-              <Check aria-hidden="true" /> Exact wording needs an attribution
-              plus a source title/detail or URL. A printed edition, episode, or
-              interview is valid evidence. Verification remains a separate
-              statement you make only after checking it.
-            </p>
-          )}
           {error && (
             <p className="season-form-error" role="alert">
               {error}

@@ -28,7 +28,7 @@ export function ContentDesk({
           <p className="eyebrow">Make the next one</p>
           <h1>Content</h1>
           <p>
-            Shape an idea, make the right version, then learn from every place
+            Shape an idea, make the right variant, then learn from every place
             it goes.
           </p>
         </div>
@@ -157,7 +157,7 @@ export function ContentDesk({
                   <span className="content-row-stage">{item.stageLabel}</span>
                   <span className="content-row-counts">
                     {item.variantCount}{" "}
-                    {item.variantCount === 1 ? "version" : "versions"}
+                    {item.variantCount === 1 ? "variant" : "variants"}
                     <i aria-hidden="true">·</i>
                     {item.publicationCount}{" "}
                     {item.publicationCount === 1 ? "release" : "releases"}
@@ -185,14 +185,17 @@ export function ContentDesk({
           <ol>
             {data.recentPublications.map((release) => (
               <li key={release.id}>
-                <time dateTime={release.publishedOn}>
-                  {release.publishedOn}
-                </time>
                 <Link href={release.href}>
-                  <strong>{displayTitle(release.contentTitle)}</strong>
-                  <span>
-                    {release.variantName} · {release.channelName}
+                  <ContentThumbnail url={release.thumbnailUrl} alt="" />
+                  <span className="content-row-copy">
+                    <strong>{displayTitle(release.contentTitle)}</strong>
+                    <span>
+                      {release.variantName} · {release.channelName}
+                    </span>
                   </span>
+                  <time dateTime={release.publishedOn}>
+                    {release.publishedOn}
+                  </time>
                   <ArrowUpRight aria-hidden="true" />
                 </Link>
               </li>

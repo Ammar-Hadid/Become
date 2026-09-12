@@ -13,7 +13,7 @@ export const METRIC_CATALOG: MetricCapability[] = [
   },
   {
     key: "CONTENT_VARIANTS_CREATED",
-    name: "Content versions created",
+    name: "Content variants created",
     description: "Distinct versions first created during the selected dates.",
     unit: "versions",
     scopes: ["contentId", "contentFormat"],

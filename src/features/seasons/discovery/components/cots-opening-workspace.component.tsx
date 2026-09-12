@@ -19,31 +19,41 @@ import {
   cotsCategory,
 } from "@/features/seasons/discovery/constants/cots-category.constants";
 import { CotsImageRail } from "@/features/seasons/discovery/components/cots-image-rail.component";
+import { CotsFinalization } from "@/features/seasons/discovery/components/cots-finalization.component";
 import { CotsManualEntry } from "@/features/seasons/discovery/components/cots-manual-entry.component";
 import { CotsPendingArtwork } from "@/features/seasons/discovery/components/cots-pending-artwork.component";
 import { CotsWordDeck } from "@/features/seasons/discovery/components/cots-word-deck.component";
 import { useCotsCollection } from "@/features/seasons/discovery/hooks/use-cots-collection.hook";
+import { cotsImagePreviewHref } from "@/features/seasons/discovery/utils/cots-image-preview.util";
 import { cotsIdentitySuggestionStatusMessage } from "@/features/seasons/discovery/utils/cots-source-status.util";
-import { cotsTextChoiceLabel } from "@/features/seasons/discovery/utils/cots-text-label.util";
-import { SeasonQuoteExcerpt } from "@/features/seasons/media/components/season-quote-excerpt.component";
 import type {
   CotsCategory,
   CotsSelectionView,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
+import type { CotsFinalizationImageChoice } from "@/features/seasons/discovery/types/cots-finalization.types";
+import { cotsFinalizationChoices } from "@/features/seasons/discovery/utils/cots-finalization.util";
 import type {
   SeasonCharacter,
+  SeasonQuoteView,
   SeasonStandard,
   SeasonView,
 } from "@/features/seasons/types/season.types";
 import "@/features/seasons/discovery/styles/cots-discovery.css";
 
-const COTS_SUBVIEWS = ["identity", "standards", "images", "words"] as const;
+const COTS_SUBVIEWS = [
+  "identity",
+  "standards",
+  "images",
+  "words",
+  "finalize",
+] as const;
 type CotsSubview = (typeof COTS_SUBVIEWS)[number];
 const COTS_SUBVIEW_LABELS: Record<CotsSubview, string> = {
   identity: "Identity",
   standards: "Standards",
   images: "Images",
   words: "Words",
+  finalize: "Finalization",
 };
 type CotsCharacterDraft = SeasonCharacter & {
   sourceCategory?: CotsCategory | null;
@@ -65,7 +75,8 @@ function initialSubview(hasIdentity: boolean): CotsSubview {
   if (
     requested === "standards" ||
     requested === "images" ||
-    requested === "words"
+    requested === "words" ||
+    requested === "finalize"
   )
     return hasIdentity ? requested : "identity";
   return "identity";
@@ -120,10 +131,24 @@ export function CotsOpeningWorkspace({
     preflight,
     addManualImage,
     addManualText,
+    refreshCollection,
+    updateMediaPreferences,
+    updateQuotePreferences,
   } = useCotsCollection(season.year, season.quarter);
   const [subview, setSubviewState] = useState<CotsSubview>("identity");
-  const [posterOverride, setPosterOverride] = useState<string | null>(null);
-  const [featuredTextOverride, setFeaturedTextOverride] = useState("");
+  const [imageCandidateToReveal, setImageCandidateToReveal] = useState<
+    string | null
+  >(null);
+  const [featuredImageOverride, setFeaturedImageOverride] = useState<
+    string | null
+  >(null);
+  const [featuredQuoteOverride, setFeaturedQuoteOverride] = useState<
+    string | null
+  >(null);
+  const [finalizationGate, setFinalizationGate] =
+    useState<CotsSelectionView | null>(null);
+  const [editingManualQuote, setEditingManualQuote] =
+    useState<SeasonQuoteView | null>(null);
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [associationChoice, setAssociationChoice] = useState(false);
   const [externalId, setExternalId] = useState<string | undefined>();
@@ -149,6 +174,7 @@ export function CotsOpeningWorkspace({
   const sourceWorkInputRef = useRef<HTMLInputElement>(null);
   const adaptationInputRef = useRef<HTMLInputElement>(null);
   const suggestionRequest = useRef(0);
+  const preloadedImages = useRef(new Map<string, HTMLImageElement>());
 
   useEffect(() => {
     if (initialized.current || loadingCollection) return;
@@ -176,9 +202,38 @@ export function CotsOpeningWorkspace({
 
   useEffect(() => {
     if (!collection?.identity) return;
-    if (subview === "images" && !pages.IMAGE) void discover("IMAGE");
-    if (subview === "words" && !pages.TEXT) void discover("TEXT");
-  }, [collection?.identity, discover, pages.IMAGE, pages.TEXT, subview]);
+    if (subview !== "identity" && !pages.IMAGE && !discovering.IMAGE)
+      void discover("IMAGE");
+    if (
+      (subview === "images" || subview === "words" || subview === "finalize") &&
+      !pages.TEXT &&
+      !discovering.TEXT
+    )
+      void discover("TEXT");
+  }, [
+    collection?.identity,
+    discover,
+    discovering.IMAGE,
+    discovering.TEXT,
+    pages.IMAGE,
+    pages.TEXT,
+    subview,
+  ]);
+
+  useEffect(() => {
+    if (subview !== "standards" || !pages.IMAGE) return;
+    pages.IMAGE.items.forEach((candidate, index) => {
+      const href = cotsImagePreviewHref(
+        candidate,
+        candidate.provider === "zerochan" && index < 4,
+      );
+      if (!href || preloadedImages.current.has(href)) return;
+      const image = new window.Image();
+      image.decoding = "async";
+      image.src = href;
+      preloadedImages.current.set(href, image);
+    });
+  }, [pages.IMAGE, subview]);
 
   const sourceCategory =
     character.sourceCategory ?? collection?.identity?.sourceCategory ?? null;
@@ -301,9 +356,6 @@ export function CotsOpeningWorkspace({
       ) ?? [],
     [collection?.selections],
   );
-  const featureableTextSelections = textSelections.filter(
-    ({ status }) => status === "SELECTED" || status === "READY",
-  );
   const selectedImages = imageSelections.filter(
     ({ status }) => status === "SELECTED",
   );
@@ -314,6 +366,10 @@ export function CotsOpeningWorkspace({
   const manualMedia = season.media.filter(
     ({ provenance }) => provenance.origin === "MANUAL",
   );
+  const failedImageCandidateRef = imageSelections.find(
+    ({ status }) => status === "FAILED",
+  )?.candidate.candidateRef;
+  const hasImportedImages = importCounts.ready > 0 || manualMedia.length > 0;
   const manualQuotes = season.quotes.filter(
     ({ provenance }) => provenance.origin === "MANUAL",
   );
@@ -326,10 +382,89 @@ export function CotsOpeningWorkspace({
       : undefined;
   }, [imageSelections, season.media]);
 
-  const desiredPosterId =
-    posterOverride ??
-    imageSelections.find(({ desiredPoster }) => desiredPoster)?.id ??
-    "";
+  const finalizationChoices = useMemo(
+    () => cotsFinalizationChoices(season, collection?.selections ?? []),
+    [collection?.selections, season],
+  );
+  const preferredFeaturedImageKey =
+    featuredImageOverride ?? finalizationChoices.currentImageKey;
+  const selectedFeaturedImageKey = finalizationChoices.images.some(
+    ({ key }) => key === preferredFeaturedImageKey,
+  )
+    ? preferredFeaturedImageKey
+    : null;
+  const preferredFeaturedQuoteId =
+    featuredQuoteOverride ?? finalizationChoices.currentQuoteId;
+  const selectedFeaturedQuoteId = finalizationChoices.quotes.some(
+    ({ quoteId }) => quoteId === preferredFeaturedQuoteId,
+  )
+    ? preferredFeaturedQuoteId
+    : null;
+  const finalizationReady =
+    (finalizationChoices.images.every(({ status }) => status === "FAILED") ||
+      Boolean(selectedFeaturedImageKey)) &&
+    (!finalizationChoices.quotes.length || Boolean(selectedFeaturedQuoteId));
+  const blockedFeaturedImage = finalizationGate
+    ? (finalizationChoices.images.find(
+        ({ selectionId }) => selectionId === finalizationGate.id,
+      ) ?? null)
+    : null;
+
+  async function removeManualQuote(quote: SeasonQuoteView) {
+    const saved = await updateQuotePreferences(quote.id, { retire: true });
+    if (!saved) return;
+    setEditingManualQuote((current) =>
+      current?.id === quote.id ? null : current,
+    );
+    router.refresh();
+  }
+
+  async function enterFinalization() {
+    const confirmed = await confirmSelections();
+    if (!confirmed) return;
+    setFinalizationGate(null);
+    router.refresh();
+    setSubview("finalize");
+  }
+
+  async function chooseFeaturedImage(choice: CotsFinalizationImageChoice) {
+    const previousChoice = selectedFeaturedImageKey;
+    setFeaturedImageOverride(choice.key);
+    setFinalizationGate(null);
+    const saved = choice.selectionId
+      ? await confirmSelections(choice.selectionId)
+      : choice.mediaId
+        ? await updateMediaPreferences(choice.mediaId, { poster: true })
+        : null;
+    if (!saved) {
+      setFeaturedImageOverride(previousChoice);
+      return;
+    }
+    router.refresh();
+  }
+
+  async function chooseFeaturedQuote(quoteId: string) {
+    const previousQuote = selectedFeaturedQuoteId;
+    setFeaturedQuoteOverride(quoteId);
+    const saved = await updateQuotePreferences(quoteId, { featured: true });
+    if (!saved) {
+      setFeaturedQuoteOverride(previousQuote);
+      return;
+    }
+    router.refresh();
+  }
+
+  async function removeFinalizationImage(selectionId: string) {
+    const selection = imageSelections.find(({ id }) => id === selectionId);
+    if (!selection) return;
+    const saved = await selectCandidate(selection.candidate, false);
+    if (!saved) return;
+    if (featuredImageOverride === `selection:${selectionId}`)
+      setFeaturedImageOverride(null);
+    setFinalizationGate((current) =>
+      current?.id === selectionId ? null : current,
+    );
+  }
 
   async function confirmIdentity(association?: "SAME" | "NEW") {
     const name = character.name.trim();
@@ -379,18 +514,23 @@ export function CotsOpeningWorkspace({
   }
 
   async function continueFromImages() {
-    const confirmed = await confirmSelections(desiredPosterId || undefined);
+    const confirmed = await confirmSelections();
     if (confirmed) setSubview("words");
   }
 
-  async function continueToPreview() {
-    const confirmed = await confirmSelections(
-      undefined,
-      featuredTextOverride || undefined,
+  async function continueToPreview(beginWithCurrentPoster = false) {
+    const result = await preflight(beginWithCurrentPoster);
+    if (!result) return;
+    const desired = result.collection.selections.find(
+      ({ desiredPoster }) => desiredPoster,
     );
-    if (!confirmed) return;
-    const result = await preflight(false);
-    if (result) onContinuePreview();
+    if (!beginWithCurrentPoster && desired && desired.status !== "READY") {
+      setFinalizationGate(desired);
+      return;
+    }
+    setFinalizationGate(null);
+    router.refresh();
+    onContinuePreview();
   }
 
   if (loadingCollection) {
@@ -411,7 +551,9 @@ export function CotsOpeningWorkspace({
             type="button"
             aria-current={subview === step ? "step" : undefined}
             disabled={!collection?.identity && step !== "identity"}
-            onClick={() => setSubview(step)}
+            onClick={() =>
+              step === "finalize" ? void enterFinalization() : setSubview(step)
+            }
           >
             <span>{index + 1}</span>
             {COTS_SUBVIEW_LABELS[step]}
@@ -974,18 +1116,11 @@ export function CotsOpeningWorkspace({
             page={pages.IMAGE}
             selections={imageSelections}
             pendingCandidateRefs={pendingCandidateRefs}
-            discovering={discovering === "IMAGE"}
-            onToggle={(candidate, selected) => {
-              if (
-                !selected &&
-                imageSelections.find(
-                  ({ candidate: item }) =>
-                    item.candidateRef === candidate.candidateRef,
-                )?.id === posterOverride
-              )
-                setPosterOverride(null);
-              void selectCandidate(candidate, selected);
-            }}
+            discovering={discovering.IMAGE}
+            revealCandidateRef={imageCandidateToReveal}
+            onToggle={(candidate, selected) =>
+              void selectCandidate(candidate, selected)
+            }
             onRetry={(selectionId) => void retrySelection(selectionId)}
             onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
@@ -1017,22 +1152,7 @@ export function CotsOpeningWorkspace({
                 {importCounts.failed ? ` · ${importCounts.failed} failed` : ""}
               </small>
             </span>
-            {imageSelections.length > 0 && (
-              <label>
-                <span>Poster</span>
-                <select
-                  value={desiredPosterId}
-                  onChange={(event) => setPosterOverride(event.target.value)}
-                >
-                  <option value="">Choose after import</option>
-                  {imageSelections.map((selection) => (
-                    <option key={selection.id} value={selection.id}>
-                      {selection.candidate.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <small>Choose the featured image in Finalization.</small>
           </div>
         </section>
       )}
@@ -1049,14 +1169,6 @@ export function CotsOpeningWorkspace({
               welcome—and stay honestly labeled.
             </p>
           </div>
-          {manualQuotes.length > 0 && (
-            <section className="cots-saved-words" aria-label="Your added words">
-              <p className="eyebrow">Already in this season</p>
-              {manualQuotes.map((quote) => (
-                <SeasonQuoteExcerpt key={quote.id} quote={quote} />
-              ))}
-            </section>
-          )}
           {(importCounts.active > 0 || importCounts.failed > 0) && (
             <CotsPendingArtwork
               media={readyLoadingMedia}
@@ -1077,10 +1189,10 @@ export function CotsOpeningWorkspace({
               onAction={
                 importCounts.failed
                   ? () => {
-                      setSubview("images");
-                      window.requestAnimationFrame(() =>
-                        document.getElementById("cots-images-title")?.focus(),
+                      setImageCandidateToReveal(
+                        failedImageCandidateRef ?? null,
                       );
+                      setSubview("images");
                     }
                   : undefined
               }
@@ -1089,54 +1201,67 @@ export function CotsOpeningWorkspace({
           <CotsWordDeck
             page={pages.TEXT}
             selections={textSelections}
+            savedQuotes={manualQuotes}
             pendingCandidateRefs={pendingCandidateRefs}
-            discovering={discovering === "TEXT"}
+            discovering={discovering.TEXT}
             onToggle={(candidate, selected) =>
               void selectCandidate(candidate, selected)
             }
             onRetry={(selectionId) => void retrySelection(selectionId)}
             onRetryDiscovery={() => void discover("TEXT")}
             onLoadMore={() => void discover("TEXT", true)}
+            savedQuotePending={Boolean(pendingAction)}
+            onEditSavedQuote={setEditingManualQuote}
+            onRemoveSavedQuote={(quote) => void removeManualQuote(quote)}
           />
-          {featureableTextSelections.length > 0 && (
-            <label className="cots-featured-text-choice">
-              <span>Featured words</span>
-              <select
-                value={featuredTextOverride}
-                onChange={(event) =>
-                  setFeaturedTextOverride(event.target.value)
-                }
-              >
-                <option value="">Keep the current poster words</option>
-                {featureableTextSelections.map((selection) => (
-                  <option key={selection.id} value={selection.id}>
-                    {cotsTextChoiceLabel(selection.candidate)}
-                  </option>
-                ))}
-              </select>
-              <small>
-                Choose one for the season poster. The rest stay in your
-                collection.
-              </small>
-            </label>
-          )}
           <CotsManualEntry
+            key={editingManualQuote?.id ?? "manual-text-entry"}
             kind="text"
             disabled={Boolean(pendingAction)}
+            editingText={editingManualQuote}
+            onCancelTextEdit={() => setEditingManualQuote(null)}
             onAddImage={async (file, draft, operationKey) =>
               addManualImage(file, draft, operationKey).then((saved) => {
                 if (saved) router.refresh();
                 return Boolean(saved);
               })
             }
-            onAddText={async (draft, operationKey) =>
-              addManualText(draft, operationKey).then((saved) => {
-                if (saved) router.refresh();
+            onAddText={async (draft, operationKey, quoteId) =>
+              addManualText(draft, operationKey, quoteId).then((saved) => {
+                if (saved) {
+                  setEditingManualQuote(null);
+                  router.refresh();
+                }
                 return Boolean(saved);
               })
             }
           />
         </section>
+      )}
+
+      {subview === "finalize" && collection?.identity && (
+        <CotsFinalization
+          choices={finalizationChoices}
+          selectedImageKey={selectedFeaturedImageKey}
+          selectedQuoteId={selectedFeaturedQuoteId}
+          busy={controlsDisabled || Boolean(pendingAction)}
+          blockedImage={blockedFeaturedImage}
+          onSelectImage={(choice) => void chooseFeaturedImage(choice)}
+          onSelectQuote={(quoteId) => void chooseFeaturedQuote(quoteId)}
+          onRetryImage={(selectionId) => {
+            setFinalizationGate(null);
+            void retrySelection(selectionId);
+          }}
+          onRemoveImage={(selectionId) =>
+            void removeFinalizationImage(selectionId)
+          }
+          onReturnToImages={() => setSubview("images")}
+          onReturnToWords={() => setSubview("words")}
+          onCheckAgain={() => {
+            void refreshCollection().then(() => continueToPreview());
+          }}
+          onUseCurrentPoster={() => void continueToPreview(true)}
+        />
       )}
 
       {error && (
@@ -1164,18 +1289,24 @@ export function CotsOpeningWorkspace({
               if (subview === "identity") onBackStage();
               else if (subview === "standards") setSubview("identity");
               else if (subview === "images") setSubview("standards");
-              else setSubview("images");
+              else if (subview === "words") setSubview("images");
+              else setSubview("words");
             }}
           >
             <ArrowLeft aria-hidden="true" /> Back
           </Button>
           <Button
             type="button"
-            disabled={controlsDisabled || Boolean(pendingAction)}
+            disabled={
+              controlsDisabled ||
+              Boolean(pendingAction) ||
+              (subview === "finalize" && !finalizationReady)
+            }
             onClick={() => {
               if (subview === "identity") void confirmIdentity();
               else if (subview === "standards") setSubview("images");
               else if (subview === "images") void continueFromImages();
+              else if (subview === "words") void enterFinalization();
               else void continueToPreview();
             }}
           >
@@ -1188,12 +1319,16 @@ export function CotsOpeningWorkspace({
                 : subview === "images"
                   ? selectedImages.length
                     ? `Continue · save ${selectedImages.length} image${selectedImages.length === 1 ? "" : "s"}`
-                    : manualMedia.length
+                    : hasImportedImages
                       ? "Continue to words"
                       : "Continue without images"
-                  : selectedWords.length
-                    ? `Continue · save ${selectedWords.length} item${selectedWords.length === 1 ? "" : "s"}`
-                    : "Continue to preview"}
+                  : subview === "words"
+                    ? selectedWords.length
+                      ? `Save ${selectedWords.length} item${selectedWords.length === 1 ? "" : "s"} & continue`
+                      : "Continue to finalization"
+                    : pendingAction
+                      ? "Saving choices…"
+                      : "See the season"}
             <ArrowRight aria-hidden="true" />
           </Button>
         </div>

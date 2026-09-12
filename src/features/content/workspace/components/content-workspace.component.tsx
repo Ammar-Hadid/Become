@@ -5,21 +5,23 @@ import Link from "next/link";
 import { ArrowLeft, Link2, Plus } from "lucide-react";
 import { confirmRecordFormDiscard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { ContentWritingEditor } from "@/features/content/editor/components/content-writing-editor.component";
+import { ContentThumbnailEditor } from "@/features/content/media/components/content-thumbnail-editor.component";
 import { ContentReleaseHistory } from "@/features/content/results/components/content-release-history.component";
-import { ContentThumbnail } from "@/features/content/shared/components/content-thumbnail.component";
 import type { ContentWorkspace as ContentWorkspaceData } from "@/features/content/types/content.types";
 import { ContentAddVersion } from "@/features/content/variants/components/content-add-version.component";
 import { ContentIntentEditor } from "@/features/content/workspace/components/content-intent-editor.component";
 import { ContentProgressRail } from "@/features/content/workspace/components/content-progress-rail.component";
 
 function variantLabel(name: string, index: number) {
-  return name.trim() || (index === 0 ? "First version" : "Untitled version");
+  return name.trim() || (index === 0 ? "First variant" : "Untitled variant");
 }
 
 export function ContentWorkspace({
   initialData,
+  initialVariantId,
 }: {
   initialData: ContentWorkspaceData;
+  initialVariantId?: string;
 }) {
   const [workspaceOverride, setWorkspaceOverride] =
     useState<ContentWorkspaceData | null>(null);
@@ -49,7 +51,9 @@ export function ContentWorkspace({
     [initialData.workspaceVersion],
   );
   const [selectedVariantId, setSelectedVariantId] = useState(
-    initialData.variants.find((variant) => !variant.archivedAt)?.id ??
+    initialData.variants.find((variant) => variant.id === initialVariantId)
+      ?.id ??
+      initialData.variants.find((variant) => !variant.archivedAt)?.id ??
       initialData.variants[0]?.id ??
       "",
   );
@@ -79,79 +83,88 @@ export function ContentWorkspace({
           <div>
             <p className="eyebrow">Creative work</p>
             <p>
-              Keep the core idea in one place. Versions change shape; releases
-              show where each version went.
+              Keep the core idea in one place. Variants change shape; releases
+              show where each variant went.
             </p>
           </div>
-          <ContentThumbnail
-            url={variant.thumbnail?.url ?? null}
-            alt={
-              workspace.title
-                ? `Thumbnail for ${workspace.title}`
-                : "Content thumbnail"
-            }
+          <ContentThumbnailEditor
+            contentId={workspace.id}
+            variant={variant}
+            contentTitle={workspace.title}
+            variantLabel={variantLabel(
+              variant.name,
+              Math.max(
+                0,
+                workspace.variants.findIndex((item) => item.id === variant.id),
+              ),
+            )}
+            readOnly={Boolean(workspace.archivedAt || variant.archivedAt)}
+            onWorkspace={acceptWorkspace}
           />
         </div>
       </header>
 
-      <ContentIntentEditor
-        key={workspace.id}
-        workspace={workspace}
-        onWorkspace={acceptWorkspace}
-      />
-
-      <nav className="content-versions" aria-label="Content versions">
-        <div className="content-version-tabs">
-          {workspace.variants.map((item, index) => (
-            <button
-              type="button"
-              key={item.id}
-              aria-current={item.id === variant.id ? "page" : undefined}
-              onClick={() => {
-                if (
-                  item.id !== variant.id &&
-                  confirmRecordFormDiscard(
-                    document.querySelector(".content-making-layout") ??
-                      undefined,
-                  )
-                ) {
-                  setSelectedVariantId(item.id);
-                }
-              }}
-            >
-              <span>{variantLabel(item.name, index)}</span>
-              <small>{item.stageLabel}</small>
-            </button>
-          ))}
-        </div>
-        <ContentAddVersion
-          contentId={workspace.id}
-          onCreated={(next, variantId) => {
-            acceptWorkspace(next);
-            if (
-              variantId &&
-              confirmRecordFormDiscard(
-                document.querySelector(".content-making-layout") ?? undefined,
-              )
-            )
-              setSelectedVariantId(variantId);
-          }}
-        />
-      </nav>
-
-      <div className="content-making-layout">
-        <ContentWritingEditor
-          key={`${workspace.id}:${variant.id}`}
-          contentId={workspace.id}
-          variant={variant}
-          onWorkspace={acceptWorkspace}
-        />
-        <ContentProgressRail
-          key={`${workspace.id}:${variant.id}`}
+      <div className="content-workspace-body">
+        <ContentIntentEditor
+          key={workspace.id}
           workspace={workspace}
-          variant={variant}
           onWorkspace={acceptWorkspace}
         />
+
+        <nav className="content-versions" aria-label="Content variants">
+          <div className="content-version-tabs">
+            {workspace.variants.map((item, index) => (
+              <button
+                type="button"
+                key={item.id}
+                aria-current={item.id === variant.id ? "page" : undefined}
+                onClick={() => {
+                  if (
+                    item.id !== variant.id &&
+                    confirmRecordFormDiscard(
+                      document.querySelector(".content-making-layout") ??
+                        undefined,
+                    )
+                  ) {
+                    setSelectedVariantId(item.id);
+                  }
+                }}
+              >
+                <span>{variantLabel(item.name, index)}</span>
+                <small>{item.stageLabel}</small>
+              </button>
+            ))}
+          </div>
+          <ContentAddVersion
+            contentId={workspace.id}
+            onCreated={(next, variantId) => {
+              acceptWorkspace(next);
+              if (
+                variantId &&
+                confirmRecordFormDiscard(
+                  document.querySelector(".content-making-layout") ?? undefined,
+                )
+              )
+                setSelectedVariantId(variantId);
+            }}
+          />
+        </nav>
+
+        <div
+          className="content-making-layout"
+          key={`${workspace.id}:${variant.id}`}
+        >
+          <ContentWritingEditor
+            contentId={workspace.id}
+            variant={variant}
+            onWorkspace={acceptWorkspace}
+          />
+          <ContentProgressRail
+            workspace={workspace}
+            variant={variant}
+            onWorkspace={acceptWorkspace}
+          />
+        </div>
       </div>
 
       <aside className="content-related" aria-label="Related records">

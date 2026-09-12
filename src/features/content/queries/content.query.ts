@@ -8,6 +8,7 @@ export {
 } from "@/lib/pagination/utils/keyset-cursor.util";
 import type { DirectionTx } from "@/features/direction/services/direction-mutation.service";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getScriptSummary } from "@/features/content/scripts/queries/content-script.query";
 import { Prisma } from "@/generated/prisma/client";
 import {
   CONTENT_PLATFORMS,
@@ -349,7 +350,7 @@ async function readContentWorkspace(
         guidance: CONTENT_STAGES[v.stage as ContentStage].guidance,
         hook: v.hook,
         outline: v.outline,
-        script: v.script,
+        scriptSummary: getScriptSummary(v),
         productionNotes: v.productionNotes,
         nextStep: v.nextStep,
         plannedOn: v.plannedOn?.toISOString().slice(0, 10) ?? null,
@@ -436,6 +437,7 @@ const summaryInclude = {
     where: { archivedAt: null },
     orderBy: { updatedAt: "desc" },
     select: {
+      id: true,
       stage: true,
       nextStep: true,
       media: { where: { retiredAt: null }, take: 1 },
@@ -457,13 +459,13 @@ function summary(c: SummaryRow, publicationCount: number): ContentSummary {
     publicationCount,
     stageLabel: v
       ? CONTENT_STAGES[v.stage as ContentStage].label
-      : "No active version",
+      : "No active variant",
     nextStep:
       v?.nextStep ||
       (v ? CONTENT_STAGES[v.stage as ContentStage].guidance : ""),
     thumbnailUrl: v?.media[0] ? `/api/content/media/${v.media[0].id}` : null,
     activeSessionId: c.sessions[0]?.id ?? null,
-    href: `/content/${c.id}`,
+    href: v ? `/content/${c.id}?variant=${v.id}` : `/content/${c.id}`,
   };
 }
 export async function getContentDesk(
@@ -512,7 +514,19 @@ export async function getContentDesk(
     }),
     prisma.publication.findMany({
       where: { userId, withdrawnAt: null },
-      include: { variant: { include: { content: true } }, channel: true },
+      include: {
+        variant: {
+          include: {
+            content: true,
+            media: {
+              where: { retiredAt: null },
+              take: 1,
+              select: { id: true },
+            },
+          },
+        },
+        channel: true,
+      },
       orderBy: [{ publishedOn: "desc" }, { id: "desc" }],
       take: 8,
     }),
@@ -553,7 +567,10 @@ export async function getContentDesk(
       variantName: p.variant.name,
       channelName: channelView(p.channel).displayName,
       publishedOn: p.publishedOn.toISOString().slice(0, 10),
-      href: `/content/${p.variant.contentId}`,
+      thumbnailUrl: p.variant.media[0]
+        ? `/api/content/media/${p.variant.media[0].id}`
+        : null,
+      href: `/content/${p.variant.contentId}?variant=${p.variantId}`,
     })),
     ideas: ideas.map((i) => ({
       id: i.id,

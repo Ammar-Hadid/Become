@@ -8,7 +8,11 @@ import { CotsImageRail } from "@/features/seasons/discovery/components/cots-imag
 import { CotsManualEntry } from "@/features/seasons/discovery/components/cots-manual-entry.component";
 import { CotsWordDeck } from "@/features/seasons/discovery/components/cots-word-deck.component";
 import { useCotsCollection } from "@/features/seasons/discovery/hooks/use-cots-collection.hook";
-import type { SeasonView } from "@/features/seasons/types/season.types";
+import type {
+  SeasonQuoteView,
+  SeasonView,
+} from "@/features/seasons/types/season.types";
+import "@/features/seasons/discovery/styles/cots-discovery.css";
 
 export function CotsCollectionDiscovery({
   season,
@@ -32,9 +36,11 @@ export function CotsCollectionDiscovery({
     retrySelection,
     addManualImage,
     addManualText,
+    updateQuotePreferences,
   } = useCotsCollection(season.year, season.quarter);
   const [kind, setKind] = useState<"IMAGE" | "TEXT">("IMAGE");
-  const [posterOverride, setPosterOverride] = useState<string | null>(null);
+  const [editingManualQuote, setEditingManualQuote] =
+    useState<SeasonQuoteView | null>(null);
   const page = pages[kind];
   const selections = useMemo(
     () =>
@@ -45,17 +51,23 @@ export function CotsCollectionDiscovery({
       ) ?? [],
     [collection?.selections, kind],
   );
-  const desiredPosterId =
-    posterOverride ??
-    selections.find(({ desiredPoster }) => desiredPoster)?.id ??
-    "";
   const selectedCount = selections.filter(
     ({ status }) => status === "SELECTED",
   ).length;
 
   useEffect(() => {
-    if (collection?.identity && !page) void discover(kind);
-  }, [collection?.identity, discover, kind, page]);
+    if (collection?.identity && !page && !discovering[kind])
+      void discover(kind);
+  }, [collection?.identity, discover, discovering, kind, page]);
+
+  async function removeManualQuote(quote: SeasonQuoteView) {
+    const saved = await updateQuotePreferences(quote.id, { retire: true });
+    if (!saved) return;
+    setEditingManualQuote((current) =>
+      current?.id === quote.id ? null : current,
+    );
+    router.refresh();
+  }
 
   return (
     <section
@@ -110,18 +122,10 @@ export function CotsCollectionDiscovery({
             page={pages.IMAGE}
             selections={selections}
             pendingCandidateRefs={pendingCandidateRefs}
-            discovering={discovering === "IMAGE"}
-            onToggle={(candidate, selected) => {
-              if (
-                !selected &&
-                selections.find(
-                  ({ candidate: item }) =>
-                    item.candidateRef === candidate.candidateRef,
-                )?.id === posterOverride
-              )
-                setPosterOverride(null);
-              void selectCandidate(candidate, selected);
-            }}
+            discovering={discovering.IMAGE}
+            onToggle={(candidate, selected) =>
+              void selectCandidate(candidate, selected)
+            }
             onRetry={(id) => void retrySelection(id)}
             onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
@@ -142,49 +146,45 @@ export function CotsCollectionDiscovery({
               })
             }
           />
-          {selections.length > 0 && (
-            <label className="cots-collection-poster-choice">
-              <span>Poster choice</span>
-              <select
-                value={desiredPosterId}
-                onChange={(event) => setPosterOverride(event.target.value)}
-              >
-                <option value="">Keep the current poster</option>
-                {selections.map((selection) => (
-                  <option key={selection.id} value={selection.id}>
-                    {selection.candidate.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
         </>
       ) : (
         <>
           <CotsWordDeck
             page={pages.TEXT}
             selections={selections}
+            savedQuotes={season.quotes.filter(
+              ({ provenance }) => provenance.origin === "MANUAL",
+            )}
             pendingCandidateRefs={pendingCandidateRefs}
-            discovering={discovering === "TEXT"}
+            discovering={discovering.TEXT}
             onToggle={(candidate, selected) =>
               void selectCandidate(candidate, selected)
             }
             onRetry={(id) => void retrySelection(id)}
             onRetryDiscovery={() => void discover("TEXT")}
             onLoadMore={() => void discover("TEXT", true)}
+            savedQuotePending={Boolean(pendingAction)}
+            onEditSavedQuote={setEditingManualQuote}
+            onRemoveSavedQuote={(quote) => void removeManualQuote(quote)}
           />
           <CotsManualEntry
+            key={editingManualQuote?.id ?? "manual-text-entry"}
             kind="text"
             disabled={Boolean(pendingAction)}
+            editingText={editingManualQuote}
+            onCancelTextEdit={() => setEditingManualQuote(null)}
             onAddImage={async (file, draft, operationKey) =>
               addManualImage(file, draft, operationKey).then((saved) => {
                 if (saved) router.refresh();
                 return Boolean(saved);
               })
             }
-            onAddText={async (draft, operationKey) =>
-              addManualText(draft, operationKey).then((saved) => {
-                if (saved) router.refresh();
+            onAddText={async (draft, operationKey, quoteId) =>
+              addManualText(draft, operationKey, quoteId).then((saved) => {
+                if (saved) {
+                  setEditingManualQuote(null);
+                  router.refresh();
+                }
                 return Boolean(saved);
               })
             }
@@ -207,9 +207,7 @@ export function CotsCollectionDiscovery({
           type="button"
           disabled={!selectedCount || Boolean(pendingAction)}
           onClick={async () => {
-            const saved = await confirmSelections(
-              kind === "IMAGE" ? desiredPosterId || undefined : undefined,
-            );
+            const saved = await confirmSelections();
             if (saved) onClose();
           }}
         >

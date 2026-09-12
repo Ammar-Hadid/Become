@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type ReactNode,
 } from "react";
 import type { RecordFormState } from "@/components/ui/forms/record-form.types";
 import { normalizeReusableEntityName } from "@/lib/validation/utils/canonical-name.util";
@@ -32,6 +33,7 @@ export function ReusableEntityCombobox({
   deferCreation = false,
   searchAction,
   selectedOptions,
+  selectedOptionsDisplay,
   onSelectionChange,
   onSelectedOptionChange,
   onQueryChange,
@@ -40,6 +42,7 @@ export function ReusableEntityCombobox({
   required = false,
 }: {
   selectedOptions?: ReusableEntityOption[];
+  selectedOptionsDisplay?: ReactNode;
   onSelectionChange?: (options: ReusableEntityOption[]) => void;
   onSelectedOptionChange?: (option: ReusableEntityOption | null) => void;
   onQueryChange?: (query: string) => void;
@@ -242,7 +245,19 @@ export function ReusableEntityCombobox({
           <span className="text-text-muted normal-case">— optional</span>
         )}
       </label>
-      {selectedOptions && (
+      {selectedOptions && selectedOptionsDisplay !== undefined ? (
+        <>
+          {selectedOptionsDisplay}
+          {selectedOptions.map((option) => (
+            <input
+              key={option.id}
+              type="hidden"
+              name={idFieldName}
+              value={option.id}
+            />
+          ))}
+        </>
+      ) : selectedOptions ? (
         <div className="gap-sm my-sm flex flex-wrap">
           {selectedOptions.map((option) => (
             <span
@@ -266,7 +281,7 @@ export function ReusableEntityCombobox({
             </span>
           ))}
         </div>
-      )}
+      ) : null}
       {!selectedOptions && (
         <input type="hidden" name={idFieldName} value={selectedId} />
       )}

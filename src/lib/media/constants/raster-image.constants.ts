@@ -1,4 +1,5 @@
 export const RASTER_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
+export const RASTER_IMAGE_MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
 
 export const RASTER_IMAGE_FORMAT_LABEL = "JPEG, PNG, WebP, or AVIF";
 

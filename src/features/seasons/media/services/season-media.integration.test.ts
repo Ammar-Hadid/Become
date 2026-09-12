@@ -142,25 +142,35 @@ describe.skipIf(!enabled)("private seasonal media transactions", () => {
       }),
     ).rejects.toThrow("changed");
   });
-  it("keeps exact wording separate from source verification and accepts offline evidence", async () => {
+  it("keeps exact wording optional metadata separate from rotation", async () => {
     const input = {
       ...identity,
       expectedVersion: 1,
       operationKey: randomUUID(),
       draft: {
         text: "An invented test sentence.",
-        attribution: "Fictional figure",
+        attribution: "",
         kind: "EXACT",
         featured: true,
         provenance: metadata.provenance,
       },
     };
-    await expect(saveSeasonQuote(userId, { ...input, draft: { ...input.draft, provenance: { ...metadata.provenance, sourceTitle: "" } } })).rejects.toThrow("Exact wording");
-    await saveSeasonQuote(userId, input);
+    await saveSeasonQuote(userId, {
+      ...input,
+      draft: {
+        ...input.draft,
+        provenance: { ...metadata.provenance, sourceTitle: "" },
+      },
+    });
     expect(await prisma.seasonQuote.count({ where: { userId } })).toBe(1);
-    const quote = await prisma.seasonQuote.findFirstOrThrow({ where: { userId } });
+    const quote = await prisma.seasonQuote.findFirstOrThrow({
+      where: { userId },
+    });
     expect(quote.kind).toBe("EXACT");
-    expect(quote.rotation).toBe(false);
-    expect(quote.provenance).toMatchObject({ attributionVerified: false, evidence: "UNRESOLVED" });
+    expect(quote.rotation).toBe(true);
+    expect(quote.provenance).toMatchObject({
+      attributionVerified: false,
+      evidence: "UNRESOLVED",
+    });
   });
 });

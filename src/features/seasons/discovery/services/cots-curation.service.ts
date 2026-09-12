@@ -268,10 +268,7 @@ export async function confirmCotsSelection(userId: string, input: unknown) {
           attribution: snapshot.speaker || "",
           kind: "EXACT",
           featured: false,
-          rotation:
-            snapshot.form !== "PASSAGE" &&
-            snapshot.evidence !== "UNRESOLVED" &&
-            Boolean(snapshot.speaker),
+          rotation: true,
           provenance: jsonValue(discoveredProvenance(snapshot, item.contextId)),
         },
       });

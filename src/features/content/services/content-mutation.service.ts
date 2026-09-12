@@ -3,6 +3,11 @@ import { DuplicatePublicationError } from "@/features/content/publications/types
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { contentCommandSchema } from "@/features/content/schemas/content.schema";
 import {
+  scriptImageIds,
+  scriptPlainText,
+} from "@/features/content/scripts/utils/content-script-document.util";
+import type { ContentScriptView } from "@/features/content/scripts/types/content-script.types";
+import {
   DirectionError,
   fingerprint,
   jsonValue,
@@ -24,6 +29,8 @@ import type {
 import { DateTime } from "luxon";
 
 type ContentMutationResult = {
+  script?: ContentScriptView;
+  scriptVersion?: number;
   id: string;
   contentId?: string;
   version?: number;
@@ -50,7 +57,7 @@ export async function createContentInTransaction(
               ? "Short vertical"
               : format === "LONG_FORM"
                 ? "Long form"
-                : "First version",
+                : "First variant",
           format,
         },
       },
@@ -157,7 +164,11 @@ export async function executeContentCommand(userId: string, input: unknown) {
           : await tx.channel.create({ data: { ...data, userId } });
         result = { id: row.id, version: row.version };
       } else {
-        if (c.type !== "SAVE_WRITING" && c.type !== "SAVE_CONTENT")
+        if (
+          c.type !== "SAVE_WRITING" &&
+          c.type !== "SAVE_CONTENT" &&
+          c.type !== "SAVE_SCRIPT"
+        )
           await lockDirection(tx, userId, `content:${c.contentId}`);
         const content = await tx.content.findFirst({
           where: { id: c.contentId, userId },
@@ -218,6 +229,7 @@ export async function executeContentCommand(userId: string, input: unknown) {
           result.variantId = row.id;
         } else if (
           c.type === "SAVE_WRITING" ||
+          c.type === "SAVE_SCRIPT" ||
           c.type === "SAVE_VARIANT" ||
           c.type === "PUBLISH"
         ) {
@@ -226,14 +238,63 @@ export async function executeContentCommand(userId: string, input: unknown) {
           });
           if (!variant)
             throw new DirectionError(
-              "This version does not belong to the work.",
+              "This variant does not belong to the work.",
               undefined,
               404,
             );
           result.variantId = variant.id;
           if (variant.archivedAt && c.type !== "SAVE_VARIANT")
-            throw new DirectionError("Restore this version before using it.");
-          if (c.type === "SAVE_WRITING") {
+            throw new DirectionError("Restore this variant before using it.");
+          if (c.type === "SAVE_SCRIPT") {
+            const imageIds = scriptImageIds(c.document);
+            const images = await tx.contentScriptImage.count({
+              where: {
+                id: { in: imageIds },
+                userId,
+                contentId: content.id,
+                variantId: variant.id,
+              },
+            });
+            if (images !== imageIds.length)
+              throw new DirectionError(
+                "An image does not belong to this script. Upload it here before saving.",
+                "document",
+              );
+            const savedAt = new Date();
+            const changed = await tx.contentVariant.updateMany({
+              where: {
+                id: variant.id,
+                userId,
+                scriptVersion: c.expectedScriptVersion,
+              },
+              data: {
+                scriptDocument: jsonValue(c.document),
+                script: scriptPlainText(c.document),
+                scriptVersion: { increment: 1 },
+                scriptSavedAt: savedAt,
+              },
+            });
+            if (!changed.count)
+              throw new DirectionError(
+                "This script changed in another tab. Your draft is preserved; review the latest saved copy.",
+                undefined,
+                409,
+              );
+            result.scriptVersion = c.expectedScriptVersion + 1;
+            // Keep the exact acknowledged snapshot in the idempotency receipt.
+            // A retry must not mistake a later writer's document for this save.
+            result.script = {
+              contentId: content.id,
+              variantId: variant.id,
+              contentTitle: content.title,
+              variantName: variant.name,
+              returnHref: `/content/${content.id}?variant=${encodeURIComponent(variant.id)}`,
+              document: c.document,
+              scriptVersion: result.scriptVersion,
+              savedAt: savedAt.toISOString(),
+              readOnly: false,
+            };
+          } else if (c.type === "SAVE_WRITING") {
             const changed = await tx.contentVariant.updateMany({
               where: {
                 id: variant.id,
@@ -268,7 +329,7 @@ export async function executeContentCommand(userId: string, input: unknown) {
             });
             if (!changed.count)
               throw new DirectionError(
-                "This version changed in another tab.",
+                "This variant changed in another tab.",
                 undefined,
                 409,
               );

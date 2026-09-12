@@ -16,6 +16,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     where,
     select: { storageKey: true },
   });
+  const scriptImages = await prisma.contentScriptImage.findMany({ where, select: { storageKey: true } });
   const jobs = await prisma.seasonCotsSelection.findMany({
     where,
     select: { storageKey: true },
@@ -81,7 +82,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     },
     { timeout: 15000 },
   );
-  for (const file of contentMedia)
+  for (const file of [...contentMedia, ...scriptImages])
     await getMediaStorage().remove(file.storageKey);
   for (const file of media) {
     await getMediaStorage().remove(file.storageKey);
