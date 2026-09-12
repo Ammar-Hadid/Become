@@ -13,6 +13,8 @@ const optionalText = z
   .transform((value) => value || null);
 
 export const startSessionSchema = z.object({
+  contentId: z.string().max(100).nullable().optional(),
+  contentVariantId: z.string().max(100).nullable().optional(),
   domainId: z.string().min(1),
   activityTypeId: z.string().min(1),
   workSourceId: z.string().min(1).nullable().optional(),

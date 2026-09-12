@@ -1,4 +1,5 @@
 # BECOME
+
 ## Master Product, Design & Engineering Specification
 
 You are the lead engineer responsible for creating a brand-new application from scratch called **Become**.
@@ -238,22 +239,22 @@ It should not feel like Jira, HR software, a crypto dashboard, a gamer UI, a gen
 ### Dark palette
 
 ```css
---background: #090A0C;
+--background: #090a0c;
 --surface: #111318;
---surface-elevated: #181B21;
---border: #262A32;
+--surface-elevated: #181b21;
+--border: #262a32;
 
---text-primary: #F4F1EA;
---text-secondary: #989BA3;
---text-muted: #666A73;
+--text-primary: #f4f1ea;
+--text-secondary: #989ba3;
+--text-muted: #666a73;
 
---primary: #E8A83E;
---primary-hover: #F0B64D;
---primary-subtle: #2A2114;
+--primary: #e8a83e;
+--primary-hover: #f0b64d;
+--primary-subtle: #2a2114;
 
---success: #54B88B;
---danger: #E56767;
---warning: #D99B42;
+--success: #54b88b;
+--danger: #e56767;
+--warning: #d99b42;
 ```
 
 Identity:
@@ -382,7 +383,7 @@ Initial domains:
 - Engineering
 - Entrepreneurship
 - Finance
-- YouTube
+- Content
 
 Domains must remain configurable rather than permanently hard-coded.
 
@@ -467,8 +468,8 @@ Income
 Spending
 Savings
 
-YOUTUBE
-1 video in progress
+CONTENT
+1 creative work in progress
 
 GOALS / EXPERIMENTS
 
@@ -511,7 +512,7 @@ Potential widgets:
 - Experiment
 - Recent Decisions
 - Parked Ideas
-- YouTube Pipeline
+- Content workspace
 - AI Insight
 
 Do not build every widget immediately.
@@ -940,87 +941,53 @@ Definitions must be explicit and deterministic.
 
 ---
 
-## 19. YouTube domain
+## 19. Content domain
 
-YouTube should remain lighter than Finance or Entrepreneurship.
+Phase 6's approved Content model supersedes the earlier YouTube-only proposal. Content should remain lighter to use than Finance or Entrepreneurship.
 
-Potential pipeline:
+One creative work has one stable Content identity. It may have several ContentVariants (cuts, formats or languages). Each variant may have several explicitly recorded Publications, each on an owned Channel. Channels represent accounts on YouTube, TikTok, Instagram, or a named OTHER platform.
 
-Idea → Planned → Script → Recording → Editing → Published.
+For example, one short vertical version posted to TikTok, YouTube Shorts and Instagram Reels is **1 Content, 1 Variant, 3 Publications**. Cross-posting never duplicates the creative work. The interface may call variants “versions” and publications “releases”; users should not need to learn the relational model.
 
-Potential fields:
+The everyday journey is:
 
-- topic
-- title ideas
-- notes
-- script
-- related project
-- status
-- recordedAt
-- publishedAt
-- views
-- comments
-- subscribers gained
-- lessons
+Idea → Create content → Write or plan → Make/edit a version → Publish to one or more channels → Record results.
 
-Potential timer activities:
+Production stages are optional guidance: Planning, Writing, Recording, Editing, Ready. Work can move backward or skip stages. Publication is a separate deliberate record, never inferred from a stage, a plan or a completed timer. Archival preserves historical output and time.
 
-- ideation
-- research
-- scripting
-- recording
-- editing
-- thumbnail
-- publishing
-- analytics
+A workspace supports title, purpose/audience, hook, outline, optional plain-text script, production notes, next step, planned date and an owned thumbnail. Longer writing needs clear saved/pending/failed/conflicted states and protection against stale tabs. Additional versions, channel management and history use progressive disclosure.
 
-Pair time with output.
+Use the existing single active Session system for ideation, research, scripting, recording, editing, thumbnails, publishing and analytics. Sessions may be linked to a work and consistent version; general Content work remains possible without either. Preserve snapshots and label measured effort “recorded production time.” Completion does not change production stage or publication.
 
-Future AI may suggest YouTube ideas from real engineering work, projects, discoveries, experiments, and lessons rather than generic content-generation prompts.
+Publications retain actual date, optional exact time, published title, channel, placement and optional URL. Corrected and withdrawn records retain history. Canonical platform URLs prevent duplicate releases. Reuploads with different platform identities are separate publications.
+
+Manual analytics comes first. Dated lifetime observations support views, likes and comments, preserving observation time, entry time and correction lineage. Latest values are selected separately per metric. Missing is unknown; explicit zero is zero. A 1,000-view reading followed by 1,800 is not 2,800. Observations preceding a corrected release date remain historical but do not qualify as current results.
+
+Authoritative reporting distinguishes Content created, Variants created, Publications made, recorded time during the chosen period, and all-time effort on distinct works released in that period. Preserve Amsterdam date windows, platform/format distinctions and measurement freshness. Goal criteria can count the three output facts; experiments can explicitly select a content cohort. Manual evidence does not become verified platform evidence, causal attribution, audience deduplication or income.
+
+No OAuth, social APIs, autonomous publishing, runtime AI, raw-video hosting, earnings estimates, Campaign/Asset/Distribution framework or rich review engine belongs to Phase 6. Actual money remains in Finance. Future AI/integration ideas remain later-phase proposals.
 
 ---
 
-## 20. Idea Parking Lot
+## 20. Global Idea Parking Lot
 
-Provide a fast place to capture exciting ideas without letting them hijack current priorities.
+Ideas live under Direction and remain global across domains. Capture requires only a short title/thought, with optional notes and domain links. No priority score, target date, review quota or classification is mandatory.
 
-Possible fields:
+An idea may deliberately create Content, a Goal or an Experiment using that destination's canonical creation contract. The destination remains editable before saving; cancellation creates nothing. Promotion and its origin link are atomic and retry-safe. Linking an existing destination is a distinct action. One idea may inspire several outputs and one output may draw on several ideas.
 
-- title
-- description
-- domain
-- problem hypothesis
-- evidence
-- excitement
-- validation status
-- next cheapest test
-- notes
-- createdAt
-
-Capture should be extremely fast.
+Preserve the original idea, meaningful edit/promotion history and links when archiving. Contextual Content access reads the same global ideas. Direct project/exploration promotion and generalized knowledge-management infrastructure are deferred.
 
 ---
 
 ## 21. Decision Journal
 
-Important decisions should be recordable.
+Decisions preserve consequential choices and the reasoning available at the time. Minimum capture is “What did you decide?” and “Why?” This is a sparse journal, without routine daily-choice logging or quotas.
 
-Possible fields:
+Optional context includes alternatives, expected outcome, reconsideration trigger, a chosen review date and owned links to Content, Engineering projects, Goals, Experiments, explorations or Seasons. Do not mirror existing domain transition histories into a second ledger.
 
-- decision
-- context
-- reasoning
-- alternatives
-- evidence
-- confidence
-- expected outcome
-- revisit trigger
-- actual outcome
-- createdAt
+Edits preserve prior wording without requiring ceremony for typos. Meaningful reversals create a superseding decision. Later dated reflections retain original reasoning and express the user's assessment (Helpful, Mixed, Not helpful, Too early), not an objective correctness score. A review is due only when intentionally scheduled and never blocks ordinary use.
 
-The purpose is to improve judgment over time.
-
-Future AI may compare predictions with what actually happened.
+Future AI interpretation and rich reviews remain later phases.
 
 ---
 
@@ -1234,7 +1201,7 @@ Possible top-level structure:
 - Engineering
 - Entrepreneurship
 - Finance
-- YouTube
+- Content
 - Goals
 - Experiments
 - Ideas
@@ -1328,11 +1295,13 @@ Dependencies should be earned by requirements.
 Use strong, intention-revealing names.
 
 Bad:
+
 - handleThing()
 - processData()
 - updateStuff()
 
 Better:
+
 - startSession()
 - completeSession()
 - getActiveSession()
@@ -1399,7 +1368,7 @@ Seed:
 - Engineering
 - Entrepreneurship
 - Finance
-- YouTube
+- Content
 
 with sensible activity types.
 
@@ -1435,9 +1404,9 @@ Add Niches, Companies, CRM stages, observations, hypotheses, conversations, prob
 
 Add generic Goal and Experiment systems with calculated progress/metrics.
 
-### Phase 6: Ideas, Decisions, YouTube
+### Phase 6: Content, Ideas and Decisions
 
-Add Idea Parking Lot, Decision Journal, YouTube pipeline and related sessions.
+Build the Content creator workspace, global Ideas, sparse Decision Journal, related Sessions, explicit multi-channel publications and honest manual analytics. See sections 19–21 and `docs/decisions/PHASE_6.md` for the approved scope and implementation status.
 
 ### Phase 7: Reviews
 

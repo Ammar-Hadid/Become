@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { directionChangeView } from "@/features/direction/mappers/direction-history.mapper";
 import { Prisma } from "@/generated/prisma/client";
 import {
@@ -130,6 +131,7 @@ export async function getExperimentView(
   const row = await tx.experiment.findFirst({
     where: { id, userId },
     include: {
+      contentSources: true,
       domains: { include: { domain: true } },
       goal: { select: { id: true, title: true } },
       repeatedFrom: { select: { id: true, title: true } },
@@ -157,6 +159,7 @@ export async function getExperimentView(
     row.criterionMode as "ALL" | "ANY",
     new Date(),
     sourceInteractionIds,
+    row.contentSources.map((s) => s.contentId),
   );
   const conclusionSnapshot =
     row.conclusionSnapshot as unknown as Evaluation | null;
@@ -188,6 +191,7 @@ export async function getExperimentView(
       : null,
     criteria,
     sourceInteractionIds,
+    sourceContentIds: row.contentSources.map((s) => s.contentId),
     sources: row.sources.map((s) => ({
       id: s.interactionId,
       label: s.interaction.revisions[0]?.summary ?? "Source unavailable",
@@ -252,7 +256,66 @@ export async function getDirectionOptions(
   const name = { contains: search.slice(0, 200), mode: "insensitive" as const };
   const options = { take: 26, orderBy: { id: "asc" as const } };
   let rows: OwnedOption[] = [];
-  if (kind === "domain")
+  if (kind === "content")
+    rows = (
+      await prisma.content.findMany({
+        where: { ...common, archivedAt: null, title: name },
+        ...options,
+      })
+    ).map((r) => ({ id: r.id, name: r.title }));
+  else if (kind === "channel")
+    rows = (
+      await prisma.channel.findMany({
+        where: { ...common, archivedAt: null, name },
+        ...options,
+      })
+    ).map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: `${r.platform} · ${r.account}`,
+    }));
+  else if (kind === "publication")
+    rows = (
+      await prisma.publication.findMany({
+        where: { ...common, withdrawnAt: null, publishedTitle: name },
+        ...options,
+      })
+    ).map((r) => ({
+      id: r.id,
+      name: r.publishedTitle,
+      description: dateLabel(r.publishedOn),
+    }));
+  else if (kind === "contentObservation") {
+    const pattern = `%${search.slice(0, 200)}%`;
+    const observations = await prisma.$queryRaw<
+      { id: string; publishedTitle: string; observedAt: Date }[]
+    >(
+      Prisma.sql`SELECT o.id,p."publishedTitle",o."observedAt" FROM content_performance_observation o JOIN content_publication p ON p.id=o."publicationId" AND p."userId"=o."userId" WHERE o."userId"=${userId} AND p."withdrawnAt" IS NULL AND o."observedAt">=COALESCE(p."publishedAt",(p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam') AT TIME ZONE 'UTC') AND NOT EXISTS(SELECT 1 FROM content_performance_observation newer WHERE newer."supersedesId"=o.id) AND (o.note ILIKE ${pattern} OR p."publishedTitle" ILIKE ${pattern}) ${cursor ? Prisma.sql`AND o.id>${cursor}` : Prisma.empty} ORDER BY o.id ASC LIMIT 26`,
+    );
+    rows = observations.map((r) => ({
+      id: r.id,
+      name: r.publishedTitle,
+      description: `Manual · ${DateTime.fromJSDate(r.observedAt).setZone("Europe/Amsterdam").toFormat("d LLL yyyy, HH:mm")} Amsterdam`,
+    }));
+  } else if (kind === "season") {
+    const pattern = `%${search.slice(0, 200)}%`;
+    const seasons = await prisma.$queryRaw<
+      { id: string; year: number; quarter: number }[]
+    >(
+      Prisma.sql`SELECT id,year,quarter FROM user_season WHERE "userId"=${userId} AND (year::text||' · Q'||quarter::text) ILIKE ${pattern} ${cursor ? Prisma.sql`AND id>${cursor}` : Prisma.empty} ORDER BY id ASC LIMIT 26`,
+    );
+    rows = seasons.map((r) => ({
+      id: r.id,
+      name: `${r.year} · Q${r.quarter}`,
+    }));
+  } else if (kind === "decision")
+    rows = (
+      await prisma.decision.findMany({
+        where: { ...common, choice: name },
+        ...options,
+      })
+    ).map((r) => ({ id: r.id, name: r.choice }));
+  else if (kind === "domain")
     rows = (
       await prisma.domain.findMany({
         where: { ...common, enabled: true, name },

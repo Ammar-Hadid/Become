@@ -8,6 +8,9 @@ import {
 } from "@/features/direction/services/direction-mutation.service";
 import { parseMoney } from "@/lib/money/utils/money.util";
 const scopes: Record<CriterionDraft["metric"], string[]> = {
+  CONTENT_CREATED: ["contentId"],
+  CONTENT_VARIANTS_CREATED: ["contentId"],
+  CONTENT_PUBLICATIONS: ["contentId", "channelId"],
   MANUAL: [],
   WORK_SOURCE_INCOME: ["workSourceId"],
   BUSINESS_RECEIPTS: ["companyId", "offerRevisionId"],
@@ -15,6 +18,7 @@ const scopes: Record<CriterionDraft["metric"], string[]> = {
   CONVERSATIONS: ["companyId", "nicheId"],
   CONVERSATION_COMPANIES: ["companyId", "nicheId"],
   SESSION_TIME: [
+    "contentId",
     "domainId",
     "activityTypeId",
     "projectId",
@@ -34,6 +38,8 @@ const referenceKeys = [
   "domainId",
   "activityTypeId",
   "savingsGoalId",
+  "contentId",
+  "channelId",
 ] as const;
 export async function validateCriterion(
   tx: DirectionTx,
@@ -91,6 +97,47 @@ export async function validateCriterion(
       ? tx.savingsGoal.findFirst({ where: { id: data.savingsGoalId, userId } })
       : null,
   ]);
+  rows.push(
+    data.contentId
+      ? ((await tx.content.findFirst({
+          where: { id: data.contentId, userId },
+        })) as (typeof rows)[number])
+      : null,
+  );
+  rows.push(
+    data.channelId
+      ? ((await tx.channel.findFirst({
+          where: { id: data.channelId, userId },
+        })) as (typeof rows)[number])
+      : null,
+  );
+  if (
+    data.contentFormat &&
+    !["CONTENT_VARIANTS_CREATED", "CONTENT_PUBLICATIONS"].includes(data.metric)
+  )
+    field("contentFormat", "Format applies to versions or releases.");
+  if (
+    data.selectedContentOnly &&
+    ![
+      "CONTENT_CREATED",
+      "CONTENT_VARIANTS_CREATED",
+      "CONTENT_PUBLICATIONS",
+      "SESSION_TIME",
+    ].includes(data.metric)
+  )
+    field("selectedContentOnly", "This metric cannot use a content cohort.");
+  if (
+    data.metric === "SESSION_TIME" &&
+    (data.contentId || data.selectedContentOnly) &&
+    (data.companyId ||
+      data.projectId ||
+      data.nicheId ||
+      (rows[5] && "slug" in rows[5] && rows[5].slug !== "content"))
+  )
+    field(
+      "contentId",
+      "Content time cannot be combined with another domain context.",
+    );
   referenceKeys.forEach((key, i) => {
     if (data[key] && !rows[i])
       field(key, "Choose an available source you own.");
@@ -213,10 +260,14 @@ export async function saveCriteria(
     where: { userId, ...owner },
   });
   for (let position = 0; position < drafts.length; position++) {
-    if (drafts[position].selectedOutreachOnly && "goalId" in owner)
+    if (
+      (drafts[position].selectedOutreachOnly ||
+        drafts[position].selectedContentOnly) &&
+      "goalId" in owner
+    )
       throw new DirectionError(
-        "Selected outreach belongs to an experiment's explicit source set.",
-        `criteria.${drafts[position].key}.selectedOutreachOnly`,
+        "Selected sources belong to an experiment's explicit source set.",
+        `criteria.${drafts[position].key}.${drafts[position].selectedContentOnly ? "selectedContentOnly" : "selectedOutreachOnly"}`,
       );
     const validated = await validateCriterion(tx, userId, drafts[position]);
     const { id, startOn, endOn, baselineAssertions, ...rest } = validated;
@@ -229,6 +280,10 @@ export async function saveCriteria(
     const data = {
       ...rest,
       selectedOutreachOnly: rest.selectedOutreachOnly ?? false,
+      selectedContentOnly: rest.selectedContentOnly ?? false,
+      contentId: rest.contentId ?? null,
+      channelId: rest.channelId ?? null,
+      contentFormat: rest.contentFormat ?? null,
       ...owner,
       userId,
       position,

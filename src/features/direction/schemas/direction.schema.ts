@@ -22,6 +22,10 @@ export const operationKey = z
   .regex(/^[a-zA-Z0-9-]{16,80}$/, "Reopen the form before saving.");
 export const criterionSchema = z
   .object({
+    contentId: optionalId,
+    channelId: optionalId,
+    contentFormat: z.enum(["LONG_FORM", "SHORT_VERTICAL", "OTHER"]).optional(),
+    selectedContentOnly: z.boolean().optional(),
     selectedOutreachOnly: z.boolean().optional(),
     id: optionalId,
     key: z.string().min(1).max(100),
@@ -36,6 +40,9 @@ export const criterionSchema = z
       "ENGINEERING_EVIDENCE",
       "ENGINEERING_PROJECT_COMPLETED",
       "SAVINGS_GOAL",
+      "CONTENT_CREATED",
+      "CONTENT_VARIANTS_CREATED",
+      "CONTENT_PUBLICATIONS",
     ]),
     label: z.string().trim().max(200),
     target: z.string().trim().max(100),
@@ -118,6 +125,7 @@ export const experimentDraftSchema = z
     domainIds: z.array(z.string().min(1).max(100)).max(20),
     criterionMode: z.enum(["ALL", "ANY"]),
     criteria: z.array(criterionSchema).max(8),
+    sourceContentIds: z.array(z.string().min(1).max(100)).max(200).optional(),
     sourceInteractionIds: z.array(z.string().min(1).max(100)).max(200),
   })
   .strict()

@@ -29,7 +29,8 @@
 
 .direction-navigation {
   display: flex;
-  gap: var(--spacing-2xl);
+  align-items: stretch;
+  gap: var(--spacing-xl);
   overflow-x: auto;
   margin-bottom: var(--spacing-4xl);
   border-bottom: 1px solid var(--color-border);
@@ -40,7 +41,32 @@
   display: none;
 }
 
-.direction-navigation a {
+.direction-navigation-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.direction-navigation-group + .direction-navigation-group {
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--spacing-xl);
+}
+
+.direction-navigation-group-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.direction-navigation-links {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+.direction-navigation-links a {
   position: relative;
   flex: 0 0 auto;
   padding: var(--spacing-lg) 0;
@@ -50,8 +76,8 @@
   transition: color var(--duration-fast) var(--ease-enter);
 }
 
-.direction-navigation a:hover,
-.direction-navigation a[aria-current] {
+.direction-navigation-links a:hover,
+.direction-navigation-links a[aria-current] {
   color: var(--color-text-primary);
 }
 
@@ -63,6 +89,87 @@
   height: 2px;
   border-radius: 99px 99px 0 0;
   background: var(--color-primary);
+}
+
+.direction-navigation-mobile {
+  display: none;
+}
+
+.direction-navigation-trigger {
+  display: flex;
+  width: 100%;
+  min-height: var(--spacing-input-height-lg);
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-sm) 0;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.direction-navigation-trigger > span,
+.direction-navigation-trigger small,
+.direction-navigation-trigger strong {
+  display: block;
+}
+
+.direction-navigation-trigger small {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.direction-navigation-trigger strong {
+  margin-top: var(--spacing-2xs);
+  font-weight: 560;
+}
+
+.direction-navigation-trigger > svg {
+  width: 16px;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.direction-navigation-trigger[aria-expanded="true"] > svg {
+  transform: rotate(180deg);
+}
+
+.direction-navigation-menu {
+  right: auto;
+  left: 0;
+  width: min(22rem, calc(100vw - var(--spacing-4xl)));
+}
+
+.direction-navigation-menu-group {
+  display: grid;
+}
+
+.direction-navigation-menu-group + .direction-navigation-menu-group {
+  margin-top: var(--spacing-xs);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-xs);
+}
+
+.direction-navigation-menu-group > p {
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.direction-navigation-menu-group .menu-item {
+  justify-content: space-between;
+}
+
+.direction-navigation-menu-group .menu-item > svg {
+  color: var(--color-primary);
+}
+
+.direction-navigation-menu-current {
+  color: var(--color-text-primary);
 }
 
 .direction-back-link,
@@ -2236,6 +2343,12 @@
   font-weight: 560;
 }
 
+.direction-content-cohort > p:not(.eyebrow) {
+  max-width: 46rem;
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-muted);
+}
+
 .direction-lifecycle-actions,
 .season-inspiration > header > div:last-child {
   display: flex;
@@ -3113,10 +3226,13 @@
     max-width: 26rem;
   }
 
-  .direction-navigation {
-    margin-right: calc(var(--spacing-xl) * -1);
-    margin-left: calc(var(--spacing-xl) * -1);
-    padding: 0 var(--spacing-xl);
+  .direction-navigation--desktop {
+    display: none;
+  }
+
+  .direction-navigation-mobile {
+    display: block;
+    margin-bottom: var(--spacing-3xl);
   }
 
   .season-opening-invitation,

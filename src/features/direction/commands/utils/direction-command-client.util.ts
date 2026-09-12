@@ -6,6 +6,7 @@ import type {
   GoalOutcome,
 } from "@/features/direction/types/direction.types";
 import type { SeasonDraft } from "@/features/seasons/types/season.types";
+import type { EvidenceReference } from "@/features/direction/evidence/services/evidence-reference.service";
 
 export type DirectionClientResult = CommandResult & {
   delivery: "confirmed" | "uncertain";
@@ -72,15 +73,7 @@ export type DirectionCommand =
       confirmed: boolean;
       rationale: string;
       assessedOn: string;
-      sources: {
-        type:
-          | "INTERACTION"
-          | "SESSION"
-          | "ENGINEERING_EVIDENCE"
-          | "TRANSACTION"
-          | "OFFER_REVISION";
-        id: string;
-      }[];
+      sources: EvidenceReference[];
     }
   | {
       type: "SEASON_LIFECYCLE";

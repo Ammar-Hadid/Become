@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DateTime } from "luxon";
 import {
   DirectionError,
   fingerprint,
@@ -8,6 +9,10 @@ import type { SourceItem } from "@/features/direction/types/direction.types";
 export const evidenceReferenceSchema = z
   .object({
     type: z.enum([
+      "CONTENT",
+      "CONTENT_PUBLICATION",
+      "CONTENT_OBSERVATION",
+      "DECISION",
       "INTERACTION",
       "SESSION",
       "ENGINEERING_EVIDENCE",
@@ -34,7 +39,68 @@ export async function resolveEvidence(
     at: Date | null = null,
     valid = true;
   const { id, type } = reference;
-  if (type === "INTERACTION") {
+  if (type === "CONTENT") {
+    const row = await tx.content.findFirst({ where: { id, userId } });
+    if (row) {
+      record = {
+        id: row.id,
+        title: row.title,
+        version: row.version,
+        createdAt: row.createdAt,
+      };
+      label = row.title;
+      at = row.createdAt;
+      href = `/content/${id}`;
+    }
+  } else if (type === "CONTENT_PUBLICATION") {
+    const row = await tx.publication.findFirst({
+      where: { id, userId },
+      include: { variant: true },
+    });
+    if (row) {
+      record = row;
+      label = row.publishedTitle;
+      at = row.publishedOn;
+      href = `/content/${row.variant.contentId}`;
+      valid = !row.withdrawnAt;
+    }
+  } else if (type === "CONTENT_OBSERVATION") {
+    const row = await tx.performanceObservation.findFirst({
+      where: { id, userId },
+      include: {
+        supersededBy: { select: { id: true } },
+        publication: { include: { variant: true } },
+      },
+    });
+    if (row) {
+      record = row;
+      label = `Manual results · ${row.publication.publishedTitle}`;
+      at = row.observedAt;
+      href = `/content/${row.publication.variant.contentId}`;
+      valid =
+        !row.publication.withdrawnAt &&
+        !row.supersededBy.length &&
+        row.observedAt >=
+          (row.publication.publishedAt ??
+            DateTime.fromISO(
+              row.publication.publishedOn.toISOString().slice(0, 10),
+              { zone: "Europe/Amsterdam" },
+            ).toJSDate());
+    }
+  } else if (type === "DECISION") {
+    const row = await tx.decision.findFirst({ where: { id, userId } });
+    if (row) {
+      record = {
+        id: row.id,
+        version: row.version,
+        choice: row.choice,
+        reason: row.reason,
+      };
+      label = row.choice;
+      at = row.decidedOn;
+      href = `/direction/decisions/${id}`;
+    }
+  } else if (type === "INTERACTION") {
     const row = await tx.interaction.findFirst({
       where: { id, userId },
       include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
@@ -104,7 +170,7 @@ export async function resolveEvidence(
       value: null,
       note: valid
         ? "Evidence for your judgment; no automatic qualification is inferred."
-        : "This source is withdrawn or not complete.",
+        : "This source is withdrawn, superseded, or outside its valid recording dates.",
       state: valid ? "QUALIFYING" : "REVIEW",
     },
   };

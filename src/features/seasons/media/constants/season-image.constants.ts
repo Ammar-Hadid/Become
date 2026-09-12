@@ -1,18 +1,6 @@
-export const SEASON_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
-
-export const SEASON_IMAGE_FORMAT_LABEL = "JPEG, PNG, WebP, or AVIF";
-
-export const SEASON_IMAGE_CONTENT_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-]);
-
-// Sharp reports AVIF through its HEIF decoder with AV1 compression.
-export const SEASON_IMAGE_DECODER_FORMATS = new Set([
-  "jpeg",
-  "png",
-  "webp",
-  "heif",
-]);
+export {
+  RASTER_IMAGE_ACCEPT as SEASON_IMAGE_ACCEPT,
+  RASTER_IMAGE_FORMAT_LABEL as SEASON_IMAGE_FORMAT_LABEL,
+  RASTER_IMAGE_CONTENT_TYPES as SEASON_IMAGE_CONTENT_TYPES,
+  RASTER_IMAGE_DECODER_FORMATS as SEASON_IMAGE_DECODER_FORMATS,
+} from "@/lib/media/constants/raster-image.constants";

@@ -13,7 +13,10 @@ import { CurrencySelect } from "@/components/ui/forms/currency-select.component"
 import { Button } from "@/components/ui/buttons/button.component";
 import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
 import { CriterionPreview } from "@/features/direction/criteria/components/criterion-preview.component";
-import { searchDirectionOptions } from "@/features/direction/options/utils/direction-option-client.util";
+import {
+  searchDirectionOptions,
+  type DirectionOptionKind,
+} from "@/features/direction/options/utils/direction-option-client.util";
 import { getMetricCatalog } from "@/features/direction/preview/utils/direction-preview-client.util";
 import type {
   CriterionDraft,
@@ -30,6 +33,13 @@ const evidenceTypes = [
   ["DEPLOYMENT", "Deployment"],
   ["ARCHITECTURE_DECISION", "Architecture decision"],
   ["TECHNICAL_DISCOVERY", "Technical discovery"],
+] as const;
+
+const contentFormats = [
+  ["", "Every format"],
+  ["LONG_FORM", "Long form"],
+  ["SHORT_VERTICAL", "Short vertical"],
+  ["OTHER", "Other format"],
 ] as const;
 
 function newCriterion(metric: CriterionDraft["metric"]): CriterionDraft {
@@ -61,18 +71,12 @@ function ScopePicker({
     | "projectId"
     | "domainId"
     | "activityTypeId"
-    | "savingsGoalId";
+    | "savingsGoalId"
+    | "contentId"
+    | "channelId";
   label: string;
   entityName: string;
-  optionKind:
-    | "workSource"
-    | "company"
-    | "offerRevision"
-    | "niche"
-    | "project"
-    | "domain"
-    | "activity"
-    | "savingsGoal";
+  optionKind: DirectionOptionKind;
   initial?: OwnedOption;
   onChange: (patch: Partial<CriterionDraft>) => void;
   optional?: boolean;
@@ -219,6 +223,14 @@ export function CriterionBuilder({
           const needsTarget =
             !projectCompletion &&
             !["MANUAL", "SAVINGS_GOAL"].includes(criterion.metric);
+          const isContentMetric = [
+            "CONTENT_CREATED",
+            "CONTENT_VARIANTS_CREATED",
+            "CONTENT_PUBLICATIONS",
+          ].includes(criterion.metric);
+          const isContentTime =
+            criterion.metric === "SESSION_TIME" &&
+            Boolean(criterion.contentId || criterion.selectedContentOnly);
           const patch = (value: Partial<CriterionDraft>) =>
             patchCriterion(criterion.key, value);
           return (
@@ -340,6 +352,112 @@ export function CriterionBuilder({
                     </>
                   )}
 
+                  {(isContentMetric || criterion.metric === "SESSION_TIME") &&
+                    !criterion.selectedContentOnly && (
+                      <ScopePicker
+                        criterion={criterion}
+                        field="contentId"
+                        label={
+                          criterion.metric === "SESSION_TIME"
+                            ? "Creative work time"
+                            : "One creative work"
+                        }
+                        entityName="creative work"
+                        optionKind="content"
+                        initial={resolvedScopes.contentId}
+                        onChange={(value) =>
+                          patch({
+                            ...value,
+                            ...(criterion.metric === "SESSION_TIME" &&
+                            value.contentId
+                              ? {
+                                  domainId: undefined,
+                                  activityTypeId: undefined,
+                                  projectId: undefined,
+                                  nicheId: undefined,
+                                  companyId: undefined,
+                                }
+                              : {}),
+                          })
+                        }
+                      />
+                    )}
+                  {criterion.metric === "CONTENT_PUBLICATIONS" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="channelId"
+                      label="Release channel"
+                      entityName="channel"
+                      optionKind="channel"
+                      initial={resolvedScopes.channelId}
+                      onChange={patch}
+                    />
+                  )}
+                  {[
+                    "CONTENT_VARIANTS_CREATED",
+                    "CONTENT_PUBLICATIONS",
+                  ].includes(criterion.metric) && (
+                    <label>
+                      <span className="field-label">
+                        Version format <span>— optional</span>
+                      </span>
+                      <span className="select-wrap">
+                        <select
+                          value={criterion.contentFormat ?? ""}
+                          onChange={(event) =>
+                            patch({
+                              contentFormat:
+                                (event.target.value as
+                                  CriterionDraft["contentFormat"] | "") ||
+                                undefined,
+                            })
+                          }
+                        >
+                          {contentFormats.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </span>
+                    </label>
+                  )}
+                  {context === "EXPERIMENT" &&
+                    (isContentMetric ||
+                      criterion.metric === "SESSION_TIME") && (
+                      <label className="direction-outreach-only direction-field-wide">
+                        <input
+                          type="checkbox"
+                          checked={criterion.selectedContentOnly ?? false}
+                          onChange={(event) =>
+                            patch({
+                              selectedContentOnly: event.target.checked,
+                              ...(event.target.checked
+                                ? {
+                                    contentId: undefined,
+                                    domainId: undefined,
+                                    activityTypeId: undefined,
+                                    projectId: undefined,
+                                    nicheId: undefined,
+                                    companyId: undefined,
+                                  }
+                                : {}),
+                            })
+                          }
+                        />
+                        <span>
+                          <strong>
+                            Only work selected for this experiment
+                          </strong>
+                          <small>
+                            Choose the exact creative work cohort in the
+                            experiment above. The evidence stays unconfigured
+                            until at least one work is selected.
+                          </small>
+                        </span>
+                      </label>
+                    )}
+
                   {criterion.metric === "WORK_SOURCE_INCOME" && (
                     <ScopePicker
                       criterion={criterion}
@@ -394,7 +512,7 @@ export function CriterionBuilder({
                   {[
                     "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
-                    "SESSION_TIME",
+                    ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
@@ -409,7 +527,7 @@ export function CriterionBuilder({
                   {[
                     "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
-                    "SESSION_TIME",
+                    ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
@@ -452,23 +570,24 @@ export function CriterionBuilder({
                     "SESSION_TIME",
                     "ENGINEERING_EVIDENCE",
                     "ENGINEERING_PROJECT_COMPLETED",
-                  ].includes(criterion.metric) && (
-                    <ScopePicker
-                      criterion={criterion}
-                      field="projectId"
-                      label={
-                        projectCompletion
-                          ? "Engineering project"
-                          : "Project scope"
-                      }
-                      entityName="project"
-                      optionKind="project"
-                      initial={resolvedScopes.projectId}
-                      optional={!projectCompletion}
-                      onChange={patch}
-                    />
-                  )}
-                  {criterion.metric === "SESSION_TIME" && (
+                  ].includes(criterion.metric) &&
+                    !isContentTime && (
+                      <ScopePicker
+                        criterion={criterion}
+                        field="projectId"
+                        label={
+                          projectCompletion
+                            ? "Engineering project"
+                            : "Project scope"
+                        }
+                        entityName="project"
+                        optionKind="project"
+                        initial={resolvedScopes.projectId}
+                        optional={!projectCompletion}
+                        onChange={patch}
+                      />
+                    )}
+                  {criterion.metric === "SESSION_TIME" && !isContentTime && (
                     <ScopePicker
                       criterion={criterion}
                       field="domainId"
@@ -487,7 +606,7 @@ export function CriterionBuilder({
                       }
                     />
                   )}
-                  {criterion.metric === "SESSION_TIME" && (
+                  {criterion.metric === "SESSION_TIME" && !isContentTime && (
                     <ScopePicker
                       criterion={criterion}
                       field="activityTypeId"

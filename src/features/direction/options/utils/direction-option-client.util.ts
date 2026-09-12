@@ -4,7 +4,14 @@ import type {
 } from "@/features/direction/types/direction.types";
 
 export type DirectionOptionKind =
+  | "content"
+  | "channel"
+  | "publication"
+  | "contentObservation"
+  | "decision"
   | "goal"
+  | "experiment"
+  | "season"
   | "domain"
   | "company"
   | "niche"

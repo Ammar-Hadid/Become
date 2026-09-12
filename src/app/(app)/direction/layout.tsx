@@ -1,5 +1,6 @@
 import { DirectionNavigation } from "@/features/direction/navigation/components/direction-navigation.component";
 import "@/features/direction/styles/direction.css";
+import "@/features/direction/thinking/styles/thinking.css";
 
 export default function DirectionLayout({
   children,

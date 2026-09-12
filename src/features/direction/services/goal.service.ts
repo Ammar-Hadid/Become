@@ -11,13 +11,18 @@ import {
   lockDirection,
   requireVersion,
   storedDate,
+  type DirectionTx,
 } from "@/features/direction/services/direction-mutation.service";
 import { saveCriteria } from "@/features/direction/services/criterion.service";
 import {
   criterionRelations,
   criterionScopes,
 } from "@/features/direction/mappers/criterion-scope.mapper";
-export async function saveGoal(userId: string, input: unknown) {
+export async function saveGoal(
+  userId: string,
+  input: unknown,
+  transaction?: DirectionTx,
+) {
   const c = z
     .object({
       id: z.string().optional(),
@@ -28,7 +33,7 @@ export async function saveGoal(userId: string, input: unknown) {
     })
     .parse(input);
   const hash = fingerprint(c);
-  return prisma.$transaction(async (tx) => {
+  const mutate = async (tx: DirectionTx) => {
     await lockDirection(tx, userId, "goals");
     const prior = await tx.goalChange.findUnique({
       where: { userId_operationKey: { userId, operationKey: c.operationKey } },
@@ -102,5 +107,6 @@ export async function saveGoal(userId: string, input: unknown) {
       },
     });
     return { id: goal.id, version: goal.version };
-  });
+  };
+  return transaction ? mutate(transaction) : prisma.$transaction(mutate);
 }
