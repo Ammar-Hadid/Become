@@ -2,6 +2,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { CriterionScopes } from "@/features/direction/types/direction.types";
 const named = { select: { id: true, name: true, archivedAt: true } } as const;
 export const criterionRelations = {
+  content: { select: { id: true, title: true, archivedAt: true } },
+  channel: named,
   workSource: named,
   company: named,
   niche: named,
@@ -22,6 +24,7 @@ export function criterionScopes(
     rows.map((row) => {
       const map: CriterionScopes[string] = {};
       for (const [relation, field] of [
+        ["channel", "channelId"],
         ["workSource", "workSourceId"],
         ["company", "companyId"],
         ["niche", "nicheId"],
@@ -41,6 +44,12 @@ export function criterionScopes(
                 : !value.enabled,
           };
       }
+      if (row.content)
+        map.contentId = {
+          id: row.content.id,
+          name: row.content.title,
+          archived: !!row.content.archivedAt,
+        };
       if (row.offerRevision)
         map.offerRevisionId = {
           id: row.offerRevision.id,

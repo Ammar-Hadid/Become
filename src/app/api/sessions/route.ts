@@ -1,3 +1,4 @@
+import { DirectionError } from "@/features/direction/services/direction-mutation.service";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { NextResponse } from "next/server";
 import { startSessionSchema } from "@/features/sessions/schemas/session.schema";
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   const result = await startSession(user.id, parsed.data).catch((error) => {
-    if (error instanceof FinanceError || error instanceof BusinessError)
+    if (error instanceof FinanceError || error instanceof BusinessError || error instanceof DirectionError)
       return { status: "invalid-finance" as const, error: error.message };
     throw error;
   });

@@ -21,6 +21,11 @@ export type DomainOption = {
 };
 
 export type SessionListItem = {
+  contentId?: string | null;
+  contentVariantId?: string | null;
+  contentTitleSnapshot?: string | null;
+  contentVariantSnapshot?: string | null;
+  contentActivitySnapshot?: string | null;
   businessCompanyId?: string | null;
   businessNicheId?: string | null;
   businessCompanySnapshot?: string | null;

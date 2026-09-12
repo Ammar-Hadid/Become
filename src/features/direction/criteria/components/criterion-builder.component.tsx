@@ -12,8 +12,12 @@ import { useEffect, useState } from "react";
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { Select } from "@/components/ui/forms/select.component";
 import { CriterionPreview } from "@/features/direction/criteria/components/criterion-preview.component";
-import { searchDirectionOptions } from "@/features/direction/options/utils/direction-option-client.util";
+import {
+  searchDirectionOptions,
+  type DirectionOptionKind,
+} from "@/features/direction/options/utils/direction-option-client.util";
 import { getMetricCatalog } from "@/features/direction/preview/utils/direction-preview-client.util";
 import type {
   CriterionDraft,
@@ -30,6 +34,13 @@ const evidenceTypes = [
   ["DEPLOYMENT", "Deployment"],
   ["ARCHITECTURE_DECISION", "Architecture decision"],
   ["TECHNICAL_DISCOVERY", "Technical discovery"],
+] as const;
+
+const contentFormats = [
+  { value: "", label: "Every format" },
+  { value: "LONG_FORM", label: "Long form" },
+  { value: "SHORT_VERTICAL", label: "Short vertical" },
+  { value: "OTHER", label: "Other format" },
 ] as const;
 
 function newCriterion(metric: CriterionDraft["metric"]): CriterionDraft {
@@ -61,18 +72,12 @@ function ScopePicker({
     | "projectId"
     | "domainId"
     | "activityTypeId"
-    | "savingsGoalId";
+    | "savingsGoalId"
+    | "contentId"
+    | "channelId";
   label: string;
   entityName: string;
-  optionKind:
-    | "workSource"
-    | "company"
-    | "offerRevision"
-    | "niche"
-    | "project"
-    | "domain"
-    | "activity"
-    | "savingsGoal";
+  optionKind: DirectionOptionKind;
   initial?: OwnedOption;
   onChange: (patch: Partial<CriterionDraft>) => void;
   optional?: boolean;
@@ -162,6 +167,12 @@ export function CriterionBuilder({
       className="direction-criteria-builder"
       aria-labelledby="criteria-builder-title"
     >
+      <input
+        type="hidden"
+        name="criteriaState"
+        value={JSON.stringify(criteria)}
+      />
+      <input type="hidden" name="criterionMode" value={criterionMode} />
       <header className="direction-criteria-header">
         <div>
           <p className="eyebrow">Optional evidence</p>
@@ -217,6 +228,14 @@ export function CriterionBuilder({
           const needsTarget = !["MANUAL", "SAVINGS_GOAL"].includes(
             criterion.metric,
           );
+          const isContentMetric = [
+            "CONTENT_CREATED",
+            "CONTENT_VARIANTS_CREATED",
+            "CONTENT_PUBLICATIONS",
+          ].includes(criterion.metric);
+          const isContentTime =
+            criterion.metric === "SESSION_TIME" &&
+            Boolean(criterion.contentId || criterion.selectedContentOnly);
           const patch = (value: Partial<CriterionDraft>) =>
             patchCriterion(criterion.key, value);
           return (
@@ -241,39 +260,32 @@ export function CriterionBuilder({
               </summary>
               <div className="direction-criterion-body">
                 <div className="direction-form-grid">
-                  <label>
+                  <div>
                     <span className="field-label">Evidence type</span>
-                    <span className="select-wrap">
-                      <select
-                        value={criterion.metric}
-                        onChange={(event) =>
-                          onChange(
-                            criteria.map((item) =>
-                              item.key === criterion.key
-                                ? {
-                                    ...newCriterion(
-                                      event.target
-                                        .value as CriterionDraft["metric"],
-                                    ),
-                                    key: item.key,
-                                  }
-                                : item,
-                            ),
-                          )
-                        }
-                      >
-                        {catalog.map((item) => (
-                          <option key={item.key} value={item.key}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-                    </span>
-                  </label>
+                    <Select
+                      label="Evidence type"
+                      name={`criteria.${criterion.key}.metric`}
+                      value={criterion.metric}
+                      options={catalog.map((item) => ({
+                        value: item.key,
+                        label: item.name,
+                      }))}
+                      onValueChange={(metric) =>
+                        onChange(
+                          criteria.map((item) =>
+                            item.key === criterion.key
+                              ? { ...newCriterion(metric), key: item.key }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
                   <label>
                     <span className="field-label">Definition label</span>
                     <input
                       className="text-input"
+                      name={`criteria.${criterion.key}.label`}
                       value={criterion.label}
                       maxLength={200}
                       onChange={(event) => patch({ label: event.target.value })}
@@ -291,6 +303,7 @@ export function CriterionBuilder({
                       </span>
                       <input
                         className="text-input"
+                        name={`criteria.${criterion.key}.target`}
                         inputMode={monetary ? "decimal" : "numeric"}
                         value={criterion.target}
                         onChange={(event) =>
@@ -301,7 +314,11 @@ export function CriterionBuilder({
                     </label>
                   )}
                   {monetary && (
-                    <CurrencySelect value={criterion.currency ?? ""} onValueChange={(currency) => patch({ currency })} required />
+                    <CurrencySelect
+                      value={criterion.currency ?? ""}
+                      onValueChange={(currency) => patch({ currency })}
+                      required
+                    />
                   )}
                   <label>
                     <span className="field-label">
@@ -310,6 +327,7 @@ export function CriterionBuilder({
                     <input
                       className="text-input"
                       type="date"
+                      name={`criteria.${criterion.key}.startOn`}
                       value={criterion.startOn ?? ""}
                       onChange={(event) =>
                         patch({ startOn: event.target.value || undefined })
@@ -323,12 +341,110 @@ export function CriterionBuilder({
                     <input
                       className="text-input"
                       type="date"
+                      name={`criteria.${criterion.key}.endOn`}
                       value={criterion.endOn ?? ""}
                       onChange={(event) =>
                         patch({ endOn: event.target.value || undefined })
                       }
                     />
                   </label>
+
+                  {(isContentMetric || criterion.metric === "SESSION_TIME") &&
+                    !criterion.selectedContentOnly && (
+                      <ScopePicker
+                        criterion={criterion}
+                        field="contentId"
+                        label={
+                          criterion.metric === "SESSION_TIME"
+                            ? "Creative work time"
+                            : "One creative work"
+                        }
+                        entityName="creative work"
+                        optionKind="content"
+                        initial={resolvedScopes.contentId}
+                        onChange={(value) =>
+                          patch({
+                            ...value,
+                            ...(criterion.metric === "SESSION_TIME" &&
+                            value.contentId
+                              ? {
+                                  domainId: undefined,
+                                  activityTypeId: undefined,
+                                  projectId: undefined,
+                                  nicheId: undefined,
+                                  companyId: undefined,
+                                }
+                              : {}),
+                          })
+                        }
+                      />
+                    )}
+                  {criterion.metric === "CONTENT_PUBLICATIONS" && (
+                    <ScopePicker
+                      criterion={criterion}
+                      field="channelId"
+                      label="Release channel"
+                      entityName="channel"
+                      optionKind="channel"
+                      initial={resolvedScopes.channelId}
+                      onChange={patch}
+                    />
+                  )}
+                  {[
+                    "CONTENT_VARIANTS_CREATED",
+                    "CONTENT_PUBLICATIONS",
+                  ].includes(criterion.metric) && (
+                    <div>
+                      <span className="field-label">
+                        Version format <span>— optional</span>
+                      </span>
+                      <Select
+                        label="Version format"
+                        name={`criteria.${criterion.key}.contentFormat`}
+                        value={criterion.contentFormat ?? ""}
+                        options={[...contentFormats]}
+                        onValueChange={(contentFormat) =>
+                          patch({ contentFormat: contentFormat || undefined })
+                        }
+                      />
+                    </div>
+                  )}
+                  {context === "EXPERIMENT" &&
+                    (isContentMetric ||
+                      criterion.metric === "SESSION_TIME") && (
+                      <label className="direction-outreach-only direction-field-wide">
+                        <input
+                          type="checkbox"
+                          name={`criteria.${criterion.key}.selectedContentOnly`}
+                          checked={criterion.selectedContentOnly ?? false}
+                          onChange={(event) =>
+                            patch({
+                              selectedContentOnly: event.target.checked,
+                              ...(event.target.checked
+                                ? {
+                                    contentId: undefined,
+                                    domainId: undefined,
+                                    activityTypeId: undefined,
+                                    projectId: undefined,
+                                    nicheId: undefined,
+                                    companyId: undefined,
+                                  }
+                                : {}),
+                            })
+                          }
+                        />
+                        <span>
+                          <strong>
+                            Only work selected for this experiment
+                          </strong>
+                          <small>
+                            Choose the exact creative work cohort in the
+                            experiment above. The evidence stays unconfigured
+                            until at least one work is selected.
+                          </small>
+                        </span>
+                      </label>
+                    )}
 
                   {criterion.metric === "WORK_SOURCE_INCOME" && (
                     <ScopePicker
@@ -384,7 +500,7 @@ export function CriterionBuilder({
                   {[
                     "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
-                    "SESSION_TIME",
+                    ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
@@ -399,7 +515,7 @@ export function CriterionBuilder({
                   {[
                     "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
-                    "SESSION_TIME",
+                    ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
@@ -440,18 +556,19 @@ export function CriterionBuilder({
                     )}
                   {["SESSION_TIME", "ENGINEERING_EVIDENCE"].includes(
                     criterion.metric,
-                  ) && (
-                    <ScopePicker
-                      criterion={criterion}
-                      field="projectId"
-                      label="Project scope"
-                      entityName="project"
-                      optionKind="project"
-                      initial={resolvedScopes.projectId}
-                      onChange={patch}
-                    />
-                  )}
-                  {criterion.metric === "SESSION_TIME" && (
+                  ) &&
+                    !isContentTime && (
+                      <ScopePicker
+                        criterion={criterion}
+                        field="projectId"
+                        label="Project scope"
+                        entityName="project"
+                        optionKind="project"
+                        initial={resolvedScopes.projectId}
+                        onChange={patch}
+                      />
+                    )}
+                  {criterion.metric === "SESSION_TIME" && !isContentTime && (
                     <ScopePicker
                       criterion={criterion}
                       field="domainId"
@@ -470,7 +587,7 @@ export function CriterionBuilder({
                       }
                     />
                   )}
-                  {criterion.metric === "SESSION_TIME" && (
+                  {criterion.metric === "SESSION_TIME" && !isContentTime && (
                     <ScopePicker
                       criterion={criterion}
                       field="activityTypeId"
@@ -483,28 +600,26 @@ export function CriterionBuilder({
                     />
                   )}
                   {criterion.metric === "ENGINEERING_EVIDENCE" && (
-                    <label>
+                    <div>
                       <span className="field-label">
                         Output kind <span>— optional</span>
                       </span>
-                      <span className="select-wrap">
-                        <select
-                          value={criterion.evidenceType ?? ""}
-                          onChange={(event) =>
-                            patch({
-                              evidenceType: event.target.value || undefined,
-                            })
-                          }
-                        >
-                          <option value="">Every output kind</option>
-                          {evidenceTypes.map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
-                      </span>
-                    </label>
+                      <Select
+                        label="Output kind"
+                        name={`criteria.${criterion.key}.evidenceType`}
+                        value={criterion.evidenceType ?? ""}
+                        options={[
+                          { value: "", label: "Every output kind" },
+                          ...evidenceTypes.map(([value, label]) => ({
+                            value,
+                            label,
+                          })),
+                        ]}
+                        onValueChange={(evidenceType) =>
+                          patch({ evidenceType: evidenceType || undefined })
+                        }
+                      />
+                    </div>
                   )}
                   {criterion.metric === "SAVINGS_GOAL" && (
                     <ScopePicker

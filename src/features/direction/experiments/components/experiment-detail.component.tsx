@@ -167,6 +167,45 @@ export function ExperimentDetail({
         )}
       </section>
 
+      {experiment.evaluation.contentCohort?.sources.length ? (
+        <section
+          className="direction-linked-sources direction-content-cohort"
+          aria-labelledby="experiment-content-cohort-title"
+        >
+          <p className="eyebrow">Creative work cohort</p>
+          <h2 id="experiment-content-cohort-title">
+            Work deliberately included in this attempt
+          </h2>
+          <p>
+            Content evidence marked “Only work selected for this experiment”
+            reads this exact set. Each work remains one work even when it has
+            several versions or releases.
+          </p>
+          <div>
+            {experiment.evaluation.contentCohort.sources.map((source) => (
+              <Link key={source.id} href={source.href}>
+                <span>
+                  {source.label}
+                  {source.archived ? " · Archived" : ""}
+                </span>
+                <small>
+                  {source.variantCount}{" "}
+                  {source.variantCount === 1 ? "version" : "versions"} ·{" "}
+                  {source.publicationCount}{" "}
+                  {source.publicationCount === 1 ? "release" : "releases"} ·{" "}
+                  {source.observationCount}{" "}
+                  {source.observationCount === 1 ? "result" : "results"}
+                  {source.latestObservedAt
+                    ? ` · latest ${new Date(source.latestObservedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}`
+                    : ""}
+                </small>
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {experiment.sources.length > 0 && (
         <section
           className="direction-linked-sources"

@@ -5,6 +5,7 @@ const icons = {
   engineering: Braces,
   entrepreneurship: Compass,
   finance: Landmark,
+  content: Play,
   youtube: Play,
 };
 

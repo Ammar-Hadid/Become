@@ -41,7 +41,26 @@ export async function validateExperimentSources(
       "sourceInteractionIds",
     );
 }
-export async function saveExperiment(userId: string, input: unknown) {
+export async function validateExperimentContentSources(
+  tx: DirectionTx,
+  userId: string,
+  ids: string[],
+) {
+  if (
+    new Set(ids).size !== ids.length ||
+    (await tx.content.count({ where: { userId, id: { in: ids } } })) !==
+      ids.length
+  )
+    throw new DirectionError(
+      "Choose each owned creative work once.",
+      "sourceContentIds",
+    );
+}
+export async function saveExperiment(
+  userId: string,
+  input: unknown,
+  transaction?: DirectionTx,
+) {
   const c = z
       .object({
         id: z.string().optional(),
@@ -52,7 +71,7 @@ export async function saveExperiment(userId: string, input: unknown) {
       })
       .parse(input),
     hash = fingerprint(c);
-  return prisma.$transaction(async (tx) => {
+  const mutate = async (tx: DirectionTx) => {
     await lockDirection(tx, userId, "experiments");
     const prior = await tx.experimentChange.findUnique({
       where: { userId_operationKey: { userId, operationKey: c.operationKey } },
@@ -102,7 +121,14 @@ export async function saveExperiment(userId: string, input: unknown) {
         "repeatedFromId",
       );
     await validateExperimentSources(tx, userId, c.draft.sourceInteractionIds);
-    const { criteria, domainIds, sourceInteractionIds, ...draft } = c.draft;
+    const {
+      criteria,
+      domainIds,
+      sourceInteractionIds,
+      sourceContentIds = [],
+      ...draft
+    } = c.draft;
+    await validateExperimentContentSources(tx, userId, sourceContentIds);
     void domainIds;
     const data = {
       ...draft,
@@ -133,6 +159,16 @@ export async function saveExperiment(userId: string, input: unknown) {
         interactionId,
       })),
     });
+    await tx.experimentContentSource.deleteMany({
+      where: { userId, experimentId: row.id },
+    });
+    await tx.experimentContentSource.createMany({
+      data: sourceContentIds.map((contentId) => ({
+        userId,
+        experimentId: row.id,
+        contentId,
+      })),
+    });
     await saveCriteria(tx, userId, { experimentId: row.id }, criteria);
     const capturedCriteria = await tx.directionCriterion.findMany({
       where: { userId, experimentId: row.id },
@@ -154,5 +190,6 @@ export async function saveExperiment(userId: string, input: unknown) {
       },
     });
     return { id: row.id, version: row.version };
-  });
+  };
+  return transaction ? mutate(transaction) : prisma.$transaction(mutate);
 }

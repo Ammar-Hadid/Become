@@ -104,6 +104,57 @@ textarea.text-input--textarea-lg {
   color: var(--color-text-muted);
 }
 
+.select-control,
+.select-control .submenu {
+  min-width: 0;
+  width: 100%;
+}
+
+.select-trigger {
+  display: flex;
+  width: 100%;
+  min-height: var(--spacing-input-height-md);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-input);
+  padding: 0 var(--spacing-md);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.select-trigger:hover {
+  border-color: #3a3f49;
+}
+
+.select-trigger:focus-visible {
+  border-color: #8e6a31;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(232, 168, 62, 0.08);
+}
+
+.select-trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-trigger > svg {
+  width: 16px;
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+}
+
+.select-control .menu-item {
+  justify-content: space-between;
+}
+
 .form-error {
   border: 1px solid rgba(229, 103, 103, 0.3);
   border-radius: 9px;

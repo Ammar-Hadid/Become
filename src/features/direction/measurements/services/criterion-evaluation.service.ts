@@ -1,4 +1,8 @@
 import {
+  readContentMeasurement,
+  readContentCohort,
+} from "@/features/content/measurements/queries/content-measurement.query";
+import {
   resolveEvidence,
   type ResolvedEvidence,
 } from "@/features/direction/evidence/services/evidence-reference.service";
@@ -36,6 +40,11 @@ import { METRIC_CATALOG } from "@/features/direction/measurements/constants/metr
 export function criterionDraft(row: DirectionCriterion): CriterionDraft {
   return {
     selectedOutreachOnly: row.selectedOutreachOnly,
+    contentId: row.contentId ?? undefined,
+    channelId: row.channelId ?? undefined,
+    contentFormat:
+      (row.contentFormat as CriterionDraft["contentFormat"]) ?? undefined,
+    selectedContentOnly: row.selectedContentOnly || undefined,
     id: row.id,
     key: row.key,
     metric: row.metric as CriterionDraft["metric"],
@@ -84,7 +93,9 @@ export async function evaluateCriterion(
   at = new Date(),
   outreachIds?: string[],
   offset = 0,
+  contentIds?: string[],
 ): Promise<CriterionEvaluation> {
+  c = { ...c, selectedContentOnly: c.selectedContentOnly || undefined };
   outreachIds = c.selectedOutreachOnly ? (outreachIds ?? []) : undefined;
   const window = measurementWindow(c, lifetime, at),
     catalog = METRIC_CATALOG.find((m) => m.key === c.metric)!;
@@ -338,7 +349,13 @@ export async function evaluateCriterion(
   } else if (c.metric === "SESSION_TIME") {
     const data = await readSessionMeasurement(
         tx,
-        { userId, ...window, ...c },
+        {
+          userId,
+          contentId: c.contentId,
+          contentIds: c.selectedContentOnly ? (contentIds ?? []) : undefined,
+          ...window,
+          ...c,
+        },
         offset,
       ),
       seconds = BigInt(data.seconds);
@@ -398,6 +415,38 @@ export async function evaluateCriterion(
         formatDuration(Number(r.seconds), true),
       ),
     );
+  } else if (
+    c.metric === "CONTENT_CREATED" ||
+    c.metric === "CONTENT_VARIANTS_CREATED" ||
+    c.metric === "CONTENT_PUBLICATIONS"
+  ) {
+    const data = await readContentMeasurement(
+      tx,
+      {
+        userId,
+        metric: c.metric,
+        ...window,
+        contentId: c.contentId,
+        channelId: c.channelId,
+        contentFormat: c.contentFormat,
+        contentIds: c.selectedContentOnly ? (contentIds ?? []) : undefined,
+      },
+      offset,
+    );
+    numeric(
+      BigInt(data.count),
+      BigInt(c.target),
+      `${data.count} ${catalog.unit}`,
+      data.count,
+      data.hash,
+    );
+    e.sources = data.rows.map((r) =>
+      source(r.id, r.title, `/content/${r.contentId}`, r.occurredAt, "1"),
+    );
+    e.exclusions = [
+      "No inference from stages, planned dates or timer sessions.",
+      "Withdrawn release claims are excluded; locally archived work retains recorded facts.",
+    ];
   } else if (c.metric === "ENGINEERING_EVIDENCE") {
     const data = await readEngineeringMeasurement(
       tx,
@@ -680,6 +729,9 @@ export async function evaluateCriterion(
       startOn: c.startOn ?? lifetime.startOn,
       endOn: c.endOn ?? lifetime.targetOn,
     },
+    selectedContentIds: c.selectedContentOnly
+      ? [...(contentIds ?? [])].sort()
+      : undefined,
     selectedOutreachIds: c.selectedOutreachOnly
       ? [...(outreachIds ?? [])].sort()
       : undefined,
@@ -709,11 +761,21 @@ export async function evaluateDirection(
   mode: "ALL" | "ANY",
   at = new Date(),
   outreachIds?: string[],
+  contentIds?: string[],
 ): Promise<Evaluation> {
   const values: CriterionEvaluation[] = [];
   for (const criterion of criteria)
     values.push(
-      await evaluateCriterion(tx, userId, criterion, lifetime, at, outreachIds),
+      await evaluateCriterion(
+        tx,
+        userId,
+        criterion,
+        lifetime,
+        at,
+        outreachIds,
+        0,
+        contentIds,
+      ),
     );
   const flags = values.map((e) => e.reached);
   const criteriaMet = !flags.length
@@ -736,13 +798,18 @@ export async function evaluateDirection(
       : criteriaMet
         ? "The configured measurable conditions are reached; your conclusion is still needed."
         : `${values.filter((e) => e.reached).length} of ${values.length} criteria reached${flags.includes(null) ? " · some evidence needs review" : ""}`;
+  const contentCohort = contentIds?.length
+    ? await readContentCohort(tx, userId, contentIds)
+    : undefined;
   return {
+    contentCohort,
     criteria: values,
     criteriaMet,
     progressSummary,
     evaluatedAt: at.toISOString(),
     fingerprint: fingerprint({
       mode,
+      contentCohort,
       definitions: values.map((e) => e.fingerprint),
     }),
   };

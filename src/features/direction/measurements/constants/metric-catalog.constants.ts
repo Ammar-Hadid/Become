@@ -1,6 +1,37 @@
 import type { MetricCapability } from "@/features/direction/types/direction.types";
 export const METRIC_CATALOG: MetricCapability[] = [
   {
+    key: "CONTENT_CREATED",
+    name: "Creative works started",
+    description:
+      "Canonical Content records first created during the selected dates.",
+    unit: "works",
+    scopes: ["contentId"],
+    monetary: false,
+    caveat:
+      "Several versions or channel releases remain one creative work. Local archive does not erase creation.",
+  },
+  {
+    key: "CONTENT_VARIANTS_CREATED",
+    name: "Content versions created",
+    description: "Distinct versions first created during the selected dates.",
+    unit: "versions",
+    scopes: ["contentId", "contentFormat"],
+    monetary: false,
+    caveat: "Cross-posting a version does not create another version.",
+  },
+  {
+    key: "CONTENT_PUBLICATIONS",
+    name: "Content releases recorded",
+    description:
+      "Explicit, non-withdrawn publications by their actual Amsterdam release date.",
+    unit: "releases",
+    scopes: ["contentId", "channelId", "contentFormat"],
+    monetary: false,
+    caveat:
+      "Manually reported, not platform verified. Stage, planned dates and sessions do not count as publication. Three channel releases count as three publications.",
+  },
+  {
     key: "MANUAL",
     name: "Evidence and your judgment",
     description: "A dated assessment of a qualitative outcome.",
@@ -64,7 +95,14 @@ export const METRIC_CATALOG: MetricCapability[] = [
     name: "Recorded focus time",
     description: "Completed session time, clipped to the selected dates.",
     unit: "minutes",
-    scopes: ["domainId", "activityTypeId", "projectId", "nicheId", "companyId"],
+    scopes: [
+      "domainId",
+      "activityTypeId",
+      "projectId",
+      "nicheId",
+      "companyId",
+      "contentId",
+    ],
     monetary: false,
     caveat:
       "Running timers are provisional. Time is not an outcome or proof of external activity.",

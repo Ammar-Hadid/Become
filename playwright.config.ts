@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isolatedPort = process.env.BECOME_E2E_PORT;
+const port = Number(isolatedPort ?? 3010);
+if (!Number.isInteger(port) || port < 1024 || port > 65535)
+  throw new Error("BECOME_E2E_PORT must be a local development port.");
+const baseURL = `http://localhost:${port}`;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -7,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3010",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -16,9 +21,8 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
-    command:
-      "BETTER_AUTH_URL=http://localhost:3010 ./node_modules/.bin/next dev -p 3010",
-    url: "http://localhost:3010/sign-in",
+    command: `BETTER_AUTH_URL=${baseURL} ./node_modules/.bin/next dev ${isolatedPort ? "--webpack " : ""}-p ${port}`,
+    url: `${baseURL}/sign-in`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

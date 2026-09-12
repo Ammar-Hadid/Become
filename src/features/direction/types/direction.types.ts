@@ -10,7 +10,10 @@ export type MetricKey =
   | "CONVERSATION_COMPANIES"
   | "SESSION_TIME"
   | "ENGINEERING_EVIDENCE"
-  | "SAVINGS_GOAL";
+  | "SAVINGS_GOAL"
+  | "CONTENT_CREATED"
+  | "CONTENT_VARIANTS_CREATED"
+  | "CONTENT_PUBLICATIONS";
 export type OwnedOption = {
   id: string;
   name: string;
@@ -19,6 +22,10 @@ export type OwnedOption = {
 };
 export type PageResult<T> = { items: T[]; nextCursor: string | null };
 export type CriterionDraft = {
+  contentId?: string;
+  channelId?: string;
+  contentFormat?: "LONG_FORM" | "SHORT_VERTICAL" | "OTHER";
+  selectedContentOnly?: boolean;
   selectedOutreachOnly?: boolean;
   id?: string;
   key: string;
@@ -82,7 +89,21 @@ export type CriterionEvaluation = {
   evaluatedAt: string;
   fingerprint: string;
 };
+export type ContentCohortEvidence = {
+  sources: {
+    id: string;
+    label: string;
+    href: string;
+    variantCount: number;
+    publicationCount: number;
+    observationCount: number;
+    latestObservedAt: string | null;
+    archived: boolean;
+  }[];
+  fingerprint: string;
+};
 export type Evaluation = {
+  contentCohort?: ContentCohortEvidence;
   criteria: CriterionEvaluation[];
   criteriaMet: boolean | null;
   progressSummary: string;
@@ -110,6 +131,8 @@ export type CriterionScopes = Record<
   string,
   Partial<
     Record<
+      | "contentId"
+      | "channelId"
       | "workSourceId"
       | "companyId"
       | "offerRevisionId"
@@ -159,6 +182,7 @@ export type ExperimentDraft = {
   criterionMode: "ALL" | "ANY";
   criteria: CriterionDraft[];
   sourceInteractionIds: string[];
+  sourceContentIds?: string[];
 };
 export type ExperimentView = ExperimentDraft & {
   id: string;

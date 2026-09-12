@@ -49,8 +49,8 @@ export const DEFAULT_DOMAINS = [
     ],
   },
   {
-    name: "YouTube",
-    slug: "youtube",
+    name: "Content",
+    slug: "content",
     icon: "play",
     analyticsColor: "#9C7772",
     activities: [

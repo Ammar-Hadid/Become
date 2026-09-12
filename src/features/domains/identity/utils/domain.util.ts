@@ -6,7 +6,10 @@ export function toDomainSlug(value: string) {
 }
 
 export function getDomainHref(slug: string) {
-  return slug === "engineering" || slug === "finance" || slug === "entrepreneurship"
+  return slug === "engineering" ||
+    slug === "finance" ||
+    slug === "entrepreneurship" ||
+    slug === "content"
     ? `/${slug}`
     : `/domains/${slug}`;
 }

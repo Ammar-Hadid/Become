@@ -9,7 +9,10 @@ import {
   dateLabel,
 } from "@/features/direction/services/direction-mutation.service";
 import { validateCriterion } from "@/features/direction/services/criterion.service";
-import { validateExperimentSources } from "@/features/direction/services/experiment.service";
+import {
+  validateExperimentSources,
+  validateExperimentContentSources,
+} from "@/features/direction/services/experiment.service";
 import {
   criterionDraft,
   evaluateCriterion,
@@ -40,7 +43,10 @@ export async function previewDirection(userId: string, input: unknown) {
       if (c.id && !owner) throw new DirectionError("Intention not found.");
       for (const criterion of c.draft.criteria) {
         await validateCriterion(tx, userId, criterion);
-        if (c.kind === "GOAL" && criterion.selectedOutreachOnly)
+        if (
+          c.kind === "GOAL" &&
+          (criterion.selectedOutreachOnly || criterion.selectedContentOnly)
+        )
           throw new DirectionError(
             "Selected outreach belongs to an experiment.",
           );
@@ -67,6 +73,12 @@ export async function previewDirection(userId: string, input: unknown) {
           userId,
           c.draft.sourceInteractionIds,
         );
+      if (c.kind === "EXPERIMENT")
+        await validateExperimentContentSources(
+          tx,
+          userId,
+          c.draft.sourceContentIds ?? [],
+        );
       return evaluateDirection(
         tx,
         userId,
@@ -75,6 +87,7 @@ export async function previewDirection(userId: string, input: unknown) {
         c.draft.criterionMode,
         new Date(),
         c.kind === "EXPERIMENT" ? c.draft.sourceInteractionIds : undefined,
+        c.kind === "EXPERIMENT" ? (c.draft.sourceContentIds ?? []) : undefined,
       );
     },
     { isolationLevel: "RepeatableRead", timeout: 20000 },
@@ -89,7 +102,10 @@ export async function getCriterionSources(
     async (tx) => {
       const criterion = await tx.directionCriterion.findFirst({
         where: { id, userId },
-        include: { goal: true, experiment: { include: { sources: true } } },
+        include: {
+          goal: true,
+          experiment: { include: { sources: true, contentSources: true } },
+        },
       });
       if (!criterion) return null;
       const owner = criterion.goal ?? criterion.experiment!;
@@ -104,6 +120,7 @@ export async function getCriterionSources(
         new Date(),
         criterion.experiment?.sources.map((s) => s.interactionId),
         offset,
+        criterion.experiment?.contentSources.map((s) => s.contentId),
       );
     },
     { isolationLevel: "RepeatableRead", timeout: 20000 },
