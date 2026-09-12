@@ -1,15 +1,46 @@
+import {
+  normalizeCotsQuote,
+  normalizeCotsText,
+} from "./cots-text-normalizer.util";
+
 export function plainWikiText(value: string) {
+  return normalizeCotsText(
+    value
+      .replace(/<ref\b[^>]*>[\s\S]*?<\/ref>|<ref\b[^>]*\/>/gi, "")
+      .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+      .replace(/\[\[([^\]]+)\]\]/g, "$1")
+      .replace(/\[(https?:\/\/\S+)\s+([^\]]+)\]/g, "$2")
+      .replace(/'{2,5}/g, "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, "&")
+      .replace(/&#39;/g, "'"),
+  );
+}
+
+function comparableSpeakerName(value: string) {
   return value
-    .replace(/<ref\b[^>]*>[\s\S]*?<\/ref>|<ref\b[^>]*\/>/gi, "")
-    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
-    .replace(/\[\[([^\]]+)\]\]/g, "$1")
-    .replace(/\[(https?:\/\/\S+)\s+([^\]]+)\]/g, "$2")
-    .replace(/'{2,5}/g, "")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
+}
+
+function speakerIdentityMatch(speaker: string, identity: string) {
+  const speakerName = comparableSpeakerName(speaker);
+  const identityName = comparableSpeakerName(identity);
+  const speakerTokens = speakerName.split(" ").filter(Boolean);
+  const identityTokens = identityName.split(" ").filter(Boolean);
+  const exact = Boolean(speakerName) && speakerName === identityName;
+  const alias =
+    !exact &&
+    speakerTokens.length === 1 &&
+    speakerTokens[0].length > 2 &&
+    identityTokens.length > 1 &&
+    (speakerTokens[0] === identityTokens[0] ||
+      speakerTokens[0] === identityTokens.at(-1));
+  return { exact, alias };
 }
 
 /** Supported explicit speaker headings/turns only. Narrative never becomes character dialogue. */
@@ -81,34 +112,49 @@ export function extractWikiQuotes(
       }
       continue;
     }
-    if (
-      !/^(?:\*[^*]|:+\s*(?:'{2,5})?[^:]{1,100}:|'{2,5}[^:]{1,100}:)/.test(raw)
-    ) {
+    const topLevelQuote = /^\*[^*]/.test(raw);
+    const colonPrefixedTurn = /^:+\s*(?:'{2,5})?[^:\n]{1,100}:\s*/.test(raw);
+    const bulletSpeakerTurn =
+      /^\*[^*]\s*'{2,5}[^'\n]{1,100}(?:'{2,5}\s*:|:'{2,5})\s*/i.test(raw);
+    const boldSpeakerTurn =
+      /^'{2,5}[^'\n]{1,100}(?:'{2,5}\s*(?:\([^\n)]{1,60}\)\s*)?:|(?::|,\s*to\b[^:\n]{0,60}:)'{2,5}\s*)/i.test(
+        raw,
+      );
+    if (!topLevelQuote && !colonPrefixedTurn && !boldSpeakerTurn) {
       if (pending && !hasCitation && raw.trim() && !/^[{[|!<]/.test(raw.trim()))
         pending.text += ` ${plainWikiText(raw)}`;
       continue;
     }
     flush();
     if (about) continue;
-    const text = plainWikiText(raw.replace(/^[*:]+\s*/, ""));
-    const explicit = text.match(/^([^:]{1,100}):\s*([\s\S]+)$/);
+    const normalized = normalizeCotsQuote(
+      plainWikiText(raw.replace(/^[*:]+\s*/, "")),
+    );
+    if (!normalized) continue;
+    const text = normalized.text;
+    const detail = [heading, normalized.sourceContext]
+      .filter(Boolean)
+      .join(" · ");
+    const explicit =
+      colonPrefixedTurn || bulletSpeakerTurn || boldSpeakerTurn
+        ? text.match(/^([^:]{1,100}):\s*([\s\S]+)$/)
+        : null;
     if (explicit) {
-      const speaker = explicit[1].replace(/,\s*to\b.*$/i, "").trim();
-      const exact = speaker.toLocaleLowerCase() === target;
-      const short =
-        speaker.length > 2 &&
-        !speaker.includes(" ") &&
-        target.startsWith(`${speaker.toLocaleLowerCase()} `);
-      if (exact || short) {
+      const speaker = explicit[1]
+        .replace(/\s*\([^)]*\)\s*$/u, "")
+        .replace(/,\s*to\b.*$/i, "")
+        .trim();
+      const { exact, alias } = speakerIdentityMatch(speaker, name);
+      if (exact || alias) {
         attributed = true;
         pending = {
           text: explicit[2].trim(),
-          detail: short
-            ? `${heading} · Source names the speaker ${speaker}; confirm the identity match.`
-            : heading,
+          detail: alias
+            ? `${detail} · Source names the speaker ${speaker}; confirm the identity match.`
+            : detail,
           speaker,
           dialogue: true,
-          unresolved: !exact,
+          unresolved: alias,
         };
       }
     } else {
@@ -117,7 +163,7 @@ export function extractWikiQuotes(
         [...headings.values()].some((v) => v.toLocaleLowerCase() === target);
       pending = {
         text,
-        detail: heading,
+        detail,
         speaker: name,
         dialogue: false,
         unresolved: false,

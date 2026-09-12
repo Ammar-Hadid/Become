@@ -22,6 +22,7 @@ const scopes: Record<CriterionDraft["metric"], string[]> = {
     "companyId",
   ],
   ENGINEERING_EVIDENCE: ["projectId"],
+  ENGINEERING_PROJECT_COMPLETED: ["projectId"],
   SAVINGS_GOAL: ["savingsGoalId"],
 };
 const referenceKeys = [
@@ -100,6 +101,21 @@ export async function validateCriterion(
     field("companyId", "Choose the company whose attributed receipts count.");
   if (data.metric === "SAVINGS_GOAL" && !data.savingsGoalId)
     field("savingsGoalId", "Choose an existing Finance savings goal.");
+  if (data.metric === "ENGINEERING_PROJECT_COMPLETED") {
+    if (!data.projectId)
+      field("projectId", "Choose the exact Engineering project to complete.");
+    if (data.target)
+      field(
+        "target",
+        "Project completion checks status and has no numeric target.",
+      );
+    if (data.startOn || data.endOn)
+      field(
+        data.startOn ? "startOn" : "endOn",
+        "Project completion checks current status and has no evidence date window.",
+      );
+    if (data.currency) field("currency", "Project completion has no currency.");
+  }
   if (data.activityTypeId && !data.domainId)
     field("domainId", "Choose the activity's domain.");
   if (
@@ -172,7 +188,9 @@ export async function validateCriterion(
       field("target", (error as Error).message);
     }
   } else if (
-    !["MANUAL", "SAVINGS_GOAL"].includes(data.metric) &&
+    !["MANUAL", "SAVINGS_GOAL", "ENGINEERING_PROJECT_COMPLETED"].includes(
+      data.metric,
+    ) &&
     (!/^\d+$/.test(data.target) ||
       !Number.isSafeInteger(Number(data.target)) ||
       BigInt(data.target) <= 0n)

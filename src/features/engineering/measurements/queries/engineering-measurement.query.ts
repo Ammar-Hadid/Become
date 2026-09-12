@@ -3,6 +3,19 @@ import {
   type EngineeringEvidenceType,
 } from "@/generated/prisma/client";
 import type { DirectionTx } from "@/features/direction/services/direction-mutation.service";
+
+export async function readEngineeringProjectCompletion(
+  tx: DirectionTx,
+  userId: string,
+  projectId: string,
+) {
+  // Archiving does not withdraw the canonical project's lifecycle state.
+  return tx.engineeringProject.findFirst({
+    where: { id: projectId, userId },
+    select: { id: true, name: true, status: true, completedOn: true },
+  });
+}
+
 export async function readEngineeringMeasurement(
   tx: DirectionTx,
   s: {

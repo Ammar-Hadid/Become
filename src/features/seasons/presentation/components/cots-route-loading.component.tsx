@@ -33,7 +33,7 @@ export function CotsRouteLoading() {
           media={media}
           active
           variant="route"
-          label="Returning to your current chapter…"
+          label="Returning to your current season…"
           detail="Loading Direction"
         />
       ) : (

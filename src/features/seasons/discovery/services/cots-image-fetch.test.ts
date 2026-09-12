@@ -113,4 +113,11 @@ describe("public image HTTP security boundary", () => {
       fetchPublicImage("https://images.example.com/a.png"),
     ).rejects.toThrow("still image");
   });
+  it("turns a blocked remote download into actionable guidance", async () => {
+    publicDns();
+    respond(403, { "content-type": "text/html" });
+    await expect(
+      fetchPublicImage("https://images.example.com/blocked.jpg"),
+    ).rejects.toThrow("Remove it and choose another image");
+  });
 });

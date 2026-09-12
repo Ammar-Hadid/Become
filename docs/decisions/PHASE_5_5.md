@@ -13,8 +13,15 @@ invitation-card proposal. No confetti or new motion dependency is used.
   dialogs, interaction already begun, hidden pages, and deep links prevent entry.
   `Not now` stores `openingDeferredAt` independently of the draft version. It
   prevents further automatic entry for that Season; Direction still offers resume.
-- Four ritual stages remain. COTS uses Identity → Images → Words inside stage 3,
-  followed by the real saved poster preview in stage 4. Empty media is valid.
+- Four ritual stages remain. COTS uses Identity → Standards → Images → Words
+  inside stage 3, followed by the real saved poster preview in stage 4. Empty
+  media is valid.
+- Stage 2 creates a complete goal inside an in-place ritual studio instead of
+  navigating into the application shell. The opening header, progress rail, URL and
+  saved draft remain anchored while the standard goal fields, domains and optional
+  evidence builder use the stage body. The user explicitly places the result as the
+  main direction or a supporting goal before saving. Standalone goal creation keeps
+  its existing page presentation and navigation unchanged.
 - The user explicitly selects Anime, TV show, Movie, Game, Book, Comic, or Public
   figure / real-life person. The registry adapts work/context fields and derives
   subject kind. Public figures require no fictional source work. Fan art is valid.
@@ -41,29 +48,72 @@ Adapters are implemented, but an adapter with missing credentials or entitlement
 returns `SETUP_REQUIRED`. Subsequent sources remain available. No account,
 subscription, API key, paid top-up or external worker is created automatically.
 
-| Category      | Image order                                     | Quote/dialogue/text order                           |
-| ------------- | ----------------------------------------------- | --------------------------------------------------- |
-| Anime         | Zerochan → SerpApi Google Images → Brave Images | Wikiquote → Animechan                               |
-| TV            | SerpApi → Brave                                 | Wikiquote work/season pages → Clip.Cafe             |
-| Movie         | SerpApi → Brave                                 | Wikiquote film pages → Clip.Cafe                    |
-| Game          | SerpApi → Brave → Zerochan                      | Wikiquote → community source review                 |
-| Book          | SerpApi → Brave → Commons                       | Wikiquote → edition-specific Wikisource passages    |
-| Comic         | SerpApi → Brave → Zerochan                      | Wikiquote comic/run pages → community source review |
-| Public figure | Commons → SerpApi → Brave                       | Wikiquote → STANDS4 Quotes.net                      |
+| Category      | Image order                                               | Quote/dialogue/text order                           |
+| ------------- | --------------------------------------------------------- | --------------------------------------------------- |
+| Anime         | Zerochan → SerpApi Google Images → Commons → Brave Images | Wikiquote → Animechan                               |
+| TV            | SerpApi → Commons → Brave                                 | Wikiquote work/season pages → Clip.Cafe             |
+| Movie         | SerpApi → Commons → Brave                                 | Wikiquote film pages → Clip.Cafe                    |
+| Game          | SerpApi → Zerochan → Commons → Brave                      | Wikiquote → community source review                 |
+| Book          | SerpApi → Commons → Brave                                 | Wikiquote → edition-specific Wikisource passages    |
+| Comic         | SerpApi → Zerochan → Commons → Brave                      | Wikiquote comic/run pages → community source review |
+| Public figure | Commons → SerpApi → Brave                                 | Wikiquote → STANDS4 Quotes.net                      |
 
 Zerochan provides useful character/fan-art tagging; SerpApi provides broad
 character-centric coverage. Brave adds an independent index; Commons provides
 particularly useful public-person file descriptions and license metadata. A work
 poster, actor, cover, cosplay or game screenshot is not assumed to depict the
 selected character. Users review relevance and source facts before keeping items.
+Discovery omits image hosts known to challenge or block Become’s server-side
+download, so a browser-visible thumbnail is not presented as importable when the
+corresponding original cannot be saved.
+Image searches quote the exact identity and applicable work/adaptation, then add
+category-specific character or portrait context. Results are ranked from actual
+title, source description and URL evidence; low-evidence namesakes and obvious
+logos, diagrams, article graphics, group shots, props and merchandise are removed
+from the first page. Explicit ecchi, NSFW, adult and suggestive provider tags are
+rejected before persistence, with strict provider safety settings and bounded
+negative search terms as defense in depth. Canonical asset keys collapse URL/rendition variants. A bounded
+perceptual fingerprint of top provider thumbnails also suppresses resized,
+re-encoded and lightly cropped near-duplicates, including across later pages. Failed
+thumbnail fingerprinting degrades to metadata and URL deduplication rather than
+making an otherwise valid provider result unavailable.
 
 Wikiquote preserves source revisions and distinguishes speaker turns. Short labels
 such as `Arthur` and `Walter` are retained as unresolved identity matches and stay
 out of automatic rotation. Explicit nested character citations are supported.
+Quote order uses a provider's popularity-oriented result order when available, then
+applies a stable identity/work match and quote-salience score; revisions and dates
+do not boost a result. Fictional dialogue must also stand on its own outside its
+scene: stage directions, short commands and apologies, logistical chatter,
+context-dependent questions and unsupported fragments are rejected, while complete
+thoughts showing conviction, reasoning, values or reflection rank higher.
+Public-figure biography prose is rejected structurally, and a shared text normalizer
+removes bare, parenthesized and linked URLs before wording can be displayed or
+persisted. Inline media/source labels move into provenance; short label fragments
+posing as quotations are rejected. Raw social-post wording with addressed handles
+or email addresses is also rejected rather than presented as a curated quotation.
+Exact normalized duplicates are collapsed.
+When a saved work title is present, a bounded Wikiquote title search accepts only
+the punctuation/diacritic-insensitive exact match before parsing the canonical
+page. When a fictional identity has no saved work, a quoted identity search may
+select a returned work page only after that page yields an explicit full-speaker
+match; broader fuzzy results are never trusted from their title alone. Short
+first- or last-name speaker labels remain unresolved identity matches.
 TV season links are taken from actual returned work pages. Movie extraction
 requires film-category evidence to avoid returning novel text for a Movie identity.
 Unsupported layouts remain reviewable source links. Book passages need an explicit
 edition/chapter and remain passages with no invented speaker.
+
+Words discovery presents one active item at a time. The quotation sits inside a
+layered, textured primary-gold gallery frame with carved foliate rails; attribution,
+evidence and curation controls form one aligned, intentionally dim provenance strip
+outside the artwork. Previous/next controls and Left/Right keys move through the result set.
+If another provider page exists, advancing beyond the final visible quotation
+replaces the artwork with a framed continuation prompt; loading continues in place
+and the next result occupies the same stage. There is no detached load-more control.
+Each newly shown item receives one bounded glow/reveal; reduced-motion mode removes
+both animations. Manual wording entry and existing storage/import contracts remain
+unchanged.
 
 ## Setup, costs and result depth
 
@@ -71,16 +121,16 @@ Prices below are the researched September 2026 advertised baseline, not purchase
 entitlements. Confirm the account's actual terms, taxes and retention permission.
 Keys are server-only `.env` values and must never use `NEXT_PUBLIC_` prefixes.
 
-| Provider                   | Required setup and starting cost                                                                                                                                | Depth and enforced limits                                                                                                                                    | Persistence / coverage limits                                                                                                                                     |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Wikimedia interfaces       | No key or fee; identified User-Agent                                                                                                                            | Shared 40 requests/minute; Commons 20/page, Wikiquote 12 extracted items/page with pinned revision and bounded linked seasons, Wikisource 10 paragraphs/page | Preserve revision, source and file-specific license. Community attribution is not verification. Unsupported layouts and missing editions can yield links only.    |
-| Zerochan                   | Real account username in `COTS_ZEROCHAN_USERNAME`; no fabricated identity                                                                                       | 20/page, 50 requests/minute in Become; canonical tag evidence required; item detail resolves on import                                                       | Rich anime/fan-art coverage, uneven Game/Comic coverage. File access does not grant repost rights. Optional `COTS_ZEROCHAN_TAGS_JSON` maps confirmed tags.        |
-| SerpApi                    | `COTS_SERPAPI_API_KEY`; free advertised 250 searches/month; optional Starter $25/month for 1,000                                                                | `ijn` plus documented next page; 50/hour and 250 or 1,000 per conservative 31-day window                                                                     | Search result storage does not license original images. Set `COTS_SERPAPI_PLAN=starter` only with approved subscription and sufficient spending ceiling.          |
-| Brave                      | `COTS_BRAVE_SEARCH_API_KEY`, `COTS_BRAVE_STORAGE_ALLOWED=true`, approved nonzero budget                                                                         | Finite batch up to 100; no invented offset; app cap at most 1,000/31 days and $5/1,000 baseline budget calculation                                           | Storage-enabled entitlement and its actual price must be confirmed; advertised search pricing alone does not establish retention permission.                      |
-| Animechan                  | Free endpoint; no paid activation implemented                                                                                                                   | Five results/page; conservative 5/hour and 90/day in Become                                                                                                  | Exact character/work filter. Catalog gaps are real; no episode or translation verification. No generated replacement quotations.                                  |
-| Clip.Cafe                  | `COTS_CLIPCAFE_API_KEY`, confirmed API/retention entitlement, `COTS_CLIPCAFE_RETENTION_ALLOWED=true`, actual inclusive cost in `COTS_CLIPCAFE_MONTHLY_COST_USD` | 10 clips/page via `from`, 8/minute and 1,800/31 days in Become                                                                                               | Advertised PRO baseline $5 + VAT requires account/API confirmation. Parse explicit target speaker turns; other listed characters are not assigned the transcript. |
-| STANDS4                    | `COTS_STANDS4_UID`, `COTS_STANDS4_TOKEN_ID`, `COTS_STANDS4_RETENTION_ALLOWED=true`                                                                              | Finite author query; 90/day in Become                                                                                                                        | Free advertised tier subject to retention/attribution confirmation. Provider author match is not an original-source verification.                                 |
-| Game/Comic community pages | No automated transcript access enabled                                                                                                                          | Source links only, no fabricated pagination or extracted candidates                                                                                          | Fandom automated access requires permission. The independent full-text fallback is intentionally unavailable until access is established.                         |
+| Provider                   | Required setup and starting cost                                                                                                                                | Depth and enforced limits                                                                                                                                                                                                                                                        | Persistence / coverage limits                                                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wikimedia interfaces       | No key or fee; identified User-Agent                                                                                                                            | Shared 180 requests/minute beneath Wikimedia’s documented 200/minute identified-client limit; duplicate name lookups are coalesced and cached; Commons 20/page, Wikiquote 12 extracted items/page with pinned revision and bounded linked seasons, Wikisource 10 paragraphs/page | Preserve revision, source and file-specific license. Community attribution is not verification. Unsupported layouts and missing editions can yield links only.    |
+| Zerochan                   | Real account username in `COTS_ZEROCHAN_USERNAME`; no fabricated identity                                                                                       | 20/page, 50 requests/minute in Become; canonical tag evidence required; item detail resolves on import                                                                                                                                                                           | Rich anime/fan-art coverage, uneven Game/Comic coverage. File access does not grant repost rights. Optional `COTS_ZEROCHAN_TAGS_JSON` maps confirmed tags.        |
+| SerpApi                    | `COTS_SERPAPI_API_KEY`; free advertised 250 searches/month; optional Starter $25/month for 1,000                                                                | `ijn` plus documented next page; 50/hour and 250 or 1,000 per conservative 31-day window                                                                                                                                                                                         | Search result storage does not license original images. Set `COTS_SERPAPI_PLAN=starter` only with approved subscription and sufficient spending ceiling.          |
+| Brave                      | `COTS_BRAVE_SEARCH_API_KEY`, `COTS_BRAVE_STORAGE_ALLOWED=true`, approved nonzero budget                                                                         | Finite batch up to 100; no invented offset; app cap at most 1,000/31 days and $5/1,000 baseline budget calculation                                                                                                                                                               | Storage-enabled entitlement and its actual price must be confirmed; advertised search pricing alone does not establish retention permission.                      |
+| Animechan                  | Free endpoint; no paid activation implemented                                                                                                                   | Five results/page; conservative 5/hour and 90/day in Become                                                                                                                                                                                                                      | Exact character/work filter. Catalog gaps are real; no episode or translation verification. No generated replacement quotations.                                  |
+| Clip.Cafe                  | `COTS_CLIPCAFE_API_KEY`, confirmed API/retention entitlement, `COTS_CLIPCAFE_RETENTION_ALLOWED=true`, actual inclusive cost in `COTS_CLIPCAFE_MONTHLY_COST_USD` | 10 clips/page via `from`, 8/minute and 1,800/31 days in Become                                                                                                                                                                                                                   | Advertised PRO baseline $5 + VAT requires account/API confirmation. Parse explicit target speaker turns; other listed characters are not assigned the transcript. |
+| STANDS4                    | `COTS_STANDS4_UID`, `COTS_STANDS4_TOKEN_ID`, `COTS_STANDS4_RETENTION_ALLOWED=true`                                                                              | Finite author query; 90/day in Become                                                                                                                                                                                                                                            | Free advertised tier subject to retention/attribution confirmation. Provider author match is not an original-source verification.                                 |
+| Game/Comic community pages | No automated transcript access enabled                                                                                                                          | Source links only, no fabricated pagination or extracted candidates                                                                                                                                                                                                              | Fandom automated access requires permission. The independent full-text fallback is intentionally unavailable until access is established.                         |
 
 Provider documentation: [Wikimedia API](https://www.mediawiki.org/wiki/API:Main_page),
 [Zerochan API](https://www.zerochan.net/api), [SerpApi pricing](https://serpapi.com/pricing),
@@ -99,6 +149,10 @@ offline source details and existing imported media work without provider credent
 discovery/import; it does not require the provider to display already saved media.
 Omit `wikidata` from an explicit list to disable identity assistance while keeping
 manual identity confirmation available.
+Provider setup, throttling, exhaustion and availability failures collapse into one
+non-technical ritual message. Exact provider, status, reason and discovery context
+are recorded as structured server diagnostics; detailed failure reasons are not
+serialized into the client response.
 `COTS_MONTHLY_SPEND_LIMIT_USD` defaults to zero. Paid plan commitments are counted
 before chargeable fallback requests. Persisted request reservations and cooldowns
 survive restarts; 429 observes Retry-After. These are app guardrails, not control of
@@ -144,7 +198,9 @@ an independently purchased subscription or a guarantee about a provider's billin
   selected source snapshots remain durable under the enabled provider's terms.
 - Text wording kind, extracted form and evidence are separate. Selection never
   verifies attribution. Passages, paraphrases, unresolved matches and source links
-  cannot silently become exact character quotations; source links are not selectable.
+  cannot silently become exact character quotations; source links are not selectable
+  and never occupy a framed word-gallery slot. When no wording is found, any useful
+  source links remain collapsed beneath the ordinary empty state as optional recovery.
 
 ## Verification and remaining activation checks
 
@@ -157,6 +213,15 @@ Automated coverage includes ownership, independent revisions, category changes,
 cross-identity reuse, duplicate confirmations/workers, pending-poster preflight,
 prepared-file recovery/cleanup, manual media, provider response parsing, revision
 pagination, private-address/DNS/redirect defenses and streamed byte limits.
+Image-quality fixtures cover Levi Ackerman / Attack on Titan, Elliot Alderson /
+Mr. Robot and David Bowie, plus exact rendition-key and perceptual resized,
+re-encoded and light-crop deduplication against a distinct-image control.
+Text-quality fixtures cover an anime character, TV character and public figure,
+including provider-popularity precedence, exact identity/work preference, biography
+rejection, duplicate wording and URL normalization. A missing-work regression covers
+Monkey D. Luffy resolving to `One Piece` only after explicit speaker validation,
+including the page's shortened `Luffy` labels as unresolved matches. The opening
+journey asserts that the quote gallery renders only its active item while navigating.
 
 Final verification: whole-repository ESLint passed; the full Vitest run with Season
 and COTS integration enabled passed 192 tests (54 unrelated opt-in integration tests

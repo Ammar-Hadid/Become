@@ -214,9 +214,11 @@ export function CriterionBuilder({
               "BUSINESS_RECEIPTS",
               "NEW_RECURRING_COMPANY",
             ].includes(criterion.metric);
-          const needsTarget = !["MANUAL", "SAVINGS_GOAL"].includes(
-            criterion.metric,
-          );
+          const projectCompletion =
+            criterion.metric === "ENGINEERING_PROJECT_COMPLETED";
+          const needsTarget =
+            !projectCompletion &&
+            !["MANUAL", "SAVINGS_GOAL"].includes(criterion.metric);
           const patch = (value: Partial<CriterionDraft>) =>
             patchCriterion(criterion.key, value);
           return (
@@ -301,34 +303,42 @@ export function CriterionBuilder({
                     </label>
                   )}
                   {monetary && (
-                    <CurrencySelect value={criterion.currency ?? ""} onValueChange={(currency) => patch({ currency })} required />
+                    <CurrencySelect
+                      value={criterion.currency ?? ""}
+                      onValueChange={(currency) => patch({ currency })}
+                      required
+                    />
                   )}
-                  <label>
-                    <span className="field-label">
-                      Evidence starts <span>— defaults to goal</span>
-                    </span>
-                    <input
-                      className="text-input"
-                      type="date"
-                      value={criterion.startOn ?? ""}
-                      onChange={(event) =>
-                        patch({ startOn: event.target.value || undefined })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span className="field-label">
-                      Evidence ends <span>— defaults to goal</span>
-                    </span>
-                    <input
-                      className="text-input"
-                      type="date"
-                      value={criterion.endOn ?? ""}
-                      onChange={(event) =>
-                        patch({ endOn: event.target.value || undefined })
-                      }
-                    />
-                  </label>
+                  {!projectCompletion && (
+                    <>
+                      <label>
+                        <span className="field-label">
+                          Evidence starts <span>— defaults to goal</span>
+                        </span>
+                        <input
+                          className="text-input"
+                          type="date"
+                          value={criterion.startOn ?? ""}
+                          onChange={(event) =>
+                            patch({ startOn: event.target.value || undefined })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span className="field-label">
+                          Evidence ends <span>— defaults to goal</span>
+                        </span>
+                        <input
+                          className="text-input"
+                          type="date"
+                          value={criterion.endOn ?? ""}
+                          onChange={(event) =>
+                            patch({ endOn: event.target.value || undefined })
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
 
                   {criterion.metric === "WORK_SOURCE_INCOME" && (
                     <ScopePicker
@@ -438,16 +448,23 @@ export function CriterionBuilder({
                         </span>
                       </label>
                     )}
-                  {["SESSION_TIME", "ENGINEERING_EVIDENCE"].includes(
-                    criterion.metric,
-                  ) && (
+                  {[
+                    "SESSION_TIME",
+                    "ENGINEERING_EVIDENCE",
+                    "ENGINEERING_PROJECT_COMPLETED",
+                  ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
                       field="projectId"
-                      label="Project scope"
+                      label={
+                        projectCompletion
+                          ? "Engineering project"
+                          : "Project scope"
+                      }
                       entityName="project"
                       optionKind="project"
                       initial={resolvedScopes.projectId}
+                      optional={!projectCompletion}
                       onChange={patch}
                     />
                   )}

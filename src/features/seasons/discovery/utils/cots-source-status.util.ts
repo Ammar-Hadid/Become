@@ -1,17 +1,8 @@
-import type { CotsSourceStatus } from "@/features/seasons/discovery/types/cots-discovery.types";
+export const COTS_DISCOVERY_ISSUE_MESSAGE =
+  "Suggestions aren’t available right now. Try again in a moment, or continue with something of your own.";
 
-export function cotsSourceStatusMessage(
-  provider: string,
-  status: CotsSourceStatus,
-  kind: "images" | "words",
-) {
-  if (status === "SETUP_REQUIRED")
-    return `${provider} is not connected in this Become installation.`;
-  if (status === "THROTTLED")
-    return `${provider} is taking a pause. Try again shortly.`;
-  if (status === "EXHAUSTED")
-    return `${provider} has no more ${kind} for this source.`;
-  if (status === "SOURCE_LINKS_ONLY")
-    return `${provider} can point you to sources to review.`;
-  return `${provider} could not be reached. Manual additions still work.`;
+export function cotsIdentitySuggestionStatusMessage(status?: string) {
+  if (["THROTTLED", "SETUP_REQUIRED", "UNAVAILABLE"].includes(status ?? ""))
+    return COTS_DISCOVERY_ISSUE_MESSAGE;
+  return "No exact match found. You can still use the name as written.";
 }

@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import { seasonCalendar } from "./season-calendar.util";
 import { measurementWindow } from "@/features/direction/measurements/utils/measurement-window.util";
 describe("season calendar and independent horizons", () => {
-  it("opens the actual 92-day chapter mid-quarter", () => {
+  it("opens the actual 92-day season mid-quarter", () => {
     const r = seasonCalendar(
       2026,
       3,

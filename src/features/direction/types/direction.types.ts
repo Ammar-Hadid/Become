@@ -10,6 +10,7 @@ export type MetricKey =
   | "CONVERSATION_COMPANIES"
   | "SESSION_TIME"
   | "ENGINEERING_EVIDENCE"
+  | "ENGINEERING_PROJECT_COMPLETED"
   | "SAVINGS_GOAL";
 export type OwnedOption = {
   id: string;

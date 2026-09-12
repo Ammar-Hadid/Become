@@ -23,49 +23,126 @@
   pointer-events: none;
 }
 
-.season-opening-ambient span:first-child {
+.season-opening-ambient::after {
+  content: "";
   position: absolute;
-  top: 31vh;
-  right: 0;
-  left: 0;
-  height: 1px;
+  z-index: 3;
+  inset: 0;
   background: linear-gradient(
     90deg,
-    transparent 4%,
-    var(--ritual-line-quiet) 28%,
-    var(--ritual-line) 50%,
-    var(--ritual-line-quiet) 72%,
-    transparent 96%
+    rgba(7, 8, 10, 0.94) 0%,
+    rgba(7, 8, 10, 0.72) 34%,
+    rgba(7, 8, 10, 0.22) 62%,
+    transparent 84%
   );
 }
 
-.season-opening-ambient span:nth-child(2) {
+.season-opening-ambient-grid {
+  --ritual-grid-cell: 3.25rem;
+  --ritual-grid-horizon: 54vh;
+  --ritual-grid-right: -9vw;
+  --ritual-grid-width: min(88vw, 88rem);
+  --ritual-grid-half-width: min(44vw, 44rem);
+  --ritual-grid-wall-height: 62vh;
+  --ritual-grid-center-x: calc(
+    100% - var(--ritual-grid-right) - var(--ritual-grid-half-width)
+  );
   position: absolute;
-  top: 31vh;
-  left: 50%;
-  width: 1px;
-  height: 12rem;
-  background: linear-gradient(var(--ritual-line), transparent);
+  z-index: 2;
+  inset: 0;
+  display: block;
+  perspective: 42rem;
+  perspective-origin: var(--ritual-grid-center-x) var(--ritual-grid-horizon);
+  transform: rotateZ(-2deg);
+  transform-origin: var(--ritual-grid-center-x) var(--ritual-grid-horizon);
+  transform-style: preserve-3d;
 }
 
-.season-opening-ambient span:last-child {
+.season-opening-ambient-wall,
+.season-opening-ambient-floor {
   position: absolute;
-  top: -23rem;
-  right: -16rem;
-  width: 42rem;
+  right: var(--ritual-grid-right);
+  display: block;
+  width: var(--ritual-grid-width);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(var(--ritual-grid-cell) - 1px),
+      rgba(244, 241, 234, 0.075) calc(var(--ritual-grid-cell) - 1px)
+        var(--ritual-grid-cell)
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 calc(var(--ritual-grid-cell) - 1px),
+      rgba(244, 241, 234, 0.075) calc(var(--ritual-grid-cell) - 1px)
+        var(--ritual-grid-cell)
+    );
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.season-opening-ambient-wall {
+  top: calc(var(--ritual-grid-horizon) - var(--ritual-grid-wall-height));
+  height: var(--ritual-grid-wall-height);
+  opacity: 0.72;
+  transform: translateZ(0);
+  transform-origin: center bottom;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.42) 30%,
+    #000 72%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.42) 30%,
+    #000 72%
+  );
+}
+
+.season-opening-ambient-floor {
+  top: var(--ritual-grid-horizon);
+  height: 82vh;
+  opacity: 0.82;
+  transform: rotateX(63deg);
+  transform-origin: center top;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.56) 26%,
+    #000 74%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.56) 26%,
+    #000 74%
+  );
+}
+
+.season-opening-ambient-glow {
+  position: absolute;
+  z-index: 1;
+  top: 13vh;
+  right: -8vw;
+  display: block;
+  width: min(48vw, 46rem);
   aspect-ratio: 1;
-  border: 1px solid rgba(232, 168, 62, 0.08);
   border-radius: 50%;
-  transform: rotate(-14deg) scaleY(0.72);
-  transition:
-    border-color var(--duration-signature) var(--ease-enter),
-    transform var(--duration-signature) var(--ease-move);
-}
-
-.season-opening-ritual[data-stage="3"] .season-opening-ambient span:last-child,
-.season-opening-ritual[data-stage="4"] .season-opening-ambient span:last-child {
-  border-color: rgba(232, 168, 62, 0.17);
-  transform: rotate(7deg) scaleY(0.82);
+  background: radial-gradient(
+    circle,
+    rgba(232, 168, 62, 0.24) 0%,
+    rgba(232, 168, 62, 0.1) 27%,
+    rgba(232, 168, 62, 0.025) 48%,
+    transparent 70%
+  );
+  filter: blur(0.75rem);
+  opacity: 0;
+  transform: translate3d(14vw, -18vh, 0) scale(0.72);
+  animation: season-ritual-grid-glow calc(var(--duration-signature) * 22)
+    var(--ease-move) infinite;
+  will-change: opacity, transform;
 }
 
 .season-opening-exit {
@@ -151,8 +228,8 @@
   opacity: 0;
   font-size: var(--text-hero);
   line-height: var(--text-hero--line-height);
-  font-weight: 520;
-  letter-spacing: -0.06em;
+  font-weight: 400;
+  letter-spacing: 0.015em;
   text-wrap: balance;
   transform: translateY(calc(-50% + var(--spacing-md)));
   transition:
@@ -360,6 +437,125 @@
     var(--ease-enter) both;
 }
 
+.season-goal-creator {
+  width: 100%;
+}
+
+.season-goal-creator-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-2xl);
+  margin-bottom: var(--spacing-3xl);
+  border-top: 1px solid var(--ritual-line);
+  border-bottom: 1px solid var(--ritual-line-quiet);
+  background: linear-gradient(
+    90deg,
+    rgba(232, 168, 62, 0.055),
+    transparent 58%
+  );
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.season-goal-creator-context > div:first-child > p:last-child {
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+}
+
+.season-goal-creator-context fieldset {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.season-goal-creator-context fieldset > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.season-goal-creator-context label {
+  cursor: pointer;
+}
+
+.season-goal-creator-context input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.season-goal-creator-context label > span {
+  display: inline-flex;
+  min-height: var(--spacing-input-height-sm);
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0 var(--spacing-md);
+  color: var(--color-text-muted);
+  transition:
+    border-color var(--duration-fast) var(--ease-enter),
+    background var(--duration-fast) var(--ease-enter),
+    color var(--duration-fast) var(--ease-enter);
+}
+
+.season-goal-creator-context input:checked + span {
+  border-color: rgba(232, 168, 62, 0.58);
+  background: rgba(232, 168, 62, 0.1);
+  color: var(--color-primary);
+}
+
+.season-goal-creator-context input:focus-visible + span {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.season-goal-creator .direction-editor--ritual {
+  width: 100%;
+  max-width: none;
+}
+
+.season-goal-creator .direction-editor-header--ritual {
+  max-width: 48rem;
+  padding-top: 0;
+}
+
+.season-goal-creator .direction-editor-header--ritual .direction-back-link {
+  display: inline-flex;
+  cursor: pointer;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-muted);
+}
+
+.season-goal-creator
+  .direction-editor-header--ritual
+  .direction-back-link:hover {
+  color: var(--color-text-primary);
+}
+
+.season-goal-creator .direction-editor-header--ritual h2 {
+  margin-top: var(--spacing-lg);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+  font-weight: 540;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.season-goal-creator .direction-editor-header--ritual > p:not(.eyebrow) {
+  max-width: 40rem;
+  margin-top: var(--spacing-md);
+  color: var(--color-text-secondary);
+}
+
+.season-goal-creator .direction-editor-panel {
+  border-color: var(--ritual-line-quiet);
+  background: rgba(17, 19, 24, 0.68);
+}
+
+.season-goal-creator .direction-editor-actions {
+  justify-content: flex-end;
+}
+
 .season-opening-ritual .season-opening-question {
   max-width: 46rem;
   margin-bottom: var(--spacing-4xl);
@@ -487,9 +683,38 @@
   }
 }
 
+@keyframes season-ritual-grid-glow {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(14vw, -18vh, 0) scale(0.72);
+  }
+
+  12% {
+    opacity: 0.2;
+  }
+
+  45% {
+    opacity: 0.72;
+    transform: translate3d(-16vw, 12vh, 0) scale(1);
+  }
+
+  76% {
+    opacity: 0.38;
+    transform: translate3d(-48vw, 34vh, 0) scale(0.84);
+  }
+
+  90% {
+    opacity: 0;
+    transform: translate3d(-62vw, 42vh, 0) scale(0.68);
+  }
+}
+
 @media (max-width: 820px) {
-  .season-opening-ambient span:last-child {
-    right: -25rem;
+  .season-opening-ambient-grid {
+    --ritual-grid-right: -20vw;
+    --ritual-grid-width: 108vw;
+    --ritual-grid-half-width: 54vw;
   }
 
   .season-opening-prelude,
@@ -514,6 +739,36 @@
 }
 
 @media (max-width: 639px) {
+  .season-opening-ambient::after {
+    background: linear-gradient(
+      90deg,
+      rgba(7, 8, 10, 0.91),
+      rgba(7, 8, 10, 0.62) 60%,
+      transparent
+    );
+  }
+
+  .season-opening-ambient-grid {
+    --ritual-grid-horizon: 56vh;
+    --ritual-grid-right: -48vw;
+    --ritual-grid-width: 148vw;
+    --ritual-grid-half-width: 74vw;
+    --ritual-grid-wall-height: 58vh;
+  }
+
+  .season-opening-ambient-wall {
+    opacity: 0.52;
+  }
+
+  .season-opening-ambient-floor {
+    opacity: 0.58;
+  }
+
+  .season-opening-ambient-glow {
+    right: -34vw;
+    width: 88vw;
+  }
+
   .season-opening-exit {
     top: max(var(--spacing-md), env(safe-area-inset-top));
     right: max(var(--spacing-md), env(safe-area-inset-right));
@@ -573,6 +828,22 @@
     margin-bottom: var(--spacing-3xl);
   }
 
+  .season-goal-creator-context {
+    grid-template-columns: 1fr;
+    align-items: start;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .season-goal-creator-context fieldset > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .season-goal-creator-context label > span {
+    justify-content: center;
+  }
+
   .season-opening-ritual .season-opening-fields--two {
     grid-template-columns: 1fr;
   }
@@ -597,10 +868,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .season-opening-ambient span:last-child,
   .season-opening-prelude-lines p,
   .season-opening-prelude-guide i {
     transition: none;
+  }
+
+  .season-opening-ambient-glow {
+    opacity: 0.24;
+    transform: translate3d(-16vw, 12vh, 0) scale(1);
+    animation: none;
   }
 
   .season-opening-ritual .season-opening-stage,

@@ -49,7 +49,7 @@ export async function changeSeasonLifecycle(userId: string, input: unknown) {
         requireVersion(row.version, c.expectedVersion);
         if (row.closedAt)
           throw new DirectionError(
-            "This chapter is already closed. Its goals can continue independently.",
+            "This season is already closed. Its goals can continue independently.",
           );
         const now = DateTime.now().setZone("Europe/Amsterdam"),
           calendar = seasonCalendar(c.year, c.quarter, now);
@@ -103,7 +103,7 @@ export async function changeSeasonLifecycle(userId: string, input: unknown) {
             )
           )
             throw new DirectionError(
-              "This seasonal cue has moved on. Review the current chapter.",
+              "This seasonal cue has moved on. Review the current season.",
             );
           if (c.action === "ACKNOWLEDGE")
             await tx.seasonMilestone.upsert({
@@ -142,7 +142,7 @@ export async function changeSeasonLifecycle(userId: string, input: unknown) {
             reason:
               c.note ||
               (c.action === "CLOSE"
-                ? "Chapter closed; ready for a future review."
+                ? "Season closed; ready for a future review."
                 : "Seasonal cue acknowledged."),
             snapshot: jsonValue(snapshot),
           },

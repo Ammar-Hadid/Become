@@ -8,11 +8,37 @@ import {
   CotsProviderError,
 } from "@/features/seasons/discovery/services/cots-provider-http.service";
 import { cotsCategorySchema } from "@/features/seasons/discovery/schemas/cots-discovery.schema";
-const cache = new Map<
-  string,
-  { expires: number; value: Awaited<ReturnType<typeof requestSuggestions>> }
->();
-async function requestSuggestions(displayName: string, sourceWork: string) {
+
+type SuggestionResult = Awaited<ReturnType<typeof requestSuggestions>>;
+
+const cache = new Map<string, { expires: number; value: SuggestionResult }>();
+const inFlight = new Map<string, Promise<SuggestionResult>>();
+
+function logSuggestionSourceIssue(
+  status: string,
+  detail: string,
+  sourceCategory: string,
+) {
+  const diagnostic = {
+    event: "cots.identity_suggestion.source_issue",
+    provider: "wikidata",
+    status,
+    detail,
+    sourceCategory,
+  };
+  if (status === "EXHAUSTED")
+    console.info(
+      "COTS identity suggestion source returned no matches",
+      diagnostic,
+    );
+  else console.warn("COTS identity suggestion source failed", diagnostic);
+}
+
+function suggestionKey(displayName: string) {
+  return displayName.trim().toLocaleLowerCase().replace(/\s+/g, " ");
+}
+
+async function requestSuggestions(displayName: string) {
   const url = new URL("https://www.wikidata.org/w/api.php");
   url.search = new URLSearchParams({
     action: "wbsearchentities",
@@ -50,6 +76,12 @@ async function requestSuggestions(displayName: string, sourceWork: string) {
       subjectKind: human ? ("PERSON" as const) : ("UNKNOWN" as const),
     };
   });
+  return { items, status: "AVAILABLE" };
+}
+
+function rankSuggestions(value: SuggestionResult, sourceWork: string) {
+  if (!sourceWork || value.items.length < 2) return value;
+  const items = [...value.items];
   items.sort(
     (a, b) =>
       Number(
@@ -65,11 +97,33 @@ async function requestSuggestions(displayName: string, sourceWork: string) {
         ),
       ),
   );
-  return { items, status: "AVAILABLE" };
+  return { ...value, items };
 }
+
+async function cachedSuggestions(displayName: string) {
+  const key = suggestionKey(displayName);
+  const prior = cache.get(key);
+  if (prior && prior.expires > Date.now()) return prior.value;
+  let request = inFlight.get(key);
+  if (!request) {
+    request = requestSuggestions(displayName);
+    inFlight.set(key, request);
+  }
+  try {
+    const value = await request;
+    if (cache.size >= 100) cache.delete(cache.keys().next().value!);
+    cache.set(key, {
+      value,
+      expires:
+        Date.now() + (value.status === "AVAILABLE" ? 3_600_000 : 5 * 60_000),
+    });
+    return value;
+  } finally {
+    if (inFlight.get(key) === request) inFlight.delete(key);
+  }
+}
+
 export async function suggestCotsIdentity(input: unknown) {
-  if (!cotsProviderEnabled("wikidata"))
-    return { items: [], status: "SETUP_REQUIRED" };
   const c = z
     .object({
       displayName: z.string().trim().min(1).max(200),
@@ -77,17 +131,31 @@ export async function suggestCotsIdentity(input: unknown) {
       sourceCategory: cotsCategorySchema,
     })
     .parse(input);
-  const key = JSON.stringify(c),
-    prior = cache.get(key);
-  if (prior && prior.expires > Date.now()) return prior.value;
+  if (!cotsProviderEnabled("wikidata")) {
+    logSuggestionSourceIssue(
+      "SETUP_REQUIRED",
+      "Wikidata is disabled in the provider configuration.",
+      c.sourceCategory,
+    );
+    return { items: [], status: "SETUP_REQUIRED" };
+  }
   try {
-    const value = await requestSuggestions(c.displayName, c.sourceWork);
-    if (cache.size >= 100) cache.delete(cache.keys().next().value!);
-    cache.set(key, { value, expires: Date.now() + 3_600_000 });
-    return value;
+    const result = rankSuggestions(
+      await cachedSuggestions(c.displayName),
+      c.sourceWork,
+    );
+    if (result.status !== "AVAILABLE")
+      logSuggestionSourceIssue(
+        result.status,
+        "No matching Wikidata entities were returned.",
+        c.sourceCategory,
+      );
+    return result;
   } catch (error) {
-    if (error instanceof CotsProviderError)
+    if (error instanceof CotsProviderError) {
+      logSuggestionSourceIssue(error.status, error.message, c.sourceCategory);
       return { items: [], status: error.status };
+    }
     throw error;
   }
 }

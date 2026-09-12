@@ -44,8 +44,11 @@ export function candidateView(
   id: string,
 ): CotsCandidateView {
   // The client never receives the download URL or credentials. Preview is authenticated and candidate-bound.
-  const { originalUrl, previewUrl, ...view } = snapshot;
+  const { originalUrl, previewUrl, imageQuality, popularityRank, ...view } =
+    snapshot;
   void originalUrl;
+  void imageQuality;
+  void popularityRank;
   return {
     ...view,
     candidateRef: id,

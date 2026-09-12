@@ -322,7 +322,7 @@ export function SeasonInspirationEditor({
           <p>
             {compact
               ? "Add to the collection while the rest of the opening waits for you."
-              : "Keep the images and words that still feel true to this chapter. Their original source details stay with them."}
+              : "Keep the images and words that still feel true to this season. Their original source details stay with them."}
           </p>
         </div>
         <div>

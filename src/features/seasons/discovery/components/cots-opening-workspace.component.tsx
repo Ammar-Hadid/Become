@@ -8,6 +8,7 @@ import {
   Save,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +23,8 @@ import { CotsManualEntry } from "@/features/seasons/discovery/components/cots-ma
 import { CotsPendingArtwork } from "@/features/seasons/discovery/components/cots-pending-artwork.component";
 import { CotsWordDeck } from "@/features/seasons/discovery/components/cots-word-deck.component";
 import { useCotsCollection } from "@/features/seasons/discovery/hooks/use-cots-collection.hook";
-import { COTS_TEXT_FORM_LABEL } from "@/features/seasons/discovery/utils/cots-text-label.util";
+import { cotsIdentitySuggestionStatusMessage } from "@/features/seasons/discovery/utils/cots-source-status.util";
+import { cotsTextChoiceLabel } from "@/features/seasons/discovery/utils/cots-text-label.util";
 import { SeasonQuoteExcerpt } from "@/features/seasons/media/components/season-quote-excerpt.component";
 import type {
   CotsCategory,
@@ -35,7 +37,14 @@ import type {
 } from "@/features/seasons/types/season.types";
 import "@/features/seasons/discovery/styles/cots-discovery.css";
 
-type CotsSubview = "identity" | "images" | "words";
+const COTS_SUBVIEWS = ["identity", "standards", "images", "words"] as const;
+type CotsSubview = (typeof COTS_SUBVIEWS)[number];
+const COTS_SUBVIEW_LABELS: Record<CotsSubview, string> = {
+  identity: "Identity",
+  standards: "Standards",
+  images: "Images",
+  words: "Words",
+};
 type CotsCharacterDraft = SeasonCharacter & {
   sourceCategory?: CotsCategory | null;
 };
@@ -53,7 +62,11 @@ function normalizedName(value: string) {
 function initialSubview(hasIdentity: boolean): CotsSubview {
   if (typeof window === "undefined") return "identity";
   const requested = new URLSearchParams(window.location.search).get("cots");
-  if (requested === "images" || requested === "words")
+  if (
+    requested === "standards" ||
+    requested === "images" ||
+    requested === "words"
+  )
     return hasIdentity ? requested : "identity";
   return "identity";
 }
@@ -114,12 +127,28 @@ export function CotsOpeningWorkspace({
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [associationChoice, setAssociationChoice] = useState(false);
   const [externalId, setExternalId] = useState<string | undefined>();
+  const [selectedSuggestion, setSelectedSuggestion] =
+    useState<IdentitySuggestion | null>(null);
   const [suggestions, setSuggestions] = useState<IdentitySuggestion[]>([]);
   const [suggestionStatus, setSuggestionStatus] = useState<string | null>(null);
+  const [nameSuggestionsOpen, setNameSuggestionsOpen] = useState(false);
+  const [expandedIdentityDetails, setExpandedIdentityDetails] = useState(
+    () => ({
+      sourceWork: Boolean(character.sourceWork.trim()),
+      adaptation: Boolean(character.adaptation.trim()),
+    }),
+  );
+  const [dismissedSavedIdentityId, setDismissedSavedIdentityId] = useState<
+    string | null
+  >(null);
   const [dismissedMismatchId, setDismissedMismatchId] = useState<string | null>(
     null,
   );
   const initialized = useRef(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const sourceWorkInputRef = useRef<HTMLInputElement>(null);
+  const adaptationInputRef = useRef<HTMLInputElement>(null);
+  const suggestionRequest = useRef(0);
 
   useEffect(() => {
     if (initialized.current || loadingCollection) return;
@@ -154,7 +183,43 @@ export function CotsOpeningWorkspace({
   const sourceCategory =
     character.sourceCategory ?? collection?.identity?.sourceCategory ?? null;
   const category = cotsCategory(sourceCategory);
-  const chosenSuggestion = suggestions.find(({ id }) => id === externalId);
+  const rankedSuggestions = useMemo(() => {
+    const sourceWork = character.sourceWork.trim().toLocaleLowerCase();
+    if (!sourceWork || suggestions.length < 2) return suggestions;
+    return [...suggestions].sort(
+      (a, b) =>
+        Number(b.description.toLocaleLowerCase().includes(sourceWork)) -
+        Number(a.description.toLocaleLowerCase().includes(sourceWork)),
+    );
+  }, [character.sourceWork, suggestions]);
+  const savedIdentity = collection?.identity;
+  const savedSuggestion =
+    !selectedSuggestion &&
+    !externalId &&
+    savedIdentity?.sourceEntityId &&
+    dismissedSavedIdentityId !== savedIdentity.id &&
+    savedIdentity.sourceCategory === sourceCategory &&
+    normalizedName(savedIdentity.displayName) === normalizedName(character.name)
+      ? {
+          id: savedIdentity.sourceEntityId,
+          label: savedIdentity.displayName,
+          description:
+            [savedIdentity.sourceWork, savedIdentity.adaptation]
+              .map((value) => value.trim())
+              .filter(Boolean)
+              .join(" · ") || "Saved identity",
+          subjectKind: savedIdentity.subjectKind,
+        }
+      : null;
+  const chosenSuggestion =
+    selectedSuggestion ??
+    rankedSuggestions.find(({ id }) => id === externalId) ??
+    savedSuggestion;
+  const identityResolved = Boolean(chosenSuggestion);
+  const suggestionsVisible =
+    !chosenSuggestion &&
+    nameSuggestionsOpen &&
+    Boolean(suggestionStatus || suggestions.length > 0);
   const suggestionMismatch =
     chosenSuggestion?.subjectKind === "PERSON" &&
     category?.subjectKind === "FICTIONAL" &&
@@ -162,9 +227,11 @@ export function CotsOpeningWorkspace({
 
   useEffect(() => {
     const name = character.name.trim();
-    if (!sourceCategory || name.length < 3) return;
+    const requestId = ++suggestionRequest.current;
+    if (identityResolved || !sourceCategory || name.length < 3) return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
+      setSuggestions([]);
       setSuggestionStatus("Looking for a match…");
       try {
         const response = await fetch("/api/direction/cots", {
@@ -179,7 +246,6 @@ export function CotsOpeningWorkspace({
             quarter: season.quarter,
             sourceCategory,
             displayName: name,
-            sourceWork: character.sourceWork.trim(),
           }),
           signal: controller.signal,
         });
@@ -190,28 +256,32 @@ export function CotsOpeningWorkspace({
         } | null;
         if (!response.ok)
           throw new Error(body?.error || "Suggestions unavailable");
+        if (requestId !== suggestionRequest.current) return;
         setSuggestions(body?.items ?? []);
         setSuggestionStatus(
           body?.items?.length
             ? "Choose a match, or keep the name exactly as you wrote it."
-            : body?.status || "No exact match found. Your name still works.",
+            : cotsIdentitySuggestionStatusMessage(body?.status),
         );
       } catch (cause) {
-        if ((cause as { name?: string }).name !== "AbortError") {
+        if (
+          requestId === suggestionRequest.current &&
+          (cause as { name?: string }).name !== "AbortError"
+        ) {
           setSuggestions([]);
           setSuggestionStatus(
             "Suggestions are unavailable. Your name still works.",
           );
         }
       }
-    }, 400);
+    }, 650);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
   }, [
     character.name,
-    character.sourceWork,
+    identityResolved,
     season.quarter,
     season.year,
     sourceCategory,
@@ -294,7 +364,18 @@ export function CotsOpeningWorkspace({
           ? { association: "SAME" }
           : {}),
     });
-    if (saved) setSubview("images");
+    if (saved) {
+      setDismissedSavedIdentityId(null);
+      setSubview("standards");
+    }
+  }
+
+  function revealIdentityDetail(field: "sourceWork" | "adaptation") {
+    setExpandedIdentityDetails((current) => ({ ...current, [field]: true }));
+    window.requestAnimationFrame(() => {
+      if (field === "sourceWork") sourceWorkInputRef.current?.focus();
+      else adaptationInputRef.current?.focus();
+    });
   }
 
   async function continueFromImages() {
@@ -324,7 +405,7 @@ export function CotsOpeningWorkspace({
   return (
     <div className="cots-workspace">
       <nav className="cots-subnav" aria-label="Inspiration steps">
-        {(["identity", "images", "words"] as const).map((step, index) => (
+        {COTS_SUBVIEWS.map((step, index) => (
           <button
             key={step}
             type="button"
@@ -333,14 +414,13 @@ export function CotsOpeningWorkspace({
             onClick={() => setSubview(step)}
           >
             <span>{index + 1}</span>
-            {step[0].toUpperCase() + step.slice(1)}
+            {COTS_SUBVIEW_LABELS[step]}
           </button>
         ))}
       </nav>
       <p className="cots-mobile-step" aria-live="polite">
-        Inspiration ·{" "}
-        {subview === "identity" ? "1" : subview === "images" ? "2" : "3"} of 3 ·{" "}
-        {subview[0].toUpperCase() + subview.slice(1)}
+        Inspiration · {COTS_SUBVIEWS.indexOf(subview) + 1} of{" "}
+        {COTS_SUBVIEWS.length} · {COTS_SUBVIEW_LABELS[subview]}
       </p>
 
       {subview === "identity" && (
@@ -348,7 +428,7 @@ export function CotsOpeningWorkspace({
           <div className="season-opening-question">
             <p className="eyebrow">Inspiration for this season</p>
             <h2 id="cots-identity-title" tabIndex={-1}>
-              Who belongs in this chapter?
+              Who belongs in this season?
             </h2>
             <p>
               Choose who you keep returning to, and what their example means in
@@ -363,9 +443,13 @@ export function CotsOpeningWorkspace({
                 <select
                   value={sourceCategory ?? ""}
                   onChange={(event) => {
+                    suggestionRequest.current += 1;
                     setExternalId(undefined);
+                    setSelectedSuggestion(null);
                     setDismissedMismatchId(null);
                     setSuggestions([]);
+                    setSuggestionStatus(null);
+                    setNameSuggestionsOpen(false);
                     onPatchCharacter({
                       sourceCategory: (event.target.value ||
                         null) as CotsCategory | null,
@@ -386,100 +470,207 @@ export function CotsOpeningWorkspace({
               </small>
             </label>
 
-            <label>
-              <span className="field-label">
+            <div
+              className="cots-identity-name-field"
+              data-popover-open={suggestionsVisible || undefined}
+              onFocus={() => setNameSuggestionsOpen(true)}
+              onBlur={(event) => {
+                if (
+                  !event.currentTarget.contains(
+                    event.relatedTarget instanceof Node
+                      ? event.relatedTarget
+                      : null,
+                  )
+                )
+                  setNameSuggestionsOpen(false);
+              }}
+            >
+              <span className="field-label" id="cots-identity-name-label">
                 {category?.subjectKind === "PERSON"
                   ? "Person’s name"
                   : "Character name"}
               </span>
-              <input
-                className="text-input"
-                value={character.name}
-                onChange={(event) => {
-                  const name = event.target.value;
-                  setExternalId(undefined);
-                  setDismissedMismatchId(null);
-                  if (name.trim().length < 3) {
-                    setSuggestions([]);
-                    setSuggestionStatus(null);
-                  }
-                  onPatchCharacter({ name });
-                }}
-                placeholder={
-                  category?.subjectKind === "PERSON"
-                    ? "Cristiano Ronaldo"
-                    : "Levi Ackerman"
-                }
-                autoComplete="off"
-              />
-            </label>
-
-            {category && (
-              <>
-                <label>
-                  <span className="field-label">{category.workLabel}</span>
-                  <input
-                    className="text-input"
-                    value={character.sourceWork}
-                    onChange={(event) =>
-                      onPatchCharacter({ sourceWork: event.target.value })
-                    }
-                    placeholder={
-                      category.value === "person"
-                        ? "Football, film, science…"
-                        : "Add the work for better matches"
-                    }
-                  />
-                </label>
-                <label>
-                  <span className="field-label">
-                    {category.adaptationLabel}
+              {chosenSuggestion ? (
+                <div
+                  className="cots-identity-selected"
+                  role="group"
+                  aria-labelledby="cots-identity-name-label"
+                >
+                  <Check aria-hidden="true" />
+                  <span>
+                    <strong>{chosenSuggestion.label}</strong>
+                    <small>{chosenSuggestion.description}</small>
                   </span>
+                  <button
+                    className="cots-identity-selected-remove"
+                    type="button"
+                    aria-label={`Remove ${chosenSuggestion.label}`}
+                    disabled={controlsDisabled}
+                    onClick={() => {
+                      suggestionRequest.current += 1;
+                      if (savedIdentity)
+                        setDismissedSavedIdentityId(savedIdentity.id);
+                      setExternalId(undefined);
+                      setSelectedSuggestion(null);
+                      setDismissedMismatchId(null);
+                      setSuggestions([]);
+                      setSuggestionStatus(null);
+                      setNameSuggestionsOpen(false);
+                      onPatchCharacter({ name: "" });
+                      window.requestAnimationFrame(() =>
+                        nameInputRef.current?.focus(),
+                      );
+                    }}
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <>
                   <input
+                    ref={nameInputRef}
+                    id="cots-identity-name"
                     className="text-input"
-                    value={character.adaptation}
-                    onChange={(event) =>
-                      onPatchCharacter({ adaptation: event.target.value })
+                    aria-labelledby="cots-identity-name-label"
+                    value={character.name}
+                    onChange={(event) => {
+                      const name = event.target.value;
+                      suggestionRequest.current += 1;
+                      setExternalId(undefined);
+                      setSelectedSuggestion(null);
+                      setDismissedMismatchId(null);
+                      setSuggestions([]);
+                      setSuggestionStatus(null);
+                      onPatchCharacter({ name });
+                    }}
+                    placeholder={
+                      category?.subjectKind === "PERSON"
+                        ? "Cristiano Ronaldo"
+                        : "Levi Ackerman"
                     }
+                    autoComplete="off"
                   />
-                </label>
-              </>
-            )}
-          </div>
 
-          {(suggestionStatus || suggestions.length > 0) && (
-            <div className="cots-identity-suggestions" aria-live="polite">
-              <p>{suggestionStatus}</p>
-              {suggestions.length > 0 && (
-                <ul>
-                  {suggestions.map((suggestion) => (
-                    <li key={suggestion.id}>
-                      <button
-                        type="button"
-                        data-selected={
-                          externalId === suggestion.id || undefined
-                        }
-                        onClick={() => {
-                          setExternalId(suggestion.id);
-                          setDismissedMismatchId(null);
-                          onPatchCharacter({ name: suggestion.label });
-                        }}
-                      >
-                        <Search aria-hidden="true" />
-                        <span>
-                          <strong>{suggestion.label}</strong>
-                          <small>{suggestion.description}</small>
-                        </span>
-                        {externalId === suggestion.id && (
-                          <Check aria-hidden="true" />
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                  {suggestionsVisible && (
+                    <div
+                      className="cots-identity-suggestions"
+                      id="cots-identity-suggestions"
+                      aria-live="polite"
+                    >
+                      <p>{suggestionStatus}</p>
+                      {suggestions.length > 0 && (
+                        <ul>
+                          {rankedSuggestions.map((suggestion) => (
+                            <li key={suggestion.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExternalId(suggestion.id);
+                                  setSelectedSuggestion(suggestion);
+                                  setDismissedMismatchId(null);
+                                  setNameSuggestionsOpen(false);
+                                  onPatchCharacter({
+                                    name: suggestion.label,
+                                  });
+                                }}
+                              >
+                                <Search aria-hidden="true" />
+                                <span>
+                                  <strong>{suggestion.label}</strong>
+                                  <small>{suggestion.description}</small>
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
-          )}
+
+            {category && (
+              <div
+                className="cots-identity-optional"
+                aria-labelledby="cots-identity-optional-title"
+              >
+                <div className="cots-identity-optional-intro">
+                  <span
+                    className="field-label"
+                    id="cots-identity-optional-title"
+                  >
+                    Optional context
+                  </span>
+                  <small>
+                    Add only what helps Become find the right match.
+                  </small>
+                </div>
+                <div className="cots-identity-optional-fields">
+                  {expandedIdentityDetails.sourceWork ? (
+                    <label className="cots-identity-optional-field">
+                      <span className="field-label">{category.workLabel}</span>
+                      <input
+                        ref={sourceWorkInputRef}
+                        className="text-input"
+                        value={character.sourceWork}
+                        onChange={(event) =>
+                          onPatchCharacter({ sourceWork: event.target.value })
+                        }
+                        placeholder={
+                          category.value === "person"
+                            ? "Football, film, science…"
+                            : "Add the work for better matches"
+                        }
+                      />
+                    </label>
+                  ) : (
+                    <button
+                      className="cots-identity-optional-trigger"
+                      type="button"
+                      aria-label={`Add ${category.workLabel}`}
+                      onClick={() => revealIdentityDetail("sourceWork")}
+                    >
+                      <Plus aria-hidden="true" />
+                      <span>
+                        <strong>{category.workLabel}</strong>
+                        <small>Add a work, field, or discipline</small>
+                      </span>
+                    </button>
+                  )}
+
+                  {expandedIdentityDetails.adaptation ? (
+                    <label className="cots-identity-optional-field">
+                      <span className="field-label">
+                        {category.adaptationLabel}
+                      </span>
+                      <input
+                        ref={adaptationInputRef}
+                        className="text-input"
+                        value={character.adaptation}
+                        onChange={(event) =>
+                          onPatchCharacter({ adaptation: event.target.value })
+                        }
+                      />
+                    </label>
+                  ) : (
+                    <button
+                      className="cots-identity-optional-trigger"
+                      type="button"
+                      aria-label={`Add ${category.adaptationLabel}`}
+                      onClick={() => revealIdentityDetail("adaptation")}
+                    >
+                      <Plus aria-hidden="true" />
+                      <span>
+                        <strong>{category.adaptationLabel}</strong>
+                        <small>Add a version, era, team, or role</small>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {suggestionMismatch && chosenSuggestion && (
             <aside className="cots-source-mismatch" role="status">
@@ -508,187 +699,6 @@ export function CotsOpeningWorkspace({
                 </Button>
               </div>
             </aside>
-          )}
-
-          {collection?.identity && (
-            <div className="cots-personal-details">
-              <div>
-                <p className="eyebrow">Make it yours</p>
-                <h3>Borrow the quality. Leave the costume.</h3>
-              </div>
-              <div className="season-opening-fields season-opening-fields--two">
-                <label>
-                  <span className="field-label">What you admire</span>
-                  <textarea
-                    className="text-input"
-                    value={character.motivation}
-                    onChange={(event) =>
-                      onPatchCharacter({ motivation: event.target.value })
-                    }
-                    placeholder="Why does their example matter now?"
-                  />
-                </label>
-                <label>
-                  <span className="field-label">
-                    What you do not want to emulate
-                  </span>
-                  <textarea
-                    className="text-input"
-                    value={character.avoid}
-                    onChange={(event) =>
-                      onPatchCharacter({ avoid: event.target.value })
-                    }
-                    placeholder="Keep the inspiration honest."
-                  />
-                </label>
-              </div>
-              <fieldset className="season-tone">
-                <legend className="field-label">Accountability tone</legend>
-                {(["DIRECT", "HARSH", "RUTHLESS"] as const).map((tone) => (
-                  <label key={tone}>
-                    <input
-                      type="radio"
-                      name="tone"
-                      value={tone}
-                      checked={character.tone === tone}
-                      onChange={() => onPatchCharacter({ tone })}
-                    />
-                    <span>{tone[0] + tone.slice(1).toLowerCase()}</span>
-                  </label>
-                ))}
-                <p>
-                  Wording may change later. Evidence and thresholds never do.
-                </p>
-              </fieldset>
-
-              <div className="season-standards-editor">
-                <div>
-                  <p className="eyebrow">Traits in practice</p>
-                  <h3>Make admiration observable.</h3>
-                </div>
-                {character.standards.map((standard) => (
-                  <div className="season-standard-editor" key={standard.key}>
-                    <label>
-                      <span className="field-label">Trait</span>
-                      <input
-                        className="text-input"
-                        value={standard.trait}
-                        onChange={(event) =>
-                          onUpdateStandard(standard.key, {
-                            trait: event.target.value,
-                          })
-                        }
-                        placeholder="Consistency"
-                      />
-                    </label>
-                    <label>
-                      <span className="field-label">
-                        What it means in your life
-                      </span>
-                      <input
-                        className="text-input"
-                        value={standard.behavior}
-                        onChange={(event) =>
-                          onUpdateStandard(standard.key, {
-                            behavior: event.target.value,
-                          })
-                        }
-                        placeholder="Keep the promises I make to myself."
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${standard.trait || "trait"}`}
-                      onClick={() =>
-                        onPatchCharacter({
-                          standards: character.standards.filter(
-                            ({ key }) => key !== standard.key,
-                          ),
-                        })
-                      }
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </button>
-                    <details className="season-standard-link">
-                      <summary>
-                        Connect this standard to a real signal{" "}
-                        <span>— optional</span>
-                      </summary>
-                      <div>
-                        <label>
-                          <span className="field-label">Goal</span>
-                          <span className="select-wrap">
-                            <select
-                              value={standard.goalId ?? ""}
-                              onChange={(event) =>
-                                onUpdateStandard(standard.key, {
-                                  goalId: event.target.value || undefined,
-                                  criterionId: undefined,
-                                })
-                              }
-                            >
-                              <option value="">No linked goal</option>
-                              {goalOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
-                          </span>
-                        </label>
-                        {standard.goalId &&
-                        season.goals.find(
-                          ({ goal }) => goal.id === standard.goalId,
-                        )?.goal.criteria.length ? (
-                          <label>
-                            <span className="field-label">Criterion</span>
-                            <span className="select-wrap">
-                              <select
-                                value={standard.criterionId ?? ""}
-                                onChange={(event) =>
-                                  onUpdateStandard(standard.key, {
-                                    criterionId:
-                                      event.target.value || undefined,
-                                  })
-                                }
-                              >
-                                <option value="">Goal only</option>
-                                {season.goals
-                                  .find(
-                                    ({ goal }) => goal.id === standard.goalId,
-                                  )
-                                  ?.goal.criteria.map((criterion) => (
-                                    <option
-                                      key={criterion.id}
-                                      value={criterion.id}
-                                    >
-                                      {criterion.label}
-                                    </option>
-                                  ))}
-                              </select>
-                            </span>
-                          </label>
-                        ) : null}
-                      </div>
-                    </details>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="season-add-standard"
-                  onClick={() =>
-                    onPatchCharacter({
-                      standards: [
-                        ...character.standards,
-                        { key: crypto.randomUUID(), trait: "", behavior: "" },
-                      ],
-                    })
-                  }
-                >
-                  <Plus aria-hidden="true" /> Add a trait
-                </button>
-              </div>
-            </div>
           )}
 
           {associationChoice && collection?.identity && (
@@ -728,6 +738,191 @@ export function CotsOpeningWorkspace({
               {identityError}
             </p>
           )}
+        </section>
+      )}
+
+      {subview === "standards" && collection?.identity && (
+        <section className="cots-panel" aria-labelledby="cots-standards-title">
+          <div className="season-opening-question">
+            <p className="eyebrow">Make it yours</p>
+            <h2 id="cots-standards-title" tabIndex={-1}>
+              Borrow the quality. Leave the costume.
+            </h2>
+            <p>
+              Name what you admire, set the tone, and turn their example into
+              standards you can actually practice.
+            </p>
+          </div>
+
+          <div className="cots-personal-details">
+            <div className="season-opening-fields season-opening-fields--two">
+              <label>
+                <span className="field-label">What you admire</span>
+                <textarea
+                  className="text-input"
+                  value={character.motivation}
+                  onChange={(event) =>
+                    onPatchCharacter({ motivation: event.target.value })
+                  }
+                  placeholder="Why does their example matter now?"
+                />
+              </label>
+              <label>
+                <span className="field-label">
+                  What you do not want to emulate
+                </span>
+                <textarea
+                  className="text-input"
+                  value={character.avoid}
+                  onChange={(event) =>
+                    onPatchCharacter({ avoid: event.target.value })
+                  }
+                  placeholder="Keep the inspiration honest."
+                />
+              </label>
+            </div>
+            <fieldset className="season-tone">
+              <legend className="field-label">Accountability tone</legend>
+              {(["DIRECT", "HARSH", "RUTHLESS"] as const).map((tone) => (
+                <label key={tone}>
+                  <input
+                    type="radio"
+                    name="tone"
+                    value={tone}
+                    checked={character.tone === tone}
+                    onChange={() => onPatchCharacter({ tone })}
+                  />
+                  <span>{tone[0] + tone.slice(1).toLowerCase()}</span>
+                </label>
+              ))}
+              <p>Wording may change later. Evidence and thresholds never do.</p>
+            </fieldset>
+
+            <div className="season-standards-editor">
+              <div>
+                <p className="eyebrow">Traits in practice</p>
+                <h3>Make admiration observable.</h3>
+              </div>
+              {character.standards.map((standard) => (
+                <div className="season-standard-editor" key={standard.key}>
+                  <label>
+                    <span className="field-label">Trait</span>
+                    <input
+                      className="text-input"
+                      value={standard.trait}
+                      onChange={(event) =>
+                        onUpdateStandard(standard.key, {
+                          trait: event.target.value,
+                        })
+                      }
+                      placeholder="Consistency"
+                    />
+                  </label>
+                  <label>
+                    <span className="field-label">
+                      What it means in your life
+                    </span>
+                    <input
+                      className="text-input"
+                      value={standard.behavior}
+                      onChange={(event) =>
+                        onUpdateStandard(standard.key, {
+                          behavior: event.target.value,
+                        })
+                      }
+                      placeholder="Keep the promises I make to myself."
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${standard.trait || "trait"}`}
+                    onClick={() =>
+                      onPatchCharacter({
+                        standards: character.standards.filter(
+                          ({ key }) => key !== standard.key,
+                        ),
+                      })
+                    }
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </button>
+                  <details className="season-standard-link">
+                    <summary>
+                      Connect this standard to a real signal{" "}
+                      <span>— optional</span>
+                    </summary>
+                    <div>
+                      <label>
+                        <span className="field-label">Goal</span>
+                        <span className="select-wrap">
+                          <select
+                            value={standard.goalId ?? ""}
+                            onChange={(event) =>
+                              onUpdateStandard(standard.key, {
+                                goalId: event.target.value || undefined,
+                                criterionId: undefined,
+                              })
+                            }
+                          >
+                            <option value="">No linked goal</option>
+                            {goalOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.name}
+                              </option>
+                            ))}
+                          </select>
+                        </span>
+                      </label>
+                      {standard.goalId &&
+                      season.goals.find(
+                        ({ goal }) => goal.id === standard.goalId,
+                      )?.goal.criteria.length ? (
+                        <label>
+                          <span className="field-label">Criterion</span>
+                          <span className="select-wrap">
+                            <select
+                              value={standard.criterionId ?? ""}
+                              onChange={(event) =>
+                                onUpdateStandard(standard.key, {
+                                  criterionId: event.target.value || undefined,
+                                })
+                              }
+                            >
+                              <option value="">Goal only</option>
+                              {season.goals
+                                .find(({ goal }) => goal.id === standard.goalId)
+                                ?.goal.criteria.map((criterion) => (
+                                  <option
+                                    key={criterion.id}
+                                    value={criterion.id}
+                                  >
+                                    {criterion.label}
+                                  </option>
+                                ))}
+                            </select>
+                          </span>
+                        </label>
+                      ) : null}
+                    </div>
+                  </details>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="season-add-standard"
+                onClick={() =>
+                  onPatchCharacter({
+                    standards: [
+                      ...character.standards,
+                      { key: crypto.randomUUID(), trait: "", behavior: "" },
+                    ],
+                  })
+                }
+              >
+                <Plus aria-hidden="true" /> Add a trait
+              </button>
+            </div>
+          </div>
         </section>
       )}
 
@@ -780,9 +975,17 @@ export function CotsOpeningWorkspace({
             selections={imageSelections}
             pendingCandidateRefs={pendingCandidateRefs}
             discovering={discovering === "IMAGE"}
-            onToggle={(candidate, selected) =>
-              void selectCandidate(candidate, selected)
-            }
+            onToggle={(candidate, selected) => {
+              if (
+                !selected &&
+                imageSelections.find(
+                  ({ candidate: item }) =>
+                    item.candidateRef === candidate.candidateRef,
+                )?.id === posterOverride
+              )
+                setPosterOverride(null);
+              void selectCandidate(candidate, selected);
+            }}
             onRetry={(selectionId) => void retrySelection(selectionId)}
             onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
@@ -861,9 +1064,26 @@ export function CotsOpeningWorkspace({
               label={
                 importCounts.active > 0
                   ? `Importing ${importCounts.active} image${importCounts.active === 1 ? "" : "s"}`
-                  : `${importCounts.failed} image import${importCounts.failed === 1 ? "" : "s"} need attention`
+                  : `${importCounts.failed} image${importCounts.failed === 1 ? "" : "s"} couldn’t be saved`
               }
-              detail={`${importCounts.ready} ready${importCounts.failed ? ` · ${importCounts.failed} failed` : ""}`}
+              detail={
+                importCounts.failed
+                  ? `${importCounts.ready} ready · Review failed images to retry or replace them.`
+                  : `${importCounts.ready} ready`
+              }
+              actionLabel={
+                importCounts.failed ? "Review failed images" : undefined
+              }
+              onAction={
+                importCounts.failed
+                  ? () => {
+                      setSubview("images");
+                      window.requestAnimationFrame(() =>
+                        document.getElementById("cots-images-title")?.focus(),
+                      );
+                    }
+                  : undefined
+              }
             />
           )}
           <CotsWordDeck
@@ -890,8 +1110,7 @@ export function CotsOpeningWorkspace({
                 <option value="">Keep the current poster words</option>
                 {featureableTextSelections.map((selection) => (
                   <option key={selection.id} value={selection.id}>
-                    {COTS_TEXT_FORM_LABEL[selection.candidate.form]} ·{" "}
-                    {selection.candidate.title}
+                    {cotsTextChoiceLabel(selection.candidate)}
                   </option>
                 ))}
               </select>
@@ -943,7 +1162,9 @@ export function CotsOpeningWorkspace({
             onClick={() => {
               setError(null);
               if (subview === "identity") onBackStage();
-              else setSubview(subview === "words" ? "images" : "identity");
+              else if (subview === "standards") setSubview("identity");
+              else if (subview === "images") setSubview("standards");
+              else setSubview("images");
             }}
           >
             <ArrowLeft aria-hidden="true" /> Back
@@ -953,6 +1174,7 @@ export function CotsOpeningWorkspace({
             disabled={controlsDisabled || Boolean(pendingAction)}
             onClick={() => {
               if (subview === "identity") void confirmIdentity();
+              else if (subview === "standards") setSubview("images");
               else if (subview === "images") void continueFromImages();
               else void continueToPreview();
             }}
@@ -961,15 +1183,17 @@ export function CotsOpeningWorkspace({
               ? collection?.identity
                 ? "Save identity"
                 : "Use this identity"
-              : subview === "images"
-                ? selectedImages.length
-                  ? `Continue · save ${selectedImages.length} image${selectedImages.length === 1 ? "" : "s"}`
-                  : manualMedia.length
-                    ? "Continue to words"
-                    : "Continue without images"
-                : selectedWords.length
-                  ? `Continue · save ${selectedWords.length} item${selectedWords.length === 1 ? "" : "s"}`
-                  : "Continue to preview"}
+              : subview === "standards"
+                ? "Continue to images"
+                : subview === "images"
+                  ? selectedImages.length
+                    ? `Continue · save ${selectedImages.length} image${selectedImages.length === 1 ? "" : "s"}`
+                    : manualMedia.length
+                      ? "Continue to words"
+                      : "Continue without images"
+                  : selectedWords.length
+                    ? `Continue · save ${selectedWords.length} item${selectedWords.length === 1 ? "" : "s"}`
+                    : "Continue to preview"}
             <ArrowRight aria-hidden="true" />
           </Button>
         </div>

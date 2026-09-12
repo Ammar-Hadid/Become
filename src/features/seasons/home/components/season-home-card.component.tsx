@@ -8,7 +8,7 @@ import type { SeasonView } from "@/features/seasons/types/season.types";
 export function SeasonHomeCard({ season }: { season: SeasonView }) {
   const href = `/direction/seasons/${season.year}/${season.quarter}`;
   const primary = season.goals.find(({ role }) => role === "PRIMARY")?.goal;
-  const chapterName =
+  const seasonName =
     season.closingCard?.title.trim() ||
     season.title.trim() ||
     `Season ${season.quarter}`;
@@ -23,7 +23,7 @@ export function SeasonHomeCard({ season }: { season: SeasonView }) {
     <section className="season-home" aria-labelledby="season-home-title">
       <header>
         <div>
-          <p className="eyebrow">The chapter around today</p>
+          <p className="eyebrow">The season around today</p>
           <h2 id="season-home-title">
             {season.openingCompletedAt
               ? "Return to your direction."
@@ -39,7 +39,7 @@ export function SeasonHomeCard({ season }: { season: SeasonView }) {
         season={season}
         variant="home"
         href={href}
-        linkLabel={`Open ${chapterName}, Season ${season.quarter} ${season.year}`}
+        linkLabel={`Open ${seasonName}, Season ${season.quarter} ${season.year}`}
       />
       {(secondary || dailyQuote) && (
         <aside className="season-home-signal" aria-label="Season inspiration">

@@ -80,6 +80,16 @@ export const METRIC_CATALOG: MetricCapability[] = [
       "Recorded evidence does not independently verify external completion or quality.",
   },
   {
+    key: "ENGINEERING_PROJECT_COMPLETED",
+    name: "Engineering project completed",
+    description: "The selected Engineering project's current completion state.",
+    unit: "project status",
+    scopes: ["projectId"],
+    monetary: false,
+    caveat:
+      "Checks the project's current status, regardless of goal dates. Reopening the project makes this criterion unmet; archiving does not change its status.",
+  },
+  {
     key: "SAVINGS_GOAL",
     name: "Existing Finance savings goal",
     description: "Current spending, funding and reserve coverage from Finance.",

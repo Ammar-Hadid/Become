@@ -31,6 +31,7 @@ Domain tags organize intentions; they do not filter measurements. Each criterion
 | Conversation companies | Distinct canonical company IDs among those conversations | Separate from interaction count |
 | Focus time | Completed sessions in selected recorded context, clipped to date boundaries | Running time is provisional; time proves no outcome |
 | Engineering evidence | Current records in selected project/type/date scope | Does not independently verify completion or quality |
+| Engineering project completed | The selected canonical Engineering project's current `status` is `COMPLETED` | Current state, independent of goal dates; no output/time threshold or evidence date window. Reopening makes live evidence unmet; archiving leaves status eligible. |
 | Finance savings goal | Existing Finance spending, allocation, funding gap and protected-pool calculations | Current as-of readiness; creates no ledger, allocation or expense |
 | Qualitative assessment | Dated user confirmation, rationale and optional owned source references | Does not overwrite a domain-derived total |
 

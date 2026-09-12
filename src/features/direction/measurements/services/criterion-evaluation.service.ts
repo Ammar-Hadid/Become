@@ -30,7 +30,11 @@ import {
   readRecurringCandidates,
 } from "@/features/entrepreneurship/measurements/queries/business-measurement.query";
 import { readSessionMeasurement } from "@/features/sessions/measurements/queries/session-measurement.query";
-import { readEngineeringMeasurement } from "@/features/engineering/measurements/queries/engineering-measurement.query";
+import {
+  readEngineeringMeasurement,
+  readEngineeringProjectCompletion,
+} from "@/features/engineering/measurements/queries/engineering-measurement.query";
+import { getEngineeringProjectStatusLabel } from "@/features/engineering/constants/engineering.constants";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
 import { METRIC_CATALOG } from "@/features/direction/measurements/constants/metric-catalog.constants";
 export function criterionDraft(row: DirectionCriterion): CriterionDraft {
@@ -428,6 +432,43 @@ export async function evaluateCriterion(
         null,
       ),
     );
+  } else if (c.metric === "ENGINEERING_PROJECT_COMPLETED") {
+    const project = await readEngineeringProjectCompletion(
+      tx,
+      userId,
+      c.projectId ?? "",
+    );
+    if (!project)
+      throw new DirectionError(
+        "Choose an existing Engineering project you own.",
+        `criteria.${c.key}.projectId`,
+      );
+    e.value = project.status;
+    e.target = "COMPLETED";
+    e.valueLabel = getEngineeringProjectStatusLabel(project.status);
+    e.targetLabel = "Completed";
+    e.availability = "AVAILABLE";
+    e.reached = project.status === "COMPLETED";
+    e.qualification = `Current Engineering status for ${project.name}; satisfied only when this project's status is Completed.`;
+    e.exclusions = [
+      "Output records and focus time do not establish project completion",
+      "Other projects, including projects with the same name",
+    ];
+    e.sources = [
+      source(
+        project.id,
+        project.name,
+        `/engineering/projects/${project.id}`,
+        project.completedOn,
+        e.valueLabel,
+        project.completedOn
+          ? `Recorded completion date: ${dateLabel(project.completedOn)}. Current status determines whether this criterion is met.`
+          : "Current status determines whether this criterion is met.",
+        e.reached ? "QUALIFYING" : "EXCLUDED",
+      ),
+    ].slice(offset, offset + 25);
+    e.sourceCount = 1;
+    contentFingerprint = project;
   } else if (c.metric === "SAVINGS_GOAL") {
     const data = await getSavings(userId, tx),
       goal = data.goals.find((g) => g.id === c.savingsGoalId);
@@ -662,7 +703,10 @@ export async function evaluateCriterion(
     e.sourceCount = matched.length + receiptSources.length;
     contentFingerprint = details;
   }
-  if (window.start > at && c.metric !== "SAVINGS_GOAL") {
+  if (
+    window.start > at &&
+    !["SAVINGS_GOAL", "ENGINEERING_PROJECT_COMPLETED"].includes(c.metric)
+  ) {
     e.caveats.push(
       `This measurement window has not begun. It starts on ${window.startOn}.`,
     );

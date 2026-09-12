@@ -34,6 +34,7 @@ export const criterionSchema = z
       "CONVERSATION_COMPANIES",
       "SESSION_TIME",
       "ENGINEERING_EVIDENCE",
+      "ENGINEERING_PROJECT_COMPLETED",
       "SAVINGS_GOAL",
     ]),
     label: z.string().trim().max(200),

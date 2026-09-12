@@ -13,6 +13,11 @@ import { saveExperiment } from "./experiment.service";
 import { changeDirectionLifecycle } from "./direction-lifecycle.service";
 import { assessCriterion } from "@/features/direction/evidence/services/criterion-assessment.service";
 import {
+  setEngineeringProjectArchived,
+  updateEngineeringProject,
+} from "@/features/engineering/projects/services/engineering-project.service";
+import { engineeringProjectSchema } from "@/features/engineering/schemas/engineering.schema";
+import {
   saveSeason,
   assignSeasonGoals,
 } from "@/features/seasons/services/season.service";
@@ -709,6 +714,118 @@ describe.skipIf(!enabled)("Phase 5 exact evidence and history", () => {
       ).value,
     ).toBe("1");
   });
+  it("uses canonical project status and preserves Goal conclusions when the project reopens", async () => {
+    const project = await prisma.engineeringProject.create({
+      data: { userId, name: "Deliver the project", status: "ACTIVE" },
+    });
+    // Neither a different completed project with the same name nor outputs prove completion.
+    await prisma.engineeringProject.create({
+      data: {
+        userId,
+        name: project.name,
+        status: "COMPLETED",
+        completedOn: new Date("2026-08-01"),
+      },
+    });
+    await prisma.engineeringEvidence.createMany({
+      data: ["FEATURE_COMPLETED", "DEPLOYMENT"].map((type) => ({
+        userId,
+        projectId: project.id,
+        title: "Project output",
+        type: type as "FEATURE_COMPLETED" | "DEPLOYMENT",
+      })),
+    });
+    const saved = await saveGoal(userId, {
+      operationKey: randomUUID(),
+      draft: goal([
+        {
+          key: "completion",
+          metric: "ENGINEERING_PROJECT_COMPLETED",
+          label: "Complete the selected project",
+          target: "",
+          projectId: project.id,
+        },
+      ]),
+    });
+    const active = (await getGoalView(userId, saved.id))!;
+    expect(active.evaluation.criteriaMet).toBe(false);
+    expect(active.criterionScopes.completion.projectId?.id).toBe(project.id);
+    expect(active.history[0].details.join(" ")).toContain(project.name);
+    const conclude = {
+      kind: "GOAL",
+      id: saved.id,
+      expectedVersion: saved.version,
+      action: "CONCLUDE",
+      outcome: "ACHIEVED",
+      reason: "The selected project is completed",
+    };
+    await expect(
+      changeDirectionLifecycle(userId, {
+        ...conclude,
+        operationKey: randomUUID(),
+        previewFingerprint: active.evaluation.fingerprint,
+      }),
+    ).rejects.toThrow("required criteria have not been established");
+
+    const update = (status: "COMPLETED" | "ACTIVE") =>
+      updateEngineeringProject(
+        userId,
+        project.id,
+        engineeringProjectSchema.parse({
+          name: project.name,
+          context: "PERSONAL",
+          status,
+        }),
+      );
+    expect((await update("COMPLETED")).status).toBe("updated");
+    const completed = (await getGoalView(userId, saved.id))!;
+    expect(completed.evaluation.criteriaMet).toBe(true);
+    expect(completed.status).toBe("ACTIVE");
+    expect(completed.history).toHaveLength(active.history.length);
+    expect(completed.evaluation.criteria[0].sources[0]).toMatchObject({
+      id: project.id,
+      value: "Completed",
+      state: "QUALIFYING",
+    });
+    await expect(
+      changeDirectionLifecycle(userId, {
+        ...conclude,
+        operationKey: randomUUID(),
+        previewFingerprint: active.evaluation.fingerprint,
+      }),
+    ).rejects.toThrow("Evidence changed");
+
+    await setEngineeringProjectArchived(userId, project.id, true);
+    const archived = (await getGoalView(userId, saved.id))!;
+    expect(archived.evaluation.criteriaMet).toBe(true);
+    expect(archived.evaluation.fingerprint).toBe(
+      completed.evaluation.fingerprint,
+    );
+    await changeDirectionLifecycle(userId, {
+      ...conclude,
+      operationKey: randomUUID(),
+      previewFingerprint: archived.evaluation.fingerprint,
+    });
+    const concluded = (await getGoalView(userId, saved.id))!;
+    const snapshot = concluded.conclusionSnapshot;
+    const conclusionHistory = concluded.history.find(
+      (change) => change.kind === "CONCLUDE",
+    );
+
+    await update("ACTIVE");
+    const reopened = (await getGoalView(userId, saved.id))!;
+    expect(reopened.evaluation.criteriaMet).toBe(false);
+    expect(reopened.evaluation.criteria[0].sources[0].occurredAt).toBeNull();
+    expect(reopened.liveChangedSinceConclusion).toBe(true);
+    expect(reopened.status).toBe("CONCLUDED");
+    expect(reopened.outcome).toBe("ACHIEVED");
+    expect(reopened.version).toBe(concluded.version);
+    expect(reopened.conclusionSnapshot).toEqual(snapshot);
+    expect(
+      reopened.history.find((change) => change.kind === "CONCLUDE"),
+    ).toEqual(conclusionHistory);
+  });
+
   it("reuses savings funding and reserve state without making allocations or money", async () => {
     const account = await prisma.financialAccount.create({
       data: {

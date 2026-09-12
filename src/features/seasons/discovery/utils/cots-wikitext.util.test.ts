@@ -26,6 +26,30 @@ describe("bounded speaker extraction", () => {
       { text: "A real explicit speaker turn.", detail: "Dialogue" },
     ]);
   });
+  it("matches a character's full and last-name speaker labels", () => {
+    expect(
+      extractWikiQuotes(
+        "== Season 1 ==\n:'''Monkey D. Luffy''': Well, I'm gonna be the King of the Pirates!\n:'''Luffy''': I decided long ago that I'm gonna be King of the Pirates.\n'''Luffy''': The way you said it, I believed you.\n'''Usopp''' (sheepishly): This belongs to somebody else.",
+        "Monkey D. Luffy",
+      ),
+    ).toMatchObject([
+      {
+        text: "Well, I'm gonna be the King of the Pirates!",
+        speaker: "Monkey D. Luffy",
+        unresolved: false,
+      },
+      {
+        text: "I decided long ago that I'm gonna be King of the Pirates.",
+        speaker: "Luffy",
+        unresolved: true,
+      },
+      {
+        text: "The way you said it, I believed you.",
+        speaker: "Luffy",
+        unresolved: true,
+      },
+    ]);
+  });
   it("rejects unresolved template wording and preserves language variants separately", () => {
     expect(
       extractWikiQuotes(
@@ -61,6 +85,69 @@ describe("bounded speaker extraction", () => {
         unresolved: true,
         text: "A synthetic unlisted speaker turn.",
       },
+    ]);
+  });
+
+  it("does not mistake a public-figure biography containing a URL for a quote", () => {
+    const result = extractWikiQuotes(
+      "'''Emory Andrew Tate III''' (born December 1, 1986) is a social media personality. https://example.com/profile\n== Quotes ==\n* Discipline is doing what needs to be done.",
+      "Andrew Tate",
+      true,
+    );
+
+    expect(result).toMatchObject([
+      { text: "Discipline is doing what needs to be done." },
+    ]);
+  });
+
+  it("normalizes URLs out of extracted quotations", () => {
+    expect(
+      extractWikiQuotes(
+        "== Quotes ==\n* Fear is only a thought. (https://example.com/quote)",
+        "Alex",
+        true,
+      ),
+    ).toMatchObject([{ text: "Fear is only a thought." }]);
+  });
+
+  it("keeps a colon inside public-figure wording instead of inventing a speaker", () => {
+    expect(
+      extractWikiQuotes(
+        "== Quotes ==\n* Remember this: discipline compounds.",
+        "Alex",
+        true,
+      ),
+    ).toMatchObject([{ text: "Remember this: discipline compounds." }]);
+  });
+
+  it("rejects Wikiquote media labels while preserving complete nearby quotes", () => {
+    expect(
+      extractWikiQuotes(
+        "== Quotes ==\n=== 2022 ===\n* absolutely a misogynist (YouTube video)\n* I'm a realist and when you're a realist you're sexist. (same YouTube video)\n* playing a comedic character (statement to The Guardian)\n* Internet sensationalism has purported the idea that I am anti women when nothing could be further from the truth. (statement to The Guardian)",
+        "Andrew Tate",
+        true,
+      ),
+    ).toMatchObject([
+      {
+        text: "I'm a realist and when you're a realist you're sexist.",
+        detail: "2022 · same YouTube video",
+      },
+      {
+        text: "Internet sensationalism has purported the idea that I am anti women when nothing could be further from the truth.",
+        detail: "2022 · statement to The Guardian",
+      },
+    ]);
+  });
+
+  it("rejects addressed social-post wording while preserving quote-shaped text", () => {
+    expect(
+      extractWikiQuotes(
+        "== Quotes ==\n* Hello @GretaThunberg I have 33 cars. Please provide your email address so I can send a complete list.\n* Discipline is built by keeping promises to yourself.",
+        "Andrew Tate",
+        true,
+      ),
+    ).toMatchObject([
+      { text: "Discipline is built by keeping promises to yourself." },
     ]);
   });
 });

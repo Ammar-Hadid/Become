@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchCotsProvider, cotsProviderRoute } from "./cots-provider.adapter";
-import { providerJson } from "../services/cots-provider-http.service";
+import {
+  CotsProviderError,
+  providerJson,
+} from "../services/cots-provider-http.service";
 import type { ProviderQuery } from "../types/cots-provider.types";
 vi.mock("@/lib/db/adapters/prisma.adapter", () => ({ prisma: {} }));
 vi.mock("../services/cots-provider-http.service", async (original) => ({
@@ -36,6 +39,7 @@ describe("COTS external service contracts", () => {
     expect(cotsProviderRoute({ ...base, kind: "IMAGE" })).toEqual([
       "zerochan",
       "serpapi",
+      "commons",
       "brave",
     ]);
     expect(
@@ -43,8 +47,31 @@ describe("COTS external service contracts", () => {
         ...base,
         kind: "IMAGE",
         identity: { ...base.identity, sourceCategory: "person" },
-      })[0],
-    ).toBe("commons");
+      }),
+    ).toEqual(["commons", "serpapi", "brave"]);
+    for (const category of ["tv", "movie"] as const)
+      expect(
+        cotsProviderRoute({
+          ...base,
+          kind: "IMAGE",
+          identity: { ...base.identity, sourceCategory: category },
+        }),
+      ).toEqual(["serpapi", "commons", "brave"]);
+    for (const category of ["game", "comic"] as const)
+      expect(
+        cotsProviderRoute({
+          ...base,
+          kind: "IMAGE",
+          identity: { ...base.identity, sourceCategory: category },
+        }),
+      ).toEqual(["serpapi", "zerochan", "commons", "brave"]);
+    expect(
+      cotsProviderRoute({
+        ...base,
+        kind: "IMAGE",
+        identity: { ...base.identity, sourceCategory: "book" },
+      }),
+    ).toEqual(["serpapi", "commons", "brave"]);
     for (const category of ["game", "comic"] as const)
       expect(
         cotsProviderRoute({
@@ -117,6 +144,14 @@ describe("COTS external service contracts", () => {
           width: 2500,
           height: 4073,
         },
+        {
+          id: 3718061,
+          tag: "Okabe Rintarou",
+          tags: ["Steins;Gate", "Okabe Rintarou", "Ecchi"],
+          thumbnail: "https://s3.zerochan.net/240/10/11/3718061.avif",
+          width: 2500,
+          height: 4073,
+        },
       ],
     });
     const result = await fetchCotsProvider("zerochan", {
@@ -128,6 +163,7 @@ describe("COTS external service contracts", () => {
         sourceWork: "Steins;Gate",
       },
     });
+    expect(result.items).toHaveLength(1);
     expect(result.items[0]).toMatchObject({
       externalId: "3718060",
       previewUrl: "https://s3.zerochan.net/240/10/11/3718060.avif",
@@ -153,7 +189,8 @@ describe("COTS external service contracts", () => {
             "== Test Hero ==\n" +
             Array.from(
               { length: 13 },
-              (_, i) => `* Synthetic fixture sentence number ${i}.`,
+              (_, i) =>
+                `* I believe purpose matters even when life tests promise number ${i}.`,
             ).join("\n"),
         },
       },
@@ -169,6 +206,93 @@ describe("COTS external service contracts", () => {
       vi.mocked(providerJson).mock.calls[1][1].searchParams.get("oldid"),
     ).toBe("123");
     expect(second.next).toBeNull();
+  });
+  it("resolves punctuation omitted from a saved Wikiquote work title", async () => {
+    vi.mocked(providerJson)
+      .mockRejectedValueOnce(
+        new CotsProviderError("EXHAUSTED", "No matching page"),
+      )
+      .mockResolvedValueOnce({
+        query: {
+          search: [{ title: "Mr. Robot" }, { title: "Robot" }],
+        },
+      })
+      .mockResolvedValueOnce({
+        parse: {
+          title: "Mr. Robot",
+          revid: 3926493,
+          links: [],
+          categories: [{ "*": "American television shows" }],
+          wikitext: {
+            "*": "== Season 1 ==\n:'''Elliot Alderson:''' I believe truth matters when fear makes the choice difficult.",
+          },
+        },
+      });
+
+    const result = await fetchCotsProvider("wikiquote", {
+      ...base,
+      identity: {
+        ...base.identity,
+        displayName: "Elliot Alderson",
+        sourceCategory: "tv",
+        sourceWork: "mr robot",
+      },
+    });
+
+    expect(result.items[0]).toMatchObject({
+      speaker: "Elliot Alderson",
+      sourceWork: "Mr. Robot",
+      text: "I believe truth matters when fear makes the choice difficult.",
+    });
+    expect(
+      vi.mocked(providerJson).mock.calls[1][1].searchParams.get("list"),
+    ).toBe("search");
+    expect(
+      vi.mocked(providerJson).mock.calls[2][1].searchParams.get("page"),
+    ).toBe("Mr. Robot");
+  });
+  it("finds a missing fictional source work only after explicit speaker validation", async () => {
+    vi.mocked(providerJson)
+      .mockRejectedValueOnce(
+        new CotsProviderError("EXHAUSTED", "No character page"),
+      )
+      .mockResolvedValueOnce({
+        query: {
+          search: [{ title: "One Piece" }, { title: "Monkey" }],
+        },
+      })
+      .mockResolvedValueOnce({
+        parse: {
+          title: "One Piece",
+          revid: 3966392,
+          links: [],
+          categories: [{ "*": "Anime" }],
+          wikitext: {
+            "*": "== Season 1 ==\n:'''Monkey D. Luffy''': I believe a dream is worth fighting for, even if it costs my life.\n:'''Luffy''': I decided long ago that I will keep my promise, even if I have to die.",
+          },
+        },
+      });
+
+    const result = await fetchCotsProvider("wikiquote", {
+      ...base,
+      identity: {
+        ...base.identity,
+        displayName: "Monkey D. Luffy",
+        sourceWork: "",
+        sourceEntityId: "Q477948",
+      },
+    });
+
+    expect(result.items.map(({ text }) => text)).toEqual([
+      "I believe a dream is worth fighting for, even if it costs my life.",
+      "I decided long ago that I will keep my promise, even if I have to die.",
+    ]);
+    expect(
+      vi.mocked(providerJson).mock.calls[1][1].searchParams.get("srsearch"),
+    ).toBe('"Monkey D. Luffy"');
+    expect(
+      vi.mocked(providerJson).mock.calls[2][1].searchParams.get("page"),
+    ).toBe("One Piece");
   });
   it("does not turn source links or book narration into a character quotation", async () => {
     const result = await fetchCotsProvider("wikisource", {
@@ -200,7 +324,7 @@ describe("COTS external service contracts", () => {
           title: "Test Work (season 1)",
           revid: 44,
           wikitext: {
-            "*": "== Pilot ==\n:'''Test Hero:''' An explicit synthetic speaker turn.",
+            "*": "== Pilot ==\n:'''Test Hero:''' I believe courage matters when fear makes the choice difficult.",
           },
         },
       });
@@ -301,5 +425,72 @@ describe("COTS external service contracts", () => {
     expect(
       (await fetchCotsProvider("brave", { ...base, kind: "IMAGE" })).next,
     ).toBeNull();
+  });
+
+  it("gives cold SerpApi image searches enough time to complete", async () => {
+    vi.stubEnv("COTS_SERPAPI_API_KEY", "fixture");
+    vi.mocked(providerJson).mockResolvedValue({
+      images_results: [
+        {
+          original: "https://example.com/original.jpg",
+          link: "https://example.com/source",
+        },
+      ],
+    });
+
+    await fetchCotsProvider("serpapi", { ...base, kind: "IMAGE" });
+
+    expect(providerJson).toHaveBeenCalledWith(
+      "serpapi",
+      expect.any(URL),
+      expect.objectContaining({ timeoutMs: 20_000 }),
+    );
+  });
+
+  it("sends exact category-specific identity context to image search providers", async () => {
+    vi.stubEnv("COTS_SERPAPI_API_KEY", "fixture");
+    vi.mocked(providerJson).mockResolvedValue({ images_results: [] });
+    const examples = [
+      {
+        identity: {
+          ...base.identity,
+          displayName: "Levi Ackerman",
+          sourceCategory: "anime" as const,
+          sourceWork: "Attack on Titan",
+        },
+        query:
+          '"Levi Ackerman" "Attack on Titan" anime character -nsfw -ecchi -echi -hentai -nude -explicit',
+      },
+      {
+        identity: {
+          ...base.identity,
+          displayName: "Elliot Alderson",
+          sourceCategory: "tv" as const,
+          sourceWork: "Mr. Robot",
+        },
+        query:
+          '"Elliot Alderson" "Mr. Robot" TV character -nsfw -ecchi -echi -hentai -nude -explicit',
+      },
+      {
+        identity: {
+          ...base.identity,
+          displayName: "David Bowie",
+          sourceCategory: "person" as const,
+          sourceWork: "",
+        },
+        query:
+          '"David Bowie" portrait photograph -nsfw -ecchi -echi -hentai -nude -explicit',
+      },
+    ];
+
+    for (const example of examples) {
+      await fetchCotsProvider("serpapi", {
+        ...base,
+        kind: "IMAGE",
+        identity: example.identity,
+      });
+      const requestUrl = vi.mocked(providerJson).mock.calls.at(-1)![1];
+      expect(requestUrl.searchParams.get("q")).toBe(example.query);
+    }
   });
 });

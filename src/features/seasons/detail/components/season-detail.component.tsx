@@ -20,7 +20,7 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
           aria-labelledby="opening-title"
         >
           <div>
-            <p className="eyebrow">This chapter is already underway</p>
+            <p className="eyebrow">This season is already underway</p>
             <h2 id="opening-title">Give this season a shape.</h2>
             <p>
               A short opening ritual for what matters, what stays protected, and
@@ -43,7 +43,7 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
           <div>
             <p className="eyebrow">Preserved at closing</p>
             <h2 id="season-captured-outcomes-title">
-              The reading this chapter closed with
+              The reading this season closed with
             </h2>
             <p>
               A dated memory from{" "}
@@ -89,7 +89,7 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
             <span aria-hidden="true" />
             <p>
               Your goals, experiments, and chosen standards will gather here as
-              the chapter takes shape.
+              the season takes shape.
             </p>
           </section>
           {!season.closedAt && season.cotsIdentity && (
@@ -101,7 +101,7 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
           {!season.closedAt && (
             <div className="season-revisit-row">
               <p>
-                Direction can change while the chapter is alive. Revisit the
+                Direction can change while the season is alive. Revisit the
                 goals, character, and standards you chose.
               </p>
               <Link href={openingHref}>
@@ -125,7 +125,7 @@ export function SeasonDetail({ season }: { season: SeasonView }) {
                 <h2 id="season-direction-title">
                   {season.closedAt
                     ? "Where these goals stand now"
-                    : "Direction for this chapter"}
+                    : "Direction for this season"}
                 </h2>
                 {season.closedAt && (
                   <p>

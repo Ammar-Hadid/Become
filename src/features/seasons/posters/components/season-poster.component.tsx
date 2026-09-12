@@ -19,13 +19,13 @@ function posterDirection(season: SeasonView) {
     return (
       season.closingCard.primaryGoal?.title ||
       season.closingCard.intention.trim() ||
-      "A chapter preserved without a single named direction."
+      "A season preserved without a single named direction."
     );
   }
   return (
     season.goals.find(({ role }) => role === "PRIMARY")?.goal.title ||
     season.intention.trim() ||
-    "Give this chapter a direction when you are ready."
+    "Give this season a direction when you are ready."
   );
 }
 

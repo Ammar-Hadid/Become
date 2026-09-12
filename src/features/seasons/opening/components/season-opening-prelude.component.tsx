@@ -11,7 +11,7 @@ const preludeLines = [
   "Choose what enters them.",
 ] as const;
 
-const PRELUDE_BEAT_MS = MOTION_DURATION_MS.signature * 3;
+const PRELUDE_BEAT_MS = MOTION_DURATION_MS.signature * 8;
 
 export function SeasonOpeningPrelude({
   seasonLabel,
@@ -68,7 +68,7 @@ export function SeasonOpeningPrelude({
           ))}
         </span>
         <Button type="button" variant="ghost" onClick={onContinue}>
-          Open the chapter <ArrowRight aria-hidden="true" />
+          Open the season <ArrowRight aria-hidden="true" />
         </Button>
       </div>
     </section>

@@ -20,6 +20,7 @@ import { getSeasonView } from "@/features/seasons/queries/season.query";
 import { deleteDisposableBrowserUser } from "../../../../../e2e/utils/disposable-user.util";
 import { fetchPublicImage } from "./cots-public-image.service";
 import { maintainCotsDiscovery } from "./cots-maintenance.service";
+import { seasonPreviewKey } from "@/features/seasons/media/services/season-image-preview.service";
 import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
 vi.mock("./cots-public-image.service", () => ({ fetchPublicImage: vi.fn() }));
 const enabled = process.env.RUN_COTS_INTEGRATION === "1";
@@ -29,6 +30,7 @@ describe.skipIf(!enabled)(
     let userId: string, email: string, bytes: Buffer;
     const scope = { year: 2026, quarter: 3 };
     beforeEach(async () => {
+      vi.stubEnv("COTS_ENABLED_PROVIDERS", "fixture");
       if (
         !["localhost", "127.0.0.1", "[::1]"].includes(
           new URL(process.env.DATABASE_URL!).hostname,
@@ -72,6 +74,7 @@ describe.skipIf(!enabled)(
           if (job.storageKey) await getMediaStorage().remove(job.storageKey);
       }
       vi.clearAllMocks();
+      vi.unstubAllEnvs();
     });
     async function select(image = true) {
       const collection = await getCotsCollection(
@@ -332,6 +335,34 @@ describe.skipIf(!enabled)(
       ]);
       expect(fetchPublicImage).toHaveBeenCalledTimes(1);
       expect(await prisma.seasonMedia.count({ where: { userId } })).toBe(1);
+    });
+    it("lets a failed image be removed before choosing a replacement", async () => {
+      const selected = await select();
+      const failed = selected.selections[0];
+      const key = `media/seasons/test/${randomUUID()}.webp`;
+      await Promise.all([
+        getMediaStorage().put(key, bytes),
+        getMediaStorage().put(seasonPreviewKey(key), bytes),
+      ]);
+      await prisma.seasonCotsSelection.update({
+        where: { id: failed.id },
+        data: { status: "FAILED", storageKey: key },
+      });
+
+      const removed = await selectCotsCandidate(userId, {
+        ...scope,
+        candidateRef: failed.candidateRef!,
+        selected: false,
+        expectedSelectionRevision: selected.selectionRevision,
+      });
+
+      expect(removed.selections).toHaveLength(0);
+      await expect(getMediaStorage().read(key)).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+      await expect(
+        getMediaStorage().read(seasonPreviewKey(key)),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     });
     it("preserves selected sources while reclaiming expired previews and abandoned prepared files", async () => {
       const selected = await select(),

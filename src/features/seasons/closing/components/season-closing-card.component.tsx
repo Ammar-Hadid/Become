@@ -51,8 +51,8 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
       <section className="season-closing-card season-closing-card--closed">
         <BookCheck aria-hidden="true" />
         <div>
-          <p className="eyebrow">Chapter closed</p>
-          <h2>{season.closingNote || "This chapter has been preserved."}</h2>
+          <p className="eyebrow">Season closed</p>
+          <h2>{season.closingNote || "This season has been preserved."}</h2>
           <p>
             Closed {new Date(season.closedAt).toLocaleDateString()}. Its goals
             and evidence may continue to change independently.
@@ -67,7 +67,7 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
     <section className="season-closing-card">
       <BookCheck aria-hidden="true" />
       <div>
-        <p className="eyebrow">The calendar chapter has ended</p>
+        <p className="eyebrow">The calendar season has ended</p>
         <h2>Keep one small truth from this season.</h2>
         <p>
           Closing preserves this view. It does not reset, stop, or conclude any
@@ -75,7 +75,7 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
         </p>
         {!open && (
           <button type="button" onClick={() => setOpen(true)}>
-            Close this chapter
+            Close this season
           </button>
         )}
       </div>
@@ -110,7 +110,7 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
           </Button>
           <Button type="submit" disabled={pending}>
             <Save aria-hidden="true" />{" "}
-            {pending ? "Closing…" : "Preserve this chapter"}
+            {pending ? "Closing…" : "Preserve this season"}
           </Button>
         </div>
       </form>

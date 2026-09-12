@@ -34,12 +34,16 @@ import type {
   SeasonView,
 } from "@/features/seasons/types/season.types";
 import { SeasonOpeningPrelude } from "@/features/seasons/opening/components/season-opening-prelude.component";
+import {
+  SeasonGoalCreator,
+  type SeasonGoalPlacement,
+} from "@/features/seasons/opening/components/season-goal-creator.component";
 import "@/features/seasons/opening/styles/season-opening-ritual.css";
 
 const stages = [
   {
     number: 1,
-    label: "Open the chapter",
+    label: "Open the season",
     description: "Name what deserves to cross the threshold with you.",
   },
   {
@@ -54,7 +58,7 @@ const stages = [
   },
   {
     number: 4,
-    label: "See the chapter",
+    label: "See the season",
     description: "See the season as one whole before you step into it.",
   },
 ] as const;
@@ -182,7 +186,7 @@ function changedSeasonAreas(
     localDraft.title !== savedDraft.title ||
     localDraft.intention !== savedDraft.intention
   )
-    areas.push("chapter framing");
+    areas.push("season framing");
   if (JSON.stringify(localDraft.answers) !== JSON.stringify(savedDraft.answers))
     areas.push("opening reflections");
   if (localDraft.stage !== savedDraft.stage) areas.push("opening stage");
@@ -220,9 +224,9 @@ function reviewFields(
 ) {
   const value = (text: string) => text.trim() || "Not set";
   return [
-    ["Chapter title", value(draft.title)],
+    ["Season title", value(draft.title)],
     ["Opening intention", value(draft.intention)],
-    ["Opening stage", stages[draft.stage - 1]?.label ?? "Open the chapter"],
+    ["Opening stage", stages[draft.stage - 1]?.label ?? "Open the season"],
     ["Carry forward", value(draft.answers.carryForward)],
     ["Leave behind", value(draft.answers.leaveBehind)],
     ["Meaningful if", value(draft.answers.meaningful)],
@@ -262,14 +266,19 @@ function reviewFields(
 export function SeasonOpening({
   season,
   goalOptions,
+  domainOptions,
+  defaultGoalStartOn,
   arrival = false,
 }: {
   season: SeasonView;
   goalOptions: OwnedOption[];
+  domainOptions: OwnedOption[];
+  defaultGoalStartOn: string;
   arrival?: boolean;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const createGoalButtonRef = useRef<HTMLButtonElement>(null);
   const ritualTitleRef = useRef<HTMLHeadingElement>(null);
   const initialDraft = draftFromSeason(season);
   const initialAssignment = assignmentsFromSeason(season);
@@ -291,6 +300,9 @@ export function SeasonOpening({
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewNotice, setReviewNotice] = useState<string | null>(null);
   const [selectionReset, setSelectionReset] = useState(0);
+  const [goalCreatorOpen, setGoalCreatorOpen] = useState(false);
+  const [goalPlacement, setGoalPlacement] =
+    useState<SeasonGoalPlacement>("PRIMARY");
   const [deferringArrival, setDeferringArrival] = useState(false);
   const [arrivalError, setArrivalError] = useState<string | null>(null);
   const [checkingCompletion, setCheckingCompletion] = useState(false);
@@ -752,13 +764,38 @@ export function SeasonOpening({
     }
   }
 
-  async function saveThenCreateGoal() {
+  async function openGoalCreator() {
     const response = await persist(draft);
     if (!response.error) {
-      router.push(
-        `/direction/goals/new?returnTo=${encodeURIComponent(`/direction/seasons/${season.year}/${season.quarter}/opening`)}`,
+      setReviewNotice(null);
+      setGoalPlacement(primary ? "SUPPORTING" : "PRIMARY");
+      setGoalCreatorOpen(true);
+    }
+  }
+
+  function closeGoalCreator() {
+    setGoalCreatorOpen(false);
+    window.requestAnimationFrame(() => createGoalButtonRef.current?.focus());
+  }
+
+  function addCreatedGoal(goal: OwnedOption, placement: SeasonGoalPlacement) {
+    if (placement === "PRIMARY") {
+      setPrimary(goal);
+      setSupporting((current) =>
+        current.filter((option) => option.id !== goal.id),
+      );
+      setSelectionReset((current) => current + 1);
+    } else {
+      setSupporting((current) =>
+        current.some((option) => option.id === goal.id)
+          ? current
+          : [...current, goal],
       );
     }
+    setReviewNotice(
+      `${goal.name} was created and added as ${placement === "PRIMARY" ? "your main direction" : "a supporting goal"}.`,
+    );
+    closeGoalCreator();
   }
 
   function updateStandard(key: string, patch: Partial<SeasonStandard>) {
@@ -816,13 +853,16 @@ export function SeasonOpening({
       className="season-opening-ritual"
       data-arrival={arrival || undefined}
       data-prelude={preludeActive || undefined}
+      data-goal-creator={goalCreatorOpen || undefined}
       data-stage={draft.stage}
       data-testid="season-opening-ritual"
     >
       <div className="season-opening-ambient" aria-hidden="true">
-        <span />
-        <span />
-        <span />
+        <span className="season-opening-ambient-glow" />
+        <span className="season-opening-ambient-grid">
+          <span className="season-opening-ambient-wall" />
+          <span className="season-opening-ambient-floor" />
+        </span>
       </div>
 
       <div className="season-opening-exit">
@@ -896,7 +936,7 @@ export function SeasonOpening({
                 type="button"
                 aria-label={`${stage.number} ${stage.label}`}
                 aria-current={draft.stage === stage.number ? "step" : undefined}
-                disabled={controlsDisabled}
+                disabled={controlsDisabled || goalCreatorOpen}
                 onClick={() => void moveTo(stage.number)}
               >
                 <span aria-hidden="true">
@@ -915,9 +955,10 @@ export function SeasonOpening({
 
         <form
           ref={formRef}
+          hidden={goalCreatorOpen}
           onSubmit={(event) => event.preventDefault()}
           aria-busy={reviewPending || state === "saving"}
-          inert={reviewPending}
+          inert={reviewPending || goalCreatorOpen}
         >
           <input
             type="hidden"
@@ -930,7 +971,7 @@ export function SeasonOpening({
           <section className="season-opening-stage" hidden={draft.stage !== 1}>
             <div className="season-opening-question">
               <p className="eyebrow">At the threshold</p>
-              <h2 tabIndex={-1}>What crosses into this chapter?</h2>
+              <h2 tabIndex={-1}>What crosses into this season?</h2>
               <p>
                 Carry only what deserves a place. Leave room for what can become
                 different.
@@ -1049,10 +1090,11 @@ export function SeasonOpening({
                 </label>
               ))}
               <button
+                ref={createGoalButtonRef}
                 className="season-create-goal"
                 type="button"
                 disabled={controlsDisabled}
-                onClick={() => void saveThenCreateGoal()}
+                onClick={() => void openGoalCreator()}
               >
                 <Plus aria-hidden="true" /> Create a new goal
               </button>
@@ -1081,7 +1123,7 @@ export function SeasonOpening({
               <p className="eyebrow">The season, assembled</p>
               <h2 tabIndex={-1}>Let the direction feel like yours.</h2>
               <p>
-                Give the chapter its final words. Its character and imagery can
+                Give the season its final words. Its character and imagery can
                 keep evolving without rewriting how it began.
               </p>
             </div>
@@ -1345,6 +1387,17 @@ export function SeasonOpening({
             </footer>
           )}
         </form>
+
+        {goalCreatorOpen && (
+          <SeasonGoalCreator
+            domainOptions={domainOptions}
+            defaultStartOn={defaultGoalStartOn}
+            placement={goalPlacement}
+            onPlacementChange={setGoalPlacement}
+            onCancel={closeGoalCreator}
+            onCreated={addCreatedGoal}
+          />
+        )}
       </div>
     </main>
   );

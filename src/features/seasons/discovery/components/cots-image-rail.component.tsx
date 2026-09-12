@@ -15,7 +15,7 @@ import type {
   CotsCandidateView,
   CotsSelectionView,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
-import { cotsSourceStatusMessage } from "@/features/seasons/discovery/utils/cots-source-status.util";
+import { COTS_DISCOVERY_ISSUE_MESSAGE } from "@/features/seasons/discovery/utils/cots-source-status.util";
 import { cn } from "@/lib/styles/utils/class-name.util";
 
 function selectionLabel(selection?: CotsSelectionView) {
@@ -25,6 +25,43 @@ function selectionLabel(selection?: CotsSelectionView) {
   if (selection.status === "IMPORTING") return "Importing";
   if (selection.status === "READY") return "Ready";
   return "Import failed";
+}
+
+function importFailure(error: string | null) {
+  const reason = error?.toLowerCase() ?? "";
+  if (reason.includes("blocked") || reason.includes("accessible still image"))
+    return {
+      message:
+        "The image host blocked this download. Remove it and choose another image.",
+      retryable: false,
+    };
+  if (reason.includes("no longer available"))
+    return {
+      message:
+        "The image was removed at its source. Remove it and choose another image.",
+      retryable: false,
+    };
+  if (reason.includes("too large"))
+    return {
+      message:
+        "This image is too large to save. Remove it and choose a smaller image.",
+      retryable: false,
+    };
+  if (
+    reason.includes("timed out") ||
+    reason.includes("interrupted") ||
+    reason.includes("unavailable")
+  )
+    return {
+      message:
+        "The image host did not finish the download. Try again, or remove it and choose another image.",
+      retryable: true,
+    };
+  return {
+    message:
+      "This image could not be saved. Try again, or remove it and choose another image.",
+    retryable: true,
+  };
 }
 
 function ImageCandidateCard({
@@ -37,6 +74,7 @@ function ImageCandidateCard({
   onKeyMove,
   onToggle,
   onRetry,
+  onRemove,
   buttonRef,
 }: {
   candidate: CotsCandidateView;
@@ -48,11 +86,14 @@ function ImageCandidateCard({
   onKeyMove: (direction: -1 | 1) => void;
   onToggle: () => void;
   onRetry: () => void;
+  onRemove: () => void;
   buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
   const frameRef = useRef<HTMLSpanElement>(null);
   const selected = Boolean(selection);
   const status = selectionLabel(selection);
+  const failure =
+    selection?.status === "FAILED" ? importFailure(selection.error) : null;
   const locked = selection && selection.status !== "SELECTED";
   const supportsLargePreview =
     candidate.provider === "zerochan" && Boolean(candidate.previewHref);
@@ -180,10 +221,32 @@ function ImageCandidateCard({
           {candidate.unavailableReason || "This source cannot be imported."}
         </p>
       )}
-      {selection?.status === "FAILED" && (
-        <button className="cots-card-retry" type="button" onClick={onRetry}>
-          <RotateCcw aria-hidden="true" /> Retry import
-        </button>
+      {failure && (
+        <div className="cots-card-failure" role="status">
+          <p>{failure.message}</p>
+          <div>
+            {failure.retryable && (
+              <Button
+                className="focus-visible:ring-danger"
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onRetry}
+              >
+                <RotateCcw aria-hidden="true" /> Try again
+              </Button>
+            )}
+            <Button
+              className="focus-visible:ring-danger"
+              type="button"
+              variant={failure.retryable ? "ghost" : "secondary"}
+              size="sm"
+              onClick={onRemove}
+            >
+              Remove
+            </Button>
+          </div>
+        </div>
       )}
       <details className="cots-source-details">
         <summary>Source details</summary>
@@ -260,14 +323,28 @@ export function CotsImageRail({
       ),
     [selections],
   );
-  const retryableDiscoveryFailure = Boolean(
-    page &&
-    !page.items.length &&
-    page.sources.some(({ status }) =>
-      ["THROTTLED", "UNAVAILABLE"].includes(status),
-    ),
+  const visibleCandidates = useMemo(() => {
+    const discovered = page?.items ?? [];
+    const discoveredRefs = new Set(
+      discovered.map(({ candidateRef }) => candidateRef),
+    );
+    const retainedSelections = selections
+      .filter(
+        ({ candidate }) =>
+          candidate.form === "IMAGE" &&
+          !discoveredRefs.has(candidate.candidateRef),
+      )
+      .sort(
+        (a, b) => Number(b.status === "FAILED") - Number(a.status === "FAILED"),
+      );
+    return [
+      ...retainedSelections.map(({ candidate }) => candidate),
+      ...discovered,
+    ];
+  }, [page?.items, selections]);
+  const sourceIssue = Boolean(
+    page?.sources.some(({ status }) => status !== "AVAILABLE"),
   );
-
   const scroll = (direction: -1 | 1) => {
     railRef.current?.scrollBy({
       left: direction * railRef.current.clientWidth * 0.82,
@@ -276,8 +353,8 @@ export function CotsImageRail({
   };
 
   const focus = (index: number) => {
-    if (!page?.items.length) return;
-    const next = (index + page.items.length) % page.items.length;
+    if (!visibleCandidates.length) return;
+    const next = (index + visibleCandidates.length) % visibleCandidates.length;
     setFocusIndex(next);
     buttonRefs.current[next]?.focus({ preventScroll: true });
     buttonRefs.current[next]?.scrollIntoView({
@@ -291,8 +368,8 @@ export function CotsImageRail({
     <div className="cots-image-browser">
       <div className="cots-rail-heading">
         <p>
-          {page?.items.length
-            ? `${page.items.length} possibilities`
+          {visibleCandidates.length
+            ? `${visibleCandidates.length} possibilities`
             : discovering
               ? "Looking for possibilities…"
               : "No image suggestions yet"}
@@ -303,7 +380,7 @@ export function CotsImageRail({
             variant="secondary"
             size="icon"
             aria-label="Previous images"
-            disabled={!page?.items.length}
+            disabled={!visibleCandidates.length}
             onClick={() => scroll(-1)}
           >
             <ArrowLeft aria-hidden="true" />
@@ -313,7 +390,7 @@ export function CotsImageRail({
             variant="secondary"
             size="icon"
             aria-label="Next images"
-            disabled={!page?.items.length}
+            disabled={!visibleCandidates.length}
             onClick={() => scroll(1)}
           >
             <ArrowRight aria-hidden="true" />
@@ -375,7 +452,7 @@ export function CotsImageRail({
           suppressClickRef.current = false;
         }}
       >
-        {page?.items.map((candidate, index) => {
+        {visibleCandidates.map((candidate, index) => {
           const selection = selectionByRef.get(candidate.candidateRef);
           return (
             <ImageCandidateCard
@@ -389,6 +466,7 @@ export function CotsImageRail({
               onKeyMove={(direction) => focus(index + direction)}
               onToggle={() => onToggle(candidate, !selection)}
               onRetry={() => selection && onRetry(selection.id)}
+              onRemove={() => onToggle(candidate, false)}
               buttonRef={(node) => {
                 buttonRefs.current[index] = node;
               }}
@@ -420,10 +498,14 @@ export function CotsImageRail({
         )}
         {page?.exhausted && (
           <div className="cots-load-more-card">
-            {retryableDiscoveryFailure ? (
+            {!visibleCandidates.length ? (
               <>
                 <RotateCcw aria-hidden="true" />
-                <p>The image sources did not complete this search.</p>
+                <p>
+                  {sourceIssue
+                    ? COTS_DISCOVERY_ISSUE_MESSAGE
+                    : "No image suggestions are ready yet."}
+                </p>
                 <Button
                   type="button"
                   variant="secondary"
@@ -442,22 +524,6 @@ export function CotsImageRail({
           </div>
         )}
       </div>
-
-      {page?.sources.some(({ status }) => status !== "AVAILABLE") && (
-        <div className="cots-source-notices" aria-label="Source availability">
-          {page.sources
-            .filter(({ status }) => status !== "AVAILABLE")
-            .map((source) => (
-              <p key={source.provider}>
-                {cotsSourceStatusMessage(
-                  source.provider,
-                  source.status,
-                  "images",
-                )}
-              </p>
-            ))}
-        </div>
-      )}
     </div>
   );
 }
