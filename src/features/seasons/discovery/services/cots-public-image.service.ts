@@ -64,9 +64,10 @@ export function publicImageUrl(value: string) {
 export async function fetchPublicImage(
   value: string,
   maximum = MAX_UPLOAD_BYTES,
+  timeoutMilliseconds = 15_000,
 ): Promise<Buffer> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMilliseconds);
   try {
     let url = publicImageUrl(value);
     for (let redirects = 0; redirects <= 3; redirects++) {
@@ -128,6 +129,24 @@ export async function fetchPublicImage(
                 .split(";", 1)[0]
                 .trim()
                 .toLowerCase();
+              if (status === 401 || status === 403) {
+                response.destroy();
+                reject(
+                  new DirectionError(
+                    "The image host blocked this download. Remove it and choose another image.",
+                  ),
+                );
+                return;
+              }
+              if (status === 404 || status === 410) {
+                response.destroy();
+                reject(
+                  new DirectionError(
+                    "The image is no longer available at its source. Remove it and choose another image.",
+                  ),
+                );
+                return;
+              }
               if (
                 status !== 200 ||
                 !SEASON_IMAGE_CONTENT_TYPES.has(contentType)

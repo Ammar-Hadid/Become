@@ -52,7 +52,7 @@ const actionCopy: Record<
   },
   REOPEN: {
     title: "Continue after the conclusion?",
-    reason: "What changed or still deserves another chapter?",
+    reason: "What changed or still deserves another season?",
     submit: "Reopen",
   },
   ARCHIVE: {

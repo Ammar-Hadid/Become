@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getMediaStorage } from "@/lib/storage/services/media-storage.service";
 import {
   DirectionError,
   jsonValue,
@@ -13,11 +14,12 @@ import {
   getCotsIdentity,
 } from "@/features/seasons/discovery/queries/cots-collection.query";
 import { cotsLimits } from "@/features/seasons/discovery/config/cots-provider.config";
+import { seasonPreviewKey } from "@/features/seasons/media/services/season-image-preview.service";
 import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
 
 export async function selectCotsCandidate(userId: string, input: unknown) {
   const c = cotsSelectionCommand.parse(input);
-  await prisma.$transaction(async (tx) => {
+  const discardedStorageKey = await prisma.$transaction(async (tx) => {
     const season = await lockSeason(tx, userId, c.year, c.quarter);
     if (!season || season.closedAt)
       throw new DirectionError("This season is not editable.");
@@ -36,7 +38,7 @@ export async function selectCotsCandidate(userId: string, input: unknown) {
     if (!c.selected && !existing) return;
     requireVersion(active.row.selectionRevision, c.expectedSelectionRevision);
     if (!c.selected) {
-      if (existing?.status !== "SELECTED")
+      if (!existing || !["SELECTED", "FAILED"].includes(existing.status))
         throw new DirectionError(
           "This item is already confirmed. Use collection retirement after it finishes.",
         );
@@ -87,7 +89,15 @@ export async function selectCotsCandidate(userId: string, input: unknown) {
       where: { id: active.row.id },
       data: { selectionRevision: { increment: 1 } },
     });
+    return existing?.status === "FAILED" ? existing.storageKey : null;
   });
+  if (discardedStorageKey) {
+    const storage = getMediaStorage();
+    await Promise.allSettled([
+      storage.remove(discardedStorageKey),
+      storage.remove(seasonPreviewKey(discardedStorageKey)),
+    ]);
+  }
   return getCotsCollection(userId, c.year, c.quarter);
 }
 

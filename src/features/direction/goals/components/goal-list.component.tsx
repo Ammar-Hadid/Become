@@ -25,8 +25,8 @@ export function GoalList({
           <p className="eyebrow">Across every season</p>
           <h2 id="goal-list-title">Your goals keep their own horizon.</h2>
           <p>
-            A goal can guide many chapters without being reset or averaged into
-            a season score.
+            A goal can guide many seasons without being reset or averaged into a
+            season score.
           </p>
         </div>
         <Link className="season-primary-action" href="/direction/goals/new">

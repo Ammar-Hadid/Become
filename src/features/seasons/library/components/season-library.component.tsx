@@ -18,7 +18,7 @@ export function SeasonLibrary({
     >
       <header className="direction-section-heading">
         <div>
-          <p className="eyebrow">Your chapters</p>
+          <p className="eyebrow">Your seasons</p>
           <h2 id="season-library-title">A record of who you were becoming.</h2>
           <p>
             Past seasons keep their closing truth while linked goals continue on
@@ -35,7 +35,7 @@ export function SeasonLibrary({
           id="season-search"
           name="search"
           defaultValue={search}
-          placeholder="Search chapter titles…"
+          placeholder="Search season titles…"
         />
         {search && <Link href="/direction/seasons">Clear</Link>}
       </form>
@@ -55,8 +55,8 @@ export function SeasonLibrary({
           <BookOpen aria-hidden="true" />
           <h3>
             {search
-              ? "No chapter matches that search."
-              : "Your season library begins after you save a chapter."}
+              ? "No season matches that search."
+              : "Your season library begins after you save a season."}
           </h3>
           <p>
             Opening notes, chosen character, and closing reflections stay

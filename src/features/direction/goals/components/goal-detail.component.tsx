@@ -134,7 +134,7 @@ export function GoalDetail({ goal }: { goal: GoalView }) {
           className="direction-goal-seasons"
           aria-labelledby="goal-seasons-title"
         >
-          <p className="eyebrow">Part of a wider chapter</p>
+          <p className="eyebrow">Part of a wider season</p>
           <h2 id="goal-seasons-title">Seasons carrying this goal</h2>
           <div>
             {goal.seasons.map((season) => (

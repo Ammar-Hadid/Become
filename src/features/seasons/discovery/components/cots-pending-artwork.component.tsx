@@ -2,6 +2,7 @@
 
 import { LoaderCircle } from "lucide-react";
 import { useState, type CSSProperties } from "react";
+import { Button } from "@/components/ui/buttons/button.component";
 import type { SeasonMediaView } from "@/features/seasons/types/season.types";
 import { cn } from "@/lib/styles/utils/class-name.util";
 
@@ -15,12 +16,16 @@ export function CotsPendingArtwork({
   active,
   label,
   detail,
+  actionLabel,
+  onAction,
   variant = "inline",
 }: {
   media?: PendingArtworkMedia;
   active: boolean;
   label: string;
   detail?: string;
+  actionLabel?: string;
+  onAction?: () => void;
   variant?: "inline" | "route";
 }) {
   const [failedId, setFailedId] = useState<string | null>(null);
@@ -70,10 +75,21 @@ export function CotsPendingArtwork({
           aria-hidden="true"
         />
       ) : null}
-      <span>
+      <span className="cots-pending-artwork-copy">
         <strong>{label}</strong>
         {detail && <small>{detail}</small>}
       </span>
+      {actionLabel && onAction && (
+        <Button
+          className="cots-pending-artwork-action"
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      )}
     </div>
   );
 }

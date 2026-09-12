@@ -25,6 +25,21 @@ afterEach(() => {
 });
 
 describe("provider JSON redirect boundary", () => {
+  it("honors a provider-specific response timeout", async () => {
+    const signal = new AbortController().signal;
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(signal);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ ok: true })),
+    );
+
+    await providerJson("serpapi", new URL("https://serpapi.com/search.json"), {
+      timeoutMs: 20_000,
+    });
+
+    expect(timeout).toHaveBeenCalledWith(20_000);
+  });
+
   it("follows a bounded same-origin canonical redirect and preserves the query", async () => {
     const fetchMock = vi
       .fn()
@@ -69,5 +84,26 @@ describe("provider JSON redirect boundary", () => {
       }),
     ).rejects.toThrow("trusted origin");
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("identifies Become to Wikimedia and preserves API throttling errors", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        error: { code: "ratelimited", info: "Rate limit exceeded" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      providerJson(
+        "wikimedia",
+        new URL("https://www.wikidata.org/w/api.php?action=wbsearchentities"),
+      ),
+    ).rejects.toMatchObject({ status: "THROTTLED" });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      headers: expect.objectContaining({
+        "User-Agent": "Become/1.0 (https://github.com/Ammar-Hadid/Become)",
+      }),
+    });
   });
 });

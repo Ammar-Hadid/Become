@@ -20,7 +20,7 @@ function PosterFallback({ character }: { character: SeasonCharacter }) {
         ) : (
           <>
             <ImageOff aria-hidden="true" />
-            <strong>Your chapter, still taking shape</strong>
+            <strong>Your season, still taking shape</strong>
           </>
         )}
       </div>

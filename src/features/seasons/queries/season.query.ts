@@ -143,7 +143,7 @@ export async function getSeasonView(
       key,
       title:
         key === "ENDED"
-          ? "This chapter has ended"
+          ? "This season has ended"
           : key === "MIDPOINT"
             ? "Return to your direction"
             : calendar.phase === "FINAL_3"

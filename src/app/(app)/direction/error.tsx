@@ -14,7 +14,7 @@ export default function DirectionError({
     <div className="page-shell direction-shell">
       <section className="direction-page-error" role="alert">
         <p className="eyebrow">Direction paused</p>
-        <h1>This chapter could not be loaded.</h1>
+        <h1>This season could not be loaded.</h1>
         <p>
           Your saved season and goals have not changed. Try loading this view
           again.

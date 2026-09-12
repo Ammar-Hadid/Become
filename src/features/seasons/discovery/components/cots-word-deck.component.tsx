@@ -1,13 +1,21 @@
 "use client";
 
-import { Check, ExternalLink, Quote, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ExternalLink,
+  Quote,
+  RotateCcw,
+} from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
 import type {
   CotsCandidatePage,
   CotsCandidateView,
   CotsSelectionView,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
-import { cotsSourceStatusMessage } from "@/features/seasons/discovery/utils/cots-source-status.util";
+import { COTS_DISCOVERY_ISSUE_MESSAGE } from "@/features/seasons/discovery/utils/cots-source-status.util";
 import {
   COTS_CANDIDATE_EVIDENCE_LABEL,
   COTS_TEXT_FORM_LABEL,
@@ -33,181 +41,295 @@ export function CotsWordDeck({
   onRetryDiscovery: () => void;
   onLoadMore: () => void;
 }) {
+  const pageKey = page?.queryKey ?? "pending";
+  const [position, setPosition] = useState({ pageKey, index: 0 });
+  const candidates =
+    page?.items.filter(
+      (candidate) =>
+        candidate.form !== "SOURCE_LINK" && Boolean(candidate.text?.trim()),
+    ) ?? [];
+  const sourceLinks = [
+    ...new Map(
+      (page?.items ?? [])
+        .filter(
+          (candidate) =>
+            candidate.form === "SOURCE_LINK" && Boolean(candidate.sourceUrl),
+        )
+        .map((candidate) => [candidate.sourceUrl, candidate]),
+    ).values(),
+  ];
+  const hasMore = Boolean(page && !page.exhausted && page.nextCursor);
+  const lastIndex = Math.max(0, candidates.length - 1 + (hasMore ? 1 : 0));
+  const activeIndex =
+    position.pageKey === pageKey ? Math.min(position.index, lastIndex) : 0;
+  const activeCandidate = candidates[activeIndex];
+  const loadMoreActive = hasMore && activeIndex === candidates.length;
   const selectionByRef = new Map(
     selections
       .filter(({ candidate }) => candidate.form !== "IMAGE")
       .map((selection) => [selection.candidate.candidateRef, selection]),
   );
-  const retryableDiscoveryFailure = Boolean(
-    page &&
-    !page.items.length &&
-    page.sources.some(({ status }) =>
-      ["THROTTLED", "UNAVAILABLE"].includes(status),
-    ),
+  const sourceIssue = Boolean(
+    page && page.sources.some(({ status }) => status !== "AVAILABLE"),
   );
+  const move = (nextIndex: number) =>
+    setPosition({
+      pageKey,
+      index: Math.max(0, Math.min(nextIndex, lastIndex)),
+    });
+
+  const activeSelection = activeCandidate
+    ? selectionByRef.get(activeCandidate.candidateRef)
+    : undefined;
+  const selected = Boolean(activeSelection);
 
   return (
     <div className="cots-word-browser">
-      <div className="cots-word-deck">
-        {page?.items.map((candidate) => {
-          const selection = selectionByRef.get(candidate.candidateRef);
-          const selected = Boolean(selection);
-          const isSourceLink = candidate.form === "SOURCE_LINK";
-          return (
-            <article
-              key={candidate.candidateRef}
-              className={cn(
-                "cots-word-card",
-                selected && "is-selected",
-                isSourceLink && "is-source-link",
-              )}
+      <div className="cots-word-gallery">
+        <header className="cots-word-gallery-nav">
+          <div>
+            <span>Curated words</span>
+            <p aria-live="polite">
+              {loadMoreActive
+                ? `${candidates.length} viewed`
+                : candidates.length
+                  ? `${activeIndex + 1} of ${candidates.length}`
+                  : discovering
+                    ? "Searching the archives…"
+                    : "No words found"}
+            </p>
+          </div>
+          <div aria-label="Browse quotes">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              aria-label="Previous quote"
+              disabled={activeIndex === 0}
+              onClick={() => move(activeIndex - 1)}
             >
-              <header>
-                <span>{COTS_TEXT_FORM_LABEL[candidate.form]}</span>
-                <span>{COTS_CANDIDATE_EVIDENCE_LABEL[candidate.evidence]}</span>
-              </header>
+              <ArrowLeft aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              aria-label="Next quote"
+              disabled={
+                activeIndex === lastIndex ||
+                (!activeCandidate && !loadMoreActive)
+              }
+              onClick={() => move(activeIndex + 1)}
+            >
+              <ArrowRight aria-hidden="true" />
+            </Button>
+          </div>
+        </header>
 
-              {candidate.text ? (
-                candidate.form === "PASSAGE" ? (
-                  <p className="cots-passage">{candidate.text}</p>
-                ) : (
-                  <blockquote>
-                    <Quote aria-hidden="true" />
-                    <p>“{candidate.text}”</p>
-                  </blockquote>
-                )
-              ) : (
-                <div className="cots-source-link-copy">
-                  <strong>{candidate.title}</strong>
-                  <p>
-                    Review the original source before keeping any wording from
-                    it.
-                  </p>
-                </div>
-              )}
+        <div className="cots-word-stage">
+          {activeCandidate ? (
+            <>
+              <article
+                key={activeCandidate.candidateRef}
+                className={cn("cots-word-frame", selected && "is-selected")}
+                aria-label={`Quote ${activeIndex + 1} of ${candidates.length}`}
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                    event.preventDefault();
+                    move(activeIndex + (event.key === "ArrowLeft" ? -1 : 1));
+                  }
+                }}
+              >
+                <div className="cots-word-frame-bezel">
+                  <span
+                    className="cots-word-frame-ornament"
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="cots-word-frame-corners"
+                    aria-hidden="true"
+                  />
+                  <div className="cots-word-frame-liner">
+                    <div className="cots-word-canvas">
+                      <header>
+                        <span>
+                          {COTS_TEXT_FORM_LABEL[activeCandidate.form]}
+                        </span>
+                        <span>
+                          {
+                            COTS_CANDIDATE_EVIDENCE_LABEL[
+                              activeCandidate.evidence
+                            ]
+                          }
+                        </span>
+                      </header>
 
-              <footer>
-                <div>
-                  <strong>
-                    {candidate.speaker || candidate.credit || candidate.title}
-                  </strong>
-                  <small>
-                    {[candidate.sourceWork, candidate.sourceDetail]
-                      .filter(Boolean)
-                      .join(" · ") || candidate.provider}
-                  </small>
-                  <small>
-                    {candidate.provider}
-                    {candidate.language ? ` · ${candidate.language}` : ""}
-                  </small>
+                      {activeCandidate.text ? (
+                        activeCandidate.form === "PASSAGE" ? (
+                          <p className="cots-passage">{activeCandidate.text}</p>
+                        ) : (
+                          <blockquote>
+                            <Quote aria-hidden="true" />
+                            <p>“{activeCandidate.text}”</p>
+                          </blockquote>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
-                {isSourceLink ? (
-                  <a
-                    className="cots-word-source-action"
-                    href={candidate.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open source <ExternalLink aria-hidden="true" />
-                  </a>
-                ) : (
+              </article>
+
+              <div className="cots-word-provenance">
+                <div className="cots-word-plaque">
+                  <div>
+                    <strong>
+                      {activeCandidate.speaker ||
+                        activeCandidate.credit ||
+                        activeCandidate.title}
+                    </strong>
+                    <small>
+                      {[
+                        activeCandidate.sourceWork,
+                        activeCandidate.sourceDetail,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || activeCandidate.provider}
+                    </small>
+                    <small>
+                      {activeCandidate.provider}
+                      {activeCandidate.language
+                        ? ` · ${activeCandidate.language}`
+                        : ""}
+                    </small>
+                  </div>
                   <Button
+                    className="cots-word-keep-action"
                     type="button"
                     variant={selected ? "secondary" : "ghost"}
                     disabled={
-                      !candidate.importable ||
-                      pendingCandidateRefs.has(candidate.candidateRef) ||
-                      Boolean(selection && selection.status !== "SELECTED")
+                      !activeCandidate.importable ||
+                      pendingCandidateRefs.has(activeCandidate.candidateRef) ||
+                      Boolean(
+                        activeSelection &&
+                        activeSelection.status !== "SELECTED",
+                      )
                     }
                     aria-pressed={selected}
-                    onClick={() => onToggle(candidate, !selected)}
+                    onClick={() => onToggle(activeCandidate, !selected)}
                   >
                     {selected && <Check aria-hidden="true" />}
-                    {selected ? "Kept in chapter" : "Keep in this chapter"}
+                    {selected ? "Kept in season" : "Keep in this season"}
                   </Button>
-                )}
-              </footer>
-              {!isSourceLink && (
+                </div>
+
                 <details className="cots-source-details cots-word-source-details">
                   <summary>Source details</summary>
                   <dl>
                     <div>
                       <dt>Provider</dt>
-                      <dd>{candidate.provider}</dd>
+                      <dd>{activeCandidate.provider}</dd>
                     </div>
-                    {candidate.sourceWork && (
+                    {activeCandidate.sourceWork && (
                       <div>
                         <dt>Work</dt>
-                        <dd>{candidate.sourceWork}</dd>
+                        <dd>{activeCandidate.sourceWork}</dd>
                       </div>
                     )}
-                    {candidate.sourceDetail && (
+                    {activeCandidate.sourceDetail && (
                       <div>
                         <dt>Evidence</dt>
-                        <dd>{candidate.sourceDetail}</dd>
+                        <dd>{activeCandidate.sourceDetail}</dd>
                       </div>
                     )}
                   </dl>
                   <a
-                    href={candidate.sourceUrl}
+                    href={activeCandidate.sourceUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
                     Open source <ExternalLink aria-hidden="true" />
                   </a>
                 </details>
-              )}
-              {!candidate.importable && !isSourceLink && (
-                <p className="cots-card-note">
-                  {candidate.unavailableReason ||
-                    "This wording is available for review only."}
-                </p>
-              )}
-              {selection?.status === "FAILED" && (
-                <button
-                  className="cots-card-retry"
-                  type="button"
-                  onClick={() => onRetry(selection.id)}
-                >
-                  <RotateCcw aria-hidden="true" /> Retry
-                </button>
-              )}
-            </article>
-          );
-        })}
-        {discovering && (
-          <div className="cots-word-card cots-word-skeleton" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-        )}
+                {!activeCandidate.importable && (
+                  <p className="cots-card-note">
+                    {activeCandidate.unavailableReason ||
+                      "This wording is available for review only."}
+                  </p>
+                )}
+                {activeSelection?.status === "FAILED" && (
+                  <button
+                    className="cots-card-retry"
+                    type="button"
+                    onClick={() => onRetry(activeSelection.id)}
+                  >
+                    <RotateCcw aria-hidden="true" /> Retry
+                  </button>
+                )}
+              </div>
+            </>
+          ) : loadMoreActive ? (
+            <div
+              className="cots-word-frame cots-word-continuation"
+              aria-label="Load more quotes"
+              aria-busy={discovering || undefined}
+            >
+              <div className="cots-word-frame-bezel">
+                <span className="cots-word-frame-ornament" aria-hidden="true" />
+                <span className="cots-word-frame-corners" aria-hidden="true" />
+                <div className="cots-word-frame-liner">
+                  <div className="cots-word-canvas cots-word-continuation-canvas">
+                    <header>
+                      <span>Current selection complete</span>
+                      <span>More available</span>
+                    </header>
+                    <div>
+                      <Quote aria-hidden="true" />
+                      <strong>More words await</strong>
+                      <p>
+                        You’ve reached the end of these quotations. Continue
+                        into the next selection when you’re ready.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={discovering}
+                        onClick={onLoadMore}
+                      >
+                        {discovering ? "Loading more…" : "Load more quotes"}
+                        {!discovering && <ArrowRight aria-hidden="true" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : discovering ? (
+            <div
+              className="cots-word-frame cots-word-skeleton"
+              aria-hidden="true"
+            >
+              <span />
+              <span />
+              <span />
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      {page && !page.exhausted && page.nextCursor && (
-        <Button
-          className="cots-word-load-more"
-          type="button"
-          variant="secondary"
-          disabled={discovering}
-          onClick={onLoadMore}
-        >
-          {discovering ? "Loading…" : "Load more"}
-        </Button>
-      )}
-      {page?.exhausted && page.items.length > 0 && (
+      {page?.exhausted && candidates.length > 0 && (
         <p className="cots-word-end">
           <Check aria-hidden="true" /> You’ve reached the end of this source.
         </p>
       )}
-      {page?.exhausted && !page.items.length && (
-        <div className="cots-word-empty">
-          <p>
-            {retryableDiscoveryFailure
-              ? "The quote sources did not complete this search."
-              : "No matching words were found in the current sources."}
-          </p>
-          {retryableDiscoveryFailure && (
+      {page?.exhausted && !candidates.length && (
+        <>
+          <div className="cots-word-empty">
+            <p>
+              {sourceIssue
+                ? COTS_DISCOVERY_ISSUE_MESSAGE
+                : "No matching words were found in the current sources."}
+            </p>
             <Button
               type="button"
               variant="secondary"
@@ -215,24 +337,29 @@ export function CotsWordDeck({
               onClick={onRetryDiscovery}
             >
               <RotateCcw aria-hidden="true" />
-              {discovering ? "Retrying…" : "Retry search"}
+              {discovering ? "Retrying…" : "Search again"}
             </Button>
+          </div>
+          {sourceLinks.length > 0 && (
+            <details className="cots-source-details cots-word-recovery-sources">
+              <summary>Review available sources</summary>
+              <ul>
+                {sourceLinks.map((source) => (
+                  <li key={source.sourceUrl}>
+                    <a href={source.sourceUrl} target="_blank" rel="noreferrer">
+                      {source.sourceWork || source.provider} source
+                      <ExternalLink aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
-        </div>
+        </>
       )}
-      {page?.sources.some(({ status }) => status !== "AVAILABLE") && (
+      {sourceIssue && candidates.length > 0 && (
         <div className="cots-source-notices" aria-label="Source availability">
-          {page.sources
-            .filter(({ status }) => status !== "AVAILABLE")
-            .map((source) => (
-              <p key={source.provider}>
-                {cotsSourceStatusMessage(
-                  source.provider,
-                  source.status,
-                  "words",
-                )}
-              </p>
-            ))}
+          <p>{COTS_DISCOVERY_ISSUE_MESSAGE}</p>
         </div>
       )}
     </div>

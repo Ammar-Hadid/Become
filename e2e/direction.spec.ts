@@ -14,6 +14,12 @@ async function createDisposableDirectionUser(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-direction-password");
   await page.getByTestId("auth-submit").click();
+  await expect
+    .poll(() => new URL(page.url()).pathname)
+    .toMatch(/^\/$|\/direction\/seasons\/\d+\/[1-4]\/opening$/);
+  if (page.url().includes("/opening")) {
+    await page.getByRole("button", { name: "Not now" }).click();
+  }
   await expect(page).toHaveURL("/");
 }
 
@@ -254,10 +260,11 @@ test("featured season quotes expand into a readable mobile card", async ({
   expect(layout.overflows).toBe(false);
 });
 
-test("returning from a cancelled goal keeps the current season version", async ({
+test("the ritual goal creator stays inside the opening and preserves its version", async ({
   page,
 }) => {
   test.setTimeout(120_000);
+  await page.setViewportSize({ width: 390, height: 844 });
   await createDisposableDirectionUser(page);
   const carryForward = `Preserve the opening ${randomUUID().slice(0, 6)}`;
   const openingUrl = await enterSeasonOpeningStageTwo(page, carryForward);
@@ -275,16 +282,50 @@ test("returning from a cancelled goal keeps the current season version", async (
   await expect(
     page.getByRole("heading", { name: "Name the outcome." }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Cancel", exact: true }).click();
-  await expect(createGoal).toBeEnabled();
-
-  await createGoal.click();
+  await expect(page).toHaveURL(openingUrl);
   await expect(
-    page.getByRole("heading", { name: "Name the outcome." }),
+    page.getByText(
+      "Your place in the opening is held while you shape this goal.",
+    ),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Leave for now" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Back to choose direction" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cancel", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", {
+      name: "Define what the record can establish.",
+    }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    )
+    .toBe(true);
+  const creatorWidths = await page.evaluate(() => {
+    const context = document.querySelector<HTMLElement>(
+      ".season-goal-creator-context",
+    );
+    const editor = document.querySelector<HTMLElement>(
+      ".season-goal-creator .direction-editor--ritual",
+    );
+    return {
+      context: context?.getBoundingClientRect().width ?? 0,
+      editor: editor?.getBoundingClientRect().width ?? 0,
+    };
+  });
+  expect(Math.abs(creatorWidths.context - creatorWidths.editor)).toBeLessThan(
+    1,
+  );
   await page.waitForTimeout(1_600);
-  await page.goBack();
+  await page.getByRole("button", { name: "Back to choose direction" }).click();
   await expect(createGoal).toBeEnabled();
+  await expect(page).toHaveURL(openingUrl);
   await expect(page.locator(".season-form-error")).toHaveCount(0);
 
   await createGoal.click();
@@ -299,6 +340,72 @@ test("returning from a cancelled goal keeps the current season version", async (
   };
   expect(saved.answers.carryForward).toBe(carryForward);
   expect(conflicts).toEqual([]);
+});
+
+test("the ritual creates and assigns a full goal without navigating away", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await createDisposableDirectionUser(page);
+  const openingUrl = await enterSeasonOpeningStageTwo(page);
+  await page.getByRole("button", { name: "Create a new goal" }).click();
+
+  const studio = page.getByRole("region", {
+    name: "Create a goal within the opening ritual",
+  });
+  await expect(studio).toBeVisible();
+  await expect(page).toHaveURL(openingUrl);
+  await expect(
+    studio.getByRole("radio", { name: "Main direction" }),
+  ).toBeChecked();
+  await expect(
+    studio.getByRole("combobox", { name: "Life domains" }),
+  ).toBeVisible();
+  await expect(
+    studio.getByRole("button", { name: "Add evidence definition" }),
+  ).toBeEnabled();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    )
+    .toBe(true);
+
+  const goalTitle = `Ritual-held goal ${randomUUID().slice(0, 6)}`;
+  await studio
+    .getByRole("textbox", { name: "Goal", exact: true })
+    .fill(goalTitle);
+  await studio
+    .getByRole("textbox", { name: "Why this matters — optional" })
+    .fill("The opening gave this outcome a clear place in the season.");
+  await studio.locator('[name="targetOn"]').fill("2026-12-31");
+  const assignmentSaved = page.waitForResponse((response) => {
+    if (
+      new URL(response.url()).pathname !== "/api/direction/commands" ||
+      !response.ok()
+    )
+      return false;
+    const body = response.request().postDataJSON() as { type?: string };
+    return body.type === "ASSIGN_SEASON_GOALS";
+  });
+  await studio.getByRole("button", { name: "Create goal" }).click();
+
+  await expect(studio).toHaveCount(0);
+  await expect(page).toHaveURL(openingUrl);
+  await expect(
+    page.getByRole("combobox", { name: "Main direction" }),
+  ).toHaveValue(goalTitle);
+  await expect(
+    page.getByText(
+      `${goalTitle} was created and added as your main direction.`,
+    ),
+  ).toBeVisible();
+  await assignmentSaved;
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Main direction" }),
+  ).toHaveValue(goalTitle);
 });
 
 test("a real season conflict compares values and waits for an explicit retry", async ({
@@ -549,8 +656,17 @@ test("a season opens around a canonical goal and keeps failed conclusion edits",
   await page.getByRole("button", { name: "Create goal" }).click();
 
   const primaryPicker = page.getByRole("combobox", { name: "Main direction" });
-  await primaryPicker.fill(goalTitle);
-  await page.getByRole("option", { name: new RegExp(goalTitle) }).click();
+  await expect(primaryPicker).toHaveValue(goalTitle);
+  await expect(
+    page.getByText(
+      `${goalTitle} was created and added as your main direction.`,
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", {
+      name: "Create a goal within the opening ritual",
+    }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page).toHaveURL(/\/direction\/seasons\/\d+\/[1-4]\/opening$/);
 

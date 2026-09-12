@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { lockDirection } from "@/features/direction/services/direction-mutation.service";
 import type { CotsSourceStatus } from "@/features/seasons/discovery/types/cots-discovery.types";
+
+const WIKIMEDIA_REQUESTS_PER_MINUTE = 180;
+const WIKIMEDIA_USER_AGENT =
+  "Become/1.0 (https://github.com/Ammar-Hadid/Become)";
+
 export class CotsProviderError extends Error {
   constructor(
     public status: CotsSourceStatus,
@@ -55,12 +60,14 @@ export async function providerJson(
     headers?: Record<string, string>;
     limit?: number;
     windowMs?: number;
+    timeoutMs?: number;
     redirects?: "same-origin" | "same-origin-preserve-query";
   } = {},
 ): Promise<unknown> {
   await reserveProviderRequest(
     provider,
-    options.limit ?? 40,
+    options.limit ??
+      (provider === "wikimedia" ? WIKIMEDIA_REQUESTS_PER_MINUTE : 40),
     options.windowMs ?? 60_000,
   );
   if (provider === "serpapi")
@@ -70,7 +77,7 @@ export async function providerJson(
   if (provider === "animechan")
     await reserveProviderRequest("animechan:day", 90, 86_400_000);
   try {
-    const signal = AbortSignal.timeout(10_000);
+    const signal = AbortSignal.timeout(options.timeoutMs ?? 10_000);
     let requestUrl = url;
     let response: Response | null = null;
     for (let redirects = 0; redirects <= 2; redirects++) {
@@ -79,7 +86,7 @@ export async function providerJson(
         redirect: "manual",
         signal,
         headers: {
-          "User-Agent": "Become/1.0 (personal COTS discovery)",
+          "User-Agent": WIKIMEDIA_USER_AGENT,
           ...options.headers,
         },
       });
@@ -161,7 +168,27 @@ export async function providerJson(
     } finally {
       reader.releaseLock();
     }
-    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
+    const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
+    if (provider === "wikimedia") {
+      const apiError = record(record(body).error);
+      const code = string(apiError.code).toLowerCase();
+      if (["maxlag", "ratelimited"].includes(code))
+        throw new CotsProviderError(
+          "THROTTLED",
+          "Wikimedia asked Become to pause before another request.",
+        );
+      if (["missingtitle", "nosuchpageid", "no-such-entity"].includes(code))
+        throw new CotsProviderError(
+          "EXHAUSTED",
+          "Wikimedia has no matching page.",
+        );
+      if (code)
+        throw new CotsProviderError(
+          "UNAVAILABLE",
+          "Wikimedia could not complete this request.",
+        );
+    }
+    return body;
   } catch (error) {
     if (error instanceof CotsProviderError) throw error;
     throw new CotsProviderError(

@@ -9,7 +9,10 @@ import {
   ReusableEntityCombobox,
   type ReusableEntityOption,
 } from "@/components/ui/forms/reusable-entity-combobox.component";
-import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
+import {
+  confirmRecordFormDiscard,
+  useRecordFormGuard,
+} from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { searchDirectionOptions } from "@/features/direction/options/utils/direction-option-client.util";
 import { useGoalSave } from "@/features/direction/goals/hooks/use-goal-save.hook";
 import { CriterionBuilder } from "@/features/direction/criteria/components/criterion-builder.component";
@@ -20,6 +23,7 @@ import type {
   GoalView,
   OwnedOption,
 } from "@/features/direction/types/direction.types";
+import { cn } from "@/lib/styles/utils/class-name.util";
 
 function errorFor(errors: Record<string, string>, ...keys: string[]) {
   return keys.map((key) => errors[key]).find(Boolean);
@@ -34,11 +38,17 @@ export function GoalEditor({
   domainOptions,
   defaultStartOn,
   returnTo,
+  presentation = "page",
+  onCancel,
+  onCreated,
 }: {
   goal?: GoalView;
   domainOptions: OwnedOption[];
   defaultStartOn: string;
   returnTo?: string;
+  presentation?: "page" | "ritual";
+  onCancel?: () => void;
+  onCreated?: (goal: OwnedOption) => void | Promise<void>;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -66,7 +76,7 @@ export function GoalEditor({
     returnDestination ??
     (goal ? `/direction/goals/${goal.id}` : "/direction/goals");
 
-  function cancel(event: MouseEvent<HTMLAnchorElement>) {
+  function cancelLink(event: MouseEvent<HTMLAnchorElement>) {
     if (
       !returnDestination ||
       event.button !== 0 ||
@@ -79,6 +89,11 @@ export function GoalEditor({
     event.preventDefault();
     router.push(returnDestination);
     router.refresh();
+  }
+
+  function cancelRitual() {
+    if (!confirmRecordFormDiscard(formRef.current ?? undefined)) return;
+    onCancel?.();
   }
 
   function readDraft(data: FormData): GoalDraft {
@@ -96,12 +111,23 @@ export function GoalEditor({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const draft = readDraft(data);
     const response = await saveGoal(
-      readDraft(data),
+      draft,
       requiresRevisionReason ? String(data.get("reason") ?? "") : undefined,
     );
     if (response.error) return;
     markSaved();
+    if (presentation === "ritual" && response.id && onCreated) {
+      await onCreated({
+        id: response.id,
+        name: draft.title.trim(),
+        description: draft.targetOn
+          ? `${draft.startOn} — ${draft.targetOn}`
+          : `Since ${draft.startOn} · open ended`,
+      });
+      return;
+    }
     const destination = returnDestination;
     if (destination) router.push(destination);
     else router.push(`/direction/goals/${response.id ?? goal?.id}`);
@@ -128,21 +154,44 @@ export function GoalEditor({
   const domainError = errorFor(fieldErrors, "domainIds", "draft.domainIds");
 
   return (
-    <div className="direction-editor">
-      <header className="direction-editor-header">
-        <Link href={cancelHref} className="direction-back-link">
-          <ArrowLeft aria-hidden="true" />{" "}
-          {goal ? "Back to goal" : "Leave for now"}
-        </Link>
-        <p className="eyebrow">
-          {goal ? "Refine direction" : "A direction worth returning to"}
-        </p>
-        <h1>{goal ? "Edit the goal." : "Name the outcome."}</h1>
-        <p>
-          Give it its own horizon. A season may carry this goal, but it never
-          owns its dates or decides what completion means.
-        </p>
-      </header>
+    <div
+      className={cn(
+        "direction-editor",
+        presentation === "ritual" && "direction-editor--ritual",
+      )}
+    >
+      {presentation === "page" ? (
+        <header className="direction-editor-header">
+          <Link href={cancelHref} className="direction-back-link">
+            <ArrowLeft aria-hidden="true" />{" "}
+            {goal ? "Back to goal" : "Leave for now"}
+          </Link>
+          <p className="eyebrow">
+            {goal ? "Refine direction" : "A direction worth returning to"}
+          </p>
+          <h1>{goal ? "Edit the goal." : "Name the outcome."}</h1>
+          <p>
+            Give it its own horizon. A season may carry this goal, but it never
+            owns its dates or decides what completion means.
+          </p>
+        </header>
+      ) : (
+        <header className="direction-editor-header direction-editor-header--ritual">
+          <button
+            type="button"
+            className="direction-back-link"
+            onClick={cancelRitual}
+          >
+            <ArrowLeft aria-hidden="true" /> Back to choose direction
+          </button>
+          <p className="eyebrow">A direction worth returning to</p>
+          <h2>Name the outcome.</h2>
+          <p>
+            Give it its own horizon. This opening may carry the goal, but it
+            never owns its dates or decides what completion means.
+          </p>
+        </header>
+      )}
 
       <form
         ref={formRef}
@@ -311,13 +360,15 @@ export function GoalEditor({
         )}
 
         <footer className="direction-editor-actions">
-          <Link
-            href={cancelHref}
-            prefetch={returnDestination ? false : undefined}
-            onClick={cancel}
-          >
-            Cancel
-          </Link>
+          {presentation === "page" && (
+            <Link
+              href={cancelHref}
+              prefetch={returnDestination ? false : undefined}
+              onClick={cancelLink}
+            >
+              Cancel
+            </Link>
+          )}
           <Button type="submit" size="lg" disabled={state === "saving"}>
             <Save aria-hidden="true" />{" "}
             {state === "saving"

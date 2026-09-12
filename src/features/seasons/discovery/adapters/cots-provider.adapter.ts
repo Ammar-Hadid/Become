@@ -16,6 +16,9 @@ import {
   extractWikiQuotes,
   plainWikiText,
 } from "@/features/seasons/discovery/utils/cots-wikitext.util";
+import { cotsImageSearchQuery } from "@/features/seasons/discovery/utils/cots-image-quality.util";
+import { hasUnsafeCotsImageMetadata } from "@/features/seasons/discovery/utils/cots-image-safety.util";
+import { rankCotsTextCandidates } from "@/features/seasons/discovery/utils/cots-text-quality.util";
 import type {
   ProviderCandidate,
   ProviderPage,
@@ -26,9 +29,11 @@ const day = 86_400_000;
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const page = (query: ProviderQuery) => Math.max(1, Number(query.cursor) || 1);
 const queryText = (q: ProviderQuery) =>
-  [q.identity.displayName, q.identity.sourceWork, q.identity.adaptation]
-    .filter(Boolean)
-    .join(" ");
+  q.kind === "IMAGE"
+    ? cotsImageSearchQuery(q.identity)
+    : [q.identity.displayName, q.identity.sourceWork, q.identity.adaptation]
+        .filter(Boolean)
+        .join(" ");
 const normalizedProviderName = (value: string) =>
   value
     .normalize("NFKD")
@@ -106,12 +111,13 @@ function linkPage(
 export function cotsProviderRoute(q: ProviderQuery): string[] {
   const category = q.identity.sourceCategory;
   if (q.kind === "IMAGE") {
-    if (category === "anime") return ["zerochan", "serpapi", "brave"];
+    if (category === "anime")
+      return ["zerochan", "serpapi", "commons", "brave"];
     if (category === "person") return ["commons", "serpapi", "brave"];
-    if (category === "book") return ["serpapi", "brave", "commons"];
+    if (category === "book") return ["serpapi", "commons", "brave"];
     if (category === "game" || category === "comic")
-      return ["serpapi", "brave", "zerochan"];
-    return ["serpapi", "brave"];
+      return ["serpapi", "zerochan", "commons", "brave"];
+    return ["serpapi", "commons", "brave"];
   }
   if (category === "anime") return ["wikiquote", "animechan"];
   if (category === "tv" || category === "movie")
@@ -152,6 +158,15 @@ export async function fetchCotsProvider(
           meta = record(info.extmetadata);
         const original = string(info.thumburl) || string(info.url);
         if (!original) return [];
+        const description = plainWikiText(
+          [
+            string(record(meta.ImageDescription).value),
+            string(record(meta.ObjectName).value),
+            string(record(meta.Categories).value),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
         return [
           candidate(provider, q, {
             externalId: String(row.pageid),
@@ -163,8 +178,12 @@ export async function fetchCotsProvider(
             title: string(row.title).replace(/^File:/, ""),
             credit: plainWikiText(string(record(meta.Artist).value)) || null,
             license: string(record(meta.LicenseShortName).value) || null,
-            sourceDetail:
+            sourceDetail: [
+              description,
               "Wikimedia file record; confirm the depicted subject.",
+            ]
+              .filter(Boolean)
+              .join(" · "),
           }),
         ];
       },
@@ -226,6 +245,11 @@ export async function fetchCotsProvider(
         !id ||
         !foundTags.some(
           (value) => value.toLowerCase() === canonicalTag.toLowerCase(),
+        ) ||
+        hasUnsafeCotsImageMetadata(
+          ...foundTags,
+          string(row.rating),
+          string(row.content_rating),
         )
       )
         return [];
@@ -271,6 +295,7 @@ export async function fetchCotsProvider(
       await providerJson(provider, url, {
         limit: commitments.serpapi ? 1000 : 250,
         windowMs: 31 * day,
+        timeoutMs: 20_000,
       }),
     );
     if (body.error)
@@ -432,7 +457,77 @@ export async function fetchCotsProvider(
         record(await providerJson("wikimedia", new URL(url))).parse,
       );
     };
-    let parsed = await read(title, cursor?.revision);
+    const searchTitles = async (searchText: string) => {
+      const search = new URL("https://en.wikiquote.org/w/api.php");
+      search.search = new URLSearchParams({
+        action: "query",
+        format: "json",
+        list: "search",
+        srsearch: searchText,
+        srnamespace: "0",
+        srlimit: "10",
+        srprop: "",
+      }).toString();
+      return array(
+        record(record(await providerJson("wikimedia", search)).query).search,
+      ).map((value) => string(record(value).title));
+    };
+    const resolveTitle = async (requestedTitle: string) => {
+      const matches = await searchTitles(requestedTitle);
+      const requestedKey = normalizedProviderName(requestedTitle);
+      return (
+        matches.find(
+          (candidateTitle) =>
+            normalizedProviderName(candidateTitle) === requestedKey,
+        ) ?? ""
+      );
+    };
+    const resolveAttributedWork = async () => {
+      const displayName = q.identity.displayName.replace(/"/g, " ").trim();
+      const matches = await searchTitles(`"${displayName}"`);
+      for (const candidateTitle of matches.slice(0, 5)) {
+        let candidatePage: Record<string, unknown>;
+        try {
+          candidatePage = await read(candidateTitle);
+        } catch (error) {
+          if (error instanceof CotsProviderError) continue;
+          throw error;
+        }
+        const candidateWikitext = string(record(candidatePage.wikitext)["*"]);
+        const attributed = extractWikiQuotes(
+          candidateWikitext,
+          q.identity.displayName,
+        );
+        if (attributed.some((row) => !row.unresolved))
+          return {
+            title: string(candidatePage.title) || candidateTitle,
+            parsed: candidatePage,
+          };
+      }
+      return null;
+    };
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = await read(title, cursor?.revision);
+    } catch (error) {
+      if (
+        cursor ||
+        !(error instanceof CotsProviderError) ||
+        error.status !== "EXHAUSTED"
+      )
+        throw error;
+      if (!q.identity.sourceWork && q.identity.sourceCategory !== "person") {
+        const resolvedWork = await resolveAttributedWork();
+        if (!resolvedWork) return done([]);
+        title = resolvedWork.title;
+        parsed = resolvedWork.parsed;
+      } else {
+        const resolvedTitle = await resolveTitle(title);
+        if (!resolvedTitle) return done([]);
+        title = resolvedTitle;
+        parsed = await read(title);
+      }
+    }
     const isFilm = (v: Record<string, unknown>) =>
       array(v.categories).some((c) =>
         /\bfilms\b/i.test(string(record(c)["*"])),
@@ -479,8 +574,23 @@ export async function fetchCotsProvider(
     const revision = String(parsed.revid ?? "");
     const sourceUrl = `https://en.wikiquote.org/wiki/${encodeURIComponent(string(parsed.title) || title)}`;
     const offset = cursor?.offset ?? 0;
+    const ranked = rankCotsTextCandidates(
+      q.identity,
+      all.map((row) =>
+        candidate(provider, q, {
+          externalId: hash(`${sourceUrl}:${revision}:${row.text}`),
+          text: row.text,
+          speaker: row.speaker,
+          form: row.dialogue ? "DIALOGUE_TURN" : "QUOTATION",
+          sourceUrl,
+          sourceWork: string(parsed.title) || title,
+          sourceDetail: `${row.detail} · revision ${revision}`,
+          evidence: row.unresolved ? "UNRESOLVED" : "COMMUNITY",
+        }),
+      ),
+    );
     const next =
-      offset + 12 < all.length
+      offset + 12 < ranked.length
         ? JSON.stringify({
             revision: Number(parsed.revid),
             offset: offset + 12,
@@ -494,18 +604,7 @@ export async function fetchCotsProvider(
               offset: 0,
             })
           : null;
-    const items = all.slice(offset, offset + 12).map((row) =>
-      candidate(provider, q, {
-        externalId: hash(`${sourceUrl}:${revision}:${row.text}`),
-        text: row.text,
-        speaker: row.speaker,
-        form: row.dialogue ? "DIALOGUE_TURN" : "QUOTATION",
-        sourceUrl,
-        sourceWork: string(parsed.title) || title,
-        sourceDetail: `${row.detail} · revision ${revision}`,
-        evidence: row.unresolved ? "UNRESOLVED" : "COMMUNITY",
-      }),
-    );
+    const items = ranked.slice(offset, offset + 12);
     if (!items.length && wikitext) {
       const review = linkPage(
         provider,
@@ -652,7 +751,7 @@ export async function fetchCotsProvider(
       ? body
       : array(record(record(body).results).result);
     return done(
-      rows.flatMap((raw) => {
+      rows.flatMap((raw, index) => {
         const row = record(raw),
           text = string(row.quote),
           author = string(row.author);
@@ -667,6 +766,7 @@ export async function fetchCotsProvider(
                 sourceUrl: "https://www.quotes.net/",
                 sourceDetail:
                   "Provider author attribution; original source not independently verified.",
+                popularityRank: index + 1,
               }),
             ]
           : [];

@@ -66,7 +66,7 @@ export function CotsCollectionDiscovery({
         <div>
           <p className="eyebrow">Discover more</p>
           <h3 id="cots-collection-discovery-title">
-            Find another piece of this chapter.
+            Find another piece of this season.
           </h3>
           <p>
             New results use the current source context. Earlier choices keep the
@@ -111,9 +111,17 @@ export function CotsCollectionDiscovery({
             selections={selections}
             pendingCandidateRefs={pendingCandidateRefs}
             discovering={discovering === "IMAGE"}
-            onToggle={(candidate, selected) =>
-              void selectCandidate(candidate, selected)
-            }
+            onToggle={(candidate, selected) => {
+              if (
+                !selected &&
+                selections.find(
+                  ({ candidate: item }) =>
+                    item.candidateRef === candidate.candidateRef,
+                )?.id === posterOverride
+              )
+                setPosterOverride(null);
+              void selectCandidate(candidate, selected);
+            }}
             onRetry={(id) => void retrySelection(id)}
             onRetryDiscovery={() => void discover("IMAGE")}
             onLoadMore={() => void discover("IMAGE", true)}
