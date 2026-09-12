@@ -14,6 +14,8 @@ import type {
   VariantView,
 } from "@/features/content/types/content.types";
 import { formatDuration } from "@/lib/dates/utils/period.util";
+import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
+import type { ActiveSessionData } from "@/features/sessions/types/session.types";
 
 const stages: { value: ContentStage; label: string }[] = [
   { value: "PLANNING", label: "Plan" },
@@ -39,6 +41,24 @@ export function ContentProgressRail({
   onWorkspace: (workspace: ContentWorkspace) => void;
 }) {
   const router = useRouter();
+  const { activeSession, elapsedSeconds, completedSessions, confirmStart } =
+    useActiveTimer();
+  const startingRef = useRef(false);
+  const workingHere = activeSession?.contentId === workspace.id;
+  // Include confirmed completions until the refreshed workspace incorporates them.
+  const newlyRecordedSeconds = Object.values(completedSessions)
+    .filter(
+      (session) =>
+        session.contentId === workspace.id &&
+        !workspace.sessions.some(
+          (saved) => saved.id === session.id && saved.endedAt,
+        ),
+    )
+    .reduce((total, session) => total + session.durationSeconds, 0);
+  const makingSeconds =
+    workspace.recordedTime.seconds +
+    newlyRecordedSeconds +
+    (workingHere ? elapsedSeconds : 0);
   const formRef = useRef<HTMLFormElement>(null);
   const markSaved = useRecordFormGuard(formRef);
   const run = useContentOperation();
@@ -121,7 +141,8 @@ export function ContentProgressRail({
   }
 
   async function startTimer() {
-    if (!activityId || timerPending) return;
+    if (!activityId || startingRef.current || activeSession) return;
+    startingRef.current = true;
     setTimerPending(true);
     setTimerError(null);
     try {
@@ -138,33 +159,57 @@ export function ContentProgressRail({
       });
       const result = (await response.json().catch(() => null)) as {
         error?: string;
+        session?: ActiveSessionData;
       } | null;
-      if (!response.ok)
+      if (!response.ok) {
+        router.refresh();
         return setTimerError(result?.error ?? "Could not start the timer.");
+      }
+      if (result?.session) confirmStart(result.session);
       router.refresh();
     } catch {
       setTimerError("Could not reach Become. Check your connection and retry.");
     } finally {
+      startingRef.current = false;
       setTimerPending(false);
     }
   }
 
   return (
-    <aside className="content-progress" aria-label="Version progress">
+    <aside className="content-progress" aria-label="Variant progress">
       <section className="content-stage-guide">
-        <p className="eyebrow">Where this version is</p>
+        <p className="eyebrow">Where this variant is</p>
         <ol aria-label={`Current stage: ${variant.stageLabel}`}>
           {stages.map((item, index) => (
             <li
               key={item.value}
-              data-state={index === stageIndex ? "current" : "other"}
+              data-state={
+                index < stageIndex
+                  ? "complete"
+                  : index === stageIndex
+                    ? "current"
+                    : "upcoming"
+              }
+              aria-current={index === stageIndex ? "step" : undefined}
             >
-              <span aria-hidden="true" />
-              {item.label}
+              <span className="content-stage-marker" aria-hidden="true">
+                {index + 1}
+              </span>
+              <span className="content-stage-card">
+                <span>{item.label}</span>
+                {index === stageIndex && (
+                  <span className="content-stage-now" aria-hidden="true">
+                    Now · {index + 1}/{stages.length}
+                  </span>
+                )}
+              </span>
             </li>
           ))}
         </ol>
-        <p className="content-stage-guidance">{variant.guidance}</p>
+        <div className="content-stage-guidance">
+          <span>Current move</span>
+          <p>{variant.guidance}</p>
+        </div>
       </section>
 
       <form
@@ -173,12 +218,12 @@ export function ContentProgressRail({
         onSubmit={saveProgress}
       >
         <label>
-          <span>Version name</span>
+          <span>Variant name</span>
           <input
             name="versionName"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Untitled version"
+            placeholder="Untitled variant"
             maxLength={120}
             required
           />
@@ -186,7 +231,7 @@ export function ContentProgressRail({
         <div className="content-progress-field">
           <span>Format</span>
           <Select
-            label="Version format"
+            label="Variant format"
             name="format"
             value={format}
             options={[
@@ -251,9 +296,11 @@ export function ContentProgressRail({
             <Clock3 />
           </span>
           <span>
-            <small id="content-time-title">Recorded making time</small>
+            <small id="content-time-title">
+              Making time{workingHere ? " · Live" : ""}
+            </small>
             <strong className="timer-numerals">
-              {formatDuration(workspace.recordedTime.seconds, true)}
+              {formatDuration(makingSeconds, !workingHere)}
             </strong>
           </span>
         </header>
@@ -269,13 +316,14 @@ export function ContentProgressRail({
             ))}
           </dl>
         )}
-        {workspace.recordedTime.activeSessionId ? (
+        {activeSession ? (
           <button
             type="button"
             className="content-timer-active"
             onClick={() => window.dispatchEvent(new Event("become:stop-timer"))}
           >
-            <Square aria-hidden="true" /> Complete active session
+            <Square aria-hidden="true" />{" "}
+            {workingHere ? "Complete active session" : "Complete other session"}
           </button>
         ) : (
           <div className="content-timer-start">
@@ -301,7 +349,7 @@ export function ContentProgressRail({
             </button>
           </div>
         )}
-        {timerError && (
+        {timerError && !activeSession && (
           <p className="content-form-error" role="alert">
             {timerError}
           </p>

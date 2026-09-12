@@ -24,6 +24,21 @@ export function ActiveTimerProvider({
   children: React.ReactNode;
 }) {
   const [nowMs, setNowMs] = useState<number | null>(null);
+  const [startedSession, setStartedSession] =
+    useState<ActiveSessionData | null>(null);
+  const confirmStart = useCallback((session: ActiveSessionData) => {
+    setStartedSession(session);
+    setNowMs(Date.now());
+  }, []);
+  // Keep the start acknowledgement only until the layout catches up. Later
+  // server refreshes must still be able to report a stop from another tab.
+  if (
+    startedSession &&
+    serverActiveSession &&
+    serverActiveSession.startedAt >= startedSession.startedAt
+  ) {
+    setStartedSession(null);
+  }
   const [completedSessions, setCompletedSessions] = useState<
     Record<string, SessionDetailItem>
   >({});
@@ -34,9 +49,15 @@ export function ActiveTimerProvider({
     }));
   }, []);
   // Confirmed server mutations take precedence over an older layout payload.
+  const latestSession =
+    startedSession &&
+    (!serverActiveSession ||
+      startedSession.startedAt >= serverActiveSession.startedAt)
+      ? startedSession
+      : serverActiveSession;
   const activeSession =
-    serverActiveSession && !completedSessions[serverActiveSession.id]
-      ? serverActiveSession
+    latestSession && !completedSessions[latestSession.id]
+      ? latestSession
       : null;
 
   useEffect(() => {
@@ -53,13 +74,14 @@ export function ActiveTimerProvider({
       activeSession,
       completedSessions,
       confirmCompletion,
+      confirmStart,
       elapsedSeconds: activeSession
         ? nowMs === null
           ? activeSession.durationSeconds
           : calculateElapsedSeconds(activeSession.startedAt, nowMs)
         : 0,
     }),
-    [activeSession, nowMs, completedSessions, confirmCompletion],
+    [activeSession, nowMs, completedSessions, confirmCompletion, confirmStart],
   );
 
   return (

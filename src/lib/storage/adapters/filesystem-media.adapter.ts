@@ -4,7 +4,7 @@ import path from "node:path";
 import type { MediaStorage } from "@/lib/storage/types/media-storage.types";
 
 const keyPattern =
-  /^media\/(?:seasons|content)\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+\.webp$/;
+  /^media\/(?:seasons|content|content-scripts)\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+\.webp$/;
 export function mediaDataRoot(
   env: NodeJS.ProcessEnv = process.env,
   cwd = process.cwd(),

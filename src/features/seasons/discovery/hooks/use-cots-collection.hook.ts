@@ -56,6 +56,11 @@ const emptyPages: Record<DiscoveryKind, CotsCandidatePage | null> = {
   TEXT: null,
 };
 
+const idleDiscovery: Record<DiscoveryKind, boolean> = {
+  IMAGE: false,
+  TEXT: false,
+};
+
 function errorMessage(body: unknown, fallback: string) {
   return body &&
     typeof body === "object" &&
@@ -95,7 +100,7 @@ export function useCotsCollection(year: number, quarter: number) {
   const collectionRef = useRef<CotsCollectionView | null>(null);
   const [pages, setPages] = useState(emptyPages);
   const [loadingCollection, setLoadingCollection] = useState(true);
-  const [discovering, setDiscovering] = useState<DiscoveryKind | null>(null);
+  const [discovering, setDiscovering] = useState(idleDiscovery);
   const [pendingCandidateRefs, setPendingCandidateRefs] = useState<Set<string>>(
     new Set(),
   );
@@ -232,7 +237,7 @@ export function useCotsCollection(year: number, quarter: number) {
       discoveryAbort.current[kind]?.abort();
       const controller = new AbortController();
       discoveryAbort.current[kind] = controller;
-      setDiscovering(kind);
+      setDiscovering((current) => ({ ...current, [kind]: true }));
       setError(null);
       try {
         const currentPage = pages[kind];
@@ -272,7 +277,7 @@ export function useCotsCollection(year: number, quarter: number) {
       } finally {
         if (discoveryAbort.current[kind] === controller) {
           discoveryAbort.current[kind] = null;
-          setDiscovering(null);
+          setDiscovering((current) => ({ ...current, [kind]: false }));
         }
       }
     },
@@ -429,13 +434,17 @@ export function useCotsCollection(year: number, quarter: number) {
   );
 
   const addManualText = useCallback(
-    (draft: SeasonQuoteDraft, operationKey: string) =>
-      queueCollectionMutation<CotsCollectionView>("manual-text", (current) => ({
-        action: "MANUAL_TEXT",
-        operationKey,
-        expectedSelectionRevision: current.selectionRevision,
-        draft,
-      })),
+    (draft: SeasonQuoteDraft, operationKey: string, quoteId?: string) =>
+      queueCollectionMutation<CotsCollectionView>(
+        quoteId ? `edit-manual-text:${quoteId}` : "manual-text",
+        (current) => ({
+          action: "MANUAL_TEXT",
+          operationKey,
+          expectedSelectionRevision: current.selectionRevision,
+          ...(quoteId ? { quoteId } : {}),
+          draft,
+        }),
+      ),
     [queueCollectionMutation],
   );
 

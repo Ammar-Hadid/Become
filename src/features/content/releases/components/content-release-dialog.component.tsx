@@ -165,7 +165,7 @@ function ContentReleaseForm({
   return (
     <form ref={formRef} className="content-dialog-form" onSubmit={submit}>
       <fieldset className="content-release-channels">
-        <legend>Where did this version go?</legend>
+        <legend>Where did this variant go?</legend>
         {channels
           .filter((channel) => !channel.archivedAt)
           .map((channel) => {
@@ -419,10 +419,10 @@ export function ContentReleaseDialog(props: {
 }) {
   return (
     <RecordDialog
-      eyebrow="Release this version"
+      eyebrow="Release this variant"
       triggerLabel="Record a release"
       title="Where did it go?"
-      description="Choose every channel that received this same version. Each release can collect its own results."
+      description="Choose every channel that received this same variant. Each release can collect its own results."
       unstyledTrigger
       className="content-primary-action"
       icon={false}

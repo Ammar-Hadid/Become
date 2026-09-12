@@ -385,8 +385,7 @@ export async function saveSeasonQuote(
       const data = {
         ...c.draft,
         identityId: identity?.row.id ?? null,
-        rotation:
-          c.draft.kind === "EXACT" && c.draft.provenance.attributionVerified,
+        rotation: old?.rotation ?? true,
         provenance: jsonValue(provenance(c.draft.provenance, old?.provenance)),
       };
       if (old) await tx.seasonQuote.update({ where: { id: old.id }, data });

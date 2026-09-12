@@ -71,6 +71,7 @@ export type ActiveTimerState = {
   elapsedSeconds: number;
   completedSessions: Readonly<Record<string, SessionDetailItem>>;
   confirmCompletion: (session: SessionDetailItem) => void;
+  confirmStart: (session: ActiveSessionData) => void;
 };
 
 export type SessionWithRelations = Prisma.SessionGetPayload<{

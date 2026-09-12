@@ -96,7 +96,7 @@ function ContentObservationForm({
       <p className="content-results-context">
         <strong>{publication.channel.displayName}</strong>
         <span>
-          {publication.publishedTitle || "This version"} · lifetime totals
+          {publication.publishedTitle || "This variant"} · lifetime totals
         </span>
       </p>
       <label className="content-form-field content-form-field--wide">

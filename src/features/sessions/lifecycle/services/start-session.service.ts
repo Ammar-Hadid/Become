@@ -4,6 +4,7 @@ import { businessSessionValues } from "@/features/entrepreneurship/sessions/serv
 import { Prisma } from "@/generated/prisma/client";
 import type { StartSessionInput } from "@/features/sessions/schemas/session.schema";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { toSessionListItem } from "@/features/sessions/mappers/session.mapper";
 import { financeSessionValues } from "@/features/finance/sessions/services/finance-session.service";
 
 export async function startSession(userId: string, input: StartSessionInput) {
@@ -83,10 +84,28 @@ export async function startSession(userId: string, input: StartSessionInput) {
             input,
             tx,
           );
-          return tx.session.create({ data: { ...data, ...checked } });
+          return tx.session.create({
+            data: { ...data, ...checked },
+            include: {
+              domain: true,
+              activityType: true,
+              engineeringProject: true,
+            },
+          });
         })
-      : await prisma.session.create({ data });
-    return { status: "created", sessionId: session.id } as const;
+      : await prisma.session.create({
+          data,
+          include: {
+            domain: true,
+            activityType: true,
+            engineeringProject: true,
+          },
+        });
+    return {
+      status: "created",
+      sessionId: session.id,
+      session: toSessionListItem(session),
+    } as const;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

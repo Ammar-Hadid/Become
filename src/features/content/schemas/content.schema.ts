@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { scriptDocumentSchema } from "@/features/content/scripts/schemas/content-script.schema";
 import {
   dayInput,
   operationKey,
@@ -22,7 +23,6 @@ export const contentWritingSchema = z
   .object({
     hook: z.string().max(6000),
     outline: z.string().max(30000),
-    script: z.string().max(120000),
     productionNotes: z.string().max(12000),
   })
   .strict();
@@ -68,6 +68,15 @@ export const observationDraftSchema = z
 const base = { operationKey };
 const owned = { ...base, contentId: contentIdSchema };
 export const contentCommandSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      ...owned,
+      type: z.literal("SAVE_SCRIPT"),
+      variantId: contentIdSchema,
+      expectedScriptVersion: version,
+      document: scriptDocumentSchema,
+    })
+    .strict(),
   z
     .object({
       ...base,

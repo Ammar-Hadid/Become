@@ -153,7 +153,10 @@ Potential long-term entities include:
 - FinancialAccount
 - Transaction
 - IncomeOpportunity
-- Video
+- Content
+- ContentVariant
+- Publication
+- Channel
 - Goal
 - Experiment
 - Idea
@@ -947,7 +950,7 @@ Phase 6's approved Content model supersedes the earlier YouTube-only proposal. C
 
 One creative work has one stable Content identity. It may have several ContentVariants (cuts, formats or languages). Each variant may have several explicitly recorded Publications, each on an owned Channel. Channels represent accounts on YouTube, TikTok, Instagram, or a named OTHER platform.
 
-For example, one short vertical version posted to TikTok, YouTube Shorts and Instagram Reels is **1 Content, 1 Variant, 3 Publications**. Cross-posting never duplicates the creative work. The interface may call variants “versions” and publications “releases”; users should not need to learn the relational model.
+For example, one short vertical version posted to TikTok, YouTube Shorts and Instagram Reels is **1 Content, 1 Variant, 3 Publications**. Cross-posting never duplicates the creative work. The interface calls ContentVariants “variants” and publications “releases”; each script stays attached to its owning variant.
 
 The everyday journey is:
 
@@ -955,7 +958,7 @@ Idea → Create content → Write or plan → Make/edit a version → Publish to
 
 Production stages are optional guidance: Planning, Writing, Recording, Editing, Ready. Work can move backward or skip stages. Publication is a separate deliberate record, never inferred from a stage, a plan or a completed timer. Archival preserves historical output and time.
 
-A workspace supports title, purpose/audience, hook, outline, optional plain-text script, production notes, next step, planned date and an owned thumbnail. Longer writing needs clear saved/pending/failed/conflicted states and protection against stale tabs. Additional versions, channel management and history use progressive disclosure.
+A workspace supports title, purpose/audience, hook, outline, an optional rich-text script, production notes, next step, planned date and an owned thumbnail. Longer writing needs clear saved/pending/failed/conflicted states and protection against stale tabs. Additional variants, channel management and history use progressive disclosure. A variant without a script offers “Write script”; saved content offers “Open script”. Both navigate to `/content/[contentId]/variants/[variantId]/script`. Become’s script editor supports formatting, headings, lists, links, tables, owned images, find/replace, DOCX/TXT import and export, and printing to PDF. It autosaves and supports explicit Save and Ctrl/Cmd+S. Script revisions are independent of hook/outline/production-note revisions, and legacy plain-text scripts remain intact. DOCX content adopts Become’s typography rather than preserving Word page layout.
 
 Use the existing single active Session system for ideation, research, scripting, recording, editing, thumbnails, publishing and analytics. Sessions may be linked to a work and consistent version; general Content work remains possible without either. Preserve snapshots and label measured effort “recorded production time.” Completion does not change production stage or publication.
 
@@ -1130,7 +1133,7 @@ Create explicit AI use cases, for example:
 - conversationExtraction
 - outreachDraft
 - analystQuery
-- youtubeIdeas
+- contentIdeas
 
 Each should have:
 

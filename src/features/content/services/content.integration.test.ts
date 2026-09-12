@@ -171,7 +171,6 @@ suite("Phase 6 canonical PostgreSQL journey", () => {
     const draft = {
       hook: "A surprising beginning",
       outline: "Three honest lessons",
-      script: "A long script",
       productionNotes: "",
     };
     const a = await contentCommand(userId, {

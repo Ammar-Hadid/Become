@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Crop,
   Plus,
   RotateCcw,
   Save,
@@ -38,6 +39,12 @@ import {
   SeasonGoalCreator,
   type SeasonGoalPlacement,
 } from "@/features/seasons/opening/components/season-goal-creator.component";
+import { SeasonSupportingGoals } from "@/features/seasons/opening/components/season-supporting-goals.component";
+import { SeasonCardPlacementEditor } from "@/features/seasons/opening/components/season-card-placement-editor.component";
+import {
+  seasonImagePosition,
+  type SeasonImagePosition,
+} from "@/features/seasons/posters/utils/season-image-position.util";
 import "@/features/seasons/opening/styles/season-opening-ritual.css";
 
 const stages = [
@@ -279,6 +286,7 @@ export function SeasonOpening({
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const createGoalButtonRef = useRef<HTMLButtonElement>(null);
+  const editCardButtonRef = useRef<HTMLButtonElement>(null);
   const ritualTitleRef = useRef<HTMLHeadingElement>(null);
   const initialDraft = draftFromSeason(season);
   const initialAssignment = assignmentsFromSeason(season);
@@ -312,6 +320,18 @@ export function SeasonOpening({
     pendingCount: number;
     failedCount: number;
   } | null>(null);
+  const [cardPlacementOpen, setCardPlacementOpen] = useState(false);
+  const [cardPlacementSaving, setCardPlacementSaving] = useState(false);
+  const [cardPlacementError, setCardPlacementError] = useState<string | null>(
+    null,
+  );
+  const [cardPlacementNotice, setCardPlacementNotice] = useState<string | null>(
+    null,
+  );
+  const [cardPlacementOverride, setCardPlacementOverride] = useState<{
+    mediaId: string;
+    position: SeasonImagePosition;
+  } | null>(null);
   const [preludeActive, setPreludeActive] = useState(
     arrival && initialDraft.stage === 1,
   );
@@ -328,6 +348,12 @@ export function SeasonOpening({
     version,
   } = useSeasonDraftSave(season);
   const markSaved = useRecordFormGuard(formRef);
+  const featuredPoster = season.media.find(({ poster }) => poster);
+  const cardImagePosition = featuredPoster
+    ? cardPlacementOverride?.mediaId === featuredPoster.id
+      ? cardPlacementOverride.position
+      : seasonImagePosition(featuredPoster.focalX, featuredPoster.focalY)
+    : null;
 
   const completePrelude = useCallback(() => setPreludeActive(false), []);
 
@@ -662,7 +688,7 @@ export function SeasonOpening({
     }
   }
 
-  async function returnToCots(subview: "images" | "words") {
+  async function returnToCots(subview: "images" | "words" | "finalize") {
     const next = { ...draft, stage: 3 };
     const response = await persist(next);
     if (!response.error) {
@@ -697,6 +723,71 @@ export function SeasonOpening({
     if (!response.ok)
       throw new Error(body?.error || "The collection could not be checked.");
     return body;
+  }
+
+  function openCardPlacement() {
+    if (!featuredPoster || !cardImagePosition) return;
+    setCardPlacementError(null);
+    setCardPlacementNotice(null);
+    setCardPlacementOpen(true);
+  }
+
+  function cancelCardPlacement() {
+    setCardPlacementError(null);
+    setCardPlacementOpen(false);
+    window.requestAnimationFrame(() => editCardButtonRef.current?.focus());
+  }
+
+  async function saveCardPlacement(position: SeasonImagePosition) {
+    if (!featuredPoster) return;
+    setCardPlacementSaving(true);
+    setCardPlacementError(null);
+    try {
+      const currentResponse = await fetch(
+        `/api/direction/cots?year=${season.year}&quarter=${season.quarter}`,
+        { cache: "no-store", headers: { Accept: "application/json" } },
+      );
+      const current = (await currentResponse.json().catch(() => null)) as
+        (Partial<CotsCollectionView> & { error?: string }) | null;
+      if (
+        !currentResponse.ok ||
+        !current ||
+        typeof current.selectionRevision !== "number" ||
+        !Number.isSafeInteger(current.selectionRevision)
+      )
+        throw new Error(
+          current?.error || "The current image placement could not be loaded.",
+        );
+      const nextPosition = seasonImagePosition(
+        Number(position.x.toFixed(4)),
+        Number(position.y.toFixed(4)),
+      );
+      await cotsPost({
+        action: "MEDIA_PREFERENCES",
+        mediaId: featuredPoster.id,
+        focalX: nextPosition.x,
+        focalY: nextPosition.y,
+        expectedSelectionRevision: current.selectionRevision,
+      });
+      setCardPlacementOverride({
+        mediaId: featuredPoster.id,
+        position: nextPosition,
+      });
+      setCardPlacementOpen(false);
+      setCardPlacementNotice(
+        "Image placement saved. Your dashboard card is updated too.",
+      );
+      router.refresh();
+      window.requestAnimationFrame(() => editCardButtonRef.current?.focus());
+    } catch (cause) {
+      setCardPlacementError(
+        cause instanceof Error
+          ? cause.message
+          : "Become could not save this image placement.",
+      );
+    } finally {
+      setCardPlacementSaving(false);
+    }
   }
 
   async function completeOpening(beginWithCurrentPoster = false) {
@@ -865,7 +956,7 @@ export function SeasonOpening({
         </span>
       </div>
 
-      <div className="season-opening-exit">
+      <div className="season-opening-exit" hidden={cardPlacementOpen}>
         {arrival ? (
           <button
             type="button"
@@ -936,7 +1027,9 @@ export function SeasonOpening({
                 type="button"
                 aria-label={`${stage.number} ${stage.label}`}
                 aria-current={draft.stage === stage.number ? "step" : undefined}
-                disabled={controlsDisabled || goalCreatorOpen}
+                disabled={
+                  controlsDisabled || goalCreatorOpen || cardPlacementOpen
+                }
                 onClick={() => void moveTo(stage.number)}
               >
                 <span aria-hidden="true">
@@ -1061,34 +1154,18 @@ export function SeasonOpening({
                 searchAction={(query) => searchDirectionOptions("goal", query)}
                 placeholder="Search your goals…"
               />
-              <ReusableEntityCombobox
-                label="Supporting goals"
-                entityName="goal"
-                idFieldName="supportingGoalIds"
-                queryFieldName="supportingGoalSearch"
+              <SeasonSupportingGoals
                 options={goalOptions}
-                searchAction={(query) => searchDirectionOptions("goal", query)}
                 selectedOptions={supporting}
                 onSelectionChange={setSupporting}
-                placeholder="Add another outcome…"
+                notes={supportNotes}
+                onNoteChange={(goalId, value) =>
+                  setSupportNotes((current) => ({
+                    ...current,
+                    [goalId]: value,
+                  }))
+                }
               />
-              {supporting.map((goal) => (
-                <label key={goal.id} className="season-support-note">
-                  <span className="field-label">
-                    How {goal.name} supports this season — optional
-                  </span>
-                  <input
-                    className="text-input"
-                    value={supportNotes[goal.id] ?? ""}
-                    onChange={(event) =>
-                      setSupportNotes((current) => ({
-                        ...current,
-                        [goal.id]: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              ))}
               <button
                 ref={createGoalButtonRef}
                 className="season-create-goal"
@@ -1153,24 +1230,65 @@ export function SeasonOpening({
                 />
               </label>
             </div>
-            <div className="season-opening-reveal-poster">
-              <SeasonPoster season={{ ...season, ...draft }} />
-            </div>
-            {season.cotsIdentity && (
-              <div className="season-preview-edit-actions">
-                <button
-                  type="button"
-                  onClick={() => void returnToCots("images")}
-                >
-                  Change artwork
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void returnToCots("words")}
-                >
-                  Change words
-                </button>
-              </div>
+            {cardPlacementOpen && featuredPoster && cardImagePosition ? (
+              <SeasonCardPlacementEditor
+                season={{ ...season, ...draft }}
+                initialPosition={cardImagePosition}
+                saving={cardPlacementSaving}
+                error={cardPlacementError}
+                onCancel={cancelCardPlacement}
+                onSave={(position) => void saveCardPlacement(position)}
+              />
+            ) : (
+              <>
+                <div className="season-opening-reveal-poster">
+                  <SeasonPoster
+                    season={{ ...season, ...draft }}
+                    imagePosition={cardImagePosition ?? undefined}
+                  />
+                </div>
+                {season.cotsIdentity && (
+                  <>
+                    <div className="season-preview-edit-actions">
+                      {featuredPoster && cardImagePosition && (
+                        <button
+                          ref={editCardButtonRef}
+                          className="season-preview-edit-card"
+                          type="button"
+                          aria-label="Edit card image placement"
+                          disabled={controlsDisabled}
+                          onClick={openCardPlacement}
+                        >
+                          <Crop aria-hidden="true" /> Edit card
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void returnToCots("images")}
+                      >
+                        Change artwork
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void returnToCots("words")}
+                      >
+                        Change words
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void returnToCots("finalize")}
+                      >
+                        Change featured choices
+                      </button>
+                    </div>
+                    {cardPlacementNotice && (
+                      <p className="season-card-placement-notice" role="status">
+                        {cardPlacementNotice}
+                      </p>
+                    )}
+                  </>
+                )}
+              </>
             )}
             {completionGate && (
               <aside className="cots-completion-gate" role="status">
@@ -1336,7 +1454,7 @@ export function SeasonOpening({
               </footer>
             </section>
           )}
-          {draft.stage !== 3 && (
+          {draft.stage !== 3 && !cardPlacementOpen && (
             <footer className="season-opening-actions">
               <Button
                 type="button"

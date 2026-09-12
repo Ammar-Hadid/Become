@@ -101,9 +101,9 @@ function ContentCreateForm({ ideaId }: { ideaId?: string }) {
         />
       </label>
       <div className="content-form-field">
-        <span>First version</span>
+        <span>First variant</span>
         <Select
-          label="First version format"
+          label="First variant format"
           name="format"
           value={format}
           options={[
@@ -156,7 +156,7 @@ export function ContentCreate({
       eyebrow="Create content"
       triggerLabel={triggerLabel}
       title="Start with the idea, not the paperwork."
-      description="One version is ready for you. Add another only when the work needs a different cut or format."
+      description="One variant is ready for you. Add another only when the work needs a different cut or format."
       unstyledTrigger
       className={
         variant === "primary"

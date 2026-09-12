@@ -33,6 +33,7 @@ export function useContentAutosave<Draft>({
   const inFlightRef = useRef(false);
   const queuedRef = useRef<Draft | null>(null);
   const uncertainRef = useRef<UncertainAttempt<Draft> | null>(null);
+  const flushWaiters = useRef<((saved: boolean) => void)[]>([]);
   const [confirmedFingerprint, setConfirmedFingerprint] = useState(fingerprint);
   const [blockedFingerprint, setBlockedFingerprint] = useState<string | null>(
     null,
@@ -125,7 +126,10 @@ export function useContentAutosave<Draft>({
       fingerprint === blockedFingerprint
     )
       return;
-    const timer = window.setTimeout(() => void perform(value), delay);
+    const timer = window.setTimeout(
+      () => void perform(value),
+      flushWaiters.current.length ? 0 : delay,
+    );
     return () => window.clearTimeout(timer);
   }, [
     blockedFingerprint,
@@ -140,13 +144,21 @@ export function useContentAutosave<Draft>({
   ]);
 
   const retry = useCallback(() => void perform(value), [perform, value]);
-  const flush = useCallback(() => {
+  const flush = useCallback((): Promise<boolean> => {
+    if (fingerprint === confirmedFingerprint && !inFlightRef.current)
+      return Promise.resolve(true);
     if (
       !requiresRecovery &&
       fingerprint !== blockedFingerprint &&
       fingerprint !== confirmedFingerprint
-    )
+    ) {
+      const completion = new Promise<boolean>((resolve) =>
+        flushWaiters.current.push(resolve),
+      );
       void perform(value);
+      return completion;
+    }
+    return Promise.resolve(false);
   }, [
     blockedFingerprint,
     confirmedFingerprint,
@@ -155,6 +167,19 @@ export function useContentAutosave<Draft>({
     requiresRecovery,
     value,
   ]);
+  useEffect(() => {
+    const complete =
+      fingerprint === confirmedFingerprint && !inFlightRef.current;
+    if (complete || status === "error" || status === "conflict") {
+      flushWaiters.current.splice(0).forEach((resolve) => resolve(complete));
+    }
+  }, [confirmedFingerprint, fingerprint, status]);
+  useEffect(
+    () => () => {
+      flushWaiters.current.splice(0).forEach((resolve) => resolve(false));
+    },
+    [],
+  );
   const accept = useCallback((serverValue: Draft) => {
     const serverFingerprint = JSON.stringify(serverValue);
     confirmedFingerprintRef.current = serverFingerprint;

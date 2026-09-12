@@ -8,13 +8,31 @@ export const metadata: Metadata = { title: "Content workspace" };
 
 export default async function ContentWorkspacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ contentId: string }>;
+  searchParams: Promise<{ variant?: string | string[] }>;
 }) {
   const user = await getCurrentUser();
   if (!user) return null;
   const { contentId } = await params;
-  const workspace = await getContentWorkspace(user.id, contentId);
+  const search = await searchParams;
+  const variantId =
+    typeof search.variant === "string" ? search.variant : undefined;
+  const workspace = await getContentWorkspace(user.id, contentId, {
+    variantId,
+  });
   if (!workspace) notFound();
-  return <ContentWorkspace key={workspace.id} initialData={workspace} />;
+  if (
+    variantId &&
+    !workspace.variants.some((variant) => variant.id === variantId)
+  )
+    notFound();
+  return (
+    <ContentWorkspace
+      key={`${workspace.id}:${variantId ?? "default"}`}
+      initialData={workspace}
+      initialVariantId={variantId}
+    />
+  );
 }

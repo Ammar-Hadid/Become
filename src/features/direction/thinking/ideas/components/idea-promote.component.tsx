@@ -151,9 +151,9 @@ function IdeaContentForm({ idea }: { idea: IdeaView }) {
         />
       </label>
       <div className="thinking-form-field">
-        <span>First version</span>
+        <span>First variant</span>
         <Select
-          label="First version format"
+          label="First variant format"
           name="format"
           value={format}
           options={[

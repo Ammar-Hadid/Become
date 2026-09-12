@@ -1619,6 +1619,9 @@ model ContentVariant {
   hook String @default("")
   outline String @default("")
   script String @default("")
+  scriptDocument Json?
+  scriptVersion Int @default(1)
+  scriptSavedAt DateTime?
   productionNotes String @default("")
   nextStep String @default("")
   plannedOn DateTime? @db.Date
@@ -1630,6 +1633,7 @@ model ContentVariant {
   publications Publication[]
   sessions Session[]
   media ContentMedia[]
+  scriptImages ContentScriptImage[]
   @@unique([id, userId])
   @@unique([id, contentId, userId])
   @@index([userId, createdAt, id])
@@ -1736,6 +1740,22 @@ model ContentMedia {
   @@unique([id, userId])
   @@index([variantId, retiredAt])
   @@map("content_media")
+}
+
+model ContentScriptImage {
+  id String @id @default(cuid())
+  userId String
+  contentId String
+  variantId String
+  storageKey String @unique
+  width Int
+  height Int
+  bytes Int
+  sha256 String
+  createdAt DateTime @default(now())
+  variant ContentVariant @relation(fields: [variantId, contentId, userId], references: [id, contentId, userId], onDelete: Cascade)
+  @@index([variantId, userId])
+  @@map("content_script_image")
 }
 
 model ContentMutation {

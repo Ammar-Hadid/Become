@@ -6,7 +6,6 @@ const icons = {
   entrepreneurship: Compass,
   finance: Landmark,
   content: Play,
-  youtube: Play,
 };
 
 export function DomainIcon({

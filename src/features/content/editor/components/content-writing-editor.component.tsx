@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
+import { useRouter } from "next/navigation";
+import {
+  confirmRecordFormDiscard,
+  flushRecordForms,
+  useRecordFormGuard,
+} from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { sendContentCommand } from "@/features/content/commands/utils/content-command.util";
+import { ContentScriptEntry } from "@/features/content/editor/components/content-script-entry.component";
 import { ContentSaveState } from "@/features/content/editor/components/content-save-state.component";
 import { useContentAutosave } from "@/features/content/editor/hooks/use-content-autosave.hook";
 import type {
@@ -21,17 +27,16 @@ export function ContentWritingEditor({
   onWorkspace: (workspace: ContentWorkspace) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const markSaved = useRecordFormGuard(formRef);
+  const router = useRouter();
+  const [openingScript, setOpeningScript] = useState(false);
   const [draft, setDraft] = useState<ContentWriting>({
     hook: variant.hook,
     outline: variant.outline,
-    script: variant.script,
     productionNotes: variant.productionNotes,
   });
   const [baseWritingVersion, setBaseWritingVersion] = useState(
     variant.writingVersion,
   );
-  const [scriptOpen, setScriptOpen] = useState(Boolean(variant.script));
   const [productionNotesOpen, setProductionNotesOpen] = useState(
     Boolean(variant.productionNotes),
   );
@@ -60,6 +65,7 @@ export function ContentWritingEditor({
       }
     },
   });
+  const markSaved = useRecordFormGuard(formRef, autosave.flush);
 
   useEffect(() => {
     if (autosave.status === "saved" && !autosave.dirty) markSaved();
@@ -77,17 +83,11 @@ export function ContentWritingEditor({
     ? {
         hook: latestVariant.hook,
         outline: latestVariant.outline,
-        script: latestVariant.script,
         productionNotes: latestVariant.productionNotes,
       }
     : null;
   const latestText = latestDraft
-    ? [
-        latestDraft.hook,
-        latestDraft.outline,
-        latestDraft.script,
-        latestDraft.productionNotes,
-      ]
+    ? [latestDraft.hook, latestDraft.outline, latestDraft.productionNotes]
         .filter(Boolean)
         .join("\n\n")
     : undefined;
@@ -96,19 +96,14 @@ export function ContentWritingEditor({
     <section className="content-writing" aria-labelledby="writing-title">
       <header>
         <div>
-          <p className="eyebrow">Make this version</p>
+          <p className="eyebrow">Make this variant</p>
           <h2 id="writing-title">Find the shape before the polish.</h2>
         </div>
         <ContentSaveState
           status={autosave.status}
           savedAt={autosave.result?.savedAt}
           error={autosave.result?.error}
-          copyText={[
-            draft.hook,
-            draft.outline,
-            draft.script,
-            draft.productionNotes,
-          ]
+          copyText={[draft.hook, draft.outline, draft.productionNotes]
             .filter(Boolean)
             .join("\n\n")}
           onRetry={autosave.retry}
@@ -147,29 +142,33 @@ export function ContentWritingEditor({
             name="outline"
             value={draft.outline}
             onChange={(event) => update("outline", event.target.value)}
-            placeholder="The turns this version needs to make…"
+            placeholder="The turns this variant needs to make…"
             maxLength={30000}
           />
         </label>
-        <details
-          className="content-writing-disclosure"
-          open={scriptOpen}
-          onToggle={(event) => setScriptOpen(event.currentTarget.open)}
-        >
-          <summary>
-            Full script <span>Optional</span>
-          </summary>
-          <label>
-            <span className="sr-only">Full script</span>
-            <textarea
-              name="script"
-              value={draft.script}
-              onChange={(event) => update("script", event.target.value)}
-              placeholder="Write freely here when this version needs every word."
-              maxLength={120000}
-            />
-          </label>
-        </details>
+        <ContentScriptEntry
+          href={`/content/${contentId}/variants/${variant.id}/script`}
+          hasContent={variant.scriptSummary.hasContent}
+          wordCount={variant.scriptSummary.wordCount}
+          opening={openingScript}
+          onNavigate={async (event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            )
+              return;
+            event.preventDefault();
+            if (openingScript) return;
+            setOpeningScript(true);
+            if ((await flushRecordForms()) && confirmRecordFormDiscard())
+              router.push(
+                `/content/${contentId}/variants/${variant.id}/script`,
+              );
+            else setOpeningScript(false);
+          }}
+        />
         <details
           className="content-writing-disclosure"
           open={productionNotesOpen}

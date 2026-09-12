@@ -89,7 +89,7 @@ These are compositional ideas, not universal animations. A surface should use th
 - **Finance:** defaults to levels 0–2. Motion clarifies changing periods, data, disclosure, and confirmed transactions; it must never imply certainty the data does not have.
 - **Future domains:** use the same vocabulary with a domain-appropriate intensity budget. New visual languages may vary composition, not invent unrelated timing and easing systems.
 
-Entrepreneurship, YouTube, and other unfinished domain mockups are not motion-design evidence and receive no feature-specific motion during the current rollout. They may inherit shared shell behavior.
+Unfinished domain mockups are not motion-design evidence and receive no feature-specific motion. They may inherit shared shell behavior. Content uses the shared motion vocabulary for its implemented creator workflows.
 
 ## Technical contract
 

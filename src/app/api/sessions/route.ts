@@ -22,7 +22,11 @@ export async function POST(request: Request) {
   }
 
   const result = await startSession(user.id, parsed.data).catch((error) => {
-    if (error instanceof FinanceError || error instanceof BusinessError || error instanceof DirectionError)
+    if (
+      error instanceof FinanceError ||
+      error instanceof BusinessError ||
+      error instanceof DirectionError
+    )
       return { status: "invalid-finance" as const, error: error.message };
     throw error;
   });
@@ -56,5 +60,8 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ id: result.sessionId }, { status: 201 });
+  return NextResponse.json(
+    { id: result.sessionId, session: result.session },
+    { status: 201 },
+  );
 }

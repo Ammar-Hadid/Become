@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
+import type {
+  CotsCandidateView,
+  CotsCollectionView,
+} from "@/features/seasons/discovery/types/cots-discovery.types";
 import { test, expect, type Page } from "./utils/browser-test.util";
 
 async function createDisposableCotsUser(page: Page) {
@@ -24,6 +28,9 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   const browserErrors: string[] = [];
   let candidateSelectionRequest: Record<string, unknown> | null = null;
   let identitySuggestionRequests = 0;
+  let imageDiscoveryRequests = 0;
+  let textDiscoveryRequests = 0;
+  let discoveryPreviewRequests = 0;
   const discoveryPreview = await sharp({
     create: {
       width: 48,
@@ -39,6 +46,7 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
     if (message.type() === "error") browserErrors.push(message.text());
   });
   await page.route("**/api/direction/cots/preview/**", async (route) => {
+    discoveryPreviewRequests += 1;
     await route.fulfill({ contentType: "image/png", body: discoveryPreview });
   });
   await page.route("**/api/direction/cots", async (route) => {
@@ -57,6 +65,7 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
         return;
       }
       if (body.action === "DISCOVER" && body.kind === "IMAGE") {
+        imageDiscoveryRequests += 1;
         await route.fulfill({
           contentType: "application/json",
           body: JSON.stringify({
@@ -102,6 +111,7 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
         return;
       }
       if (body.action === "DISCOVER" && body.kind === "TEXT") {
+        textDiscoveryRequests += 1;
         await route.fulfill({
           contentType: "application/json",
           body: JSON.stringify({
@@ -312,7 +322,7 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   const inspirationSteps = page.getByRole("navigation", {
     name: "Inspiration steps",
   });
-  await expect(inspirationSteps.getByRole("button")).toHaveCount(4);
+  await expect(inspirationSteps.getByRole("button")).toHaveCount(5);
   await expect(
     inspirationSteps.getByRole("button", { name: /Standards/ }),
   ).toHaveAttribute("aria-current", "step");
@@ -321,6 +331,9 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
       name: "Borrow the quality. Leave the costume.",
     }),
   ).toBeVisible();
+  await expect.poll(() => imageDiscoveryRequests).toBe(1);
+  await expect.poll(() => discoveryPreviewRequests).toBeGreaterThan(0);
+  expect(textDiscoveryRequests).toBe(0);
   await page
     .getByRole("textbox", { name: "What you admire" })
     .fill("Calm judgment under pressure.");
@@ -331,6 +344,7 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
       name: "What feels like Levi Ackerman to you?",
     }),
   ).toBeVisible();
+  await expect.poll(() => textDiscoveryRequests).toBe(1);
   await expect(
     page.getByRole("region", { name: "Source availability" }),
   ).toHaveCount(0);
@@ -368,9 +382,9 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   await imageForm
     .getByRole("textbox", { name: "Alternative text" })
     .fill("A quiet amber field for this season");
-  await imageForm
-    .getByRole("checkbox", { name: "Use as the season poster" })
-    .check();
+  await expect(
+    imageForm.getByRole("checkbox", { name: "Use as the season poster" }),
+  ).toHaveCount(0);
   await imageForm
     .getByRole("textbox", { name: "Source title" })
     .fill("Created for COTS acceptance");
@@ -441,30 +455,216 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
   await wordsForm
     .getByRole("combobox", { name: "Wording" })
     .selectOption("EXACT");
-  await wordsForm
-    .getByRole("textbox", { name: "Attribution" })
-    .fill("Synthetic acceptance voice");
-  await wordsForm
-    .getByRole("textbox", { name: /Source title or detail/ })
-    .fill("Synthetic acceptance fixture");
-  await wordsForm
-    .getByRole("checkbox", { name: "Feature on the poster" })
-    .check();
+  await expect(
+    wordsForm.getByRole("checkbox", {
+      name: "I checked this wording and source.",
+    }),
+  ).toHaveCount(0);
+  await expect(wordsForm.getByText(/Exact wording needs/)).toHaveCount(0);
+  await expect(
+    wordsForm.getByRole("checkbox", { name: "Feature on the poster" }),
+  ).toHaveCount(0);
   await wordsForm.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Already in this season")).toBeVisible();
+  const savedManualQuote = page
+    .locator(".cots-word-frame")
+    .filter({ hasText: "Keep the next move deliberate." });
+  await expect(savedManualQuote).toBeVisible();
+  await expect(
+    savedManualQuote.getByText("Selected", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Already in this season")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Continue to preview" }).click();
+  await page.getByRole("button", { name: "Manage saved quote" }).click();
+  await page.getByRole("menuitem", { name: "Edit quote" }).click();
+  const editWordsForm = page.locator('[data-cots-manual="text"]');
+  await expect(
+    editWordsForm.getByRole("textbox", { name: "Quote or paraphrase" }),
+  ).toHaveValue("Keep the next move deliberate.");
+  await expect(
+    editWordsForm.getByRole("combobox", { name: "Wording" }),
+  ).toHaveValue("EXACT");
+  await expect(
+    editWordsForm.getByRole("checkbox", { name: "Feature on the poster" }),
+  ).toHaveCount(0);
+  await editWordsForm
+    .getByRole("textbox", { name: "Quote or paraphrase" })
+    .fill("Keep the next move precise.");
+  await editWordsForm.getByRole("button", { name: "Save changes" }).click();
+  await expect(
+    page
+      .locator(".cots-word-frame")
+      .filter({ hasText: "Keep the next move precise." }),
+  ).toBeVisible();
+  await expect(page.getByText("Keep the next move deliberate.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Manage saved quote" }).click();
+  await page.getByRole("menuitem", { name: "Remove from season" }).click();
+  await expect(page.getByText("Keep the next move precise.")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Add words manually" }).click();
+  const replacementWordsForm = page.locator('[data-cots-manual="text"]');
+  await replacementWordsForm
+    .getByRole("textbox", { name: "Quote or paraphrase" })
+    .fill("Move with clarity.");
+  await replacementWordsForm
+    .getByRole("combobox", { name: "Wording" })
+    .selectOption("EXACT");
+  await expect(
+    replacementWordsForm.getByRole("checkbox", {
+      name: "Feature on the poster",
+    }),
+  ).toHaveCount(0);
+  await replacementWordsForm
+    .getByRole("button", { name: "Save", exact: true })
+    .click();
+  await expect(
+    page.locator(".cots-word-frame").filter({ hasText: "Move with clarity." }),
+  ).toContainText("Selected");
+
+  await page.getByRole("button", { name: "Continue to finalization" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Choose what leads the season." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Featured is the lead, not the whole collection."),
+  ).toBeVisible();
+  const featuredImage = page.getByRole("radio", {
+    name: /A quiet amber field for this season/,
+  });
+  await featuredImage.check();
+  await expect(featuredImage).toBeChecked();
+  await page.getByRole("button", { name: "Feature these words" }).click();
+  await expect(
+    page.getByRole("button", { name: "Featured quote" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "See the season" }).click();
   await expect(
     page.getByRole("heading", { name: "Let the direction feel like yours." }),
   ).toBeVisible();
   const preview = page.locator(".season-poster");
+  await expect(page.locator(".season-opening-reveal-poster")).toHaveCSS(
+    "background-image",
+    "none",
+  );
   await expect(preview).toContainText("Levi Ackerman");
   await expect(preview).toContainText("Quote · Source not verified");
+  await page.getByRole("button", { name: "Edit card image placement" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Adjust the featured image" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "This focus point is also used by the season card on your dashboard.",
+    ),
+  ).toBeVisible();
+  const imageEditor = page.getByRole("group", {
+    name: "Reposition featured image. Drag it or use the arrow keys.",
+  });
+  const savePlacement = page.getByRole("button", {
+    name: "Save placement",
+  });
+  await expect(imageEditor).toBeFocused();
+  await expect(savePlacement).toBeDisabled();
+  const editorBounds = await imageEditor.boundingBox();
+  expect(editorBounds).not.toBeNull();
+  if (!editorBounds) throw new Error("The image editor has no visible bounds.");
+  await page.mouse.move(
+    editorBounds.x + editorBounds.width / 2,
+    editorBounds.y + editorBounds.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    editorBounds.x + editorBounds.width / 2,
+    editorBounds.y + editorBounds.height / 2 - 48,
+  );
+  await page.mouse.up();
+  await expect(savePlacement).toBeEnabled();
+  await imageEditor.press("ArrowUp");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(
+    page.getByRole("button", { name: "Edit card image placement" }),
+  ).toBeFocused();
+
+  await page.getByRole("button", { name: "Edit card image placement" }).click();
+  await page.getByText("Fine tune", { exact: true }).click();
+  const verticalPosition = page.getByRole("slider", {
+    name: "Vertical image position",
+  });
+  await verticalPosition.fill("80");
+  const editablePosterImage = page.locator(
+    ".season-card-placement-preview .season-poster-visual img",
+  );
+  await expect(editablePosterImage).toHaveCSS("object-position", "50% 80%");
+  await page.getByRole("button", { name: "Save placement" }).click();
+  await expect(
+    page.getByText(
+      "Image placement saved. Your dashboard card is updated too.",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.locator(".season-opening-reveal-poster .season-poster-visual img"),
+  ).toHaveCSS("object-position", "50% 80%");
   await page.getByRole("button", { name: "Begin this season" }).click();
   await expect(page).toHaveURL(/\/direction\/seasons\/\d+\/[1-4]$/);
   await expect(
     page.getByRole("heading", { name: "Approved collection" }),
   ).toBeVisible();
+  await page.goto("/");
+  await expect(page.locator(".season-poster--home img")).toHaveCSS(
+    "object-position",
+    "50% 80%",
+  );
+  await page.goBack();
+  await expect(
+    page.getByRole("heading", { name: "Approved collection" }),
+  ).toBeVisible();
+
+  const addManually = page.getByRole("button", { name: "Add manually" });
+  await expect(addManually).toBeEnabled();
+  await addManually.click();
+  await page.getByRole("menuitem", { name: "Add an image" }).click();
+  const personalImageForm = page
+    .locator(".season-inspiration-form")
+    .filter({ hasText: "Add one purposeful image." });
+  await expect(personalImageForm).toBeInViewport();
+  await personalImageForm
+    .getByRole("button", { name: "Close image editor" })
+    .click();
+
+  const discoverMore = page.getByRole("button", { name: "Discover more" });
+  await discoverMore.click();
+  const discovery = page.locator(".cots-collection-discovery");
+  await expect(discovery).toBeInViewport();
+  await expect(discovery).toHaveCSS("border-top-style", "solid");
+  await expect(page.locator(".cots-collection-tabs")).toHaveCSS(
+    "display",
+    "inline-grid",
+  );
+  await expect(page.getByText("Poster choice", { exact: true })).toHaveCount(0);
+  await expect(addManually).toBeEnabled();
+  await expect(discoverMore).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Reuse from a past season" }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("button", {
+      name: "Manage A quiet amber field for this season",
+    }),
+  ).toBeEnabled();
+  const wordsTab = page.getByRole("tab", { name: "Words" });
+  await expect(wordsTab).toBeEnabled();
+  await wordsTab.click();
+  await expect(wordsTab).toHaveAttribute("aria-selected", "true");
+
+  await addManually.click();
+  await page.getByRole("menuitem", { name: "Add words" }).click();
+  const personalWordsForm = page
+    .locator(".season-inspiration-form")
+    .filter({ hasText: "Add a quote without blurring its source." });
+  await expect(personalWordsForm).toBeInViewport();
+  await personalWordsForm
+    .getByRole("button", { name: "Close quote editor" })
+    .click();
 
   await page
     .getByRole("button", { name: "Manage A quiet amber field for this season" })
@@ -542,6 +742,208 @@ test("the season threshold stays focused and becomes still with reduced motion",
       ),
     )
     .toBe(true);
+});
+
+test("reviewing a failed image reveals it and preserves the successful-import state", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const candidates: CotsCandidateView[] = Array.from(
+    { length: 8 },
+    (_, index) => ({
+      candidateRef: `failed-image-navigation-${index + 1}`,
+      provider: "fixture",
+      externalId: `fixture-${index + 1}`,
+      form: "IMAGE",
+      title:
+        index === 7
+          ? "The image that failed to import"
+          : `Image possibility ${index + 1}`,
+      previewHref: `/api/direction/cots/preview/failed-image-navigation-${index + 1}`,
+      width: 600,
+      height: 750,
+      text: null,
+      speaker: null,
+      sourceUrl: `https://example.com/image-${index + 1}`,
+      sourceWork: "Fixture work",
+      sourceDetail: "Synthetic navigation fixture",
+      credit: "Fixture artist",
+      license: null,
+      evidence: "PROVIDER",
+      language: "en",
+      importable: true,
+      unavailableReason: null,
+    }),
+  );
+  let collection: CotsCollectionView = {
+    identity: {
+      id: "failed-image-identity",
+      identityRevision: 1,
+      displayName: "Navigation Fixture",
+      subjectKind: "FICTIONAL",
+      sourceCategory: "anime",
+      registryVersion: 1,
+      discoveryContextId: "failed-image-context",
+      discoveryRevision: 1,
+      sourceWork: "Fixture work",
+      adaptation: "",
+      language: "en",
+      savedAt: new Date().toISOString(),
+      sourceEntityId: null,
+    },
+    selectionRevision: 0,
+    selections: [],
+    limits: { images: 24, quotes: 48 },
+  };
+
+  await page.route("**/api/direction/cots/preview/**", async (route) => {
+    await route.fulfill({
+      contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"/>',
+    });
+  });
+  await page.route("**/api/direction/cots", async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    const body = request.postDataJSON() as Record<string, unknown>;
+    if (body.action === "IDENTITY") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(collection),
+      });
+      return;
+    }
+    if (body.action === "SUGGEST_IDENTITY") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], status: "EXHAUSTED" }),
+      });
+      return;
+    }
+    if (body.action === "DISCOVER") {
+      const imageDiscovery = body.kind === "IMAGE";
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          identityRevision: 1,
+          discoveryRevision: 1,
+          queryKey: imageDiscovery ? "failed-image-navigation" : "empty-words",
+          items: imageDiscovery ? candidates : [],
+          nextCursor: null,
+          exhausted: true,
+          sources: [],
+        }),
+      });
+      return;
+    }
+    if (body.action === "SELECT") {
+      const candidate = candidates.find(
+        ({ candidateRef }) => candidateRef === body.candidateRef,
+      );
+      if (candidate && body.selected === true) {
+        collection = {
+          ...collection,
+          selectionRevision: collection.selectionRevision + 1,
+          selections: [
+            ...collection.selections,
+            {
+              id: `selection-${candidate.candidateRef}`,
+              candidateRef: candidate.candidateRef,
+              candidate,
+              identityId: collection.identity!.id,
+              sourceCategory: "anime",
+              sourceWork: "Fixture work",
+              adaptation: "",
+              status: "SELECTED",
+              desiredPoster: false,
+              mediaId: null,
+              quoteId: null,
+              error: null,
+            },
+          ],
+        };
+      } else if (candidate && body.selected === false) {
+        collection = {
+          ...collection,
+          selectionRevision: collection.selectionRevision + 1,
+          selections: collection.selections.filter(
+            ({ candidateRef }) => candidateRef !== candidate.candidateRef,
+          ),
+        };
+      }
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(collection),
+      });
+      return;
+    }
+    if (body.action === "CONFIRM") {
+      collection = {
+        ...collection,
+        selectionRevision: collection.selectionRevision + 1,
+        selections: collection.selections.map((selection, index) =>
+          index === 0
+            ? { ...selection, status: "READY", mediaId: "ready-media" }
+            : {
+                ...selection,
+                status: "FAILED",
+                error: "The image host blocked this download.",
+              },
+        ),
+      };
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(collection),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.setViewportSize({ width: 960, height: 820 });
+  await createDisposableCotsUser(page);
+  await page
+    .getByRole("button", { name: "Open the season", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Where do you know them from?" })
+    .selectOption("anime");
+  await page
+    .getByRole("textbox", { name: "Character name" })
+    .fill("Navigation Fixture");
+  await page.getByRole("button", { name: "Use this identity" }).click();
+  await page.getByRole("button", { name: "Continue to images" }).click();
+
+  const successfulCard = page
+    .locator(".cots-image-card")
+    .filter({ hasText: "Image possibility 1" });
+  const failedCard = page
+    .locator(".cots-image-card")
+    .filter({ hasText: "The image that failed to import" });
+  await successfulCard.getByRole("button", { name: /Select/ }).click();
+  await failedCard.getByRole("button", { name: /Select/ }).click();
+  await page.getByRole("button", { name: /Continue · save 2 images/ }).click();
+  await expect(page.locator(".cots-word-gallery")).toHaveCount(0);
+  await expect(page.locator('[aria-label="Browse quotes"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "Review failed images" }).click();
+
+  const removeFailedImage = failedCard.getByRole("button", {
+    name: "Remove",
+    exact: true,
+  });
+  await expect(removeFailedImage).toBeFocused();
+  await removeFailedImage.click();
+  await expect(
+    page.getByRole("button", { name: "Continue to words" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Continue without images" }),
+  ).toHaveCount(0);
 });
 
 test("identity suggestions stay anchored to focus and resolve into a removable selection", async ({

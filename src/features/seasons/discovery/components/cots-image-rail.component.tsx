@@ -15,6 +15,7 @@ import type {
   CotsCandidateView,
   CotsSelectionView,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
+import { cotsImagePreviewHref } from "@/features/seasons/discovery/utils/cots-image-preview.util";
 import { COTS_DISCOVERY_ISSUE_MESSAGE } from "@/features/seasons/discovery/utils/cots-source-status.util";
 import { cn } from "@/lib/styles/utils/class-name.util";
 
@@ -76,6 +77,7 @@ function ImageCandidateCard({
   onRetry,
   onRemove,
   buttonRef,
+  cardRef,
 }: {
   candidate: CotsCandidateView;
   selection?: CotsSelectionView;
@@ -88,6 +90,7 @@ function ImageCandidateCard({
   onRetry: () => void;
   onRemove: () => void;
   buttonRef: (node: HTMLButtonElement | null) => void;
+  cardRef: (node: HTMLElement | null) => void;
 }) {
   const frameRef = useRef<HTMLSpanElement>(null);
   const selected = Boolean(selection);
@@ -100,9 +103,7 @@ function ImageCandidateCard({
   const [largePreview, setLargePreview] = useState(
     supportsLargePreview && loadImmediately,
   );
-  const previewHref = candidate.previewHref
-    ? `${candidate.previewHref}${candidate.previewHref.includes("?") ? "&" : "?"}${largePreview ? "size=large" : "size=thumbnail"}`
-    : null;
+  const previewHref = cotsImagePreviewHref(candidate, largePreview);
   const [previewLoad, setPreviewLoad] = useState<{
     href: string | null;
     state: "loading" | "ready" | "failed" | "missing";
@@ -134,6 +135,7 @@ function ImageCandidateCard({
 
   return (
     <article
+      ref={cardRef}
       className={cn("cots-image-card", selected && "is-selected")}
       data-status={selection?.status.toLowerCase()}
     >
@@ -289,6 +291,7 @@ export function CotsImageRail({
   selections,
   pendingCandidateRefs,
   discovering,
+  revealCandidateRef,
   onToggle,
   onRetry,
   onRetryDiscovery,
@@ -298,6 +301,7 @@ export function CotsImageRail({
   selections: CotsSelectionView[];
   pendingCandidateRefs: Set<string>;
   discovering: boolean;
+  revealCandidateRef?: string | null;
   onToggle: (candidate: CotsCandidateView, selected: boolean) => void;
   onRetry: (selectionId: string) => void;
   onRetryDiscovery: () => void;
@@ -305,6 +309,8 @@ export function CotsImageRail({
 }) {
   const railRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const lastRevealedCandidateRef = useRef<string | null>(null);
   const dragRef = useRef({
     pointerId: -1,
     x: 0,
@@ -363,6 +369,35 @@ export function CotsImageRail({
       inline: "center",
     });
   };
+
+  useEffect(() => {
+    if (
+      !revealCandidateRef ||
+      lastRevealedCandidateRef.current === revealCandidateRef
+    )
+      return;
+    const index = visibleCandidates.findIndex(
+      ({ candidateRef }) => candidateRef === revealCandidateRef,
+    );
+    if (index < 0) return;
+    const frame = window.requestAnimationFrame(() => {
+      const card = cardRefs.current[index];
+      setFocusIndex(index);
+      card?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+      const failureAction = card?.querySelector<HTMLButtonElement>(
+        ".cots-card-failure button",
+      );
+      (failureAction ?? buttonRefs.current[index])?.focus({
+        preventScroll: true,
+      });
+      lastRevealedCandidateRef.current = revealCandidateRef;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [revealCandidateRef, visibleCandidates]);
 
   return (
     <div className="cots-image-browser">
@@ -469,6 +504,9 @@ export function CotsImageRail({
               onRemove={() => onToggle(candidate, false)}
               buttonRef={(node) => {
                 buttonRefs.current[index] = node;
+              }}
+              cardRef={(node) => {
+                cardRefs.current[index] = node;
               }}
             />
           );

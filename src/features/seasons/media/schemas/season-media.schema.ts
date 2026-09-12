@@ -53,19 +53,4 @@ export const quoteDraftSchema = z
     featured: z.boolean(),
     provenance: manualProvenanceSchema,
   })
-  .strict()
-  .refine(
-    (v) =>
-      v.kind !== "EXACT" ||
-      Boolean(
-        v.attribution &&
-        (v.provenance.sourceUrl ||
-          v.provenance.sourceTitle ||
-          v.provenance.sourceDetail),
-      ),
-    {
-      message:
-        "Exact wording needs attribution and a source URL or offline work/episode/edition detail. Saving does not verify the attribution.",
-      path: ["kind"],
-    },
-  );
+  .strict();

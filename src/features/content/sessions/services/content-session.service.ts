@@ -14,7 +14,7 @@ export async function contentSessionValues(
   if (domainSlug !== "content" && (input.contentId || input.contentVariantId))
     throw new DirectionError("Content context requires the Content domain.");
   if (input.contentVariantId && !input.contentId)
-    throw new DirectionError("Choose the creative work for this version.");
+    throw new DirectionError("Choose the creative work for this variant.");
   const content = input.contentId
     ? await tx.content.findFirst({
         where: { id: input.contentId, userId, archivedAt: null },
@@ -34,7 +34,7 @@ export async function contentSessionValues(
     : null;
   if (input.contentVariantId && !variant)
     throw new DirectionError(
-      "This version does not belong to the selected work.",
+      "This variant does not belong to the selected work.",
     );
   return {
     contentId: content?.id ?? null,

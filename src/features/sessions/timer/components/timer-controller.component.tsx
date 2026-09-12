@@ -36,6 +36,7 @@ import type {
 } from "@/features/engineering/types/engineering.types";
 import type {
   DomainOption,
+  ActiveSessionData,
   SessionDetailItem,
 } from "@/features/sessions/types/session.types";
 import { SESSION_RESOLUTION_STORAGE_KEY } from "@/features/sessions/constants/session-motion.constants";
@@ -131,7 +132,8 @@ export function TimerController({
     incomeOpportunityId: "",
     financeCompensationType: "UNKNOWN",
   });
-  const { activeSession, elapsedSeconds, confirmCompletion } = useActiveTimer();
+  const { activeSession, elapsedSeconds, confirmCompletion, confirmStart } =
+    useActiveTimer();
   const displayedSession = resolvedSession ?? activeSession;
   const [mode, setMode] = useState<"start" | "stop">("start");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -310,10 +312,14 @@ export function TimerController({
         description,
       }),
     });
-    const body = (await response.json()) as { error?: string };
+    const body = (await response.json()) as {
+      error?: string;
+      session?: ActiveSessionData;
+    };
     setPending(false);
     if (!response.ok)
       return setError(body.error ?? "Could not start the timer.");
+    if (body.session) confirmStart(body.session);
     setDescription("");
     setFinance({
       workSourceId: "",

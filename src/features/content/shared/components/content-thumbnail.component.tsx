@@ -20,7 +20,9 @@ export function ContentThumbnail({
           src={url}
           alt={alt}
           fill
-          priority={priority}
+          preload={priority}
+          unoptimized
+          style={{ objectFit: "contain" }}
           sizes="(max-width: 639px) 100vw, (max-width: 1023px) 60vw, 520px"
         />
       ) : (

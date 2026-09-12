@@ -1,0 +1,248 @@
+.editor {
+  min-width: 0;
+}
+
+.captionRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.caption {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.success {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-success);
+}
+
+.success svg {
+  width: 14px;
+  height: 14px;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.frame[data-dragging] {
+  border-color: var(--color-primary);
+}
+
+.frame :global(.content-thumbnail) {
+  width: 100%;
+}
+
+.emptyThumbnail :global(.content-thumbnail-fallback) > svg {
+  display: none;
+}
+
+.emptyAction,
+.activity {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  text-align: center;
+}
+
+.emptyAction {
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.emptyAction:hover {
+  background: var(--color-primary-subtle);
+  color: var(--color-text-primary);
+}
+
+.emptyAction:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.emptyAction svg,
+.activity svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.5;
+  color: var(--color-primary);
+}
+
+.activity {
+  background: color-mix(in srgb, var(--color-background) 76%, transparent);
+  pointer-events: none;
+}
+
+.pendingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.manage {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+}
+
+.manageTrigger {
+  position: relative;
+  display: grid;
+  width: var(--spacing-input-height-md);
+  height: var(--spacing-input-height-md);
+  cursor: pointer;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.manageTrigger::before {
+  position: absolute;
+  inset: var(--spacing-sm);
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-background) 84%, transparent);
+  content: "";
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.manageTrigger:hover {
+  color: var(--color-text-primary);
+}
+
+.manageTrigger:hover::before {
+  border-color: var(--color-primary-muted);
+  background: var(--color-surface-elevated);
+}
+
+.manageTrigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.manageTrigger svg {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+}
+
+.removeMenuItem,
+.removeMenuItem > svg {
+  color: var(--color-danger);
+}
+
+.messageArea {
+  min-height: var(--spacing-3xl);
+  margin-top: var(--spacing-sm);
+}
+
+.helper,
+.problem {
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.helper {
+  color: var(--color-text-muted);
+}
+
+.helper[data-reserved] {
+  visibility: hidden;
+}
+
+.problem {
+  display: grid;
+  gap: var(--spacing-sm);
+  border-top: 1px solid var(--color-danger);
+  padding-top: var(--spacing-sm);
+  color: var(--color-text-secondary);
+}
+
+.problemCopy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--spacing-sm);
+}
+
+.problemCopy > svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-danger);
+}
+
+.problemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.problemActions button {
+  display: inline-flex;
+  min-height: 44px;
+  cursor: pointer;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.problemActions button:hover {
+  color: var(--color-primary-hover);
+}
+
+.problemActions button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.problemActions svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame,
+  .emptyAction,
+  .manageTrigger,
+  .manageTrigger::before {
+    transition: none;
+  }
+}
