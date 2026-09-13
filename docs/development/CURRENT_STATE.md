@@ -1,6 +1,6 @@
 # Current development state
 
-Phases 1–7 are present on `feature/reviews`, including the completed Content/script-editor and thumbnail work, persistent session pause/resume, COTS curation, and the new review/finale experience. Phase 7 changes remain uncommitted. The repository is authoritative for what exists; the master specification also describes future work. See [Phase 7 verification](../decisions/PHASE_7.md) for acceptance details and migration isolation.
+Phases 1–7 are merged into the repository, including the completed Content/script-editor and thumbnail work, persistent session pause/resume, COTS curation, and the review/finale experience. Production preparation is documented in [the deployment walkthrough](../deployment/PRODUCTION.md). The repository is authoritative for what exists; the master specification also describes future work. See [Phase 7 verification](../decisions/PHASE_7.md) for acceptance details and migration isolation.
 
 ## Available now
 

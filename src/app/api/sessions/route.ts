@@ -1,3 +1,5 @@
+import { getServerEnv } from "@/lib/config/server-environment.config";
+import { isTrustedRequestOrigin } from "@/lib/http/utils/request-origin.util";
 import { DirectionError } from "@/features/direction/services/direction-mutation.service";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { NextResponse } from "next/server";
@@ -7,6 +9,11 @@ import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { FinanceError } from "@/features/finance/types/finance.types";
 
 export async function POST(request: Request) {
+  if (!isTrustedRequestOrigin(request, getServerEnv().BETTER_AUTH_URL))
+    return NextResponse.json(
+      { error: "This request must come from Become." },
+      { status: 403 },
+    );
   const user = await getCurrentUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

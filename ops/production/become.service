@@ -1,0 +1,32 @@
+[Unit]
+Description=Become Next.js application
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=become
+Group=become
+WorkingDirectory=/srv/apps/become/current
+EnvironmentFile=/etc/become/production.env
+# This dedicated Node installation does not change the VPS's other apps.
+Environment=PATH=/opt/become-node/bin:/usr/bin:/bin
+ExecStart=/opt/become-node/bin/node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3010
+Restart=always
+RestartSec=5
+TimeoutStopSec=45
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/data/become /srv/apps/become/current/.next
+CapabilityBoundingSet=
+RestrictSUIDSGID=true
+# V8 requires executable memory; do not add MemoryDenyWriteExecute.
+
+[Install]
+WantedBy=multi-user.target

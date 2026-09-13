@@ -6,7 +6,7 @@ import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button.component";
 import { authClient } from "@/lib/auth/config/auth-client.config";
 
-export function AuthForm() {
+export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [name, setName] = useState("");
@@ -15,52 +15,68 @@ export function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const signingUp = allowSignUp && mode === "sign-up";
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (pending) return;
     setPending(true);
     setError(null);
-    const result =
-      mode === "sign-in"
-        ? await authClient.signIn.email({ email, password })
-        : await authClient.signUp.email({ name, email, password });
-    setPending(false);
-    if (result.error)
-      return setError(result.error.message ?? "Authentication failed.");
-    router.push("/");
-    router.refresh();
+    try {
+      const result = signingUp
+        ? await authClient.signUp.email({ name, email, password })
+        : await authClient.signIn.email({ email, password });
+      if (result.error) {
+        setError(result.error.message ?? "Authentication failed.");
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError(
+        "Become could not connect. Check your connection and try again.",
+      );
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
     <div className="auth-form-wrap">
-      <div
-        className="auth-mode-switch"
-        role="tablist"
-        aria-label="Authentication mode"
-      >
-        <button
-          type="button"
-          className={mode === "sign-in" ? "active" : ""}
-          onClick={() => {
-            setMode("sign-in");
-            setError(null);
-          }}
+      {allowSignUp && (
+        <div
+          className="auth-mode-switch"
+          role="group"
+          aria-label="Authentication mode"
         >
-          Sign in
-        </button>
-        <button
-          type="button"
-          className={mode === "sign-up" ? "active" : ""}
-          onClick={() => {
-            setMode("sign-up");
-            setError(null);
-          }}
-        >
-          Create account
-        </button>
-      </div>
+          <button
+            type="button"
+            aria-pressed={!signingUp}
+            className={!signingUp ? "active" : ""}
+            disabled={pending}
+            onClick={() => {
+              setMode("sign-in");
+              setError(null);
+            }}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            aria-pressed={signingUp}
+            className={signingUp ? "active" : ""}
+            disabled={pending}
+            onClick={() => {
+              setMode("sign-up");
+              setError(null);
+            }}
+          >
+            Create account
+          </button>
+        </div>
+      )}
       <form onSubmit={submit} className="mt-3xl space-y-xl">
-        {mode === "sign-up" && (
+        {signingUp && (
           <label className="block">
             <span className="field-label">Name</span>
             <input
@@ -94,13 +110,11 @@ export function AuthForm() {
             <input
               className="text-input pr-12"
               type={showPassword ? "text" : "password"}
-              autoComplete={
-                mode === "sign-in" ? "current-password" : "new-password"
-              }
+              autoComplete={signingUp ? "new-password" : "current-password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder={
-                mode === "sign-up" ? "At least 8 characters" : "Your password"
+                signingUp ? "At least 8 characters" : "Your password"
               }
               minLength={8}
               required
@@ -132,7 +146,7 @@ export function AuthForm() {
             <LoaderCircle className="size-4 animate-spin" />
           ) : (
             <>
-              {mode === "sign-in" ? "Enter Become" : "Create your space"}
+              {signingUp ? "Create your space" : "Enter Become"}
               <ArrowRight className="size-4" />
             </>
           )}

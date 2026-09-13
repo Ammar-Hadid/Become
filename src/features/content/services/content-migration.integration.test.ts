@@ -1,6 +1,9 @@
+import "dotenv/config";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { createRequire } from "node:module";
 import {
-  readFile,
+  rm,
   readdir,
   mkdtemp,
   mkdir,
@@ -20,8 +23,7 @@ suite("Phase 6 additive migration safety", () => {
     const root = process.cwd();
     const require = createRequire(root + "/package.json");
     const { Client } = require("pg");
-    const env = require("dotenv").parse(await readFile(root + "/.env"));
-    const url = new URL(env.DATABASE_URL);
+    const url = new URL(process.env.DATABASE_URL!);
     if (
       !["localhost", "127.0.0.1"].includes(url.hostname) ||
       !url.pathname.startsWith("/become_phase6_")
@@ -34,8 +36,8 @@ suite("Phase 6 additive migration safety", () => {
     console.log("Created migration-check database: " + name);
     url.pathname = "/" + name;
     const db = new Client({ connectionString: url.toString() });
+    const dir = await mkdtemp(path.join(tmpdir(), "become-phase6-migrations-"));
     try {
-      const dir = await mkdtemp("/private/tmp/become-phase6-migrations-");
       const migrations = dir + "/migrations";
       await mkdir(migrations);
       const source = root + "/prisma/migrations";
@@ -147,6 +149,7 @@ suite("Phase 6 additive migration safety", () => {
       await db.end().catch(() => {});
       await admin.query(`DROP DATABASE "${name}"`);
       await admin.end();
+      await rm(dir, { recursive: true, force: true });
       console.log(
         "Removed only the migration-check database created by this script.",
       );

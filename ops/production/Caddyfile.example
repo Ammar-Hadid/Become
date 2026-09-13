@@ -1,0 +1,25 @@
+# Add this as its own site block to the EXISTING port-80/443 Caddy instance.
+# Replace the example domain. Do not replace another application's Caddyfile.
+become.example.com {
+	encode zstd gzip
+	request_body {
+		max_size 8MB
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+	# Temporary bootstrap restriction: replace this with your current public IP.
+	# Keep it until the owner account exists and BECOME_ALLOW_SIGNUP is false.
+	@outside_bootstrap not remote_ip 192.0.2.10
+	respond @outside_bootstrap "Setup in progress" 403
+
+	reverse_proxy 127.0.0.1:3010 {
+		# Overwrite spoofable client values. This assumes Caddy is the edge proxy.
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

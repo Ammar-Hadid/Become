@@ -56,7 +56,7 @@ The Phase 7 migration has been verified on isolated local databases. Applying it
 
 ## Stack
 
-Next.js App Router, React, TypeScript, PostgreSQL, Prisma, Better Auth, Tailwind CSS, shadcn-style local primitives, Simple Icons, Zod, Recharts, Luxon, Vitest, and Playwright. `dnd-kit`, React Hook Form, and the official OpenAI SDK are installed for their specified future uses but are not forced into flows that do not need them.
+Next.js App Router, React, TypeScript, PostgreSQL, Prisma, Better Auth, Tailwind CSS, shadcn-style local primitives, Simple Icons, Zod, Recharts, Luxon, Vitest, and Playwright. Dependencies are installed for implemented functionality; deferred AI and interaction libraries are added only when their features are built.
 
 ## Run locally
 
@@ -84,7 +84,8 @@ pnpm typecheck      # TypeScript
 pnpm test           # deterministic unit tests
 pnpm test:e2e       # desktop/tablet/mobile journeys (database must be running)
 pnpm test:finance:integration # real local PostgreSQL constraints and races
-pnpm db:migrate     # apply/create Prisma migrations
+pnpm db:migrate     # apply/create local development migrations
+pnpm db:deploy      # apply committed migrations (production/verification)
 pnpm db:seed        # sync reference data, then ensure demo domains if the user exists
 pnpm db:sync-tech # synchronize built-in reference data only
 pnpm db:studio      # inspect local data
@@ -337,3 +338,12 @@ before enabling providers. Copy only the desired settings from `.env.example`;
 the default paid budget is zero. After additive migrations and `prisma generate`,
 restart the local dev server to load the new generated client. Run the disposable
 local COTS database suite with `RUN_COTS_INTEGRATION=1 pnpm test`.
+
+## Production deployment
+
+Use the [production deployment walkthrough](docs/deployment/PRODUCTION.md) for the
+Hetzner + Caddy + Neon setup, and read the [readiness report](docs/deployment/READINESS.md)
+for verified checks and remaining operational prerequisites. Production requires
+an explicit HTTPS origin, a generated auth secret, and a persistent media root
+outside the release. Registration is closed by default in production; bootstrap
+the owner only behind the walkthrough's temporary IP restriction.

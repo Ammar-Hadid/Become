@@ -5,18 +5,11 @@ import {
   isDirectionWriteConflict,
 } from "@/features/direction/services/direction-mutation.service";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { getServerEnv } from "@/lib/config/server-environment.config";
+import { isTrustedRequestOrigin } from "@/lib/http/utils/request-origin.util";
 export async function directionUser(request: Request, mutation = false) {
   if (mutation) {
-    let sameOrigin = false;
-    try {
-      const origin = new URL(request.headers.get("origin") ?? "");
-      sameOrigin =
-        ["http:", "https:"].includes(origin.protocol) &&
-        origin.host === new URL(request.url).host;
-    } catch {
-      /* Reject malformed origins. */
-    }
-    if (!sameOrigin)
+    if (!isTrustedRequestOrigin(request, getServerEnv().BETTER_AUTH_URL))
       throw new DirectionError(
         "This request must come from Become.",
         undefined,

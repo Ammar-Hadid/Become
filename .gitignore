@@ -7,6 +7,8 @@ test-results
 coverage
 .env
 .env.local
+.env.*
+!.env.example
 src/generated/prisma
 *.log
 *.tsbuildinfo

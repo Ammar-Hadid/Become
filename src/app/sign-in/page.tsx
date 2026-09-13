@@ -3,9 +3,11 @@ import { ArrowDownRight } from "lucide-react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { AuthForm } from "@/features/auth/components/auth-form.component";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { getServerEnv } from "@/lib/config/server-environment.config";
 
 export default async function SignInPage() {
   if (await getCurrentUser()) redirect("/");
+  const { BECOME_ALLOW_SIGNUP } = getServerEnv();
   return (
     <main className="auth-page">
       <section className="auth-story">
@@ -45,7 +47,7 @@ export default async function SignInPage() {
           <p className="text-text-secondary mt-md text-body">
             A truthful view starts with the work you log.
           </p>
-          <AuthForm />
+          <AuthForm allowSignUp={BECOME_ALLOW_SIGNUP} />
         </div>
       </section>
     </main>

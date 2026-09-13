@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly Become backup (brief application maintenance)
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=true
+Unit=become-backup.service
+
+[Install]
+WantedBy=timers.target

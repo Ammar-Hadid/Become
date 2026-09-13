@@ -16,7 +16,10 @@ export function mediaDataRoot(
     throw new Error(
       "Production requires BECOME_DATA_DIR outside the deployment directory.",
     );
-  const root = path.resolve(configured || path.join(cwd, ".data/become"));
+  // Runtime-owned media is deliberately outside the deployment artifact.
+  const root = path.resolve(
+    /* turbopackIgnore: true */ configured || path.join(cwd, ".data/become"),
+  );
   if (root === path.parse(root).root)
     throw new Error("Use a dedicated Become data directory.");
   if (

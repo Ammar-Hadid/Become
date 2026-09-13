@@ -55,7 +55,7 @@ export default async function DomainPage({
           </div>
           <h1>{formatDuration(completedSeconds, true)} recorded</h1>
           <p className="page-description text-text-secondary mt-sm">
-            Phase 1 activity and session evidence for this domain.
+            Activity and session evidence for this domain.
           </p>
         </div>
       </header>

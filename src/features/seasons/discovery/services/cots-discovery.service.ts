@@ -19,7 +19,7 @@ import type {
   CotsSourceStatus,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
 import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
-import { getServerEnv } from "@/lib/config/environment.config";
+import { getServerEnv } from "@/lib/config/server-environment.config";
 import { sanitizeCotsCandidate } from "@/features/seasons/discovery/utils/cots-candidate.util";
 import { rankCotsTextCandidates } from "@/features/seasons/discovery/utils/cots-text-quality.util";
 import { prepareCotsImageCandidates } from "@/features/seasons/discovery/services/cots-image-quality.service";

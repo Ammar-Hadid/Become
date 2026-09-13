@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   mkdtemp,
@@ -26,7 +28,7 @@ describe.skipIf(process.env.RUN_SESSION_MIGRATION_INTEGRATION !== "1")(
       await admin.query(`CREATE DATABASE "${name}"`);
       url.pathname = "/" + name;
       const db = new Client({ connectionString: url.toString() });
-      const dir = await mkdtemp("/private/tmp/become-pause-migration-");
+      const dir = await mkdtemp(path.join(tmpdir(), "become-pause-migration-"));
       try {
         const migrations = dir + "/migrations";
         await mkdir(migrations);
