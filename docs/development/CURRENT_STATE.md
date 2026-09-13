@@ -1,9 +1,6 @@
 # Current development state
 
-Phases 1–5.5 are present, including Entrepreneurship, Seasons & Direction,
-and category-aware COTS curation. Phase 5.5 work is on `feature/COTS-search`,
-uncommitted. The repository is authoritative for
-what exists; the master specification also describes future work.
+Phases 1–7 are present on `feature/reviews`, including the completed Content/script-editor and thumbnail work, persistent session pause/resume, COTS curation, and the new review/finale experience. Phase 7 changes remain uncommitted. The repository is authoritative for what exists; the master specification also describes future work. See [Phase 7 verification](../decisions/PHASE_7.md) for acceptance details and migration isolation.
 
 ## Available now
 
@@ -32,6 +29,11 @@ what exists; the master specification also describes future work.
   discovery, durable selections and imports, private local previews, collection
   reuse/preferences, contextual seasonal presence, and proactive opening with
   persistent deferral. See [Phase 5.5 setup and limits](../decisions/PHASE_5_5.md).
+- Content: one work/variants/releases/channels, owned thumbnails, dedicated rich script editing with autosave and conflict recovery, DOCX/TXT import/export, linked Sessions, explicit release corrections and dated manual lifetime observations.
+- Ideas and Decisions: global captures, explicit promotion into canonical work, original reasoning, changes, supersession and later reflections.
+- Reviews: all four periods, qualified cross-domain facts, historical intention coverage, source pagination, user-selected moments, optional writing, immutable final editions and explicit amendments. Multi-quarter reviews keep distinct Season chapters.
+- Season transition: prior participating Season → progressively revealed finale → existing current opening, with quiet no-COTS/sparse paths, persistent deferral/progress, skip/replay, duplicate-tab coordination and active-work guards. Carry-forward words are reviewable suggestions.
+- Phase 8 foundations: bounded period/current/targeted contracts and a versioned source-grounded persona-profile input. Phase 7 supplies no researched profile and performs no AI generation.
 - Business attention is available on Home; Finance also surfaces receipt attribution
   that needs review. Legacy Entrepreneurship domain links redirect to the dedicated
   workspace and preserve query parameters.
@@ -59,8 +61,7 @@ business allocations are separate dimensions of one payment, never additive mone
 - Completed Session timing is not generally editable or deletable.
 - No Contact directory, email sending, campaigns, AI evidence judgments, invoicing,
   subscription billing, projected recurring revenue, acquisition ROI or business
-  effective hourly rate. Credentialed COTS sources require setup; rich
-  seasonal reviews, recurring-commitment compliance, and later phases remain deferred.
+  effective hourly rate. Credentialed COTS sources require setup; AI commentary, generated farewells/chat, recurring-commitment compliance, and later phases remain deferred.
 - No guessed historical business categorization or automatic validation labels.
 - Global reference catalog synchronization remains an explicit developer operation.
 - Balance reconciliation is an observed anchor; missing anchors mean unknown.

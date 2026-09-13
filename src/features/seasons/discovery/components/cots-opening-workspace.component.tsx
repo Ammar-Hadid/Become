@@ -891,8 +891,8 @@ export function CotsOpeningWorkspace({
               Borrow the quality. Leave the costume.
             </h2>
             <p>
-              Name what you admire, set the tone, and turn their example into
-              standards you can actually practice.
+              Name what you admire, keep the inspiration honest, and turn their
+              example into standards you can actually practice.
             </p>
           </div>
 
@@ -923,23 +923,6 @@ export function CotsOpeningWorkspace({
                 />
               </label>
             </div>
-            <fieldset className="season-tone">
-              <legend className="field-label">Accountability tone</legend>
-              {(["DIRECT", "HARSH", "RUTHLESS"] as const).map((tone) => (
-                <label key={tone}>
-                  <input
-                    type="radio"
-                    name="tone"
-                    value={tone}
-                    checked={character.tone === tone}
-                    onChange={() => onPatchCharacter({ tone })}
-                  />
-                  <span>{tone[0] + tone.slice(1).toLowerCase()}</span>
-                </label>
-              ))}
-              <p>Wording may change later. Evidence and thresholds never do.</p>
-            </fieldset>
-
             <div className="season-standards-editor">
               <div>
                 <p className="eyebrow">Traits in practice</p>

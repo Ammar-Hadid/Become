@@ -18,7 +18,6 @@ export type SeasonCharacter = {
   adaptation: string;
   motivation: string;
   avoid: string;
-  tone: "DIRECT" | "HARSH" | "RUTHLESS";
   standards: SeasonStandard[];
 };
 export type SeasonAnswers = {

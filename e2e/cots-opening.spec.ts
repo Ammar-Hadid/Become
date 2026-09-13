@@ -255,9 +255,9 @@ test("a new season arrives once and keeps a curated inspiration collection", asy
     .getByRole("textbox", { name: "Carry forward" })
     .fill("A note saved before deferring the ritual.");
   await page.getByRole("button", { name: "Not now" }).click();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL((url) => url.pathname === "/");
   await page.reload();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL((url) => url.pathname === "/");
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/direction");

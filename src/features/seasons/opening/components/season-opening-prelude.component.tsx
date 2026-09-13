@@ -23,7 +23,10 @@ export function SeasonOpeningPrelude({
   const [lineIndex, setLineIndex] = useState(0);
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
     const timer = window.setTimeout(() => {
+      if (reducedMotion.matches) return;
       if (lineIndex === preludeLines.length - 1) onContinue();
       else setLineIndex((current) => current + 1);
     }, PRELUDE_BEAT_MS);

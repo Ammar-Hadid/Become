@@ -21,7 +21,6 @@ export const emptySeasonDraft = (): SeasonDraft => ({
     adaptation: "",
     motivation: "",
     avoid: "",
-    tone: "DIRECT",
     standards: [],
   },
 });

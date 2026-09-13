@@ -35,9 +35,9 @@ export async function readSourceIncome(
       take: 25,
       include: { workSource: { select: { name: true } } },
     }),
-    tx.$queryRaw<
-      { hash: string }[]
-    >`SELECT md5(COALESCE(string_agg(id || ':' || "amountMinor"::text || ':' || "occurredAt"::text, ',' ORDER BY id),'')) AS hash FROM financial_transaction WHERE "userId"=${s.userId} AND type='INCOME' AND "inflowKind"='EARNED_WORK' AND currency=${s.currency} AND "workSourceId"=${s.workSourceId ?? ""} AND "occurredAt">=${s.start} AND "occurredAt"<${s.end}`,
+    tx.$queryRaw<{ hash: string }[]>(
+      Prisma.sql`SELECT md5(COALESCE(string_agg(id || ':' || "amountMinor"::text || ':' || "occurredAt"::text, ',' ORDER BY id),'')) AS hash FROM financial_transaction WHERE "userId"=${s.userId} AND type='INCOME' AND "inflowKind"='EARNED_WORK' AND currency=${s.currency} ${s.workSourceId ? Prisma.sql`AND "workSourceId"=${s.workSourceId}` : Prisma.empty} AND "occurredAt">=${s.start} AND "occurredAt"<${s.end}`,
+    ),
   ]);
   return {
     amount: total._sum.amountMinor ?? 0n,
@@ -82,7 +82,7 @@ export async function readBusinessIncome(
       where: { ...where, needsReviewAt: { not: null } },
     }),
     tx.$queryRaw<{ hash: string }[]>(
-      Prisma.sql`SELECT md5(COALESCE(string_agg(a.id || ':' || a."amountMinor"::text || ':' || t."occurredAt"::text,',' ORDER BY a.id),'')) AS hash FROM business_receipt_allocation a JOIN financial_transaction t ON t.id=a."transactionId" AND t."userId"=a."userId" WHERE a."userId"=${s.userId} AND a."companyId"=${s.companyId ?? ""} ${s.offerRevisionId ? Prisma.sql`AND a."offerRevisionId"=${s.offerRevisionId}` : Prisma.empty} AND a."withdrawnAt" IS NULL AND a."needsReviewAt" IS NULL AND t.type='INCOME' AND t."inflowKind" IN ('EARNED_WORK','BUSINESS_REVENUE') AND t.currency=${s.currency} AND t."occurredAt">=${s.start} AND t."occurredAt"<${s.end}`,
+      Prisma.sql`SELECT md5(COALESCE(string_agg(a.id || ':' || a."amountMinor"::text || ':' || t."occurredAt"::text,',' ORDER BY a.id),'')) AS hash FROM business_receipt_allocation a JOIN financial_transaction t ON t.id=a."transactionId" AND t."userId"=a."userId" WHERE a."userId"=${s.userId} ${s.companyId ? Prisma.sql`AND a."companyId"=${s.companyId}` : Prisma.empty} ${s.offerRevisionId ? Prisma.sql`AND a."offerRevisionId"=${s.offerRevisionId}` : Prisma.empty} AND a."withdrawnAt" IS NULL AND a."needsReviewAt" IS NULL AND t.type='INCOME' AND t."inflowKind" IN ('EARNED_WORK','BUSINESS_REVENUE') AND t.currency=${s.currency} AND t."occurredAt">=${s.start} AND t."occurredAt"<${s.end}`,
     ),
   ]);
   return {

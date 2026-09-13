@@ -6,6 +6,8 @@ import { hasDirtyRecordForms } from "@/components/ui/forms/hooks/use-record-form
 import { isCurrentBecomeSeason } from "@/features/seasons/presentation/utils/current-season.util";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import type { SeasonView } from "@/features/seasons/types/season.types";
+import type { SeasonTransitionView } from "@/features/reviews/contracts/types/review.types";
+import { readTransitionSuppression } from "@/features/seasons/transition/utils/transition-storage.util";
 
 function hasCompetingLayer() {
   return Boolean(
@@ -19,11 +21,26 @@ function hasTimerMutationPending() {
   return document.documentElement.hasAttribute("data-timer-mutation-pending");
 }
 
-export function SeasonOpeningArrival({ season }: { season?: SeasonView }) {
+export function SeasonOpeningArrival({
+  season,
+  transition,
+  transitionUnavailable = false,
+  recoveryScope,
+}: {
+  season?: SeasonView;
+  transition?: SeasonTransitionView | null;
+  transitionUnavailable?: boolean;
+  recoveryScope?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { activeSession } = useActiveTimer();
+  const { activeSession, pendingOperation, recoveryRequired, reconcileTimer } =
+    useActiveTimer();
   const entering = useRef(false);
+  const interactionStarted = useRef(false);
+  const occupation = useRef(
+    Boolean(activeSession || pendingOperation || recoveryRequired),
+  );
   const eligible = Boolean(
     season &&
     !season.openingCompletedAt &&
@@ -35,16 +52,56 @@ export function SeasonOpeningArrival({ season }: { season?: SeasonView }) {
   );
 
   useEffect(() => {
-    if (!eligible || pathname !== "/" || activeSession || !season) return;
+    occupation.current = Boolean(
+      activeSession || pendingOperation || recoveryRequired,
+    );
+  }, [activeSession, pendingOperation, recoveryRequired]);
 
-    let interactionStarted = false;
+  useEffect(() => {
     const stopForInteraction = () => {
-      interactionStarted = true;
+      interactionStarted.current = true;
     };
+    document.addEventListener("pointerdown", stopForInteraction, {
+      capture: true,
+    });
+    document.addEventListener("keydown", stopForInteraction, { capture: true });
+    return () => {
+      document.removeEventListener("pointerdown", stopForInteraction, true);
+      document.removeEventListener("keydown", stopForInteraction, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      transitionUnavailable ||
+      pathname !== "/" ||
+      occupation.current ||
+      entering.current
+    )
+      return;
+    const transitionReady = Boolean(
+      transition?.autoEligible &&
+      transition.finaleHref &&
+      !transition.occupied &&
+      !readTransitionSuppression(transition).suppressed,
+    );
+    // A prior participating Season takes the place of automatic opening. A
+    // deferred/skipped finale leaves both paths available through manual entry.
+    if (
+      transition?.from &&
+      transition.disposition !== "COMPLETED" &&
+      !transitionReady
+    )
+      return;
+    if (!transitionReady && (!eligible || !season)) return;
+    let cancelled = false;
+    let frame: number | null = null;
     const enter = () => {
       if (
+        cancelled ||
         entering.current ||
-        interactionStarted ||
+        interactionStarted.current ||
+        occupation.current ||
         window.location.search !== "" ||
         window.location.hash !== "" ||
         document.visibilityState !== "visible" ||
@@ -53,28 +110,51 @@ export function SeasonOpeningArrival({ season }: { season?: SeasonView }) {
         hasCompetingLayer()
       )
         return;
+      if (transition && readTransitionSuppression(transition).suppressed)
+        return;
+      if (season) {
+        try {
+          if (
+            sessionStorage.getItem(
+              `become:opening-deferred:${recoveryScope ?? season.id}`,
+            )
+          )
+            return;
+        } catch {
+          /* The saved backend disposition and URL still apply. */
+        }
+      }
       entering.current = true;
       router.replace(
-        `/direction/seasons/${season.year}/${season.quarter}/opening?arrival=season`,
+        transitionReady && transition?.finaleHref
+          ? `${transition.finaleHref}?arrival=season`
+          : `/direction/seasons/${season!.year}/${season!.quarter}/opening?arrival=season`,
         { scroll: false },
       );
     };
 
-    document.addEventListener("pointerdown", stopForInteraction, {
-      capture: true,
-      once: true,
+    // Wait for a successful timer reconciliation on this Home visit. The
+    // animation frame observes its committed running/paused occupation state.
+    void reconcileTimer().then((confirmed) => {
+      if (confirmed && !cancelled) frame = window.requestAnimationFrame(enter);
     });
-    document.addEventListener("keydown", stopForInteraction, {
-      capture: true,
-      once: true,
-    });
-    const frame = window.requestAnimationFrame(enter);
     return () => {
-      window.cancelAnimationFrame(frame);
-      document.removeEventListener("pointerdown", stopForInteraction, true);
-      document.removeEventListener("keydown", stopForInteraction, true);
+      cancelled = true;
+      if (frame !== null) window.cancelAnimationFrame(frame);
     };
-  }, [activeSession, eligible, pathname, router, season]);
+  }, [
+    activeSession,
+    eligible,
+    pathname,
+    pendingOperation,
+    reconcileTimer,
+    recoveryRequired,
+    recoveryScope,
+    router,
+    season,
+    transition,
+    transitionUnavailable,
+  ]);
 
   return null;
 }

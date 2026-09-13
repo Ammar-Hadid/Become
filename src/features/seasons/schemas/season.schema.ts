@@ -30,7 +30,6 @@ export const seasonDraftSchema = z
         adaptation: z.string().trim().max(200),
         motivation: text,
         avoid: text,
-        tone: z.enum(["DIRECT", "HARSH", "RUTHLESS"]),
         standards: z
           .array(
             z

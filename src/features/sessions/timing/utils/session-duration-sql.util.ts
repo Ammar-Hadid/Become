@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma/client";
 /** SQL counterpart of calculateSessionMilliseconds; bounds and instants stay parameters. */
 export function sessionFocusedSecondsSql(
   alias: "s" | "session" = "s",
-  range?: { start: Date; end: Date },
+  range?: { start: Date | Prisma.Sql; end: Date | Prisma.Sql },
   now = new Date(),
 ) {
   const s = alias === "s" ? Prisma.sql`s` : Prisma.sql`session`;

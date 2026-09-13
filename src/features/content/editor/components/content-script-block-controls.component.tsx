@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
+import { NodeSelection } from "@tiptap/pm/state";
 import { TableMap } from "@tiptap/pm/tables";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { addScriptRowAbove } from "@/features/content/editor/utils/content-script-table.util";
@@ -50,6 +52,7 @@ export function ContentScriptBlockControls({
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !editor.isEditable) return;
+    const editorDOM = editor.view.dom;
     let active: HTMLElement | null = null;
     let frame = 0;
 
@@ -153,8 +156,46 @@ export function ContentScriptBlockControls({
       );
     }
 
+    function focusImageDetails(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.key !== "Tab" ||
+        event.shiftKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !editor.isEditable
+      )
+        return;
+      const selection = editor.state.selection;
+      if (
+        !(selection instanceof NodeSelection) ||
+        selection.node.type.name !== "image"
+      )
+        return;
+      const image = editor.view.nodeDOM(selection.from);
+      if (
+        !(image instanceof HTMLElement) ||
+        !image.matches("figure[data-script-image]")
+      )
+        return;
+
+      // Rapid selection → Tab can precede the scheduled overlay render. Commit
+      // this selected image's control before the browser resolves tab order.
+      track(image);
+      cancelAnimationFrame(frame);
+      flushSync(measure);
+      const handle = container?.querySelector<HTMLButtonElement>(
+        ".content-script-image-handle",
+      );
+      if (!handle) return;
+      event.preventDefault();
+      handle.focus();
+    }
+
     container.addEventListener("pointermove", pointerMove);
     container.addEventListener("pointerleave", pointerLeave);
+    editorDOM.addEventListener("keydown", focusImageDetails);
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, true);
     editor.on("selectionUpdate", selectionChanged);
@@ -164,6 +205,7 @@ export function ContentScriptBlockControls({
       observer.disconnect();
       container.removeEventListener("pointermove", pointerMove);
       container.removeEventListener("pointerleave", pointerLeave);
+      editorDOM.removeEventListener("keydown", focusImageDetails);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("scroll", schedule, true);
       editor.off("selectionUpdate", selectionChanged);
