@@ -1,3 +1,4 @@
+import { getTimerSnapshot } from "@/features/sessions/timer/queries/timer-snapshot.query";
 import { DateTime } from "luxon";
 import {
   toSessionDetailItem,
@@ -6,7 +7,7 @@ import {
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 
 export async function getAppSessionData(userId: string, now = DateTime.utc()) {
-  const [domains, activeSession] = await Promise.all([
+  const [domains, timerSnapshot] = await Promise.all([
     prisma.domain.findMany({
       where: { userId, enabled: true },
       include: {
@@ -17,14 +18,7 @@ export async function getAppSessionData(userId: string, now = DateTime.utc()) {
       },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.session.findFirst({
-      where: { userId, endedAt: null },
-      include: {
-        domain: true,
-        activityType: true,
-        engineeringProject: true,
-      },
-    }),
+    getTimerSnapshot(userId, now),
   ]);
 
   return {
@@ -41,7 +35,8 @@ export async function getAppSessionData(userId: string, now = DateTime.utc()) {
         financeActivityKind: activity.financeActivityKind,
       })),
     })),
-    activeSession: activeSession ? toSessionListItem(activeSession, now) : null,
+    activeSession: timerSnapshot.activeSession,
+    timerSnapshot,
   };
 }
 
@@ -56,6 +51,7 @@ export async function getRecentSessions(
       domain: true,
       activityType: true,
       engineeringProject: true,
+      pauses: true,
     },
     orderBy: { startedAt: "desc" },
     take,
@@ -71,6 +67,7 @@ export async function getCompletedSessionById(userId: string, id: string) {
       domain: true,
       activityType: true,
       engineeringProject: true,
+      pauses: true,
       engineeringEvidence: { orderBy: { occurredAt: "desc" } },
     },
   });

@@ -1,3 +1,4 @@
+import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
 import { DateTime } from "luxon";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -33,7 +34,7 @@ async function readContentAnalytics(
   const range = getPeriod(reference, period),
     start = range.start.toJSDate(),
     end = DateTime.min(range.end, now).toJSDate();
-  const clipped = Prisma.sql`GREATEST(0,FLOOR(EXTRACT(EPOCH FROM LEAST(s."endedAt",${end})-GREATEST(s."startedAt",${start}))))`;
+  const clipped = sessionFocusedSecondsSql("s", { start, end }, now.toJSDate());
   const sessionScope = Prisma.sql`s."userId"=${userId} AND d.slug='content' AND s."endedAt" IS NOT NULL AND s."startedAt"<${end} AND s."endedAt">${start}`;
   const [
     content,
@@ -88,7 +89,7 @@ async function readContentAnalytics(
       Prisma.sql`SELECT p.id,v."contentId",c.title AS "contentTitle",v.format FROM content_publication p JOIN content_variant v ON v.id=p."variantId" JOIN content c ON c.id=v."contentId" JOIN content_performance_observation o ON o."publicationId"=p.id WHERE p."userId"=${userId} AND p."withdrawnAt" IS NULL AND o."observedAt">=COALESCE(p."publishedAt",(p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam') AT TIME ZONE 'UTC') AND NOT EXISTS(SELECT 1 FROM content_performance_observation newer WHERE newer."supersedesId"=o.id) GROUP BY p.id,v.id,c.id ORDER BY MAX(o."observedAt") DESC,p.id DESC LIMIT 12`,
     ),
     tx.$queryRaw<{ seconds: string }[]>(
-      Prisma.sql`SELECT COALESCE(SUM(GREATEST(0,FLOOR(EXTRACT(EPOCH FROM s."endedAt"-s."startedAt")))),0)::text AS seconds FROM session s WHERE s."userId"=${userId} AND s."endedAt" IS NOT NULL AND s."contentId" IN (SELECT DISTINCT v."contentId" FROM content_publication p JOIN content_variant v ON v.id=p."variantId" WHERE p."userId"=${userId} AND p."withdrawnAt" IS NULL AND p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam'>=${start} AND p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam'<${end})`,
+      Prisma.sql`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("s", undefined, now.toJSDate())}),0)::text AS seconds FROM session s WHERE s."userId"=${userId} AND s."endedAt" IS NOT NULL AND s."contentId" IN (SELECT DISTINCT v."contentId" FROM content_publication p JOIN content_variant v ON v.id=p."variantId" WHERE p."userId"=${userId} AND p."withdrawnAt" IS NULL AND p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam'>=${start} AND p."publishedOn"::timestamp AT TIME ZONE 'Europe/Amsterdam'<${end})`,
     ),
   ]);
   const recentViews = await getPublicationViews(

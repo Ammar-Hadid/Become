@@ -1,7 +1,7 @@
 "use client";
 
 import { DateTime } from "luxon";
-import { ChevronRight, Circle } from "lucide-react";
+import { ChevronRight, Circle, Pause } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getEngineeringContextLabel } from "@/features/engineering/constants/engineering.constants";
@@ -23,10 +23,11 @@ export function SessionRow({
   showDate?: boolean;
 }) {
   const { openSession } = useSessionDetails();
-  const { completedSessions } = useActiveTimer();
+  const { completedSessions, activeSession, elapsedSeconds } = useActiveTimer();
+  const current = activeSession?.id === serverSession.id ? activeSession : null;
   const session = serverSession.endedAt
     ? serverSession
-    : (completedSessions[serverSession.id] ?? serverSession);
+    : (completedSessions[serverSession.id] ?? current ?? serverSession);
   const [resolved, setResolved] = useState(false);
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
   const activity = session.contentActivitySnapshot || session.activityType.name;
@@ -57,9 +58,20 @@ export function SessionRow({
       <div className="min-w-0 flex-1">
         <div className="gap-x-sm gap-y-xs flex flex-wrap items-center">
           <h3 className="text-body font-medium">{title}</h3>
-          {!session.endedAt && (
-            <span className="running-label">
-              <Circle className="size-2 fill-current" /> Running
+          {!session.endedAt && current && (
+            <span
+              className={
+                current.status === "PAUSED"
+                  ? "running-label paused-label"
+                  : "running-label"
+              }
+            >
+              {current.status === "PAUSED" ? (
+                <Pause className="size-2.5 fill-current" aria-hidden="true" />
+              ) : (
+                <Circle className="size-2 fill-current" aria-hidden="true" />
+              )}
+              {current.status === "PAUSED" ? "Paused" : "Running"}
             </span>
           )}
         </div>
@@ -74,7 +86,12 @@ export function SessionRow({
       </div>
       <div className="shrink-0 text-right">
         <p className="timer-numerals text-body font-medium">
-          {formatDuration(session.durationSeconds, true)}
+          {formatDuration(
+            !session.endedAt && current
+              ? elapsedSeconds
+              : session.durationSeconds,
+            true,
+          )}
         </p>
         {showDate && (
           <p className="session-metadata text-text-muted mt-xs">

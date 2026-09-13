@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { calculateElapsedSeconds } from "@/features/sessions/timer/utils/elapsed-time.util";
+import {
+  calculateElapsedSeconds,
+  calculateFocusedSeconds,
+} from "@/features/sessions/timer/utils/elapsed-time.util";
 
 describe("active session elapsed time", () => {
   it("derives elapsed seconds from the persisted start time", () => {
@@ -32,5 +35,70 @@ describe("active session elapsed time", () => {
         Date.parse("2026-09-03T10:00:00.000Z"),
       ),
     ).toBe(0);
+  });
+});
+
+describe("focused time across breaks", () => {
+  it("keeps a paused session frozen through time away and reload", () => {
+    const session = {
+      status: "PAUSED" as const,
+      accumulatedActiveMilliseconds: 12750,
+      runningSince: null,
+    };
+    expect(
+      calculateFocusedSeconds(session, Date.parse("2026-09-13T10:00:00Z")),
+    ).toBe(12);
+    expect(
+      calculateFocusedSeconds(session, Date.parse("2026-09-14T10:00:00Z")),
+    ).toBe(12);
+  });
+
+  it("adds the latest running span and rounds only the combined duration", () => {
+    expect(
+      calculateFocusedSeconds(
+        {
+          status: "RUNNING",
+          accumulatedActiveMilliseconds: 1750,
+          runningSince: "2026-09-13T10:00:00.000Z",
+        },
+        Date.parse("2026-09-13T10:00:00.750Z"),
+      ),
+    ).toBe(2);
+  });
+
+  it("uses a resume anchor rather than counting the intervening break", () => {
+    expect(
+      calculateFocusedSeconds(
+        {
+          status: "RUNNING",
+          accumulatedActiveMilliseconds: 120000,
+          runningSince: "2026-09-13T10:30:00.000Z",
+        },
+        Date.parse("2026-09-13T10:30:05.000Z"),
+      ),
+    ).toBe(125);
+  });
+
+  it("does not add a span after completion or from a future anchor", () => {
+    expect(
+      calculateFocusedSeconds(
+        {
+          status: "COMPLETED",
+          accumulatedActiveMilliseconds: 3100,
+          runningSince: null,
+        },
+        Date.now(),
+      ),
+    ).toBe(3);
+    expect(
+      calculateFocusedSeconds(
+        {
+          status: "RUNNING",
+          accumulatedActiveMilliseconds: 3100,
+          runningSince: "2026-09-13T10:00:01Z",
+        },
+        Date.parse("2026-09-13T10:00:00Z"),
+      ),
+    ).toBe(3);
   });
 });

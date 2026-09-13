@@ -1,3 +1,4 @@
+import { getSessionTiming } from "@/features/sessions/timing/utils/session-duration.util";
 import { DateTime } from "luxon";
 import type {
   SessionDetailItem,
@@ -10,9 +11,6 @@ export function toSessionListItem(
   session: SessionWithRelations,
   now = DateTime.utc(),
 ): SessionListItem {
-  const end = session.endedAt ? DateTime.fromJSDate(session.endedAt) : now;
-  const start = DateTime.fromJSDate(session.startedAt);
-
   return {
     id: session.id,
     contentId: session.contentId,
@@ -36,10 +34,7 @@ export function toSessionListItem(
     description: session.description,
     outcome: session.outcome,
     notes: session.notes,
-    durationSeconds: Math.max(
-      0,
-      Math.floor(end.diff(start, "seconds").seconds),
-    ),
+    ...getSessionTiming(session, now.toMillis()),
     domain: {
       id: session.domain.id,
       name: session.domain.name,

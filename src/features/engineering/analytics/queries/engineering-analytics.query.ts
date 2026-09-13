@@ -31,6 +31,7 @@ export async function getEngineeringAnalyticsData(
         OR: [{ endedAt: null }, { endedAt: { gt: rangeStart } }],
       },
       select: {
+        pauses: true,
         startedAt: true,
         endedAt: true,
         engineeringContext: true,

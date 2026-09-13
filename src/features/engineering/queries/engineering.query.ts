@@ -1,3 +1,4 @@
+import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
   EngineeringEvidenceListItem,
@@ -137,13 +138,14 @@ export async function getEngineeringProjectById(
           domain: true,
           activityType: true,
           engineeringProject: true,
+          pauses: true,
         },
         orderBy: { startedAt: "desc" },
         take: 100,
       }),
       prisma.session.findMany({
         where: { userId, engineeringProjectId: projectId },
-        select: { startedAt: true, endedAt: true },
+        select: { startedAt: true, endedAt: true, pauses: true },
       }),
       prisma.engineeringEvidence.findMany({
         where: {
@@ -171,14 +173,7 @@ export async function getEngineeringProjectById(
   const now = Date.now();
   const totalSeconds = sessionDurations.reduce(
     (total, session) =>
-      total +
-      Math.max(
-        0,
-        Math.floor(
-          ((session.endedAt?.getTime() ?? now) - session.startedAt.getTime()) /
-            1000,
-        ),
-      ),
+      total + Math.floor(calculateSessionMilliseconds(session, now) / 1000),
     0,
   );
 

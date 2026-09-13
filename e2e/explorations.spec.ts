@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
@@ -41,7 +42,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .getByTestId("password-input")
     .fill("become-disposable-exploration-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL("/");
+  await deferAutomaticSeasonOpening(page);
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const screenshots = "docs/development/niche-first-qa";
   await mkdir(screenshots, { recursive: true });
@@ -200,6 +201,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   });
   // Opening a running timer from another exploration must keep its original context.
   await page.locator('[data-testid="active-timer-trigger"]:visible').click();
+  await page.getByRole("dialog").getByTestId("end-session").click();
   await page.getByText("Company & niche · optional", { exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: "Niche", exact: true }),
@@ -288,7 +290,7 @@ test("direction review offers contextual choices and preserves explicit continue
     .getByTestId("password-input")
     .fill("become-disposable-exploration-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL("/");
+  await deferAutomaticSeasonOpening(page);
   await page.goto("/entrepreneurship");
   const path = await startExploration(page, "Direction review");
   const nicheId = path.split("/").at(-1)!;

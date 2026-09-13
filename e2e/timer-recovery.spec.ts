@@ -16,6 +16,10 @@ test.describe("recovered timer completion", () => {
     await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill("become-test-password");
     await page.getByTestId("auth-submit").click();
+    await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
+      timeout: 15_000,
+    });
+    await page.goto("/?timer=recovery");
     await page.locator('[data-testid="start-timer-trigger"]:visible').click();
     await page
       .getByRole("button", { name: "Engineering", exact: true })
@@ -69,7 +73,7 @@ test.describe("recovered timer completion", () => {
     });
 
     try {
-      await timer.click();
+      await timer.getByTestId("end-session").click();
       await reopened
         .getByTestId("session-outcome")
         .fill("Recovered session saved");
@@ -125,7 +129,7 @@ test.describe("recovered timer completion", () => {
     const timer = page.getByTestId("dashboard-active-session");
     const sessionId = (await timer.getAttribute("data-session-id"))!;
     const completionUrl = `/api/sessions/${sessionId}/complete`;
-    await timer.click();
+    await timer.getByTestId("end-session").click();
     await page.getByTestId("session-outcome").fill("Original outcome");
     await page
       .getByRole("button", { name: "Record concrete evidence" })

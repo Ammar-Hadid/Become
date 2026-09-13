@@ -22,8 +22,15 @@ export async function POST(
     );
 
   const { id } = await context.params;
-  const result = await completeSession(user.id, id, parsed.data).catch((error) => { if (error instanceof BusinessError) return { status: "invalid-business" as const, error: error.message }; throw error; });
-  if (result.status === "invalid-business") return NextResponse.json({ error: result.error }, { status: 400 });
+  const result = await completeSession(user.id, id, parsed.data).catch(
+    (error) => {
+      if (error instanceof BusinessError)
+        return { status: "invalid-business" as const, error: error.message };
+      throw error;
+    },
+  );
+  if (result.status === "invalid-business")
+    return NextResponse.json({ error: result.error }, { status: 400 });
   if (result.status === "not-found")
     return NextResponse.json(
       { error: "Active session not found." },
@@ -49,5 +56,6 @@ export async function POST(
     sessionId: result.sessionId,
     evidenceId: result.evidenceId,
     session: result.session,
+    timer: result.timer,
   });
 }

@@ -19,6 +19,7 @@ import type { SessionListItem } from "@/features/sessions/types/session.types";
 import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
 import { SeasonOpeningArrival } from "@/features/seasons/home/components/season-opening-arrival.component";
 import type { SeasonView } from "@/features/seasons/types/season.types";
+import { DashboardActiveSession } from "@/features/dashboard/components/dashboard-active-session.component";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import {
@@ -50,7 +51,7 @@ export function Dashboard({
   const [pending, startTransition] = useTransition();
   const [requestedTimeframe, setRequestedTimeframe] =
     useState<Timeframe | null>(null);
-  const { activeSession, elapsedSeconds } = useActiveTimer();
+  const { activeSession } = useActiveTimer();
 
   function selectTimeframe(timeframe: Timeframe) {
     if (timeframe === data.timeframe) return;
@@ -149,40 +150,7 @@ export function Dashboard({
           )}
 
           {activeSession ? (
-            <button
-              className="dashboard-focus-action dashboard-focus-action--active"
-              onClick={() =>
-                window.dispatchEvent(new Event("become:stop-timer"))
-              }
-              data-testid="dashboard-active-session"
-              data-session-id={activeSession.id}
-              data-elapsed-seconds={elapsedSeconds}
-            >
-              <span className="active-orbit" aria-hidden="true">
-                <span />
-              </span>
-              <span className="dashboard-focus-copy">
-                <span className="eyebrow text-primary">In focus now</span>
-                <strong>
-                  {activeSession.description || activeSession.activityType.name}
-                </strong>
-                <small>
-                  {activeSession.domain.name} ·{" "}
-                  {activeSession.activityType.name}
-                </small>
-              </span>
-              <span className="dashboard-focus-end">
-                <strong
-                  className="timer-numerals"
-                  data-testid="dashboard-active-session-time"
-                >
-                  {formatDuration(elapsedSeconds)}
-                </strong>
-                <span>
-                  Complete <ArrowRight aria-hidden="true" />
-                </span>
-              </span>
-            </button>
+            <DashboardActiveSession />
           ) : (
             <button
               className="dashboard-focus-action"
@@ -398,7 +366,10 @@ export function Dashboard({
                   window.dispatchEvent(new Event("become:start-timer"))
                 }
               >
-                Record your first focus block <ArrowRight />
+                {activeSession
+                  ? "View current session"
+                  : "Record your first focus block"}{" "}
+                <ArrowRight />
               </button>
             </div>
           )}

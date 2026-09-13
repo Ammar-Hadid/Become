@@ -1,3 +1,4 @@
+import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
 import {
   encodeCursor as encodeContentCursor,
   decodeCursor as decodeContentCursor,
@@ -291,12 +292,17 @@ async function readContentWorkspace(
     getContentChannels(userId, tx),
     tx.session.findMany({
       where: { userId, contentId: id },
-      include: { domain: true, activityType: true, engineeringProject: true },
+      include: {
+        domain: true,
+        activityType: true,
+        engineeringProject: true,
+        pauses: true,
+      },
       orderBy: [{ startedAt: "desc" }, { id: "desc" }],
       take: 51,
     }),
     tx.$queryRaw<{ name: string; seconds: bigint }[]>(
-      Prisma.sql`SELECT COALESCE(s."contentActivitySnapshot",a.name) AS name, COALESCE(SUM(GREATEST(0,FLOOR(EXTRACT(EPOCH FROM (s."endedAt"-s."startedAt")))))::bigint,0) AS seconds FROM session s JOIN activity_type a ON a.id=s."activityTypeId" WHERE s."userId"=${userId} AND s."contentId"=${id} AND s."endedAt" IS NOT NULL GROUP BY COALESCE(s."contentActivitySnapshot",a.name) ORDER BY name`,
+      Prisma.sql`SELECT COALESCE(s."contentActivitySnapshot",a.name) AS name, COALESCE(SUM(${sessionFocusedSecondsSql()})::bigint,0) AS seconds FROM session s JOIN activity_type a ON a.id=s."activityTypeId" WHERE s."userId"=${userId} AND s."contentId"=${id} AND s."endedAt" IS NOT NULL GROUP BY COALESCE(s."contentActivitySnapshot",a.name) ORDER BY name`,
     ),
     tx.domain.findFirst({
       where: { userId, slug: "content", enabled: true },

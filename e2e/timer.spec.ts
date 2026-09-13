@@ -8,6 +8,10 @@ async function createAccount(page: Page, name: string) {
   await page.getByTestId("email-input").fill(email);
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
+    timeout: 15_000,
+  });
+  await page.goto("/?timer=journey");
   await expect(
     page.getByRole("heading", { name: new RegExp(name) }),
   ).toBeVisible();
@@ -23,6 +27,7 @@ test("a new user can start, recover, and complete a timer", async ({
   await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("session-description").fill("Build the timer journey");
   await page.getByTestId("confirm-start-timer").click();
+  await page.goto("/");
 
   const shellTimer = page.locator(
     '[data-testid="active-timer-trigger"]:visible',
@@ -61,7 +66,7 @@ test("a new user can start, recover, and complete a timer", async ({
     )
     .toBeGreaterThanOrEqual(elapsedBeforeRefresh);
 
-  await dashboardTimer.click();
+  await dashboardTimer.getByTestId("end-session").click();
   await page.getByTestId("session-outcome").fill("Timer journey verified");
   await page.getByTestId("confirm-stop-timer").click();
   await expect(dashboardTimer).toHaveCount(0);
@@ -100,6 +105,10 @@ test("shell controls remain readable, separated, centered, and explicit", async 
     );
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
+    timeout: 15_000,
+  });
+  await page.goto("/?timer=shell");
   await expect(page.getByRole("heading", { name: /Shell/ })).toBeVisible();
 
   const mobileNavigation = page.getByTestId("mobile-bottom-nav");

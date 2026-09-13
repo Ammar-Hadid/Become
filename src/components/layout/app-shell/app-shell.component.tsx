@@ -15,12 +15,10 @@ import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import type { EngineeringProjectOption } from "@/features/engineering/types/engineering.types";
 import { ActiveTimerProvider } from "@/features/sessions/timer/components/active-timer-provider.component";
 import { SessionDetailsProvider } from "@/features/sessions/details/components/session-details-provider.component";
-import {
-  TimerController,
-  TimerTrigger,
-} from "@/features/sessions/timer/components/timer-controller.component";
+import { TimerController } from "@/features/sessions/timer/components/timer-controller.component";
+import { TimerTrigger } from "@/features/sessions/timer/components/timer-trigger.component";
 import type {
-  ActiveSessionData,
+  TimerSnapshot,
   DomainOption,
 } from "@/features/sessions/types/session.types";
 import { authClient } from "@/lib/auth/config/auth-client.config";
@@ -30,14 +28,14 @@ export function AppShell({
   children,
   user,
   domains,
-  activeSession,
+  timerSnapshot,
   engineeringProjects,
   financeOptions,
 }: {
   children: React.ReactNode;
   user: { name: string; email: string };
   domains: DomainOption[];
-  activeSession: ActiveSessionData | null;
+  timerSnapshot: TimerSnapshot;
   engineeringProjects: EngineeringProjectOption[];
   financeOptions: FinanceWorkOptions;
 }) {
@@ -189,7 +187,7 @@ export function AppShell({
   );
 
   return (
-    <ActiveTimerProvider activeSession={activeSession}>
+    <ActiveTimerProvider timerSnapshot={timerSnapshot}>
       <div className="bg-background text-text-primary min-h-screen">
         <aside className="sidebar hidden lg:flex">
           <BrandMark />

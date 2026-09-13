@@ -51,3 +51,7 @@ export const completeSessionSchema = z.object({
 
 export type StartSessionInput = z.infer<typeof startSessionSchema>;
 export type CompleteSessionInput = z.infer<typeof completeSessionSchema>;
+
+export const transitionSessionSchema = z.object({
+  expectedRevision: z.number().int().nonnegative(),
+});

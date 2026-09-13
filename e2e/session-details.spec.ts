@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
 
 async function createAccount(page: Page) {
@@ -8,6 +9,7 @@ async function createAccount(page: Page) {
   await page.getByTestId("email-input").fill(email);
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
+  await deferAutomaticSeasonOpening(page);
   await expect(page.getByRole("heading", { name: /Session/ })).toBeVisible();
 }
 
@@ -30,7 +32,10 @@ async function recordSession(
     await page.getByTestId("session-description").fill(details.focus);
   }
   await page.getByTestId("confirm-start-timer").click();
-  await page.getByTestId("dashboard-active-session").click();
+  await page
+    .getByTestId("dashboard-active-session")
+    .getByTestId("end-session")
+    .click();
   if (details.outcome) {
     await page.getByTestId("session-outcome").fill(details.outcome);
   }
@@ -39,6 +44,9 @@ async function recordSession(
   }
   await page.getByTestId("confirm-stop-timer").click();
   await expect(page.getByTestId("dashboard-active-session")).toHaveCount(0);
+  await expect(
+    page.getByRole("dialog", { name: "What came from the time?", exact: true }),
+  ).toHaveCount(0);
 }
 
 test("completed sessions share one responsive details experience across contexts", async ({

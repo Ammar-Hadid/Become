@@ -100,6 +100,11 @@
   color: var(--color-primary);
 }
 
+.paused-label {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+}
+
 .session-details-backdrop {
   position: fixed;
   z-index: 110;
@@ -191,12 +196,70 @@
 .session-details-timing dt svg {
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
 }
 
 .session-details-timing dd {
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
+}
+
+.session-details-durations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-2xl);
+}
+
+.session-details-durations > div {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-elevated);
+  padding: var(--spacing-lg);
+}
+
+.session-details-durations > .session-details-duration-focus {
+  border-color: var(--color-primary-muted);
+  background: var(--color-primary-subtle);
+}
+
+.session-details-durations dt {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.session-details-durations dt svg {
+  width: var(--spacing-lg);
+  height: var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.session-details-duration-focus dt svg {
+  color: var(--color-primary);
+}
+
+.session-details-durations dd {
+  margin-top: var(--spacing-md);
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.session-details-duration-note {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .session-details-evidence {

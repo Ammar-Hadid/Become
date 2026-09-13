@@ -1,7 +1,7 @@
 "use client";
 
 import { DateTime } from "luxon";
-import { CalendarDays, Clock3, X } from "lucide-react";
+import { CalendarDays, Clock3, Pause, X } from "lucide-react";
 import Link from "next/link";
 import { useId, useRef, type AnimationEvent } from "react";
 import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
@@ -128,7 +128,7 @@ export function SessionDetailsDrawer({
         <dl className="session-details-timing">
           <div>
             <dt>
-              <CalendarDays /> Started
+              <CalendarDays aria-hidden="true" /> Started
             </dt>
             <dd data-testid="session-detail-start">
               {formatDateTime(startedAt)}
@@ -137,16 +137,19 @@ export function SessionDetailsDrawer({
           {endedAt && (
             <div>
               <dt>
-                <CalendarDays /> Ended
+                <CalendarDays aria-hidden="true" /> Ended
               </dt>
               <dd data-testid="session-detail-end">
                 {formatDateTime(endedAt)}
               </dd>
             </div>
           )}
-          <div>
+        </dl>
+
+        <dl className="session-details-durations">
+          <div className="session-details-duration-focus">
             <dt>
-              <Clock3 /> Duration
+              <Clock3 aria-hidden="true" /> Focused time
             </dt>
             <dd
               className="timer-numerals"
@@ -155,6 +158,26 @@ export function SessionDetailsDrawer({
               {formatDetailDuration(session.durationSeconds)}
             </dd>
           </div>
+          {session.totalPausedMilliseconds > 0 && (
+            <div>
+              <dt>
+                <Pause aria-hidden="true" /> Break time
+              </dt>
+              <dd>
+                <span
+                  className="timer-numerals"
+                  data-testid="session-detail-break-time"
+                >
+                  {formatDetailDuration(
+                    Math.floor(session.totalPausedMilliseconds / 1000),
+                  )}
+                </span>
+                <span className="session-details-duration-note">
+                  Excluded from focused time
+                </span>
+              </dd>
+            </div>
+          )}
         </dl>
 
         {hasEvidence && (

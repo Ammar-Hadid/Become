@@ -37,7 +37,10 @@ export async function POST(request: Request) {
   }
   if (result.status === "already-active") {
     return NextResponse.json(
-      { error: "A timer is already running." },
+      {
+        error: "End your current session before starting another timer.",
+        timer: result.timer,
+      },
       { status: 409 },
     );
   }
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { id: result.sessionId, session: result.session },
+    { id: result.sessionId, session: result.session, timer: result.timer },
     { status: 201 },
   );
 }

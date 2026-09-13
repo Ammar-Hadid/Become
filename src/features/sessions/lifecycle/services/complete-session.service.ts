@@ -1,3 +1,9 @@
+import {
+  lockTimer,
+  advanceTimerRevision,
+  timerNow,
+} from "./timer-mutation.service";
+import { readTimerSnapshot } from "@/features/sessions/timer/queries/timer-snapshot.query";
 import { businessSessionValues } from "@/features/entrepreneurship/sessions/services/business-session.service";
 import type { CompleteSessionInput } from "@/features/sessions/schemas/session.schema";
 import { toSessionDetailItem } from "@/features/sessions/mappers/session.mapper";
@@ -9,7 +15,9 @@ export async function completeSession(
   input: CompleteSessionInput,
 ) {
   return prisma.$transaction(async (transaction) => {
+    await lockTimer(transaction, userId);
     const include = {
+      pauses: true,
       domain: true,
       activityType: true,
       engineeringProject: true,
@@ -27,6 +35,7 @@ export async function completeSession(
         sessionId,
         evidenceId: null,
         session: toSessionDetailItem(session),
+        timer: await readTimerSnapshot(transaction, userId),
       } as const;
     }
 
@@ -60,15 +69,38 @@ export async function completeSession(
       if (!project) return { status: "project-not-found" } as const;
     }
 
-    const business = input.businessCompanyId !== undefined || input.businessNicheId !== undefined
-      ? await businessSessionValues(userId, session.domain.slug === "entrepreneurship", session.activityType.slug, { businessCompanyId: input.businessCompanyId === undefined ? session.businessCompanyId : input.businessCompanyId, businessNicheId: input.businessNicheId === undefined ? session.businessNicheId : input.businessNicheId }, transaction) : {};
+    const business =
+      input.businessCompanyId !== undefined ||
+      input.businessNicheId !== undefined
+        ? await businessSessionValues(
+            userId,
+            session.domain.slug === "entrepreneurship",
+            session.activityType.slug,
+            {
+              businessCompanyId:
+                input.businessCompanyId === undefined
+                  ? session.businessCompanyId
+                  : input.businessCompanyId,
+              businessNicheId:
+                input.businessNicheId === undefined
+                  ? session.businessNicheId
+                  : input.businessNicheId,
+            },
+            transaction,
+          )
+        : {};
+    const endedAt = await timerNow(transaction);
+    await transaction.sessionPause.updateMany({
+      where: { sessionId, endedAt: null },
+      data: { endedAt },
+    });
     const result = await transaction.session.updateMany({
       where: { id: sessionId, userId, endedAt: null },
       data: {
         ...business,
         // Completing old recovered timers must not reinterpret their activity.
         entrepreneurshipActivityKind: session.entrepreneurshipActivityKind,
-        endedAt: new Date(),
+        endedAt,
         outcome: input.outcome,
         notes: input.notes,
         engineeringContext: isEngineering ? engineeringContext : null,
@@ -84,13 +116,14 @@ export async function completeSession(
           type: input.engineeringEvidence.type,
           title: input.engineeringEvidence.title,
           details: input.engineeringEvidence.details,
-          occurredAt: new Date(),
+          occurredAt: endedAt,
         },
         select: { id: true },
       });
       evidenceId = evidence.id;
     }
 
+    await advanceTimerRevision(transaction, userId);
     const completed = await transaction.session.findFirstOrThrow({
       where: { id: sessionId, userId, endedAt: { not: null } },
       include,
@@ -100,6 +133,7 @@ export async function completeSession(
       sessionId,
       evidenceId,
       session: toSessionDetailItem(completed),
+      timer: await readTimerSnapshot(transaction, userId),
     } as const;
   });
 }

@@ -347,15 +347,21 @@ Session
 
 Do not build independent timer systems for every domain.
 
-Only one active timer per user initially.
+Only one unfinished timer per user, whether running or paused. A paused session
+must be ended before a different timer can start, across all domains.
 
 Do not use WebSockets simply to count seconds.
 
 When a session starts, store `startedAt`.
 
-The client displays elapsed time from `now - startedAt`.
+Pausing records a UTC break interval on the same Session; resuming closes that
+interval. Preserve the original `startedAt` and session context. Focused time is
+elapsed time minus recorded breaks, calculated in milliseconds before rounding.
+Analytics subtract the intersection of breaks with each reporting window.
 
-After refresh, reload the active session and reconstruct elapsed time.
+After refresh, reload the unfinished session and reconstruct its running or
+paused state. Pauses persist indefinitely until explicitly resumed or ended.
+Revisioned server snapshots prevent older responses from restoring stale state.
 
 Do not continuously write timer ticks to the database.
 
@@ -372,6 +378,11 @@ Start Timer → Domain → Activity → Optional related project/entity → Opti
 Stop flow should remain lightweight:
 
 Stop → duration → optional outcome/notes/domain-specific details → save.
+
+Running sessions expose Pause and End session; paused sessions expose Resume and
+End session. Home retains a clear paused-session card with context and frozen
+focused time. Ending while paused opens the same optional wrap-up form without
+resuming. Cancelling leaves it paused; saving excludes the entire break.
 
 Logging must remain fast.
 

@@ -1,5 +1,13 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  CompleteSessionInput,
+  StartSessionInput,
+} from "@/features/sessions/schemas/session.schema";
+import type {
+  TimerMutationResult,
+  TimerOperation,
+} from "@/features/sessions/timer/types/timer-mutation.types";
+import type {
   FinanceActivityKind,
   FinanceCompensationType,
 } from "@/generated/prisma/enums";
@@ -21,6 +29,11 @@ export type DomainOption = {
 };
 
 export type SessionListItem = {
+  status: "RUNNING" | "PAUSED" | "COMPLETED";
+  pausedAt: string | null;
+  accumulatedActiveMilliseconds: number;
+  runningSince: string | null;
+  totalPausedMilliseconds: number;
   contentId?: string | null;
   contentVariantId?: string | null;
   contentTitleSnapshot?: string | null;
@@ -66,16 +79,34 @@ export type SessionDetailItem = SessionListItem & {
 
 export type ActiveSessionData = SessionListItem;
 
+export type TimerSnapshot = {
+  revision: number;
+  activeSession: ActiveSessionData | null;
+};
+
 export type ActiveTimerState = {
   activeSession: ActiveSessionData | null;
   elapsedSeconds: number;
+  pendingOperation: TimerOperation | null;
+  recoveryRequired: boolean;
   completedSessions: Readonly<Record<string, SessionDetailItem>>;
-  confirmCompletion: (session: SessionDetailItem) => void;
-  confirmStart: (session: ActiveSessionData) => void;
+  startSession: (input: StartSessionInput) => Promise<TimerMutationResult>;
+  completeSession: (
+    id: string,
+    input: CompleteSessionInput,
+  ) => Promise<TimerMutationResult<SessionDetailItem>>;
+  pauseSession: (id: string) => Promise<TimerMutationResult>;
+  resumeSession: (id: string) => Promise<TimerMutationResult>;
+  reconcileTimer: () => Promise<boolean>;
 };
 
 export type SessionWithRelations = Prisma.SessionGetPayload<{
-  include: { domain: true; activityType: true; engineeringProject: true };
+  include: {
+    domain: true;
+    activityType: true;
+    engineeringProject: true;
+    pauses: true;
+  };
 }>;
 
 export type SessionDetailWithRelations = Prisma.SessionGetPayload<{
@@ -84,5 +115,6 @@ export type SessionDetailWithRelations = Prisma.SessionGetPayload<{
     activityType: true;
     engineeringProject: true;
     engineeringEvidence: true;
+    pauses: true;
   };
 }>;

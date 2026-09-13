@@ -30,7 +30,7 @@ export default async function AuthenticatedLayout({
       financeOptions={financeOptions}
       user={user}
       domains={appData.domains}
-      activeSession={appData.activeSession}
+      timerSnapshot={appData.timerSnapshot}
       engineeringProjects={engineeringProjects}
     >
       <CotsPresentationProvider

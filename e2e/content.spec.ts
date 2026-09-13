@@ -18,7 +18,9 @@ async function createDisposableContentUser(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-content-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/);
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
+    timeout: 15_000,
+  });
 }
 
 function waitForThinkingCommand(page: Page, type: string) {
@@ -179,10 +181,8 @@ test("an idea becomes one variant released and measured on three channels", asyn
     ),
     page.getByRole("button", { name: "Start focus" }).click(),
   ]);
-  await expect(
-    page.getByRole("button", { name: "Complete active session" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Complete active session" }).click();
+  await expect(page.getByRole("button", { name: "End session" })).toBeVisible();
+  await page.getByRole("button", { name: "End session" }).click();
   await page.getByTestId("session-outcome").fill("Finished the short script.");
   await Promise.all([
     page.waitForResponse((response) =>

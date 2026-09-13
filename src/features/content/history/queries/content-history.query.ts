@@ -24,16 +24,14 @@ export async function getContentHistory(
       take: 21,
     });
     return {
-      items: rows
-        .slice(0, 20)
-        .map((h) => ({
-          id: h.id,
-          version: h.version,
-          kind: h.kind,
-          reason: h.reason,
-          recordedAt: h.createdAt.toISOString(),
-          snapshot: h.snapshot,
-        })),
+      items: rows.slice(0, 20).map((h) => ({
+        id: h.id,
+        version: h.version,
+        kind: h.kind,
+        reason: h.reason,
+        recordedAt: h.createdAt.toISOString(),
+        snapshot: h.snapshot,
+      })),
       nextCursor: rows.length > 20 ? String(rows[19].version) : null,
     };
   }
@@ -79,7 +77,12 @@ export async function getContentHistory(
     },
     orderBy: [{ startedAt: "desc" }, { id: "desc" }],
     take: 51,
-    include: { domain: true, activityType: true, engineeringProject: true },
+    include: {
+      domain: true,
+      activityType: true,
+      engineeringProject: true,
+      pauses: true,
+    },
   });
   return {
     items: rows.slice(0, 50).map((s) => toSessionListItem(s)),
