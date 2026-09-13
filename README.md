@@ -1,6 +1,6 @@
 # Become
 
-Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–5.5: Foundation, Engineering, Finance, Entrepreneurship, Seasons & Direction, and COTS discovery and curation**.
+Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–7: Foundation, Engineering, Finance, Entrepreneurship, Seasons & Direction, COTS discovery, Content/Ideas/Decisions, and Reviews**.
 
 ## What Phase 1 includes
 
@@ -40,11 +40,19 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-COTS discovery uses category-specific external sources; credentialed adapters require setup. Rich reviews, AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
+COTS discovery uses category-specific external sources; credentialed adapters require setup. AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
 
-## Phase 6 work in progress
+## Content, Ideas and Decisions
 
-This feature branch adds Content, global Ideas and a sparse Decision Journal. Content uses one creative work → versions → explicit releases → owned channels, with linked Sessions and manual dated results. Its approved scope, migration safety and acceptance status are recorded in [Phase 6 decisions](docs/decisions/PHASE_6.md). Browser acceptance is still pending; this is not a completed-release claim.
+Content connects one creative work → variants → explicit releases → owned channels, with linked Sessions and manual dated results. The dedicated rich script editor supports autosave, conflict recovery, formatting, owned images, tables, find/replace, DOCX/TXT import/export and printing. Owned thumbnails, release corrections and bounded histories are implemented. Ideas and the Decision Journal preserve origin links, choices, reasons and later reflections. See [Phase 6 decisions](docs/decisions/PHASE_6.md).
+
+## Reviews and Season transitions
+
+Week, Month, Season and Year reviews combine domain-qualified facts, optional writing, source drill-through and defining moments. Finalization preserves immutable editions; source corrections change the live reading and explicit amendments retain earlier editions. A participating prior Season can unfold into a four-movement finale and the existing next-Season opening, with direct numbered scene navigation, manual progress, deferral, skip and replay. Reduced motion uses the same ceremony without animation. First-time users retain direct opening; active work suppresses automatic arrival.
+
+The versioned Phase 8 foundation provides bounded period facts, current context, typed retrieval and a source-grounded COTS persona-profile contract. No profile research, inferred personality, AI calls or generated farewells run in Phase 7. Generic Direct/Harsh/Ruthless settings are removed. See [Phase 7 architecture, verification and manual acceptance](docs/decisions/PHASE_7.md).
+
+The Phase 7 migration has been verified on isolated local databases. Applying it to an existing personal installation is a separate explicit local migration step; implementation testing did not modify personal records.
 
 ## Stack
 
@@ -94,6 +102,9 @@ pnpm exec playwright install chromium
 - `src/features/dashboard` owns command-center UI, types, and deterministic aggregation queries.
 - `src/features/engineering` owns Engineering projects, evidence, session extensions, validation, services, queries, and analytics.
 - `src/features/finance` owns accounts, transactions, savings, recurrence, work sources, opportunities, payment attribution, and Finance analytics.
+- `src/features/reviews` owns shared period facts, frozen editions, writing, evidence drill-through and bounded retrieval. Domain qualification stays with each domain.
+- `src/features/seasons` owns identity, curated COTS media, opening and finale lifecycle, including versioned persona inputs.
+- `src/features/content` owns creative works, variants, releases, thumbnails, scripts and manual analytics; Direction owns global Ideas and Decisions.
 - `src/features/settings` owns the application Settings shell.
 - `src/lib/money` owns exact decimal parsing, formatting, currency validation and integer allocation.
 - `src/features/sessions` owns timer/session components, queries, schemas, mappers, services, and types.
@@ -318,8 +329,7 @@ Phase 5 database tests with `RUN_DIRECTION_INTEGRATION=1 pnpm test`.
 
 Phase 5.5 adds explicit Anime, TV, Movie, Game, Book, Comic and Public figure
 identity categories, onboarding image/text curation, recoverable imports, local
-previews, cross-season image reuse, and later collection preferences. The first
-eligible ordinary Home entry enters an unopened current Season's ritual directly.
+previews, cross-season image reuse, and later collection preferences. An eligible ordinary Home entry starts a prior participating Season's finale before the current opening. First-time users enter the current opening directly.
 `Not now` persists deferral; Direction retains the resume path.
 
 Read [Phase 5.5 setup, contracts and limitations](docs/decisions/PHASE_5_5.md)

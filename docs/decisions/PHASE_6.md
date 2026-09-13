@@ -1,5 +1,8 @@
 # Phase 6: Content, Ideas and Decisions
 
+> Reconciled 13 September 2026 during Phase 7: the implementation checkpoint below is historical. The current repository contains the completed creator workspace, thumbnails, dedicated rich script editor, release corrections, histories and analytics. Its earlier browser approval block and temporary-worktree status are superseded by the user's subsequent implementation authorization and current `feature/reviews` checkout. Phase 7 independently re-ran the existing Content/script PostgreSQL regressions; see [the current verification record](PHASE_7.md). Original checkpoint results remain unchanged below.
+
+
 Implementation approved by the product owner, with the YouTube plan superseded by Content → ContentVariant → Publication → Channel. Parent Astra owns all backend semantics and implementation. The existing Sol subagent's effective runtime was verified as gpt-5.6-sol with xhigh reasoning; Sol owns frontend composition and interaction.
 
 A Content is one creative work. A Variant is a cut, format or language of that work. A Publication is an explicitly recorded release of one variant on one Channel (an owned account on YouTube, TikTok, Instagram or OTHER). Cross-posting one short to three channels remains one Content, one Variant and three Publications. The UI calls variants versions and publications releases. Creating content creates its first version atomically. Stage is production guidance and never publication proof. Pause/archive preserves all creation and release history.

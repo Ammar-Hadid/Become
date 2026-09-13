@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { seasonDraftSchema } from "@/features/seasons/schemas/season.schema";
+import { seasonCharacter } from "@/features/seasons/mappers/season-character.mapper";
 import type { SeasonClosingCard } from "@/features/seasons/types/season.types";
 const provenance = z.object({
   origin: z.enum(["MANUAL", "DISCOVERY"]),
@@ -32,7 +33,13 @@ const closing = z.object({
   title: z.string(),
   intention: z.string(),
   note: z.string(),
-  character: seasonDraftSchema.shape.character,
+  character: z.preprocess((value) => {
+    try {
+      return seasonCharacter(value);
+    } catch {
+      return null;
+    }
+  }, seasonDraftSchema.shape.character),
   media: z.array(
     z.object({
       id: z.string(),

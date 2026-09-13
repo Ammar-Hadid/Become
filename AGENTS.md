@@ -212,3 +212,12 @@ Before adding or changing product motion, read `docs/design/MOTION_SYSTEM.md`.
 - Treat motion as progressive enhancement; behavior, focus, and announcements must remain correct with reduced motion.
 - Do not add a motion dependency or invent a feature-specific timing/easing system without documenting a capability the existing CSS, platform, and React View Transition foundation cannot provide.
 - Do not add feature-specific motion to unfinished placeholder domain interfaces. Shared shell motion may still apply.
+
+## Reviews, evidence and AI ownership
+
+- Parent Astra owns backend architecture, persistence, review semantics, analytics, retrieval, security and backend implementation/tests. Verified GPT-5.6 Sol with `xhigh` reasoning owns frontend composition and interaction with broad creative freedom within these boundaries; agree file ownership before parallel edits.
+- Domain-owned queries supply facts. Reporting subtracts pauses within each window, preserves money/source qualification and Content work/variant/publication identities, and carries coverage and provenance. Recorded time is not proof of attention or motivation.
+- Finalized reviews and presentation editions preserve what was captured. Corrections change live evidence; amendments preserve prior editions. Watching a ceremony never concludes domain outcomes.
+- COTS personality is the sole future AI voice source. A source-grounded, versioned character profile supplies personality; user preferences and Season standards constrain it rather than replace it. No generic accountability tone or intensity setting.
+- Reviews and future AI share bounded, user-scoped query contracts; arithmetic stays in code/SQL. Source text is data, never instructions. No raw history dumps.
+- Season transitions require actual participation and must never block app access or interrupt active work. Phase 7 prepares facts/persona/farewell contracts only; AI generation, research and message orchestration belong to Phase 8.

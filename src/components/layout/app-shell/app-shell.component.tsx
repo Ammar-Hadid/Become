@@ -3,7 +3,16 @@
 import type { FinanceWorkOptions } from "@/features/finance/sessions/types/finance-session.types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Clock3, Compass, Home, LogOut, Menu, Settings, X } from "lucide-react";
+import {
+  BookOpen,
+  Clock3,
+  Compass,
+  Home,
+  LogOut,
+  Menu,
+  Settings,
+  X,
+} from "lucide-react";
 import { useRef, useState, ViewTransition } from "react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
@@ -100,6 +109,25 @@ export function AppShell({
               </ViewTransition>
             )}
             <Compass /> Direction
+          </Link>
+          <Link
+            className={cn(
+              "nav-link",
+              pathname.startsWith("/reviews") && "active",
+            )}
+            href="/reviews"
+            onClick={() => setMobileOpen(false)}
+          >
+            {pathname.startsWith("/reviews") && (
+              <ViewTransition
+                name={indicatorName}
+                share="motion-guide"
+                default="none"
+              >
+                <span className="nav-link-indicator" aria-hidden="true" />
+              </ViewTransition>
+            )}
+            <BookOpen /> Reviews
           </Link>
           <Link
             className={cn("nav-link", pathname === "/sessions" && "active")}

@@ -18,6 +18,8 @@ import { SessionRow } from "@/features/sessions/components/session-row.component
 import type { SessionListItem } from "@/features/sessions/types/session.types";
 import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
 import { SeasonOpeningArrival } from "@/features/seasons/home/components/season-opening-arrival.component";
+import { SeasonTransitionEntry } from "@/features/seasons/transition/components/season-transition-entry.component";
+import type { SeasonTransitionView } from "@/features/reviews/contracts/types/review.types";
 import type { SeasonView } from "@/features/seasons/types/season.types";
 import { DashboardActiveSession } from "@/features/dashboard/components/dashboard-active-session.component";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
@@ -37,6 +39,9 @@ export function Dashboard({
   recentSessions,
   businessAttention = [],
   seasonDirection,
+  transition,
+  transitionUnavailable = false,
+  seasonRecoveryScope,
 }: {
   userName: string;
   season: string;
@@ -46,6 +51,9 @@ export function Dashboard({
   recentSessions: SessionListItem[];
   businessAttention?: { id: string; text: string; href: string }[];
   seasonDirection?: SeasonView;
+  transition?: SeasonTransitionView | null;
+  transitionUnavailable?: boolean;
+  seasonRecoveryScope?: string;
 }) {
   const [data, setData] = useState(initialData);
   const [pending, startTransition] = useTransition();
@@ -73,7 +81,12 @@ export function Dashboard({
 
   return (
     <div className="page-shell">
-      <SeasonOpeningArrival season={seasonDirection} />
+      <SeasonOpeningArrival
+        season={seasonDirection}
+        transition={transition}
+        transitionUnavailable={transitionUnavailable}
+        recoveryScope={seasonRecoveryScope}
+      />
       <section className="dashboard-hero" aria-labelledby="dashboard-greeting">
         <div className="dashboard-hero-meta">
           <div className="dashboard-season-context">
@@ -176,6 +189,23 @@ export function Dashboard({
         </div>
       </section>
 
+      {transitionUnavailable ? (
+        <p className="border-border text-text-muted text-body-sm gap-lg py-lg mt-xl flex flex-wrap items-center border-b">
+          <span>The Season transition could not be loaded.</span>
+          <Link
+            href="/reviews"
+            className="text-primary gap-sm min-h-input-height-sm inline-flex items-center"
+          >
+            Open reviews <ArrowRight className="size-lg" aria-hidden="true" />
+          </Link>
+        </p>
+      ) : (
+        <SeasonTransitionEntry
+          view={transition}
+          season={seasonDirection}
+          recoveryScope={seasonRecoveryScope}
+        />
+      )}
       {seasonDirection && <SeasonHomeCard season={seasonDirection} />}
 
       <div className="border-border mt-4xl gap-lg pb-2xl flex flex-col border-b sm:flex-row sm:items-end sm:justify-between">

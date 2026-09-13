@@ -1,8 +1,15 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { BusinessSessionDetails } from "@/features/entrepreneurship/sessions/components/business-session-details.component";
-import { createContext, useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
 import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { SessionDetailsDrawer } from "@/features/sessions/details/components/session-details-drawer.component";
@@ -28,7 +35,6 @@ export function SessionDetailsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const [selectedSession, setSelectedSession] =
     useState<SessionDetailItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -67,39 +73,37 @@ export function SessionDetailsProvider({
     setDrawerOpen(true);
   }, []);
 
+  const syncSelection = useCallback(
+    async (pathname: string, sessionId: string | null) => {
+      // The dedicated capture page owns its session parameter and its UI.
+      if (!sessionId || pathname === "/entrepreneurship/interactions/capture") {
+        requestSequence.current += 1;
+        setDrawerOpen(false);
+        const scrollTop = pageScrollPosition.current;
+        if (scrollTop !== null && pageScrollPathname.current === pathname) {
+          window.requestAnimationFrame(() => window.scrollTo(0, scrollTop));
+        }
+        return;
+      }
+      await loadSessionDetails(sessionId);
+    },
+    [loadSessionDetails],
+  );
+
   const syncFromLocation = useCallback(async () => {
     const url = new URL(window.location.href);
-    // This dedicated capture page owns its session parameter; it is not a
-    // request to overlay the global session drawer.
-    const sessionId =
-      url.pathname === "/entrepreneurship/interactions/capture"
-        ? null
-        : url.searchParams.get(SESSION_QUERY_KEY);
-
-    if (!sessionId) {
-      requestSequence.current += 1;
-      setDrawerOpen(false);
-      const scrollTop = pageScrollPosition.current;
-      if (scrollTop !== null && pageScrollPathname.current === url.pathname) {
-        window.requestAnimationFrame(() => window.scrollTo(0, scrollTop));
-      }
-      return;
-    }
-
-    await loadSessionDetails(sessionId);
-  }, [loadSessionDetails]);
+    await syncSelection(url.pathname, url.searchParams.get(SESSION_QUERY_KEY));
+  }, [syncSelection]);
 
   useEffect(() => {
     const previousScrollRestoration = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
-    const initialSync = window.setTimeout(() => void syncFromLocation(), 0);
     window.addEventListener("popstate", syncFromLocation);
     return () => {
       window.history.scrollRestoration = previousScrollRestoration;
-      window.clearTimeout(initialSync);
       window.removeEventListener("popstate", syncFromLocation);
     };
-  }, [syncFromLocation, pathname]);
+  }, [syncFromLocation]);
 
   const openSession = useCallback(
     (session: SessionListItem) => {
@@ -146,6 +150,9 @@ export function SessionDetailsProvider({
 
   return (
     <SessionDetailsContext.Provider value={{ openSession }}>
+      <Suspense fallback={null}>
+        <SessionDetailsLocationSync onChange={syncSelection} />
+      </Suspense>
       {children}
       <SessionDetailsStage
         session={selectedSession}
@@ -154,6 +161,21 @@ export function SessionDetailsProvider({
       />
     </SessionDetailsContext.Provider>
   );
+}
+
+function SessionDetailsLocationSync({
+  onChange,
+}: {
+  onChange: (pathname: string, sessionId: string | null) => Promise<void>;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get(SESSION_QUERY_KEY);
+  useEffect(() => {
+    const sync = window.setTimeout(() => void onChange(pathname, sessionId), 0);
+    return () => window.clearTimeout(sync);
+  }, [onChange, pathname, sessionId]);
+  return null;
 }
 
 function SessionDetailsStage({

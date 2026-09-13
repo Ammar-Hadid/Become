@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { getSeasonForDate } from "@/lib/dates/utils/period.util";
 import { getSeasonView } from "@/features/seasons/queries/season.query";
+import { getSeasonTransition } from "@/features/seasons/transition/queries/season-transition.query";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -15,13 +16,25 @@ export default async function HomePage() {
   if (!now.isValid)
     throw new Error(`Invalid application timezone: ${APP_TIMEZONE}`);
   const season = getSeasonForDate(now);
-  const [dashboard, recentSessions, businessAttention, seasonDirection] =
-    await Promise.all([
-      getDashboardData(user.id, "week", now),
-      getRecentSessions(user.id, 8),
-      getBusinessAttention(user.id),
-      getSeasonView(user.id),
-    ]);
+  const [
+    dashboard,
+    recentSessions,
+    businessAttention,
+    seasonDirection,
+    transition,
+  ] = await Promise.all([
+    getDashboardData(user.id, "week", now),
+    getRecentSessions(user.id, 8),
+    getBusinessAttention(user.id),
+    getSeasonView(user.id),
+    getSeasonTransition(user.id).catch((error: unknown) => {
+      console.error(
+        "Season transition unavailable; Home remains accessible",
+        error,
+      );
+      return null;
+    }),
+  ]);
   const seasonProgress =
     (now.diff(season.start, "seconds").seconds /
       season.end.diff(season.start, "seconds").seconds) *
@@ -37,6 +50,9 @@ export default async function HomePage() {
       recentSessions={recentSessions}
       businessAttention={businessAttention}
       seasonDirection={seasonDirection}
+      transition={transition}
+      transitionUnavailable={transition === null}
+      seasonRecoveryScope={`${user.id}:${season.year}:${season.season}`}
     />
   );
 }

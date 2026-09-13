@@ -1,4 +1,5 @@
 import { seasonClosingCard } from "@/features/seasons/mappers/season-closing.mapper";
+import { seasonCharacter } from "@/features/seasons/mappers/season-character.mapper";
 import { getCotsIdentity } from "@/features/seasons/discovery/queries/cots-collection.query";
 import { seasonPresentation } from "@/features/seasons/presentation/utils/season-presentation.util";
 import type { DirectionTx } from "@/features/direction/services/direction-mutation.service";
@@ -176,7 +177,7 @@ export async function getSeasonView(
     intention: row?.intention ?? "",
     stage: row?.stage ?? 1,
     answers: { ...draft.answers, ...(row?.answers as object) },
-    character: { ...draft.character, ...(row?.character as object) },
+    character: seasonCharacter(row?.character),
     openingCompletedAt: row?.openingCompletedAt?.toISOString() ?? null,
     goals,
     experiments,

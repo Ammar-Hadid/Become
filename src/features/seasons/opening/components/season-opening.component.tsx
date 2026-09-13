@@ -35,6 +35,13 @@ import type {
   SeasonView,
 } from "@/features/seasons/types/season.types";
 import { SeasonOpeningPrelude } from "@/features/seasons/opening/components/season-opening-prelude.component";
+import { SeasonCarryForward } from "@/features/seasons/opening/components/season-carry-forward.component";
+import type { CarryForwardSuggestion } from "@/features/reviews/contracts/types/review.types";
+import {
+  readOpeningPause,
+  rememberOpeningPause,
+  type OpeningRecovery,
+} from "@/features/seasons/opening/utils/opening-recovery.util";
 import {
   SeasonGoalCreator,
   type SeasonGoalPlacement,
@@ -247,7 +254,6 @@ function reviewFields(
     ["Adaptation", value(draft.character.adaptation)],
     ["What you admire", value(draft.character.motivation)],
     ["What not to emulate", value(draft.character.avoid)],
-    ["Accountability tone", draft.character.tone],
     [
       "Character standards",
       draft.character.standards
@@ -270,26 +276,49 @@ function reviewFields(
   ] as const;
 }
 
-export function SeasonOpening({
-  season,
-  goalOptions,
-  domainOptions,
-  defaultGoalStartOn,
-  arrival = false,
-}: {
+type SeasonOpeningProps = {
   season: SeasonView;
   goalOptions: OwnedOption[];
   domainOptions: OwnedOption[];
   defaultGoalStartOn: string;
   arrival?: boolean;
-}) {
+  fromFinale?: boolean;
+  carryForward?: CarryForwardSuggestion | null;
+  recoveryScope?: string;
+};
+
+export function SeasonOpening(props: SeasonOpeningProps) {
+  return (
+    <SeasonOpeningSession
+      key={`${props.recoveryScope ?? props.season.id ?? "opening"}:${props.season.year}:${props.season.quarter}`}
+      {...props}
+    />
+  );
+}
+
+function SeasonOpeningSession({
+  season,
+  goalOptions,
+  domainOptions,
+  defaultGoalStartOn,
+  arrival = false,
+  fromFinale = false,
+  carryForward,
+  recoveryScope,
+}: SeasonOpeningProps) {
   const router = useRouter();
+  const arriving = arrival || fromFinale;
   const formRef = useRef<HTMLFormElement>(null);
   const createGoalButtonRef = useRef<HTMLButtonElement>(null);
   const editCardButtonRef = useRef<HTMLButtonElement>(null);
   const ritualTitleRef = useRef<HTMLHeadingElement>(null);
   const initialDraft = draftFromSeason(season);
   const initialAssignment = assignmentsFromSeason(season);
+  const savedOpeningAtMount = useRef({
+    draft: initialDraft,
+    assignment: initialAssignment,
+  });
+  const recoveryKey = recoveryScope ?? season.id;
   const queuedDraftFingerprint = useRef(JSON.stringify(initialDraft));
   const latestDraft = useRef<SeasonDraft>(initialDraft);
   const previousStage = useRef(initialDraft.stage);
@@ -313,6 +342,7 @@ export function SeasonOpening({
     useState<SeasonGoalPlacement>("PRIMARY");
   const [deferringArrival, setDeferringArrival] = useState(false);
   const [arrivalError, setArrivalError] = useState<string | null>(null);
+  const [keptOpening, setKeptOpening] = useState<OpeningRecovery | null>(null);
   const [checkingCompletion, setCheckingCompletion] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [completionGate, setCompletionGate] = useState<{
@@ -333,7 +363,7 @@ export function SeasonOpening({
     position: SeasonImagePosition;
   } | null>(null);
   const [preludeActive, setPreludeActive] = useState(
-    arrival && initialDraft.stage === 1,
+    arrival && !fromFinale && initialDraft.stage === 1,
   );
   const preludeWasShown = useRef(preludeActive);
   const loadedSavedVersion = useRef<number | null>(null);
@@ -356,6 +386,20 @@ export function SeasonOpening({
     : null;
 
   const completePrelude = useCallback(() => setPreludeActive(false), []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const kept = readOpeningPause(recoveryKey).recovery;
+      const saved = savedOpeningAtMount.current;
+      if (
+        kept &&
+        writableFingerprint(kept.draft, kept) !==
+          writableFingerprint(saved.draft, saved.assignment)
+      )
+        setKeptOpening(kept);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [recoveryKey]);
 
   useEffect(() => {
     if (!preludeWasShown.current || preludeActive) return;
@@ -648,15 +692,19 @@ export function SeasonOpening({
   }
 
   async function deferAutomaticOpening() {
+    if (deferringArrival) return;
     setDeferringArrival(true);
     setArrivalError(null);
+    const recovery = { draft, primary, supporting, supportNotes };
+    rememberOpeningPause(
+      recoveryKey,
+      recovery,
+      "Your opening is paused. Any unconfirmed entries are kept in this tab for your manual return.",
+    );
+    markSaved();
+    router.replace("/?opening=paused", { scroll: false });
     try {
       const saved = await persist(draft);
-      if (saved.error) {
-        setArrivalError(saved.error);
-        setDeferringArrival(false);
-        return;
-      }
       const response = await fetch("/api/direction/cots", {
         method: "POST",
         headers: {
@@ -668,6 +716,7 @@ export function SeasonOpening({
           year: season.year,
           quarter: season.quarter,
         }),
+        signal: AbortSignal.timeout(15_000),
       });
       const body = (await response.json().catch(() => null)) as {
         error?: string;
@@ -676,15 +725,19 @@ export function SeasonOpening({
         throw new Error(
           body?.error || "Become could not remember that choice yet.",
         );
-      router.replace("/");
-      router.refresh();
-    } catch (cause) {
-      setArrivalError(
-        cause instanceof Error
-          ? cause.message
-          : "Become could not remember that choice yet.",
+      rememberOpeningPause(
+        recoveryKey,
+        saved.error ? recovery : null,
+        saved.error
+          ? "The opening is paused. Some entries could not be confirmed; they are kept in this tab for you to review when you return."
+          : "Your opening is paused. Return through its Home entry when you choose.",
       );
-      setDeferringArrival(false);
+    } catch (cause) {
+      rememberOpeningPause(
+        recoveryKey,
+        recovery,
+        `You are back in Become. This tab will keep the opening paused, and your entries are kept here. The saved deferral could not be confirmed: ${cause instanceof Error ? cause.message : "Please retry when you return."}`,
+      );
     }
   }
 
@@ -942,7 +995,7 @@ export function SeasonOpening({
   return (
     <main
       className="season-opening-ritual"
-      data-arrival={arrival || undefined}
+      data-arrival={arriving || undefined}
       data-prelude={preludeActive || undefined}
       data-goal-creator={goalCreatorOpen || undefined}
       data-stage={draft.stage}
@@ -957,7 +1010,7 @@ export function SeasonOpening({
       </div>
 
       <div className="season-opening-exit" hidden={cardPlacementOpen}>
-        {arrival ? (
+        {arriving ? (
           <button
             type="button"
             disabled={deferringArrival}
@@ -1012,6 +1065,57 @@ export function SeasonOpening({
             {!reviewPending && state === "conflict" && "Changed elsewhere"}
           </div>
         </header>
+        {keptOpening && (
+          <aside className="season-opening-kept-entries">
+            <p>
+              Entries from your earlier opening are kept in this tab. Review
+              them against the saved Season before applying them.
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setDraft(keptOpening.draft);
+                latestDraft.current = keptOpening.draft;
+                setPrimary(keptOpening.primary);
+                setSupporting(keptOpening.supporting);
+                setSupportNotes(keptOpening.supportNotes);
+                latestAssignment.current = {
+                  primary: keptOpening.primary,
+                  supporting: keptOpening.supporting,
+                  supportNotes: keptOpening.supportNotes,
+                  fingerprint: assignmentFingerprint(
+                    keptOpening.primary,
+                    keptOpening.supporting,
+                    keptOpening.supportNotes,
+                  ),
+                };
+                setSelectionReset((current) => current + 1);
+                setKeptOpening(null);
+                requireReview(
+                  "Your kept entries are ready for comparison with the saved Season.",
+                );
+                void reviewCurrentSeason(true);
+              }}
+            >
+              Review kept entries
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setKeptOpening(null);
+                rememberOpeningPause(
+                  recoveryKey,
+                  null,
+                  "Your opening remains paused until you choose to return.",
+                );
+              }}
+            >
+              Discard kept copy
+            </Button>
+          </aside>
+        )}
 
         <p className="season-opening-mobile-progress" aria-live="polite">
           Step {draft.stage} of {stages.length} · {currentStage.label}
@@ -1079,11 +1183,22 @@ export function SeasonOpening({
                 )}
               </aside>
             )}
+            {carryForward && (
+              <SeasonCarryForward
+                key={carryForward.editionId}
+                suggestion={carryForward}
+                current={draft.answers}
+                onApply={patchAnswers}
+                disabled={controlsDisabled}
+                storageScope={recoveryKey}
+              />
+            )}
             <div className="season-opening-fields season-opening-fields--two">
               <label>
                 <span className="field-label">Carry forward</span>
                 <textarea
                   className="text-input"
+                  name="carryForward"
                   value={draft.answers.carryForward}
                   onChange={(event) =>
                     patchAnswers({ carryForward: event.target.value })
@@ -1095,6 +1210,7 @@ export function SeasonOpening({
                 <span className="field-label">Leave behind</span>
                 <textarea
                   className="text-input"
+                  name="leaveBehind"
                   value={draft.answers.leaveBehind}
                   onChange={(event) =>
                     patchAnswers({ leaveBehind: event.target.value })
@@ -1108,6 +1224,7 @@ export function SeasonOpening({
                 </span>
                 <textarea
                   className="text-input"
+                  name="meaningful"
                   value={draft.answers.meaningful}
                   onChange={(event) =>
                     patchAnswers({ meaningful: event.target.value })
@@ -1119,6 +1236,7 @@ export function SeasonOpening({
                 <span className="field-label">Protect</span>
                 <textarea
                   className="text-input"
+                  name="protect"
                   value={draft.answers.protect}
                   onChange={(event) =>
                     patchAnswers({ protect: event.target.value })

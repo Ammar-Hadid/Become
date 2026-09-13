@@ -1,64 +1,12 @@
-# Become
+# Architecture decision records
 
-Become is a personal operating system for tracking growth across the areas of life that matter most.
+The repository and [current development state](../development/CURRENT_STATE.md) describe what is implemented. These phase records retain decisions and historical verification checkpoints; older checkpoints are not current release status.
 
-It connects intentions, actions, time, outputs, outcomes, and reflection so progress can be measured from evidence rather than memory or feeling.
+- [Phase 3 — Finance implementation](phase-3-implementation.md)
+- [Phase 4 — Entrepreneurship](PHASE_4.md)
+- [Phase 5 — Direction and Seasons](PHASE_5.md)
+- [Phase 5.5 — COTS discovery and curation](PHASE_5_5.md)
+- [Phase 6 — Content, Ideas and Decisions](PHASE_6.md)
+- [Phase 7 — Reviews, transitions and Phase 8 foundations](PHASE_7.md)
 
-The core idea is simple:
-
-> Who am I becoming?
-
-Become is designed as a long-term system rather than a short-term productivity tracker.
-
----
-
-## Current Status
-
-Become is under active development.
-
-### Phase 1: Foundation
-
-Implemented:
-
-- Authentication
-- Configurable domains and activity types
-- Global session timer
-- Active-session recovery after refresh
-- Session history
-- Read-only Session Details
-- Week, month, season, and year analytics
-- Responsive desktop, tablet, and mobile UI
-- PostgreSQL + Prisma persistence
-- Automated Vitest and Playwright coverage
-
-### Next
-
-**Phase 2: Engineering**
-
-Phase 2 extends the generic session foundation with Engineering-specific concepts such as projects, outputs, learning evidence, and deeper Engineering analytics.
-
-See:
-
-- [`docs/product/MASTER_SPEC.md`](docs/product/MASTER_SPEC.md) for the long-term product specification.
-- [`AGENTS.md`](AGENTS.md) for engineering and coding-agent conventions.
-
----
-
-## Product Model
-
-Become is built around the flow:
-
-```text
-Intentions
-    ↓
-Actions
-    ↓
-Time
-    ↓
-Outputs
-    ↓
-Outcomes
-    ↓
-Learning
-    ↓
-Direction
+The [master specification](../product/MASTER_SPEC.md) includes future work; it does not imply all future features are implemented.

@@ -46,6 +46,9 @@ enum TechnologyCategory {
 }
 
 model User {
+  reviews Review[]
+  reviewMutations ReviewMutation[]
+  seasonTransitions SeasonTransition[]
   timerRevision Int @default(0)
   contents Content[]
   contentChannels Channel[]
@@ -1928,4 +1931,90 @@ model ExperimentContentSource {
   content Content @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
   @@id([experimentId, contentId])
   @@map("experiment_content_source")
+}
+
+model Review {
+  id String @id @default(cuid())
+  userId String
+  timeframe String
+  startOn DateTime @db.Date
+  version Int @default(1)
+  writing Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  editions ReviewEdition[]
+  @@unique([userId, timeframe, startOn])
+  @@unique([id, userId])
+  @@index([userId, updatedAt, id])
+  @@map("review")
+}
+
+model ReviewEdition {
+  id String @id @default(cuid())
+  userId String
+  reviewId String
+  number Int
+  kind String
+  fingerprint String
+  factsFingerprint String
+  facts Json
+  writing Json
+  supersedesId String?
+  capturedAt DateTime @default(now())
+  review Review @relation(fields: [reviewId, userId], references: [id, userId], onDelete: Cascade)
+  supersedes ReviewEdition? @relation("ReviewAmendments", fields: [supersedesId, userId], references: [id, userId], onDelete: NoAction)
+  amendments ReviewEdition[] @relation("ReviewAmendments")
+  sources ReviewEditionSource[]
+  transitions SeasonTransition[]
+  @@unique([reviewId, number])
+  @@unique([id, userId])
+  @@index([reviewId, kind, number])
+  @@map("review_edition")
+}
+
+model ReviewEditionSource {
+  id String @id @default(cuid())
+  userId String
+  editionId String
+  key String
+  metricKey String
+  occurredAt DateTime
+  snapshot Json
+  edition ReviewEdition @relation(fields: [editionId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([editionId, key])
+  @@index([editionId, metricKey, occurredAt, key])
+  @@map("review_edition_source")
+}
+
+model ReviewMutation {
+  id String @id @default(cuid())
+  userId String
+  operationKey String
+  fingerprint String
+  result Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operationKey])
+  @@map("review_mutation")
+}
+
+model SeasonTransition {
+  id String @id @default(cuid())
+  userId String
+  fromStartOn DateTime @db.Date
+  version Int @default(1)
+  disposition String @default("AVAILABLE")
+  movement Int @default(0)
+  completedMovements Int @default(0)
+  editionId String?
+  leaseToken String?
+  leaseUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  edition ReviewEdition? @relation(fields: [editionId, userId], references: [id, userId], onDelete: NoAction)
+  @@unique([userId, fromStartOn])
+  @@unique([id, userId])
+  @@map("season_transition")
 }

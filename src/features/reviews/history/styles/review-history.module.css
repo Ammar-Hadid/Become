@@ -1,0 +1,189 @@
+.history {
+  padding-bottom: var(--spacing-4xl);
+}
+.masthead {
+  padding: var(--spacing-xl) 0 var(--spacing-4xl);
+}
+.masthead h1 {
+  max-width: 14ch;
+  margin: var(--spacing-xl) 0 var(--spacing-2xl);
+  font-size: var(--text-hero);
+  line-height: var(--text-hero--line-height);
+  font-weight: 450;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+.masthead > p:last-child {
+  max-width: 48ch;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+}
+.enter {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--spacing-4xl);
+  padding: var(--spacing-4xl) 0;
+  border-block: 1px solid var(--color-border);
+}
+.enter h2,
+.saved h2 {
+  margin: var(--spacing-sm) 0 var(--spacing-lg);
+  color: var(--color-text-primary);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+  font-weight: 450;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.enter header > p:last-child {
+  max-width: 42ch;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.periods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3xl);
+}
+.periods > div {
+  border-top: 1px solid var(--color-primary-muted);
+  padding-top: var(--spacing-lg);
+}
+.periods h3 {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
+  font-weight: 500;
+}
+.periods a {
+  display: flex;
+  min-height: var(--spacing-input-height-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.periods a:hover {
+  color: var(--color-primary);
+}
+.history svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.saved {
+  padding-top: var(--spacing-4xl);
+}
+.saved > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-lg);
+}
+.filters button {
+  min-height: var(--spacing-input-height-sm);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.filters button[aria-pressed="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+.history a:focus-visible,
+.filters button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+.readings {
+  border-top: 1px solid var(--color-border);
+}
+.readings li {
+  border-bottom: 1px solid var(--color-border);
+}
+.readings a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--spacing-2xl);
+  padding: var(--spacing-2xl) 0;
+}
+.readings h3 {
+  margin: var(--spacing-sm) 0;
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  font-weight: 450;
+}
+.readings a > svg {
+  color: var(--color-text-muted);
+}
+.readings a:hover > svg {
+  color: var(--color-primary);
+}
+.updated,
+.status {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.empty {
+  padding: var(--spacing-3xl) 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.empty > p:last-child {
+  margin-top: var(--spacing-md);
+  color: var(--color-text-muted);
+}
+.older {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: var(--spacing-input-height-md);
+  margin-top: var(--spacing-xl);
+  color: var(--color-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+@media (max-width: 900px) {
+  .enter {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .masthead h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+  }
+  .readings a {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-lg);
+  }
+  .status {
+    grid-row: 2;
+  }
+  .readings a > svg {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+}

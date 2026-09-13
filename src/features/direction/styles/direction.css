@@ -1063,52 +1063,6 @@
   height: 15px;
 }
 
-.season-tone {
-  margin-top: var(--spacing-3xl);
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-2xl);
-}
-
-.season-tone label {
-  display: inline-flex;
-  cursor: pointer;
-  margin: 0 var(--spacing-sm) var(--spacing-sm) 0;
-}
-
-.season-tone input {
-  position: absolute;
-  opacity: 0;
-}
-
-.season-tone label span {
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  color: var(--color-text-secondary);
-  transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
-}
-
-.season-tone input:checked + span {
-  border-color: var(--direction-line);
-  background: var(--color-primary-subtle);
-  color: var(--color-primary);
-}
-
-.season-tone input:focus-visible + span {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.season-tone > p {
-  margin-top: var(--spacing-sm);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
 .season-standards-editor {
   display: grid;
   gap: var(--spacing-lg);

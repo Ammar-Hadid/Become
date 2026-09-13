@@ -1424,11 +1424,11 @@ Build the Content creator workspace, global Ideas, sparse Decision Journal, rela
 
 ### Phase 7: Reviews
 
-Add deterministic weekly/monthly/seasonal/yearly aggregation and AI reviews.
+Add deterministic weekly/monthly/seasonal/yearly reviews with qualified facts, historical intentions, optional user writing, inspectable sources, immutable editions and explicit amendments. Connect a participating prior Season's progressive finale to the existing opening while preserving first-time and active-work exceptions, deferral, skip, recovery and replay. Prepare bounded period facts, current context, typed retrieval and versioned COTS persona inputs. No AI calls, persona research or generated farewells belong to Phase 7. See `docs/decisions/PHASE_7.md`.
 
 ### Phase 8: AI Analyst
 
-Add evidence-backed conversational querying over structured Become data.
+Add evidence-backed conversational querying and commentary over structured Become data. One source-grounded COTS persona profile supplies communication tendencies, temperament, values, support/challenge, behavior and anti-caricature boundaries with provenance across Home, reviews, domains, farewell and chatbot. The user's admired/rejected traits, Season standards and adaptation constrain that authentic profile; they do not replace it. No generic Direct/Harsh/Ruthless mode. Personality never changes facts, certainty, qualification or safety. Generated character-inspired farewells bind to saved review/context and persona versions and replay saved output; they remain distinct from verified quotes. Phase 8 owns research/generation, AI-message persistence and orchestration.
 
 ### Phase 9: Integrations
 

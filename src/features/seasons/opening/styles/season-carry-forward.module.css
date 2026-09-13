@@ -1,0 +1,127 @@
+.suggestions {
+  margin: var(--spacing-xl) 0 var(--spacing-3xl);
+  padding: var(--spacing-2xl) 0;
+  border-top: 1px solid var(--color-primary-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+.suggestions header {
+  display: flex;
+  gap: var(--spacing-2xl);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.suggestions h3 {
+  margin: var(--spacing-sm) 0 var(--spacing-md);
+  color: var(--color-text-primary);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  font-weight: 400;
+}
+.suggestions header p:not(:first-child) {
+  max-width: 58ch;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.suggestions a {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.suggestions header > a {
+  flex-shrink: 0;
+  min-height: var(--spacing-input-height-sm);
+}
+.suggestions svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-xl);
+}
+.fields > div {
+  display: grid;
+  gap: var(--spacing-md);
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.choice input {
+  width: var(--spacing-lg);
+  height: var(--spacing-lg);
+  accent-color: var(--color-primary);
+}
+.fields textarea {
+  width: 100%;
+  min-height: var(--spacing-textarea-height-sm);
+  resize: vertical;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-input);
+  padding: var(--spacing-lg);
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.fields textarea:focus,
+.choice input:focus-visible,
+.suggestions a:focus-visible,
+.unfinished summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+.unfinished {
+  margin-top: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.unfinished summary {
+  cursor: pointer;
+  min-height: var(--spacing-input-height-sm);
+}
+.unfinished li {
+  padding: var(--spacing-sm) 0;
+}
+.unfinished p {
+  margin-top: var(--spacing-md);
+  max-width: 68ch;
+  color: var(--color-text-muted);
+}
+.notice,
+.error {
+  margin-top: var(--spacing-lg);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  color: var(--color-text-secondary);
+}
+.error {
+  color: var(--color-danger);
+}
+@media (max-width: 639px) {
+  .suggestions header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}
