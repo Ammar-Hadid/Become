@@ -15,7 +15,9 @@ async function workspace(page: Page, origin: string) {
     .getByTestId("password-input")
     .fill("become-disposable-content-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/);
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
+    timeout: 15_000,
+  });
   const response = await page.request.post("/api/content/commands", {
     headers: { origin },
     data: {
@@ -92,7 +94,7 @@ test("Content focus ticks and can restart after completion without waiting for a
       expect(started.status(), await started.text()).toBe(201);
       const session = (await started.json()).session;
       await expect(
-        rail.getByRole("button", { name: "Complete active session" }),
+        rail.getByRole("button", { name: "End session" }),
       ).toBeVisible();
       await expect(
         rail.getByRole("button", { name: "Start focus", exact: true }),
@@ -103,9 +105,7 @@ test("Content focus ticks and can restart after completion without waiting for a
         /^00:01:\d{2}$/,
       );
       await page.clock.resume();
-      await rail
-        .getByRole("button", { name: "Complete active session" })
-        .click();
+      await rail.getByRole("button", { name: "End session" }).click();
       await page.getByTestId("session-outcome").fill("Finished this pass.");
       const [stopped] = await Promise.all([
         page.waitForResponse((r) =>

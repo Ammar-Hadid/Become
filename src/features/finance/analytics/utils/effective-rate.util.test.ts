@@ -5,6 +5,7 @@ import { getPeriod } from "@/lib/dates/utils/period.util";
 const now = DateTime.fromISO("2026-03-03T00:00", { zone: "Europe/Amsterdam" });
 const period = getPeriod(now, "month");
 const work = {
+  pauses: [],
   startedAt: new Date("2026-02-28T22:00:00Z"),
   endedAt: new Date("2026-03-01T00:00:00Z"),
   paymentAttributionCompleteAt: new Date(),
@@ -50,4 +51,26 @@ it("distinguishes every unavailable state", () => {
       now,
     ).state,
   ).toBe("MIXED_CURRENCY");
+});
+
+it("excludes breaks from both overlapping work and the full paid-work denominator", () => {
+  const pausedWork = {
+    ...work,
+    pauses: [
+      {
+        startedAt: new Date("2026-02-28T22:30:00Z"),
+        endedAt: new Date("2026-02-28T23:30:00Z"),
+      },
+    ],
+  };
+  const rate = effectiveHourlyRate([pausedWork], period, now);
+  expect(rate).toMatchObject({ state: "AVAILABLE", displayMinor: 10001n });
+  const onlyBreak = {
+    ...period,
+    start: DateTime.fromISO("2026-02-28T22:45:00Z"),
+    end: DateTime.fromISO("2026-02-28T23:15:00Z"),
+  };
+  expect(effectiveHourlyRate([pausedWork], onlyBreak, now).state).toBe(
+    "NO_PAID_WORK",
+  );
 });

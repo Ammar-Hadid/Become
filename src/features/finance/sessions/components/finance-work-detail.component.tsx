@@ -1,3 +1,4 @@
+import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DateTime } from "luxon";
@@ -48,6 +49,7 @@ export async function FinanceWorkDetail({
   const session = await prisma.session.findFirst({
     where: { id, userId, endedAt: { not: null }, domain: { slug: "finance" } },
     include: {
+      pauses: true,
       workSource: true,
       incomeOpportunity: true,
       paymentAllocations: { include: { transaction: true } },
@@ -55,14 +57,7 @@ export async function FinanceWorkDetail({
   });
   if (!session) notFound();
   const options = await getFinanceWorkOptions(userId);
-  const minutes = Math.max(
-    0,
-    Math.round(
-      ((session.endedAt?.getTime() ?? session.startedAt.getTime()) -
-        session.startedAt.getTime()) /
-        60000,
-    ),
-  );
+  const minutes = Math.round(calculateSessionMilliseconds(session) / 60_000);
   const isPaidWork = session.financeActivityKind === "PAID_WORK";
   const activity = session.financeActivityKind
     ? activityCopy[session.financeActivityKind]

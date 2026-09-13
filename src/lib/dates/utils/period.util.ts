@@ -1,4 +1,4 @@
-import { DateTime, Interval } from "luxon";
+import { DateTime } from "luxon";
 
 export const TIMEFRAMES = ["week", "month", "season", "year"] as const;
 export type Timeframe = (typeof TIMEFRAMES)[number];
@@ -112,55 +112,6 @@ export function getPeriodBuckets(period: Period): PeriodBucket[] {
       label: start.toFormat("LLL"),
     };
   });
-}
-
-export type TimedSession = { startedAt: Date; endedAt: Date | null };
-
-export function calculateSessionDurationWithinPeriod(
-  session: TimedSession,
-  period: Pick<Period, "start" | "end">,
-  now: DateTime,
-) {
-  const startedAt = DateTime.fromJSDate(session.startedAt, { zone: "utc" });
-  const endedAt = session.endedAt
-    ? DateTime.fromJSDate(session.endedAt, { zone: "utc" })
-    : now.toUTC();
-  const overlap = Interval.fromDateTimes(
-    DateTime.max(startedAt, period.start.toUTC()),
-    DateTime.min(endedAt, period.end.toUTC(), now.toUTC()),
-  );
-  return overlap.isValid
-    ? Math.max(0, Math.floor(overlap.length("seconds")))
-    : 0;
-}
-
-export function countActiveDaysWithinPeriod(
-  sessions: TimedSession[],
-  period: Pick<Period, "start" | "end">,
-  now: DateTime,
-) {
-  let activeDays = 0;
-  let dayStart = period.start.startOf("day");
-  const effectiveEnd = DateTime.min(period.end, now);
-
-  while (dayStart < effectiveEnd) {
-    const dayEnd = DateTime.min(dayStart.plus({ days: 1 }), period.end);
-    if (
-      sessions.some(
-        (session) =>
-          calculateSessionDurationWithinPeriod(
-            session,
-            { start: dayStart, end: dayEnd },
-            now,
-          ) > 0,
-      )
-    ) {
-      activeDays += 1;
-    }
-    dayStart = dayStart.plus({ days: 1 });
-  }
-
-  return activeDays;
 }
 
 export function formatDuration(totalSeconds: number, compact = false) {

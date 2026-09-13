@@ -407,7 +407,7 @@ export async function evaluateCriterion(
         : " across recorded domains"
     }, clipped to ${window.wording}.`;
     e.exclusions = [
-      "Active timers, nonmatching recorded context, and time outside the window",
+      "Unfinished sessions, paused time, nonmatching recorded context, and time outside the window",
       "Conversation or outcome claims inferred from time",
     ];
     e.sources = data.rows.map((r) =>

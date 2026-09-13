@@ -1,9 +1,7 @@
+import { calculateSessionDurationWithinPeriod } from "@/features/sessions/timing/utils/session-duration.util";
 import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
-import {
-  calculateSessionDurationWithinPeriod,
-  type Period,
-} from "@/lib/dates/utils/period.util";
+import { type Period } from "@/lib/dates/utils/period.util";
 import { effectiveHourlyRate } from "@/features/finance/analytics/utils/effective-rate.util";
 export async function getFinanceWork(
   userId: string,
@@ -21,6 +19,7 @@ export async function getFinanceWork(
       ],
     },
     include: {
+      pauses: true,
       paymentAllocations: {
         include: { transaction: { select: { currency: true } } },
       },

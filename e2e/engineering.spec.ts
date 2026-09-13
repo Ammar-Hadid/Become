@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
 
 async function createAccount(page: Page) {
@@ -8,6 +9,7 @@ async function createAccount(page: Page) {
   await page.getByTestId("email-input").fill(email);
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
+  await deferAutomaticSeasonOpening(page);
   await expect(
     page.getByRole("heading", { name: /Engineering/ }),
   ).toBeVisible();
@@ -80,7 +82,10 @@ test("engineering sessions keep their own context with or without a project", as
     .toBeGreaterThan(0);
 
   await page.reload();
-  await page.getByTestId("dashboard-active-session").click();
+  await page
+    .getByTestId("dashboard-active-session")
+    .getByTestId("end-session")
+    .click();
   await expect(
     page.getByTestId("completion-engineering-context-select"),
   ).toHaveValue("UNI");
@@ -153,7 +158,10 @@ test("engineering sessions keep their own context with or without a project", as
     .getByTestId("session-description")
     .fill("Study distributed systems");
   await page.getByTestId("confirm-start-timer").click();
-  await page.getByTestId("dashboard-active-session").click();
+  await page
+    .getByTestId("dashboard-active-session")
+    .getByTestId("end-session")
+    .click();
   await expect(
     page.getByTestId("completion-engineering-context-select"),
   ).toHaveValue("UNI");
@@ -200,18 +208,30 @@ test("project forms protect unsaved changes without blocking successful saves", 
   page,
 }) => {
   await createAccount(page);
+  const openNewProject = async () => {
+    await page.goto("/engineering/projects/new");
+    // The guard records its baseline after hydration; wait before changing it.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            window.history.state?.__becomeEngineeringProjectFormGuard === true,
+        ),
+      )
+      .toBe(true);
+  };
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByRole("link", { name: "Cancel" }).click();
   await expect(page).toHaveURL(/\/engineering\/projects$/);
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByTestId("engineering-project-name").fill("Temporary");
   await page.getByTestId("engineering-project-name").fill("");
   await page.getByRole("link", { name: "Cancel" }).click();
   await expect(page).toHaveURL(/\/engineering\/projects$/);
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByTestId("engineering-project-name").fill("Protected project");
   const dismissedCancel = waitForDialog(page, "confirm", false);
   await page.getByRole("link", { name: "Cancel" }).click();
@@ -226,7 +246,7 @@ test("project forms protect unsaved changes without blocking successful saves", 
   await acceptedCancel;
   await expect(page).toHaveURL(/\/engineering\/projects$/);
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByTestId("engineering-project-name").fill("Internal guard");
   const dismissedNavigation = waitForDialog(page, "confirm", false);
   await page.locator('a[href="/"]:visible').first().click();
@@ -238,7 +258,7 @@ test("project forms protect unsaved changes without blocking successful saves", 
   await acceptedNavigation;
   await expect(page).toHaveURL(/\/$/);
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByTestId("engineering-project-name").fill("Back guard");
   const dismissedBack = waitForDialog(page, "confirm", false);
   await page.evaluate(() => window.history.back());
@@ -250,7 +270,7 @@ test("project forms protect unsaved changes without blocking successful saves", 
   await acceptedBack;
   await expect(page).not.toHaveURL(/\/engineering\/projects\/new$/);
 
-  await page.goto("/engineering/projects/new");
+  await openNewProject();
   await page.getByTestId("engineering-project-name").fill("Reload guard");
   const acceptedReload = waitForDialog(page, "beforeunload", true);
   await page.reload();

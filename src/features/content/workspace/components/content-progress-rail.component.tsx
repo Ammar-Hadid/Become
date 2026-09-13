@@ -2,7 +2,6 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { Clock3, Play, Square } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/forms/select.component";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { sendContentCommand } from "@/features/content/commands/utils/content-command.util";
@@ -15,7 +14,8 @@ import type {
 } from "@/features/content/types/content.types";
 import { formatDuration } from "@/lib/dates/utils/period.util";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
-import type { ActiveSessionData } from "@/features/sessions/types/session.types";
+import { Button } from "@/components/ui/buttons/button.component";
+import { SessionTimerActions } from "@/features/sessions/timer/components/session-timer-actions.component";
 
 const stages: { value: ContentStage; label: string }[] = [
   { value: "PLANNING", label: "Plan" },
@@ -40,10 +40,14 @@ export function ContentProgressRail({
   variant: VariantView;
   onWorkspace: (workspace: ContentWorkspace) => void;
 }) {
-  const router = useRouter();
-  const { activeSession, elapsedSeconds, completedSessions, confirmStart } =
-    useActiveTimer();
-  const startingRef = useRef(false);
+  const {
+    activeSession,
+    elapsedSeconds,
+    completedSessions,
+    startSession,
+    pendingOperation,
+    recoveryRequired,
+  } = useActiveTimer();
   const workingHere = activeSession?.contentId === workspace.id;
   // Include confirmed completions until the refreshed workspace incorporates them.
   const newlyRecordedSeconds = Object.values(completedSessions)
@@ -72,7 +76,7 @@ export function ContentProgressRail({
     workspace.timer.activities[0]?.id ?? "",
   );
   const [pending, setPending] = useState(false);
-  const [timerPending, setTimerPending] = useState(false);
+  const timerPending = Boolean(pendingOperation);
   const [error, setError] = useState<string | null>(null);
   const [timerError, setTimerError] = useState<string | null>(null);
   const [latest, setLatest] = useState<{
@@ -141,38 +145,17 @@ export function ContentProgressRail({
   }
 
   async function startTimer() {
-    if (!activityId || startingRef.current || activeSession) return;
-    startingRef.current = true;
-    setTimerPending(true);
+    if (!activityId || activeSession || timerPending || recoveryRequired)
+      return;
     setTimerError(null);
-    try {
-      const response = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          domainId: workspace.timer.domainId,
-          activityTypeId: activityId,
-          contentId: workspace.id,
-          contentVariantId: variant.id,
-          description: workspace.title || variant.name || "Content session",
-        }),
-      });
-      const result = (await response.json().catch(() => null)) as {
-        error?: string;
-        session?: ActiveSessionData;
-      } | null;
-      if (!response.ok) {
-        router.refresh();
-        return setTimerError(result?.error ?? "Could not start the timer.");
-      }
-      if (result?.session) confirmStart(result.session);
-      router.refresh();
-    } catch {
-      setTimerError("Could not reach Become. Check your connection and retry.");
-    } finally {
-      startingRef.current = false;
-      setTimerPending(false);
-    }
+    const result = await startSession({
+      domainId: workspace.timer.domainId,
+      activityTypeId: activityId,
+      contentId: workspace.id,
+      contentVariantId: variant.id,
+      description: workspace.title || variant.name || "Content session",
+    });
+    if (!result.ok) setTimerError(result.error ?? "Could not start the timer.");
   }
 
   return (
@@ -317,14 +300,40 @@ export function ContentProgressRail({
           </dl>
         )}
         {activeSession ? (
-          <button
-            type="button"
-            className="content-timer-active"
-            onClick={() => window.dispatchEvent(new Event("become:stop-timer"))}
-          >
-            <Square aria-hidden="true" />{" "}
-            {workingHere ? "Complete active session" : "Complete other session"}
-          </button>
+          <div className="space-y-md mt-lg">
+            <p className="text-body-sm text-text-secondary">
+              {activeSession.status === "PAUSED" ? "Paused" : "Running"}
+              {workingHere
+                ? " · This content"
+                : ` · ${activeSession.domain.name} · ${activeSession.description || activeSession.activityType.name}`}
+            </p>
+            {workingHere ? (
+              <SessionTimerActions />
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() =>
+                    window.dispatchEvent(new Event("become:manage-timer"))
+                  }
+                >
+                  View current session
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  disabled={timerPending}
+                  onClick={() =>
+                    window.dispatchEvent(new Event("become:stop-timer"))
+                  }
+                >
+                  <Square className="size-3 fill-current" aria-hidden="true" />{" "}
+                  Complete other session
+                </Button>
+              </>
+            )}
+          </div>
         ) : (
           <div className="content-timer-start">
             <div className="content-timer-activity">
@@ -342,7 +351,7 @@ export function ContentProgressRail({
             <button
               type="button"
               onClick={startTimer}
-              disabled={!activityId || timerPending}
+              disabled={!activityId || timerPending || recoveryRequired}
             >
               <Play aria-hidden="true" />{" "}
               {timerPending ? "Starting…" : "Start focus"}

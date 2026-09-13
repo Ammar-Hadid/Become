@@ -1,11 +1,13 @@
-import { DateTime } from "luxon";
 import {
   calculateSessionDurationWithinPeriod,
-  type Period,
-} from "@/lib/dates/utils/period.util";
+  calculateSessionMilliseconds,
+} from "@/features/sessions/timing/utils/session-duration.util";
+import { DateTime } from "luxon";
+import { type Period } from "@/lib/dates/utils/period.util";
 type PaidSession = {
   startedAt: Date;
   endedAt: Date | null;
+  pauses: ReadonlyArray<{ startedAt: Date; endedAt: Date | null }>;
   paymentAttributionCompleteAt: Date | null;
   paymentAllocations: {
     amountMinor: bigint;
@@ -48,9 +50,7 @@ export function effectiveHourlyRate(
   let seconds = 0n;
   for (const { session, seconds: overlap } of overlapping) {
     const duration = BigInt(
-      Math.floor(
-        (session.endedAt!.getTime() - session.startedAt.getTime()) / 1000,
-      ),
+      Math.floor(calculateSessionMilliseconds(session, now.toMillis()) / 1000),
     );
     const amount = session.paymentAllocations.reduce(
       (sum, allocation) => sum + allocation.amountMinor,

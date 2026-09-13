@@ -1,3 +1,7 @@
+import {
+  calculateSessionDurationWithinPeriod,
+  countActiveDaysWithinPeriod,
+} from "@/features/sessions/timing/utils/session-duration.util";
 import { DateTime } from "luxon";
 import {
   ENGINEERING_CONTEXT_OPTIONS,
@@ -10,8 +14,6 @@ import type {
   EngineeringEvidenceTypeValue,
 } from "@/features/engineering/types/engineering.types";
 import {
-  calculateSessionDurationWithinPeriod,
-  countActiveDaysWithinPeriod,
   getPeriod,
   getPeriodBuckets,
   getPreviousPeriod,
@@ -22,6 +24,7 @@ import {
 export type EngineeringSessionFact = {
   startedAt: Date;
   endedAt: Date | null;
+  pauses: ReadonlyArray<{ startedAt: Date; endedAt: Date | null }>;
   engineeringContext: EngineeringContextValue | null;
   activityType: { id: string; name: string };
   engineeringProject: {

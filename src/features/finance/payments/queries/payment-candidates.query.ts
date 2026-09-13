@@ -1,3 +1,4 @@
+import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 export async function getPaymentCandidates(
   userId: string,
@@ -35,6 +36,7 @@ export async function getPaymentCandidates(
         : {}),
     },
     include: {
+      pauses: true,
       workSource: true,
       incomeOpportunity: true,
       paymentAllocations: {
@@ -57,6 +59,7 @@ export async function getPaymentCandidates(
       ...(await prisma.session.findMany({
         where: { userId, id: { in: missing } },
         include: {
+          pauses: true,
           workSource: true,
           incomeOpportunity: true,
           paymentAllocations: {
@@ -107,11 +110,8 @@ export async function getPaymentCandidates(
         description: session.description || "Paid work",
         startedAt: session.startedAt.toISOString(),
         endedAt: session.endedAt!.toISOString(),
-        durationSeconds: Math.max(
-          0,
-          Math.floor(
-            (session.endedAt!.getTime() - session.startedAt.getTime()) / 1000,
-          ),
+        durationSeconds: Math.floor(
+          calculateSessionMilliseconds(session) / 1000,
         ),
         workSourceName: session.workSource?.name ?? "Unassigned",
         complete: Boolean(session.paymentAttributionCompleteAt),

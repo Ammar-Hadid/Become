@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import {
@@ -21,6 +22,7 @@ test.describe("Phase 3 Finance", () => {
     await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill("finance-test-password");
     await page.getByTestId("auth-submit").click();
+    await deferAutomaticSeasonOpening(page);
     await expect(
       page.getByRole("heading", { name: /Finance\./ }),
     ).toBeVisible();
@@ -343,6 +345,7 @@ test.describe("Phase 3 Finance", () => {
       page.locator('[data-testid="active-timer-trigger"]:visible'),
     ).toBeVisible();
     await page.locator('[data-testid="active-timer-trigger"]:visible').click();
+    await page.getByRole("dialog").getByTestId("end-session").click();
     await expect(page.getByRole("dialog")).not.toContainText("payment");
     await page.getByTestId("confirm-stop-timer").click();
     await expect(page.getByRole("dialog")).toHaveCount(0);

@@ -2,6 +2,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { test, expect, type Page } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 async function signUp(page: Page) {
   await page.goto("/sign-in");
   await page
@@ -16,7 +17,7 @@ async function signUp(page: Page) {
     .getByTestId("password-input")
     .fill("disposable-acceptance-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL("/");
+  await deferAutomaticSeasonOpening(page);
   return (await prisma.user.findUniqueOrThrow({ where: { email } })).id;
 }
 test("dirty form selection does not request discard; actual dismissal does", async ({
@@ -199,10 +200,14 @@ test("company and accepted offer connect existing work and explicitly attribute 
   ).toBeVisible();
   await page.getByText("Earlier quoted terms · 1", { exact: true }).click();
   await expect(
-    page.getByText("Previous: EUR 150.00 every 1 month", { exact: true }),
+    page
+      .locator(".business-revision-value--previous")
+      .getByText("EUR 150.00 every 1 month", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Revised: EUR 175.00 every 1 month", { exact: true }),
+    page
+      .locator(".business-revision-value--revised")
+      .getByText("EUR 175.00 every 1 month", { exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: `docs/development/phase4-corrections/${info.project.name}-accepted-offer.png`,
@@ -246,7 +251,9 @@ test("company and accepted offer connect existing work and explicitly attribute 
   await page
     .getByRole("combobox", { name: "Finance receipt", exact: true })
     .selectOption(receipt.id);
-  await expect(page.getByRole("status")).toContainText("EUR 150.00 remaining");
+  await expect(page.getByRole("dialog").getByRole("status")).toContainText(
+    "EUR 150.00 remaining",
+  );
   await expect(
     page.getByRole("combobox", { name: "Proposed offer revision · optional" }),
   ).toHaveValue(accepted.id);

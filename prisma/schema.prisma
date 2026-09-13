@@ -46,6 +46,7 @@ enum TechnologyCategory {
 }
 
 model User {
+  timerRevision Int @default(0)
   contents Content[]
   contentChannels Channel[]
   ideas Idea[]
@@ -477,6 +478,7 @@ model ActivityType {
 }
 
 model Session {
+  pauses SessionPause[]
   contentId String?
   contentVariantId String?
   contentTitleSnapshot String?
@@ -529,6 +531,17 @@ model Session {
   @@index([userId, engineeringContext, startedAt])
   @@index([userId, financeActivityKind, startedAt])
   @@map("session")
+}
+
+model SessionPause {
+  id        String   @id @default(cuid())
+  sessionId String
+  startedAt DateTime
+  endedAt   DateTime?
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, startedAt])
+  @@map("session_pause")
 }
 
 model EngineeringProject {

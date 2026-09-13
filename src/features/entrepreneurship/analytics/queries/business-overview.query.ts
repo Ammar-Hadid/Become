@@ -1,3 +1,4 @@
+import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
 import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -99,7 +100,7 @@ async function periodFacts(userId: string, start: Date, end: Date) {
       >`SELECT r.kind, COUNT(*)::int AS count, COUNT(DISTINCT r."companyId")::int AS companies FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."occurredAt">=${start} AND r."occurredAt"<${end} GROUP BY r.kind`,
       prisma.$queryRaw<
         { kind: string; seconds: number }[]
-      >`SELECT COALESCE(s."entrepreneurshipActivityKind",'UNKNOWN') AS kind, SUM(GREATEST(0, FLOOR(EXTRACT(EPOCH FROM LEAST(COALESCE(s."endedAt",${end}),${end})-GREATEST(s."startedAt",${start})))) )::float8 AS seconds FROM session s JOIN domain d ON d.id=s."domainId" WHERE s."userId"=${userId} AND d.slug='entrepreneurship' AND s."startedAt"<${end} AND (s."endedAt" IS NULL OR s."endedAt">${start}) GROUP BY s."entrepreneurshipActivityKind"`,
+      >`SELECT COALESCE(s."entrepreneurshipActivityKind",'UNKNOWN') AS kind, SUM(${sessionFocusedSecondsSql("s", { start, end })})::float8 AS seconds FROM session s JOIN domain d ON d.id=s."domainId" WHERE s."userId"=${userId} AND d.slug='entrepreneurship' AND s."startedAt"<${end} AND (s."endedAt" IS NULL OR s."endedAt">${start}) GROUP BY s."entrepreneurshipActivityKind"`,
       prisma.company.count({
         where: { userId, createdAt: { gte: start, lt: end } },
       }),

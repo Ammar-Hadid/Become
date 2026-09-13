@@ -22,11 +22,15 @@ export function FinanceSessionDetails({
     : "Unclassified Finance activity";
 
   return (
-    <section className="finance-session-summary">
+    <Link
+      href={`/finance/work/${session.id}`}
+      className="finance-session-summary"
+      aria-label={`Review work and payments for ${activity}`}
+    >
       <span className="finance-session-summary-icon">
         <BriefcaseBusiness aria-hidden="true" />
       </span>
-      <div>
+      <div className="min-w-0">
         <p className="eyebrow">Finance context</p>
         <h3>{activity}</h3>
         {session.financeActivityKind === "PAID_WORK" && (
@@ -40,9 +44,9 @@ export function FinanceSessionDetails({
           </span>
         )}
       </div>
-      <Link href={`/finance/work/${session.id}`}>
-        Review work and payments <ArrowRight aria-hidden="true" />
-      </Link>
-    </section>
+      <span className="finance-session-summary-action" aria-hidden="true">
+        <ArrowRight />
+      </span>
+    </Link>
   );
 }

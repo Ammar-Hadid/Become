@@ -1,3 +1,6 @@
+import { timerSessionInclude } from "@/features/sessions/timer/queries/timer-snapshot.query";
+import { toSessionListItem } from "@/features/sessions/mappers/session.mapper";
+import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
   companyExplorationWhere,
@@ -29,7 +32,7 @@ export async function getExplorationSummary(userId: string, nicheId: string) {
     >`SELECT COUNT(*)::int AS interactions, COUNT(DISTINCT r."companyId") FILTER (WHERE r.kind <> 'ATTEMPT_NO_CONTACT')::int AS contacted, COUNT(*) FILTER (WHERE r.kind='CONVERSATION')::int AS conversations FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,
     prisma.$queryRaw<
       { seconds: number; sessions: number }[]
-    >`SELECT COALESCE(SUM(GREATEST(0, EXTRACT(EPOCH FROM COALESCE("endedAt", NOW()) - "startedAt"))), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
+    >`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
   ]);
   return { companies, problems, offers, ...events[0], ...time[0] };
 }
@@ -65,12 +68,16 @@ export async function getExplorationSignals(userId: string, nicheId: string) {
       where: { userId, businessNicheId: nicheId },
       orderBy: { startedAt: "desc" },
       take: 5,
-      select: { id: true, description: true, startedAt: true, endedAt: true },
+      include: timerSessionInclude,
     }),
   ]);
   const nextActions = await prisma.followUp.findMany({
     where: { userId, id: { in: followUps.map((f) => f.id) } },
     orderBy: [{ dueOn: "asc" }, { id: "asc" }],
   });
-  return { voice, nextActions, sessions };
+  return {
+    voice,
+    nextActions,
+    sessions: sessions.map((session) => toSessionListItem(session)),
+  };
 }

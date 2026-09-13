@@ -16,6 +16,7 @@ describe("Engineering analytics", () => {
     const analytics = buildEngineeringAnalytics(
       [
         {
+          pauses: [],
           startedAt,
           endedAt,
           engineeringContext: "UNI",
@@ -23,6 +24,7 @@ describe("Engineering analytics", () => {
           engineeringProject: null,
         },
         {
+          pauses: [],
           startedAt,
           endedAt,
           engineeringContext: "PERSONAL",
@@ -104,6 +106,7 @@ describe("Engineering analytics", () => {
     const analytics = buildEngineeringAnalytics(
       [
         {
+          pauses: [],
           startedAt: DateTime.fromISO("2026-09-04T10:00", { zone })
             .toUTC()
             .toJSDate(),
@@ -152,6 +155,7 @@ describe("Engineering analytics", () => {
     const analytics = buildEngineeringAnalytics(
       [
         {
+          pauses: [],
           startedAt: DateTime.fromISO("2026-09-03T10:00", { zone })
             .toUTC()
             .toJSDate(),
@@ -163,6 +167,7 @@ describe("Engineering analytics", () => {
           engineeringProject: project,
         },
         {
+          pauses: [],
           startedAt: DateTime.fromISO("2026-09-04T10:00", { zone })
             .toUTC()
             .toJSDate(),

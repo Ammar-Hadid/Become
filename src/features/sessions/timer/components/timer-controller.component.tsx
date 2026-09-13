@@ -21,7 +21,6 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/buttons/button.component";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import {
@@ -40,6 +39,7 @@ import type {
   SessionDetailItem,
 } from "@/features/sessions/types/session.types";
 import { SESSION_RESOLUTION_STORAGE_KEY } from "@/features/sessions/constants/session-motion.constants";
+import { SessionTimerActions } from "@/features/sessions/timer/components/session-timer-actions.component";
 import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import { formatDuration } from "@/lib/dates/utils/period.util";
@@ -50,61 +50,13 @@ type TimerControllerProps = {
   financeOptions: FinanceWorkOptions;
 };
 
-export function TimerTrigger({ compact = false }: { compact?: boolean }) {
-  const { activeSession, elapsedSeconds } = useActiveTimer();
-
-  if (activeSession) {
-    const activity =
-      activeSession.contentActivitySnapshot || activeSession.activityType.name;
-    const context = activeSession.contentTitleSnapshot
-      ? `${activity} · ${activeSession.contentTitleSnapshot}`
-      : activity;
-    return (
-      <button
-        onClick={(event) => {
-          event.currentTarget.focus();
-          window.dispatchEvent(new Event("become:stop-timer"));
-        }}
-        className={cn(
-          "group border-primary/30 bg-primary-subtle hover:border-primary/60 duration-fast ease-move flex items-center rounded-full border text-left transition-[color,border-color,background-color,transform] active:translate-y-px active:scale-[0.99] motion-reduce:transform-none",
-          compact ? "size-12 justify-center" : "gap-md px-md w-full py-2.5",
-        )}
-        aria-label={`Stop ${context} timer`}
-        data-testid="active-timer-trigger"
-        data-session-id={activeSession.id}
-        data-elapsed-seconds={elapsedSeconds}
-      >
-        <span className="bg-primary text-on-primary relative flex size-8 shrink-0 items-center justify-center rounded-full">
-          <Square className="size-3 fill-current" />
-        </span>
-        {!compact && (
-          <span className="min-w-0 flex-1">
-            <span className="timer-trigger-label text-text-secondary block truncate">
-              {context}
-            </span>
-            <span className="timer-numerals text-primary text-body block font-semibold">
-              {formatDuration(elapsedSeconds)}
-            </span>
-          </span>
-        )}
-      </button>
-    );
-  }
-
-  return (
-    <Button
-      onClick={(event) => {
-        event.currentTarget.focus();
-        window.dispatchEvent(new Event("become:start-timer"));
-      }}
-      className={cn(compact ? "size-12 px-0" : "w-full")}
-      aria-label="Start timer"
-      data-testid="start-timer-trigger"
-    >
-      <Play className="size-4 fill-current" />
-      {!compact && "Start timer"}
-    </Button>
-  );
+function focusVisibleTimerTrigger() {
+  const trigger = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[data-testid="active-timer-trigger"], [data-testid="start-timer-trigger"]',
+    ),
+  ).find((element) => element.getClientRects().length > 0);
+  trigger?.focus({ preventScroll: true });
 }
 
 export function TimerController({
@@ -112,7 +64,6 @@ export function TimerController({
   engineeringProjects,
   financeOptions,
 }: TimerControllerProps) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const resolutionTimerRef = useRef<number | null>(null);
@@ -132,10 +83,25 @@ export function TimerController({
     incomeOpportunityId: "",
     financeCompensationType: "UNKNOWN",
   });
-  const { activeSession, elapsedSeconds, confirmCompletion, confirmStart } =
-    useActiveTimer();
-  const displayedSession = resolvedSession ?? activeSession;
-  const [mode, setMode] = useState<"start" | "stop">("start");
+  const {
+    activeSession,
+    elapsedSeconds,
+    completedSessions,
+    pendingOperation,
+    recoveryRequired,
+    startSession,
+    completeSession,
+  } = useActiveTimer();
+  const [completionTarget, setCompletionTarget] =
+    useState<ActiveSessionData | null>(null);
+  const displayedSession =
+    resolvedSession ??
+    (completionTarget
+      ? activeSession?.id === completionTarget.id
+        ? activeSession
+        : (completedSessions[completionTarget.id] ?? completionTarget)
+      : null);
+  const [mode, setMode] = useState<"start" | "manage" | "stop">("start");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [resolutionState, setResolutionState] = useState<"idle" | "confirmed">(
     "idle",
@@ -162,18 +128,9 @@ export function TimerController({
     useState<EngineeringEvidenceTypeValue>("FEATURE_COMPLETED");
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDetails, setEvidenceDetails] = useState("");
-  const [pending, setPending] = useState(false);
+  const pending = Boolean(pendingOperation);
   const [error, setError] = useState<string | null>(null);
   const dialogPresence = usePresence(dialogOpen);
-
-  useEffect(() => {
-    document.documentElement.toggleAttribute(
-      "data-timer-mutation-pending",
-      pending,
-    );
-    return () =>
-      document.documentElement.removeAttribute("data-timer-mutation-pending");
-  }, [pending]);
 
   useModalLayer({
     open: dialogOpen,
@@ -196,20 +153,20 @@ export function TimerController({
   const isEngineering = selectedDomain?.slug === "engineering";
   const completionProjects = useMemo(() => {
     if (
-      !activeSession?.engineeringProject ||
+      !completionTarget?.engineeringProject ||
       engineeringProjects.some(
-        (project) => project.id === activeSession.engineeringProject?.id,
+        (project) => project.id === completionTarget.engineeringProject?.id,
       )
     ) {
       return engineeringProjects;
     }
-    return [activeSession.engineeringProject, ...engineeringProjects];
-  }, [activeSession, engineeringProjects]);
+    return [completionTarget.engineeringProject, ...engineeringProjects];
+  }, [completionTarget, engineeringProjects]);
 
   useEffect(() => {
     const start = (event: Event) => {
       if (activeSession) {
-        window.dispatchEvent(new Event("become:stop-timer"));
+        window.dispatchEvent(new Event("become:manage-timer"));
         return;
       }
       const workspace = /^\/entrepreneurship\/explorations\/([^/]+)/.exec(
@@ -244,8 +201,33 @@ export function TimerController({
       setMode("start");
       setDialogOpen(true);
     };
+    const manage = () => {
+      if (!activeSession) return;
+      setResolvedSession(null);
+      setError(null);
+      setMode("manage");
+      setDialogOpen(true);
+    };
     const stop = () => {
       if (!activeSession) return;
+      if (completionTarget?.id !== activeSession.id) {
+        setOutcome("");
+        setNotes("");
+        setIncludeEvidence(false);
+        setEvidenceType("FEATURE_COMPLETED");
+        setEvidenceTitle("");
+        setEvidenceDetails("");
+        setCompletionContext(
+          (activeSession.engineeringContext as EngineeringContextValue | null) ??
+            "",
+        );
+        setCompletionProjectId(activeSession.engineeringProject?.id ?? "");
+        setCompletionBusiness({
+          businessCompanyId: activeSession.businessCompanyId ?? "",
+          businessNicheId: activeSession.businessNicheId ?? "",
+        });
+      }
+      setCompletionTarget(activeSession);
       if (resolutionTimerRef.current !== null) {
         window.clearTimeout(resolutionTimerRef.current);
         resolutionTimerRef.current = null;
@@ -253,25 +235,19 @@ export function TimerController({
       setResolvedSession(null);
       setError(null);
       setResolutionState("idle");
-      setCompletionContext(
-        (activeSession?.engineeringContext as EngineeringContextValue | null) ??
-          "",
-      );
-      setCompletionProjectId(activeSession?.engineeringProject?.id ?? "");
-      setCompletionBusiness({
-        businessCompanyId: activeSession.businessCompanyId ?? "",
-        businessNicheId: activeSession.businessNicheId ?? "",
-      });
       setMode("stop");
       setDialogOpen(true);
+      window.requestAnimationFrame(() => closeButtonRef.current?.focus());
     };
     window.addEventListener("become:start-timer", start);
     window.addEventListener("become:stop-timer", stop);
+    window.addEventListener("become:manage-timer", manage);
     return () => {
       window.removeEventListener("become:start-timer", start);
       window.removeEventListener("become:stop-timer", stop);
+      window.removeEventListener("become:manage-timer", manage);
     };
-  }, [activeSession, domains]);
+  }, [activeSession, completionTarget?.id, domains]);
 
   useEffect(() => {
     return () => {
@@ -282,44 +258,38 @@ export function TimerController({
   }, []);
 
   async function startTimer() {
-    if (!selectedDomain || !selectedActivityId) return;
-    setPending(true);
+    if (
+      !selectedDomain ||
+      !selectedActivityId ||
+      pending ||
+      activeSession ||
+      recoveryRequired
+    )
+      return;
     setError(null);
-    const response = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...(selectedDomain.slug === "entrepreneurship"
-          ? {
-              businessCompanyId: business.businessCompanyId || null,
-              businessNicheId: business.businessNicheId || null,
-            }
-          : {}),
-        domainId: selectedDomain.id,
-        activityTypeId: selectedActivityId,
-        engineeringContext: isEngineering ? engineeringContext || null : null,
-        engineeringProjectId: isEngineering
-          ? engineeringProjectId || null
+    const result = await startSession({
+      ...(selectedDomain.slug === "entrepreneurship"
+        ? {
+            businessCompanyId: business.businessCompanyId || null,
+            businessNicheId: business.businessNicheId || null,
+          }
+        : {}),
+      domainId: selectedDomain.id,
+      activityTypeId: selectedActivityId,
+      engineeringContext: isEngineering ? engineeringContext || null : null,
+      engineeringProjectId: isEngineering ? engineeringProjectId || null : null,
+      workSourceId:
+        financeKind === "PAID_WORK" ? finance.workSourceId || null : null,
+      incomeOpportunityId:
+        financeKind && financeKind !== "FINANCE_ADMIN"
+          ? finance.incomeOpportunityId || null
           : null,
-        workSourceId:
-          financeKind === "PAID_WORK" ? finance.workSourceId || null : null,
-        incomeOpportunityId:
-          financeKind && financeKind !== "FINANCE_ADMIN"
-            ? finance.incomeOpportunityId || null
-            : null,
-        financeCompensationType:
-          financeKind === "PAID_WORK" ? finance.financeCompensationType : null,
-        description,
-      }),
+      financeCompensationType:
+        financeKind === "PAID_WORK" ? finance.financeCompensationType : null,
+      description,
     });
-    const body = (await response.json()) as {
-      error?: string;
-      session?: ActiveSessionData;
-    };
-    setPending(false);
-    if (!response.ok)
-      return setError(body.error ?? "Could not start the timer.");
-    if (body.session) confirmStart(body.session);
+    if (!result.ok)
+      return setError(result.error ?? "Could not start the timer.");
     setDescription("");
     setFinance({
       workSourceId: "",
@@ -329,61 +299,43 @@ export function TimerController({
     setEngineeringContext("");
     setEngineeringProjectId("");
     setDialogOpen(false);
-    router.refresh();
   }
 
   async function stopTimer() {
-    if (!activeSession || pending || resolutionState === "confirmed") return;
-    setPending(true);
+    if (!completionTarget || pending || resolutionState === "confirmed") return;
     setError(null);
     try {
-      const response = await fetch(
-        `/api/sessions/${activeSession.id}/complete`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            outcome,
-            notes,
-            ...(activeSession.domain.slug === "entrepreneurship" &&
-            (completionBusiness.businessCompanyId !==
-              (activeSession.businessCompanyId ?? "") ||
-              completionBusiness.businessNicheId !==
-                (activeSession.businessNicheId ?? ""))
-              ? {
-                  businessCompanyId:
-                    completionBusiness.businessCompanyId || null,
-                  businessNicheId: completionBusiness.businessNicheId || null,
-                }
-              : {}),
-            ...(activeSession.domain.slug === "engineering"
-              ? {
-                  engineeringContext: completionContext || null,
-                  engineeringProjectId: completionProjectId || null,
-                  engineeringEvidence: includeEvidence
-                    ? {
-                        type: evidenceType,
-                        title: evidenceTitle,
-                        details: evidenceDetails,
-                      }
-                    : null,
-                }
-              : {}),
-          }),
-        },
-      );
-      const body = (await response.json()) as {
-        error?: string;
-        sessionId?: string;
-        evidenceId?: string | null;
-        session?: SessionDetailItem;
-      };
-      if (!response.ok)
-        return setError(body.error ?? "Could not stop the timer.");
-      if (!body.session?.endedAt || body.session.id !== activeSession.id) {
+      const body = await completeSession(completionTarget.id, {
+        outcome,
+        notes,
+        ...(completionTarget.domain.slug === "entrepreneurship" &&
+        (completionBusiness.businessCompanyId !==
+          (completionTarget.businessCompanyId ?? "") ||
+          completionBusiness.businessNicheId !==
+            (completionTarget.businessNicheId ?? ""))
+          ? {
+              businessCompanyId: completionBusiness.businessCompanyId || null,
+              businessNicheId: completionBusiness.businessNicheId || null,
+            }
+          : {}),
+        ...(completionTarget.domain.slug === "engineering"
+          ? {
+              engineeringContext: completionContext || null,
+              engineeringProjectId: completionProjectId || null,
+              engineeringEvidence: includeEvidence
+                ? {
+                    type: evidenceType,
+                    title: evidenceTitle,
+                    details: evidenceDetails,
+                  }
+                : null,
+            }
+          : {}),
+      });
+      if (!body.ok) return setError(body.error ?? "Could not stop the timer.");
+      if (!body.session?.endedAt || body.session.id !== completionTarget.id) {
         throw new Error("Missing completed session in response.");
       }
-      confirmCompletion(body.session);
       setResolvedSession(body.session);
       if (body.sessionId) {
         try {
@@ -404,7 +356,6 @@ export function TimerController({
 
       setResolutionState("confirmed");
       // Refresh secondary data immediately; timer truth no longer waits for it.
-      router.refresh();
       resolutionTimerRef.current = window.setTimeout(() => {
         setOutcome("");
         setNotes("");
@@ -412,6 +363,7 @@ export function TimerController({
         setEvidenceTitle("");
         setEvidenceDetails("");
         setDialogOpen(false);
+        window.requestAnimationFrame(focusVisibleTimerTrigger);
         if (body.session?.domain.slug === "entrepreneurship")
           setCaptureSessionId(body.session.id);
         setResolutionState("idle");
@@ -421,10 +373,21 @@ export function TimerController({
       setError(
         "Could not confirm the save. Please try again; a saved session will not be completed twice.",
       );
-    } finally {
-      setPending(false);
     }
   }
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (dialogOpen && mode !== "start") closeButtonRef.current?.focus();
+      else if (!dialogOpen && document.activeElement === document.body)
+        focusVisibleTimerTrigger();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [dialogOpen, mode]);
+
+  // Reconcile this component's mode before committing obsolete start controls.
+  if (dialogOpen && mode === "start" && activeSession) setMode("manage");
+  if (dialogOpen && mode === "manage" && !activeSession) setDialogOpen(false);
 
   return (
     <>
@@ -463,7 +426,9 @@ export function TimerController({
                 <p className="eyebrow mb-sm">
                   {mode === "start"
                     ? "Begin a focus block"
-                    : "Complete session"}
+                    : mode === "manage"
+                      ? "Current session"
+                      : "Complete session"}
                 </p>
                 <h2
                   id="timer-dialog-title"
@@ -471,7 +436,11 @@ export function TimerController({
                 >
                   {mode === "start"
                     ? "What are you working on?"
-                    : "What came from the time?"}
+                    : mode === "manage"
+                      ? activeSession?.status === "PAUSED"
+                        ? "Ready to pick it back up?"
+                        : "Your focus session"
+                      : "What came from the time?"}
                 </h2>
               </div>
               <button
@@ -578,6 +547,8 @@ export function TimerController({
                   onClick={startTimer}
                   disabled={
                     pending ||
+                    Boolean(activeSession) ||
+                    recoveryRequired ||
                     !selectedActivityId ||
                     (isEngineering && !engineeringContext)
                   }
@@ -586,6 +557,53 @@ export function TimerController({
                   <Play className="size-4 fill-current" />{" "}
                   {pending ? "Starting…" : "Start focus session"}
                 </Button>
+              </div>
+            ) : mode === "manage" && activeSession ? (
+              <div className="space-y-2xl">
+                <div className="stop-summary gap-lg">
+                  <div className="min-w-0">
+                    <p className="text-body font-medium">
+                      {activeSession.description ||
+                        activeSession.contentActivitySnapshot ||
+                        activeSession.activityType.name}
+                    </p>
+                    <p className="dialog-supporting-text text-text-secondary mt-xs">
+                      {activeSession.domain.name} ·{" "}
+                      {activeSession.contentActivitySnapshot ||
+                        activeSession.activityType.name}
+                    </p>
+                    {activeSession.contentTitleSnapshot && (
+                      <p className="dialog-supporting-text text-text-secondary mt-xs">
+                        {activeSession.contentTitleSnapshot}
+                        {activeSession.contentVariantSnapshot
+                          ? ` · ${activeSession.contentVariantSnapshot}`
+                          : ""}
+                      </p>
+                    )}
+                    {activeSession.engineeringProject && (
+                      <p className="dialog-supporting-text text-text-secondary mt-xs">
+                        {activeSession.engineeringProject.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-body-sm text-text-muted">Focused time</p>
+                    <p className="timer-numerals text-h5 mt-xs font-semibold">
+                      {formatDuration(elapsedSeconds)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-body text-text-secondary">
+                  {activeSession.status === "PAUSED"
+                    ? "Your session is paused. Break time is excluded, and you can end the session here without resuming."
+                    : "Take a break without losing this session, or finish and save what came from the time."}
+                </p>
+                {error && (
+                  <p className="form-error" role="alert">
+                    {error}
+                  </p>
+                )}
+                <SessionTimerActions />
               </div>
             ) : displayedSession ? (
               <div className="space-y-2xl">
@@ -627,10 +645,26 @@ export function TimerController({
                   </div>
                   <span className="timer-numerals text-primary text-h5 font-semibold">
                     {formatDuration(
-                      resolvedSession?.durationSeconds ?? elapsedSeconds,
+                      displayedSession.endedAt
+                        ? displayedSession.durationSeconds
+                        : activeSession?.id === displayedSession.id
+                          ? elapsedSeconds
+                          : displayedSession.durationSeconds,
                     )}
                   </span>
                 </div>
+                {(displayedSession.status === "PAUSED" ||
+                  (displayedSession.endedAt &&
+                    completionTarget?.status === "PAUSED")) && (
+                  <p
+                    className="text-text-secondary text-body-sm"
+                    data-testid="paused-wrap-up"
+                  >
+                    {displayedSession.endedAt
+                      ? "Break time is excluded from your saved session."
+                      : "Session paused. Break time stays excluded while you wrap up."}
+                  </p>
+                )}
                 {displayedSession.domain.slug === "entrepreneurship" && (
                   <BusinessTimerFields
                     value={completionBusiness}
@@ -761,7 +795,11 @@ export function TimerController({
                     className="px-lg"
                   >
                     <ArrowLeft className="size-4" />
-                    Keep running
+                    {displayedSession.endedAt
+                      ? "Close"
+                      : displayedSession.status === "PAUSED"
+                        ? "Keep paused"
+                        : "Keep running"}
                   </Button>
                   <Button
                     size="lg"
@@ -785,7 +823,7 @@ export function TimerController({
                       ? "Session saved"
                       : pending
                         ? "Saving…"
-                        : "Stop & save"}
+                        : "End & save"}
                   </Button>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import "dotenv/config";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { saveFinancialTransaction } from "../src/features/finance/transactions/services/financial-transaction.service";
@@ -17,7 +18,7 @@ async function signUp(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-phase4-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL("/");
+  await deferAutomaticSeasonOpening(page);
   return (await prisma.user.findUniqueOrThrow({ where: { email } })).id;
 }
 async function logConversation(page: Page) {
@@ -201,6 +202,7 @@ test("entrepreneurship timer completion is authoritative and capture remains opt
   await page.getByTestId("confirm-start-timer").click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.locator('[data-testid="active-timer-trigger"]:visible').click();
+  await page.getByRole("dialog").getByTestId("end-session").click();
   await page.getByTestId("session-outcome").fill("A clearer introduction");
   await page.getByTestId("confirm-stop-timer").click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -428,7 +430,9 @@ test("company edits, browser Back and archived problem history remain navigable"
   await page
     .getByRole("menuitem", { name: "Archive problem", exact: true })
     .click();
-  await expect(page.getByRole("status")).toHaveText("Problem archived.");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Problem archived." }),
+  ).toHaveText("Problem archived.");
   await page.goto("/entrepreneurship/problems");
   await expect(
     page.getByRole("link", { name: /Retained question/ }),
@@ -444,7 +448,9 @@ test("company edits, browser Back and archived problem history remain navigable"
   await page
     .getByRole("menuitem", { name: "Restore problem", exact: true })
     .click();
-  await expect(page.getByRole("status")).toHaveText("Problem restored.");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Problem restored." }),
+  ).toHaveText("Problem restored.");
   await page.goto("/entrepreneurship/problems");
   await expect(
     page.getByRole("link", { name: /Retained question/ }),

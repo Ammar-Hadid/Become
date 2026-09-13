@@ -1,9 +1,11 @@
+import {
+  calculateSessionDurationWithinPeriod,
+  countActiveDaysWithinPeriod,
+} from "@/features/sessions/timing/utils/session-duration.util";
 import { DateTime } from "luxon";
 import type { DashboardData } from "@/features/dashboard/analytics/types/dashboard.types";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
-  calculateSessionDurationWithinPeriod,
-  countActiveDaysWithinPeriod,
   getPeriod,
   getPeriodBuckets,
   getPreviousPeriod,
@@ -18,7 +20,7 @@ async function getSessionsForRange(userId: string, start: Date, end: Date) {
       startedAt: { lt: end },
       OR: [{ endedAt: null }, { endedAt: { gt: start } }],
     },
-    include: { domain: true, activityType: true },
+    include: { domain: true, activityType: true, pauses: true },
     orderBy: { startedAt: "desc" },
   });
 }

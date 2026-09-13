@@ -136,7 +136,11 @@ export function ExplorationTimer({ nicheId }: { nicheId: string }) {
         );
       }}
     >
-      {activeSession ? "View running session" : "Start session"}
+      {activeSession
+        ? activeSession.status === "PAUSED"
+          ? "View paused session"
+          : "View running session"
+        : "Start session"}
     </Button>
   );
 }

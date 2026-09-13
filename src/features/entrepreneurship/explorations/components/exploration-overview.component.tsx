@@ -8,6 +8,7 @@ import { getInteractionOptions } from "@/features/entrepreneurship/interactions/
 import { InteractionForm } from "@/features/entrepreneurship/interactions/components/interaction-form.component";
 import { FollowUpRecord } from "@/features/entrepreneurship/follow-ups/components/follow-up.component";
 import { formatDuration } from "@/lib/dates/utils/period.util";
+import { SessionRow } from "@/features/sessions/components/session-row.component";
 import {
   businessDate,
   humanize,
@@ -125,20 +126,7 @@ export async function ExplorationOverview({
           </strong>
         </div>
         {signals.sessions.length ? (
-          signals.sessions.map((s) => (
-            <article key={s.id} className="business-record-row">
-              <Link
-                href={`/sessions?session=${s.id}`}
-                className="business-text-link"
-              >
-                {s.description || "Focused session"} ↗
-              </Link>
-              <span className="business-meta">
-                {businessDate(s.startedAt)}
-                {!s.endedAt ? " · running" : ""}
-              </span>
-            </article>
-          ))
+          signals.sessions.map((s) => <SessionRow key={s.id} session={s} />)
         ) : (
           <p className="business-inline-empty">
             No session time recorded here yet.

@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { DateTime } from "luxon";
 import {
   calculateSessionDurationWithinPeriod,
   countActiveDaysWithinPeriod,
+} from "@/features/sessions/timing/utils/session-duration.util";
+import { describe, expect, it } from "vitest";
+import { DateTime } from "luxon";
+import {
   formatDuration,
   getPeriod,
   getPreviousPeriod,
@@ -48,6 +50,7 @@ describe("period boundaries", () => {
 
   it("clips a session crossing midnight to the requested day", () => {
     const session = {
+      pauses: [],
       startedAt: DateTime.fromISO("2026-09-02T23:30", { zone })
         .toUTC()
         .toJSDate(),
@@ -66,6 +69,7 @@ describe("period boundaries", () => {
 
   it("measures real elapsed time through the Amsterdam spring DST change", () => {
     const session = {
+      pauses: [],
       startedAt: DateTime.fromISO("2026-03-29T01:30", { zone })
         .toUTC()
         .toJSDate(),
@@ -87,7 +91,7 @@ describe("period boundaries", () => {
     const start = DateTime.fromISO("2026-09-03T10:00", { zone });
     expect(
       calculateSessionDurationWithinPeriod(
-        { startedAt: start.toUTC().toJSDate(), endedAt: null },
+        { pauses: [], startedAt: start.toUTC().toJSDate(), endedAt: null },
         {
           start: start.startOf("day"),
           end: start.plus({ days: 1 }).startOf("day"),
@@ -104,6 +108,7 @@ describe("period boundaries", () => {
     );
     const sessions = [
       {
+        pauses: [],
         startedAt: DateTime.fromISO("2026-09-02T23:30", { zone })
           .toUTC()
           .toJSDate(),

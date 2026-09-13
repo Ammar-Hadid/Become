@@ -80,7 +80,7 @@ Springs are not part of the base system. Introduce a spring only for a direct-ma
 - **Deletion:** use immediate acknowledgement followed by a short collapse only after confirmation. Never make destructive work feel playful.
 - **Loading:** preserve geometry. Prefer local pending state, skeleton continuity, or subtle opacity over spinners and looping shimmer.
 - **Success, warning, and error:** keep copy readable immediately. Success may settle once; warnings and errors should not shake, flash, or pulse repeatedly.
-- **Timers:** the running timer is the ambient signal. Completion gets one confirmed settle before the refreshed record becomes authoritative.
+- **Timers:** the running timer is the ambient signal. A confirmed pause replaces it with a static pause mark while preserving the timer and action anchors; resume restores the live signal. Completion gets one confirmed settle before the refreshed record becomes authoritative.
 - **Hover, focus, and press:** color, border, shadow, or very small opacity changes. Never bounce ordinary controls. Focus indication stays immediate.
 
 ## Signature ideas

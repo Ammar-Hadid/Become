@@ -6,7 +6,7 @@ Become is a calm personal operating system for connecting intention, focused tim
 
 - Email/password authentication with Better Auth
 - Personal, configurable domains and activity types seeded on signup
-- A single global timer with refresh recovery
+- A single global timer with persistent pause/resume and refresh recovery
 - Lightweight start and stop flows with optional intention, outcome, and notes
 - Session history and domain views
 - Week, Month, Season, and Year focused-time analytics
@@ -195,7 +195,7 @@ database-independent.
 
 - PostgreSQL timestamps are canonical UTC instants; calendar interpretation uses `APP_TIMEZONE`.
 - Season dates are derived fixed quarters; user-owned opening, identity and closing records attach to those quarters without replacing calendar calculations.
-- A partial unique PostgreSQL index guarantees only one active product session per user.
+- A partial unique PostgreSQL index guarantees only one unfinished product session per user, whether running or paused. End it before starting another timer.
 - A product `Session` is distinct from Better Auth's `AuthSession`.
 - An activity must belong to the selected domain and that domain must belong to the authenticated user.
 - Every new Engineering session stores its own context independently of its optional project; that session value is authoritative history.
@@ -203,6 +203,7 @@ database-independent.
 - Technologies are reusable project metadata only; they are never required or stored on timer sessions.
 - Engineering projects and evidence are user-owned, and cross-user or cross-domain relationships are rejected at the database and service boundaries.
 - Durations are clipped to analytics boundaries, including sessions crossing midnight, weeks, months, seasons, or DST changes.
+- Pause intervals are excluded from focused time, analytics, and Finance hourly rates. Resuming retains the same session and context. Pauses persist until explicitly resumed or ended, including after closing the app.
 - The database is truth. The current Phase 1 “recent signal” is deterministic copy, not an AI claim.
 
 ## Known boundaries
@@ -216,6 +217,34 @@ database-independent.
 - Foundation and Engineering analytics show the current period and its previous equivalent. Finance also supports selecting a historical reference date.
 
 Further product phases remain governed by `docs/product/MASTER_SPEC.md` and are not included in this implementation.
+
+## Pausing a session
+
+Use **Pause** on Home or in the global session controls. Home keeps the session
+visible with its frozen focused time, **Resume**, and **End session**. Ending a
+paused session opens the usual optional outcome/notes/evidence form; the session
+stays paused while filling it out or cancelling. Completed details distinguish
+focused time from excluded break time.
+
+Session lifecycle changes are transactional and return revisioned server state.
+Other tabs reconcile through invalidation and on focus; a refresh or retry cannot
+restore an older timer state. There are no timer-tick database writes.
+
+Apply the additive migration with `pnpm exec prisma migrate deploy`, generate the
+client with `pnpm db:generate`, and restart a running development server to load
+the updated Prisma client. Historical sessions without pauses are unchanged.
+
+Focused PostgreSQL checks create and clean up isolated fixtures:
+
+```bash
+RUN_SESSION_INTEGRATION=1 pnpm exec vitest run src/features/sessions/lifecycle/services/session-lifecycle.integration.test.ts
+RUN_SESSION_MIGRATION_INTEGRATION=1 pnpm exec vitest run src/features/sessions/lifecycle/services/session-migration.integration.test.ts
+BECOME_E2E_PORT=3021 pnpm exec playwright test e2e/session-pause.spec.ts e2e/timer.spec.ts e2e/timer-recovery.spec.ts
+```
+
+The migration check uses and removes a disposable local PostgreSQL database.
+`BECOME_E2E_PORT` gives browser tests a separate Next.js output directory so they
+can coexist with the normal development server.
 
 ## Finance semantics and verification
 

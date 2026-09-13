@@ -16,6 +16,7 @@ async function createDisposableArrivalUser(page: Page) {
   await page.getByTestId("auth-submit").click();
   await expect(page).toHaveURL(
     /\/direction\/seasons\/\d+\/[1-4]\/opening\?arrival=season/,
+    { timeout: 15_000 },
   );
 }
 
@@ -97,7 +98,10 @@ test("season arrival preserves deep links, unfinished timer input, and an active
   );
   await expect(activeTimer).toBeVisible();
   await expect(activeTimer).toHaveAttribute("data-session-id", /.+/);
-  await expect(activeTimer).toHaveAttribute("aria-label", "Stop Coding timer");
+  await expect(activeTimer).toHaveAttribute(
+    "aria-label",
+    "View running Coding session",
+  );
   await page.evaluate(() => {
     window.history.replaceState({}, "", "/?timer=active");
     window.history.replaceState({}, "", "/");
