@@ -32,7 +32,10 @@ export async function archiveMarketAction(
 }
 export async function changeDirectionAction(id: string, form: FormData) {
   return businessMutation((userId) =>
-    changeNicheDirection(userId, id, Object.fromEntries(form)),
+    changeNicheDirection(userId, id, {
+      ...Object.fromEntries(form),
+      sourceKeys: form.getAll("sourceKeys").map(String),
+    }),
   );
 }
 

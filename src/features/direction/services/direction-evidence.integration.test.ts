@@ -115,12 +115,16 @@ describe.skipIf(!enabled)("Phase 5 exact evidence and history", () => {
         proposedAt: new Date("2026-07-01"),
       },
     });
+    const engagement = await prisma.offerEngagement.create({
+      data: { userId, offerId: offer.id, companyId, identityKind: "BUSINESS" },
+    });
     await prisma.offerEvent.createMany({
       data: [
         {
           userId,
           offerId: offer.id,
           offerRevisionId: revision.id,
+          engagementId: engagement.id,
           kind: "PROPOSED",
           occurredAt: new Date("2026-07-01"),
           sourceDescription: "Test proposal",
@@ -129,6 +133,7 @@ describe.skipIf(!enabled)("Phase 5 exact evidence and history", () => {
           userId,
           offerId: offer.id,
           offerRevisionId: revision.id,
+          engagementId: engagement.id,
           kind: "ACCEPTED",
           occurredAt: new Date("2026-07-02"),
           sourceDescription: "Test acceptance",
@@ -278,6 +283,11 @@ describe.skipIf(!enabled)("Phase 5 exact evidence and history", () => {
         userId,
         offerId: revision.offerId,
         offerRevisionId: revision.id,
+        engagementId: (
+          await prisma.offerEngagement.findFirstOrThrow({
+            where: { userId, offerId: revision.offerId },
+          })
+        ).id,
         kind: "CANCELLED",
         occurredAt: new Date("2026-08-02"),
         sourceDescription: "Stopped",

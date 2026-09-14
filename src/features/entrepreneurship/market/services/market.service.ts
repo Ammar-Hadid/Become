@@ -1,3 +1,4 @@
+import { captureDirectionSources } from "@/features/entrepreneurship/explorations/services/exploration-direction.service";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { canonicalName } from "@/features/entrepreneurship/shared/utils/business.util";
@@ -84,9 +85,13 @@ export async function saveMarketRecord(
         data: {
           ...values,
           userId,
+          marketFocus: data.marketFocus ?? "UNKNOWN",
+          marketConclusion: "UNDECIDED",
           decisions: {
             create: {
               direction: "EXPLORING",
+              marketFocus: data.marketFocus ?? "UNKNOWN",
+              marketConclusion: "UNDECIDED",
               rationale: "Started exploring this market.",
               scopeSnapshot: data.scope,
             },
@@ -164,8 +169,18 @@ export async function changeNicheDirection(
       );
     const niche = await tx.niche.update({
       where: { id_userId: { id: nicheId, userId } },
-      data: { direction: data.direction },
+      data: {
+        direction: data.direction,
+        marketFocus: data.marketFocus ?? prior.marketFocus,
+        marketConclusion: data.marketConclusion ?? prior.marketConclusion,
+      },
     });
+    const sourceSnapshots = await captureDirectionSources(
+      tx,
+      userId,
+      nicheId,
+      data.sourceKeys,
+    );
     await tx.nicheDecision.create({
       data: {
         userId,
@@ -173,6 +188,10 @@ export async function changeNicheDirection(
         direction: data.direction,
         rationale: data.rationale,
         scopeSnapshot: niche.scope,
+        marketFocus: niche.marketFocus,
+        marketConclusion: niche.marketConclusion,
+        conclusionScope: data.conclusionScope,
+        sourceSnapshots,
       },
     });
     return niche;

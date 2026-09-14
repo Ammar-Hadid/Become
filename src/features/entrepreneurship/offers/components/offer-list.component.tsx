@@ -8,6 +8,7 @@ import {
   offerPresentation,
 } from "@/features/entrepreneurship/offers/utils/offer.util";
 import { humanize } from "@/features/entrepreneurship/shared/utils/business.util";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 export async function OfferList({
   userId,
   cursor,
@@ -33,7 +34,12 @@ export async function OfferList({
             What you offered, what happened, and what was actually received.
           </p>
         </div>
-        <OfferForm companies={options.companies} problems={options.problems} />
+        <OfferForm
+          companies={options.companies}
+          people={options.people}
+          segments={options.segments}
+          problems={options.problems}
+        />
       </header>
       <section
         className={`business-zone business-zone--ledger${archived ? "business-zone--archived" : ""}`}
@@ -58,10 +64,15 @@ export async function OfferList({
         {data.records.length ? (
           <div className="business-offer-list">
             {data.records.map((offer) => {
-              const { quote, status, acceptance } = offerPresentation(
+              const presentation = offerPresentation(
                 offer.revisions,
                 offer.events,
               );
+              const { status, acceptance } = presentation;
+              const audienceTest = offer.mode === "AUDIENCE_TEST";
+              const quote = audienceTest
+                ? offer.revisions[0]
+                : presentation.quote;
               return (
                 <Link
                   className={`business-offer-row${archived ? "business-record--archived" : ""}`}
@@ -69,20 +80,26 @@ export async function OfferList({
                   key={offer.id}
                 >
                   <div className="business-offer-copy">
-                    <p className="business-meta">{offer.company.name}</p>
+                    <p className="business-meta">
+                      <AudienceSummary {...quote} />
+                    </p>
                     <h3>{quote.title}</h3>
                     <p>{quote.scope}</p>
                   </div>
                   <div className="business-offer-terms">
                     <span className="business-status-badge">
-                      {humanize(status)}
-                      {acceptance && status !== "ACCEPTED"
+                      {audienceTest ? "Audience test" : humanize(status)}
+                      {!audienceTest && acceptance && status !== "ACCEPTED"
                         ? " · acceptance retained"
                         : ""}
                     </span>
                     <strong>{quoteLabel(quote)}</strong>
                     <span className="business-hint">
-                      {acceptance ? "Accepted terms" : "Quoted terms"}
+                      {audienceTest
+                        ? "Test terms · separate recipient responses"
+                        : acceptance
+                          ? "Accepted terms"
+                          : "Quoted terms"}
                     </span>
                   </div>
                   <ArrowUpRight aria-hidden="true" />
@@ -95,8 +112,8 @@ export async function OfferList({
             <FileText aria-hidden="true" />
             <h3>Give the solution a shape.</h3>
             <p>
-              Start with a company, a useful scope and a quote. An unspecified
-              price can stay unknown.
+              Try one set of terms with an audience, or shape a proposal for a
+              person or business. An unspecified price can stay unknown.
             </p>
           </div>
         )}

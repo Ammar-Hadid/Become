@@ -547,11 +547,20 @@ describe.runIf(process.env.RUN_REVIEW_INTEGRATION === "1")(
           intervalCount: 1,
         },
       });
+      const engagement = await prisma.offerEngagement.create({
+        data: {
+          userId,
+          offerId: offer.id,
+          companyId: company.id,
+          identityKind: "BUSINESS",
+        },
+      });
       await prisma.offerEvent.create({
         data: {
           userId,
           offerId: offer.id,
           offerRevisionId: revision.id,
+          engagementId: engagement.id,
           kind: "ACCEPTED",
           occurredAt,
           sourceDescription: "Explicit recorded acceptance, no payment",

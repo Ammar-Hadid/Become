@@ -1,3 +1,5 @@
+import type { AudienceReviewContext } from "@/features/entrepreneurship/audiences/types/audience.types";
+import type { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import type { Timeframe } from "@/lib/dates/utils/period.util";
 import type {
   SeasonMediaView,
@@ -33,6 +35,8 @@ export type ReviewPeriod = {
   };
 };
 export type ReviewSource = {
+  /** Absent in older editions; never reconstruct historical audience from live entities. */
+  audience?: AudienceReviewContext | null;
   key: string;
   metricKey: string;
   kind: string;
@@ -102,6 +106,10 @@ export type ReviewIdentity = {
   legacyClosing: boolean;
 };
 export type PeriodReviewFacts = {
+  audience?: {
+    version: 1;
+    summary: Awaited<ReturnType<typeof getAudienceMetrics>>;
+  };
   schemaVersion: 1;
   metricVersion: 1;
   fingerprint: string;

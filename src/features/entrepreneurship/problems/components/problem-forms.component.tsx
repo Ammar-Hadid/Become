@@ -10,8 +10,11 @@ import {
   BusinessFormSection,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
-import { searchCompaniesAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
+import {
+  AudienceFields,
+  type AudienceOption,
+  type AudienceFieldValue,
+} from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import {
   createProblemAction,
   linkEvidenceAction,
@@ -19,6 +22,7 @@ import {
   assessProblemAction,
   reconfirmEvidenceAction,
   linkReceiptEvidenceAction,
+  changeProblemAudienceAction,
 } from "@/features/entrepreneurship/problems/actions/problem.action";
 import {
   businessToday,
@@ -26,7 +30,13 @@ import {
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
 
-export function ProblemForm({ niches }: { niches: BusinessOption[] }) {
+export function ProblemForm({
+  niches,
+  segments = [],
+}: {
+  niches: BusinessOption[];
+  segments?: AudienceOption[];
+}) {
   const exploration = useExploration();
   const router = useRouter();
   return (
@@ -58,6 +68,7 @@ export function ProblemForm({ niches }: { niches: BusinessOption[] }) {
             required
           />
         </BusinessFormSection>
+        <AudienceFields segments={segments} target open />
         <BusinessFormSection
           eyebrow="Boundary"
           title="Where the belief belongs"
@@ -67,11 +78,11 @@ export function ProblemForm({ niches }: { niches: BusinessOption[] }) {
             <option value="OBSERVATION_LED">Prompted by an observation</option>
           </BusinessSelect>
           <BusinessSelect
-            label="Niche · optional"
+            label="Exploration · optional"
             name="nicheId"
             value={exploration?.archived ? "" : (exploration?.id ?? "")}
           >
-            <option value="">No niche</option>
+            <option value="">No exploration</option>
             {niches.map((niche) => (
               <option value={niche.id} key={niche.id}>
                 {niche.name}
@@ -175,17 +186,28 @@ export function LinkEvidenceForm({
     </RecordDialog>
   );
 }
-function ObservationFields({
+export function ObservationFields({
   companies,
+  people = [],
+  segments = [],
+  niches = [],
   interactions,
   problemId,
+  initialSource,
 }: {
   companies: BusinessOption[];
+  people?: BusinessOption[];
+  segments?: AudienceOption[];
+  niches?: BusinessOption[];
   interactions: { id: string; revisionId: string; name: string }[];
   problemId: string | null;
+  initialSource?: "DIRECT_OBSERVATION" | "PUBLIC_SOURCE";
 }) {
   const exploration = useExploration();
-  const [source, setSource] = useState("DIRECT_OBSERVATION");
+  const [source, setSource] = useState<string>(
+    initialSource ?? "DIRECT_OBSERVATION",
+  );
+  const [audienceOverride, setAudienceOverride] = useState(false);
   return (
     <>
       <CaptureKey />
@@ -207,7 +229,17 @@ function ObservationFields({
           required
         />
         <div className="gap-lg grid grid-cols-2">
-          <BusinessSelect label="Kind" name="kind">
+          <BusinessSelect
+            label="Kind"
+            name="kind"
+            value={
+              initialSource === "DIRECT_OBSERVATION"
+                ? "OBSERVED_BEHAVIOR"
+                : initialSource === "PUBLIC_SOURCE"
+                  ? "CONTEXT"
+                  : "CUSTOMER_STATEMENT"
+            }
+          >
             <option value="CUSTOMER_STATEMENT">Customer statement</option>
             <option value="OBSERVED_BEHAVIOR">Observed behavior</option>
             <option value="INTEREST">Interest</option>
@@ -226,31 +258,44 @@ function ObservationFields({
           value={businessToday()}
           required
         />
-        <ReusableEntityCombobox
-          label="Company"
-          entityName="company"
-          idFieldName="companyId"
-          queryFieldName="companyName"
-          options={companies}
-          searchAction={searchCompaniesAction}
-          deferCreation
-          placeholder="Find or add a company…"
-        />
+        {source !== "INTERACTION" && (
+          <AudienceFields
+            people={people}
+            segments={segments}
+            companies={companies}
+          />
+        )}
+        {source !== "INTERACTION" && !exploration && (
+          <BusinessSelect label="Exploration · optional" name="nicheId">
+            <option value="">No exploration</option>
+            {niches.map((niche) => (
+              <option key={niche.id} value={niche.id}>
+                {niche.name}
+              </option>
+            ))}
+          </BusinessSelect>
+        )}
       </BusinessFormSection>
       <BusinessFormSection eyebrow="Traceability" title="Where it came from">
-        <label className="field-label">
-          Source
-          <select
-            className="text-input mt-sm"
-            name="sourceKind"
-            value={source}
-            onChange={(event) => setSource(event.target.value)}
-          >
-            <option value="DIRECT_OBSERVATION">I observed this directly</option>
-            <option value="INTERACTION">A recorded interaction</option>
-            <option value="PUBLIC_SOURCE">A public source</option>
-          </select>
-        </label>
+        {initialSource ? (
+          <input type="hidden" name="sourceKind" value={initialSource} />
+        ) : (
+          <label className="field-label">
+            Source
+            <select
+              className="text-input mt-sm"
+              name="sourceKind"
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+            >
+              <option value="DIRECT_OBSERVATION">
+                I observed this directly
+              </option>
+              <option value="INTERACTION">A recorded interaction</option>
+              <option value="PUBLIC_SOURCE">A public source</option>
+            </select>
+          </label>
+        )}
         {source === "PUBLIC_SOURCE" && (
           <BusinessField
             label="Source URL"
@@ -273,6 +318,40 @@ function ObservationFields({
             ))}
           </BusinessSelect>
         )}
+        {source === "INTERACTION" && (
+          <details className="business-disclosure">
+            <summary>Audience attribution</summary>
+            <div>
+              <label className="business-choice-row">
+                <input
+                  type="checkbox"
+                  name="audienceOverride"
+                  checked={audienceOverride}
+                  onChange={(event) =>
+                    setAudienceOverride(event.target.checked)
+                  }
+                />
+                This observation concerns a narrower audience
+              </label>
+              {audienceOverride ? (
+                <>
+                  <AudienceFields target open segments={segments} />
+                  <BusinessField
+                    label="Why this attribution?"
+                    name="audienceReason"
+                    multiline
+                    required
+                    hint="Keep the source identity. Explain which part of the interaction supports this narrower boundary."
+                  />
+                </>
+              ) : (
+                <p className="business-hint">
+                  Keeps the recorded interaction's audience and source identity.
+                </p>
+              )}
+            </div>
+          </details>
+        )}
         <BusinessField
           label="Source excerpt or context"
           name="sourceDescription"
@@ -287,6 +366,46 @@ function ObservationFields({
         </BusinessFormSection>
       )}
     </>
+  );
+}
+export function ProblemAudienceForm({
+  problemId,
+  expectedVersion,
+  value,
+  segments,
+}: {
+  problemId: string;
+  expectedVersion: number;
+  value: AudienceFieldValue;
+  segments: AudienceOption[];
+}) {
+  return (
+    <RecordDialog
+      eyebrow="A clearer boundary"
+      title="Refine the problem audience"
+      triggerLabel="Refine audience"
+      variant="secondary"
+      description="Save a new audience boundary. Earlier assessments retain the scope they used at the time."
+    >
+      <RecordForm
+        action={changeProblemAudienceAction.bind(
+          null,
+          problemId,
+          expectedVersion,
+        )}
+        submitLabel="Save audience boundary"
+        closeOnSuccess
+      >
+        <CaptureKey />
+        <AudienceFields target open value={value} segments={segments} />
+        <BusinessField
+          name="rationale"
+          label="Why refine this audience?"
+          multiline
+          required
+        />
+      </RecordForm>
+    </RecordDialog>
   );
 }
 export function ObservationForm(

@@ -1,3 +1,11 @@
+import { z } from "zod";
+import {
+  captureAudience,
+  captureAudienceContext,
+  audienceSnapshot,
+  targetAudience,
+} from "@/features/entrepreneurship/audiences/services/audience.service";
+import { audienceContextSchema } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { captureOnce } from "@/features/entrepreneurship/shared/services/capture.service";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
@@ -7,7 +15,6 @@ import {
   sourcedObservationSchema,
   assessmentSchema,
 } from "@/features/entrepreneurship/problems/schemas/problem.schema";
-import { resolveCompany } from "@/features/entrepreneurship/market/services/market.service";
 import {
   evidenceInclude,
   evidenceCondition,
@@ -63,6 +70,10 @@ export async function linkReceiptEvidence(
           currency: allocation.transaction.currency,
           occurredAt: allocation.transaction.occurredAt.toISOString(),
           companyName: allocation.companySnapshot,
+          personName: allocation.personSnapshot,
+          audienceLabel: allocation.audienceLabel,
+          audienceContextId: allocation.audienceContextId,
+          engagementId: allocation.engagementId,
         },
       },
     });
@@ -95,11 +106,32 @@ export async function createProblem(
       : null;
     if (data.nicheId && !niche)
       throw new BusinessError("Choose an active niche you own.");
-    return (
-      await tx.problem.create({
-        data: { ...data, userId, nicheSnapshot: niche?.name },
-      })
-    ).id;
+    const audience = targetAudience(
+      await captureAudience(tx, userId, data, data.nicheId),
+    );
+    const { title, initialStatement, origin, notes, nicheId } = data;
+    const problem = await tx.problem.create({
+      data: {
+        title,
+        initialStatement,
+        origin,
+        notes,
+        nicheId,
+        userId,
+        nicheSnapshot: niche?.name,
+        ...audience,
+      },
+    });
+    await tx.problemAudienceRevision.create({
+      data: {
+        userId,
+        problemId: problem.id,
+        audienceContextId: audience.audienceContextId,
+        version: 1,
+        rationale: "Initial audience scope.",
+      },
+    });
+    return problem.id;
   });
 }
 export async function linkEvidence(
@@ -142,12 +174,6 @@ export async function recordObservation(
   const data = sourcedObservationSchema.parse(input);
   return captureOnce(userId, key, input, async (tx) => {
     if (problemId) await requireProblem(tx, userId, problemId);
-    let company = await resolveCompany(
-      tx,
-      userId,
-      data.companyId,
-      data.companyName,
-    );
     let niche = data.nicheId
       ? await tx.niche.findFirst({
           where: { id: data.nicheId, userId, archivedAt: null },
@@ -175,7 +201,11 @@ export async function recordObservation(
         throw new BusinessError(
           "Choose the current version of an available interaction.",
         );
-      if (company && source.companyId && company.id !== source.companyId)
+      if (
+        data.companyId &&
+        source.companyId &&
+        data.companyId !== source.companyId
+      )
         throw new BusinessError(
           "Observation and source must refer to the same company.",
         );
@@ -183,11 +213,25 @@ export async function recordObservation(
         throw new BusinessError(
           "Observation and source must refer to the same niche.",
         );
-      company ??= source.company;
-      niche ??= source.niche;
+      niche = source.niche;
     }
     if (data.sourceKind === "PUBLIC_SOURCE" && !data.sourceUrl)
       throw new BusinessError("Keep the public source URL.");
+    if (source && data.audienceOverride && !data.audienceReason)
+      throw new BusinessError("Explain the narrower audience attribution.");
+    const audience =
+      source && !data.audienceOverride
+        ? audienceSnapshot(source)
+        : await captureAudience(tx, userId, data, niche?.id);
+    if (
+      source &&
+      data.audienceOverride &&
+      audience.identityKind === "UNSPECIFIED"
+    )
+      Object.assign(audience, {
+        ...audienceSnapshot(source),
+        audienceContextId: audience.audienceContextId,
+      });
     const observation = await tx.observation.create({ data: { userId } });
     const revision = await tx.observationRevision.create({
       data: {
@@ -198,15 +242,17 @@ export async function recordObservation(
         wordingMode: data.wordingMode,
         statement: data.statement,
         observedAt: data.observedAt,
-        companyId: company?.id,
-        companySnapshot: company?.name,
+        ...audience,
         nicheId: niche?.id,
         nicheSnapshot: niche?.name,
         sourceKind: data.sourceKind,
         interactionId: source?.interactionId,
         interactionRevisionId: source?.id,
         sourceUrl: data.sourceKind === "PUBLIC_SOURCE" ? data.sourceUrl : null,
-        sourceDescription: data.sourceDescription,
+        sourceDescription:
+          data.audienceOverride && data.audienceReason
+            ? `${data.sourceDescription}\nAudience attribution: ${data.audienceReason}`
+            : data.sourceDescription,
       },
     });
     if (problemId) {
@@ -255,10 +301,15 @@ export async function assessProblem(
       throw new BusinessError(
         "A supported judgment needs at least one supporting source and a clear scope.",
       );
+    const audienceRevision = await tx.problemAudienceRevision.findFirst({
+      where: { userId, problemId },
+      orderBy: { version: "desc" },
+    });
     const assessment = await tx.problemAssessment.create({
       data: {
         userId,
         problemId,
+        audienceRevisionId: audienceRevision?.id,
         state: data.state,
         scope: data.scope,
         rationale: data.rationale,
@@ -321,5 +372,46 @@ export async function reconfirmEvidence(
       where: { id: { in: ids }, userId, problemId },
       data: { confirmedAt: new Date() },
     });
+  });
+}
+
+export async function changeProblemAudience(
+  userId: string,
+  problemId: string,
+  key: string,
+  input: unknown,
+) {
+  const data = audienceContextSchema
+    .extend({
+      expectedVersion: z.number().int().positive(),
+      rationale: z.string().trim().min(1).max(6000),
+    })
+    .parse(input);
+  return captureOnce(userId, key, input, async (tx) => {
+    await tx.$queryRaw`SELECT id FROM problem WHERE id=${problemId} AND "userId"=${userId} FOR UPDATE`;
+    await requireProblem(tx, userId, problemId);
+    const latest = await tx.problemAudienceRevision.findFirst({
+      where: { userId, problemId },
+      orderBy: { version: "desc" },
+    });
+    if (latest?.version !== data.expectedVersion)
+      throw new BusinessError(
+        "The audience scope changed. Review its latest version.",
+      );
+    const context = await captureAudienceContext(tx, userId, data);
+    await tx.problemAudienceRevision.create({
+      data: {
+        userId,
+        problemId,
+        version: data.expectedVersion + 1,
+        audienceContextId: context.id,
+        rationale: data.rationale,
+      },
+    });
+    await tx.problem.update({
+      where: { id_userId: { id: problemId, userId } },
+      data: { audienceContextId: context.id },
+    });
+    return problemId;
   });
 }

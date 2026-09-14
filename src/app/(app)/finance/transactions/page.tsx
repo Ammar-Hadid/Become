@@ -4,6 +4,8 @@ export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{
+    engagement?: string;
+    exploration?: string;
     company?: string;
     offer?: string;
     cursor?: string;

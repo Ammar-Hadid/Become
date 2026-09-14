@@ -2,6 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { observationInputSchema } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 import { humanize } from "@/features/entrepreneurship/shared/utils/business.util";
+import {
+  ObservationAudienceAttributionFields,
+  type ObservationAudienceAttribution,
+} from "@/features/entrepreneurship/observations/components/observation-audience-attribution.component";
+import type { AudienceOption } from "@/features/entrepreneurship/audiences/types/audience.types";
 type Entry = {
   id: string;
   kind: string;
@@ -11,17 +16,25 @@ type Entry = {
   problemId: string;
   stance: string;
   explanation: string;
+  audience?: ObservationAudienceAttribution;
+  audienceReason?: string;
 };
 export function ObservationEntries({
   problems,
+  segments = [],
 }: {
   problems: { id: string; name: string }[];
+  segments?: AudienceOption[];
 }) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const root = useRef<HTMLDivElement>(null);
-  function update(id: string, field: string, value: string) {
+  function update(
+    id: string,
+    field: string,
+    value: string | ObservationAudienceAttribution | undefined,
+  ) {
     setEntries((rows) =>
       rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)),
     );
@@ -31,11 +44,17 @@ export function ObservationEntries({
     if (!form) return;
     function reveal(id: string) {
       setExpanded((rows) => [...new Set([...rows, id])]);
-      requestAnimationFrame(() =>
-        root.current
-          ?.querySelector<HTMLElement>(`[data-entry="${id}"] textarea`)
-          ?.focus(),
-      );
+      requestAnimationFrame(() => {
+        const region = root.current?.querySelector<HTMLElement>(
+          `[data-entry="${id}"]`,
+        );
+        region
+          ?.querySelectorAll<HTMLDetailsElement>("details")
+          .forEach((details) => {
+            details.open = true;
+          });
+        region?.querySelector<HTMLElement>("textarea")?.focus();
+      });
     }
     const validate = (event: Event) => {
       const data = new FormData(form!);
@@ -48,7 +67,10 @@ export function ObservationEntries({
           ...entry,
           sourceDescription: entry.sourceDescription || fallback,
         });
-        if (!result.success)
+        if (entry.audience && !entry.audienceReason?.trim()) {
+          issues[entry.id] =
+            `Observation ${i + 1}: explain why this narrower audience belongs to the source.`;
+        } else if (!result.success)
           issues[entry.id] =
             entry.problemId && !entry.explanation.trim()
               ? `Observation ${i + 1}: explain how this statement relates to “${problems.find((p) => p.id === entry.problemId)?.name ?? "the selected problem"}”.`
@@ -173,6 +195,47 @@ export function ObservationEntries({
                 description.
               </span>
             </label>
+            <details className="business-disclosure">
+              <summary>Audience attribution</summary>
+              <div>
+                <label className="business-choice-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(entry.audience)}
+                    onChange={(event) =>
+                      update(
+                        entry.id,
+                        "audience",
+                        event.target.checked
+                          ? {
+                              marketType: "UNKNOWN",
+                              segmentIds: [],
+                              audienceDescription: "",
+                            }
+                          : undefined,
+                      )
+                    }
+                  />
+                  This observation concerns a narrower audience
+                </label>
+                {entry.audience ? (
+                  <ObservationAudienceAttributionFields
+                    value={entry.audience}
+                    reason={entry.audienceReason ?? ""}
+                    segments={segments}
+                    onChange={(value) => update(entry.id, "audience", value)}
+                    onReasonChange={(value) =>
+                      update(entry.id, "audienceReason", value)
+                    }
+                  />
+                ) : (
+                  <p className="business-hint">
+                    Keeps the interaction or outcome's audience and source
+                    identity.
+                  </p>
+                )}
+              </div>
+            </details>
             <label className="field-label">
               Related problem · optional
               <select

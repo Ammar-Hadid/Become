@@ -13,10 +13,30 @@ const scopes: Record<CriterionDraft["metric"], string[]> = {
   CONTENT_PUBLICATIONS: ["contentId", "channelId"],
   MANUAL: [],
   WORK_SOURCE_INCOME: ["workSourceId"],
-  BUSINESS_RECEIPTS: ["companyId", "offerRevisionId"],
+  BUSINESS_RECEIPTS: [
+    "companyId",
+    "offerRevisionId",
+    "personId",
+    "segmentId",
+    "nicheId",
+    "marketType",
+  ],
   NEW_RECURRING_COMPANY: ["companyId", "offerRevisionId"],
-  CONVERSATIONS: ["companyId", "nicheId"],
-  CONVERSATION_COMPANIES: ["companyId", "nicheId"],
+  CONVERSATIONS: [
+    "companyId",
+    "nicheId",
+    "personId",
+    "segmentId",
+    "marketType",
+  ],
+  CONVERSATION_COMPANIES: ["companyId", "nicheId", "segmentId", "marketType"],
+  CONVERSATION_PEOPLE: [
+    "personId",
+    "companyId",
+    "nicheId",
+    "segmentId",
+    "marketType",
+  ],
   SESSION_TIME: [
     "contentId",
     "domainId",
@@ -40,6 +60,8 @@ const referenceKeys = [
   "savingsGoalId",
   "contentId",
   "channelId",
+  "personId",
+  "segmentId",
 ] as const;
 export async function validateCriterion(
   tx: DirectionTx,
@@ -55,7 +77,11 @@ export async function validateCriterion(
       field(key, "This source does not qualify this metric.");
   if (
     data.selectedOutreachOnly &&
-    !["CONVERSATIONS", "CONVERSATION_COMPANIES"].includes(data.metric)
+    ![
+      "CONVERSATIONS",
+      "CONVERSATION_COMPANIES",
+      "CONVERSATION_PEOPLE",
+    ].includes(data.metric)
   )
     field(
       "selectedOutreachOnly",
@@ -111,6 +137,22 @@ export async function validateCriterion(
         })) as (typeof rows)[number])
       : null,
   );
+  rows.push(
+    data.personId
+      ? ((await tx.person.findFirst({
+          where: { id: data.personId, userId },
+        })) as (typeof rows)[number])
+      : null,
+  );
+  rows.push(
+    data.segmentId
+      ? ((await tx.audienceSegment.findFirst({
+          where: { id: data.segmentId, userId },
+        })) as (typeof rows)[number])
+      : null,
+  );
+  if (data.marketType && !scopes[data.metric].includes("marketType"))
+    field("marketType", "Buyer context does not qualify this metric.");
   if (
     data.contentFormat &&
     !["CONTENT_VARIANTS_CREATED", "CONTENT_PUBLICATIONS"].includes(data.metric)
@@ -144,8 +186,18 @@ export async function validateCriterion(
   });
   if (data.metric === "WORK_SOURCE_INCOME" && !data.workSourceId)
     field("workSourceId", "Choose the exact WorkSource whose income counts.");
-  if (data.metric === "BUSINESS_RECEIPTS" && !data.companyId)
-    field("companyId", "Choose the company whose attributed receipts count.");
+  if (
+    data.metric === "BUSINESS_RECEIPTS" &&
+    !data.companyId &&
+    !data.personId &&
+    !data.nicheId &&
+    !data.segmentId &&
+    !data.offerRevisionId
+  )
+    field(
+      "nicheId",
+      "Choose an exploration, recipient, segment or offer whose attributed receipts count.",
+    );
   if (data.metric === "SAVINGS_GOAL" && !data.savingsGoalId)
     field("savingsGoalId", "Choose an existing Finance savings goal.");
   if (data.metric === "ENGINEERING_PROJECT_COMPLETED") {
@@ -292,6 +344,9 @@ export async function saveCriteria(
       baselineAssertions: baselineAssertions ?? [],
       workSourceId: rest.workSourceId ?? null,
       companyId: rest.companyId ?? null,
+      personId: rest.personId ?? null,
+      segmentId: rest.segmentId ?? null,
+      marketType: rest.marketType ?? null,
       offerRevisionId: rest.offerRevisionId ?? null,
       nicheId: rest.nicheId ?? null,
       projectId: rest.projectId ?? null,

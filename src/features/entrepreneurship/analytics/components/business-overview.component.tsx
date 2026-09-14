@@ -4,7 +4,10 @@ import { DateTime } from "luxon";
 import { ArrowUpRight, Compass, Quote } from "lucide-react";
 import { getBusinessOverview } from "@/features/entrepreneurship/analytics/queries/business-overview.query";
 import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
-import { InteractionForm } from "@/features/entrepreneurship/interactions/components/interaction-form.component";
+import { EvidenceCapture } from "@/features/entrepreneurship/evidence/components/evidence-capture.component";
+import { AudienceMetrics } from "@/features/entrepreneurship/analytics/components/audience-metrics.component";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
+import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import { FollowUpRecord } from "@/features/entrepreneurship/follow-ups/components/follow-up.component";
 import { BusinessPeriodControl } from "@/features/entrepreneurship/analytics/components/business-period-control.component";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -46,13 +49,13 @@ export async function BusinessOverview({
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">Direction, grounded</p>
-          <h2>Closer to the people. Clearer on the problem.</h2>
+          <h2>What are you learning across explorations?</h2>
           <p>
             A working picture of what you’re exploring, hearing and choosing
             next.
           </p>
         </div>
-        <InteractionForm {...options} />
+        <EvidenceCapture {...options} />
       </header>
       <div className="business-overview-grid business-dashboard-grid">
         <section className="business-zone business-zone--primary">
@@ -61,18 +64,15 @@ export async function BusinessOverview({
               <Compass aria-hidden="true" />
               In exploration
             </h3>
-            <Link
-              className="business-text-link"
-              href="/entrepreneurship/market"
-            >
-              Open Market ↗
+            <Link className="business-text-link" href="/entrepreneurship">
+              Open explorations ↗
             </Link>
           </div>
           {data.niches.length ? (
             data.niches.map((niche) => (
               <Link
                 className="business-exploration"
-                href={`/entrepreneurship/market/niches/${niche.id}`}
+                href={`/entrepreneurship/explorations/${niche.id}`}
                 key={niche.id}
               >
                 <span className="business-kicker">
@@ -84,21 +84,21 @@ export async function BusinessOverview({
                 </h3>
                 <p>{niche.scope ?? "The scope is still taking shape."}</p>
                 <span className="business-meta">
-                  {niche._count.companies} companies linked
+                  <ExplorationDirectionSummary
+                    marketFocus={niche.marketFocus}
+                    marketConclusion={niche.marketConclusion}
+                  />
                 </span>
               </Link>
             ))
           ) : (
             <div className="business-exploration">
-              <h3>Pick a corner of the market.</h3>
+              <h3>Begin with a question.</h3>
               <p>
-                A niche gives your questions a setting. Start narrow enough to
-                meet the people in it.
+                An exploration gives your questions a setting. Start narrow
+                enough to meet the people in it.
               </p>
-              <Link
-                className="business-text-link"
-                href="/entrepreneurship/market"
-              >
+              <Link className="business-text-link" href="/entrepreneurship">
                 Begin an exploration →
               </Link>
             </div>
@@ -144,7 +144,7 @@ export async function BusinessOverview({
             From the market
           </h3>
           <Link
-            href="/entrepreneurship/interactions"
+            href="/entrepreneurship/evidence"
             className="business-text-link"
           >
             Read the journal ↗
@@ -155,7 +155,7 @@ export async function BusinessOverview({
             {data.voice.map((observation) => (
               <article key={observation.id}>
                 <p className="business-meta">
-                  {observation.companySnapshot ?? "Company not recorded"} ·{" "}
+                  <AudienceSummary {...observation} /> ·{" "}
                   {humanize(observation.wordingMode)}
                 </p>
                 <blockquote>{observation.statement}</blockquote>
@@ -202,32 +202,40 @@ export async function BusinessOverview({
           default="motion-data-recompose"
         >
           <div>
-            <div className="business-facts">
+            <AudienceMetrics facts={data.facts.audience} />
+            <details className="business-disclosure mt-xl">
+              <summary>
+                Business outreach & individual proposal measures
+              </summary>
               <div>
-                <strong>{outbound?.companies ?? 0}</strong>
-                <span>Companies sent outreach</span>
-                <small>
-                  {outbound?.count ?? 0} actual outbound interactions
-                </small>
+                <div className="business-facts">
+                  <div>
+                    <strong>{outbound?.companies ?? 0}</strong>
+                    <span>Businesses sent outreach</span>
+                    <small>
+                      {outbound?.count ?? 0} actual outbound interactions
+                    </small>
+                  </div>
+                  <div>
+                    <strong>{conversations?.count ?? 0}</strong>
+                    <span>Conversations recorded</span>
+                    <small>
+                      {conversations?.companies ?? 0} businesses represented
+                    </small>
+                  </div>
+                  <div>
+                    <strong>{data.facts.offersProposed}</strong>
+                    <span>Individual offers proposed</span>
+                    <small>Distinct offers, not revision count</small>
+                  </div>
+                  <div>
+                    <strong>{data.facts.companiesAdded}</strong>
+                    <span>Businesses added</span>
+                    <small>By record creation date</small>
+                  </div>
+                </div>
               </div>
-              <div>
-                <strong>{conversations?.count ?? 0}</strong>
-                <span>Conversations recorded</span>
-                <small>
-                  {conversations?.companies ?? 0} companies represented
-                </small>
-              </div>
-              <div>
-                <strong>{data.facts.offersProposed}</strong>
-                <span>Offers proposed</span>
-                <small>Distinct offers, not revision count</small>
-              </div>
-              <div>
-                <strong>{data.facts.companiesAdded}</strong>
-                <span>Companies added</span>
-                <small>By record creation date</small>
-              </div>
-            </div>
+            </details>
             <div className="business-supporting-grid">
               <section>
                 <h3>Time behind the work</h3>
@@ -280,13 +288,15 @@ export async function BusinessOverview({
                   ))
                 ) : (
                   <p className="business-inline-empty">
-                    No confirmed business receipt attribution in this period.
+                    No confirmed Entrepreneurship receipt attribution in this
+                    period.
                   </p>
                 )}
                 <p className="business-hint">
                   Confirmed attributed amounts, by cash-received date and
-                  currency. One receipt may span companies. No projected income,
-                  currency conversion or added session-attribution totals.
+                  currency. One receipt may span recipients. No projected
+                  income, currency conversion or added session-attribution
+                  totals.
                 </p>
               </section>
             </div>
@@ -303,10 +313,21 @@ export async function BusinessOverview({
                 </p>
                 <div className="business-evidence-counts">
                   <span>
+                    {data.previousFacts.audience.evidenceEntries} evidence
+                    entries
+                  </span>
+                  <span>
+                    {data.previousFacts.audience.peopleContacted} identified
+                    people contacted
+                  </span>
+                  <span>
+                    {data.previousFacts.audience.responses} recipient responses
+                  </span>
+                  <span>
                     {data.previousFacts.interactions.find(
                       (i) => i.kind === "OUTREACH_SENT",
                     )?.companies ?? 0}{" "}
-                    companies sent outreach
+                    businesses sent outreach
                   </span>
                   <span>
                     {data.previousFacts.interactions.find(

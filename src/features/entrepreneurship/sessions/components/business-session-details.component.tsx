@@ -13,11 +13,12 @@ export function BusinessSessionDetails({
       <div className="border-border mt-lg gap-md pt-lg grid border-t">
         <div>
           <p className="text-body-sm text-text-muted">
-            Company and exploration
+            Recorded exploration & optional business
           </p>
           <p className="text-body text-text-secondary mt-xs">
-            {session.businessCompanySnapshot ?? "No company recorded"} ·{" "}
-            {session.businessNicheSnapshot ?? "No niche recorded"}
+            {session.businessNicheSnapshot ?? "No exploration recorded"}
+            {session.businessCompanySnapshot &&
+              ` · ${session.businessCompanySnapshot}`}
           </p>
         </div>
         <div>

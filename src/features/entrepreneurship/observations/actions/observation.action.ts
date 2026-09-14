@@ -12,6 +12,9 @@ export async function correctObservationAction(
   return businessMutation((userId) =>
     correctObservation(userId, id, String(form.get("captureKey")), {
       ...Object.fromEntries(form),
+      segmentIds: form.getAll("segmentIds"),
+      segmentNames: form.getAll("segmentNames").map(String),
+      audienceOverride: form.get("audienceOverride") === "on",
       expectedVersion,
       meaningUnchanged: form.get("meaningUnchanged") === "on",
     }),

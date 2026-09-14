@@ -8,6 +8,7 @@ import {
 import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { ProblemForm } from "@/features/entrepreneurship/problems/components/problem-forms.component";
 import { humanize } from "@/features/entrepreneurship/shared/utils/business.util";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 export async function ProblemList({
   userId,
   cursor,
@@ -34,7 +35,7 @@ export async function ProblemList({
             Contradictions belong here too.
           </p>
         </div>
-        <ProblemForm niches={options.niches} />
+        <ProblemForm niches={options.niches} segments={options.segments} />
       </header>
       <section
         className={`business-zone business-zone--ledger${archived ? "business-zone--archived" : ""}`}
@@ -69,7 +70,7 @@ export async function ProblemList({
                   <div className="business-record-heading">
                     <div>
                       <p className="business-meta">
-                        {problem.nicheSnapshot ?? "No niche"}
+                        <AudienceSummary {...problem} />
                       </p>
                       <h3>{problem.title}</h3>
                     </div>
@@ -85,22 +86,28 @@ export async function ProblemList({
                   <p>{problem.initialStatement}</p>
                   <dl className="business-record-facts">
                     <div>
-                      <dd>{counts.supporting}</dd>
-                      <dt>Supporting companies</dt>
+                      <dd>{counts.supportingSources}</dd>
+                      <dt>Supporting source links</dt>
                     </div>
                     <div>
-                      <dd>{counts.contradicting}</dd>
-                      <dt>Contradicting companies</dt>
+                      <dd>{counts.contradictingSources}</dd>
+                      <dt>Contradicting source links</dt>
                     </div>
                     <div>
-                      <dd>{counts.total}</dd>
-                      <dt>Companies represented</dt>
+                      <dd>{counts.people}</dd>
+                      <dt>Identified people represented</dt>
                     </div>
                     <div>
                       <dd>{counts.sources}</dd>
                       <dt>Current source links</dt>
                     </div>
                   </dl>
+                  <p className="business-hint">
+                    {counts.businesses} businesses represented ·{" "}
+                    {counts.anonymous} source links without identified people or
+                    businesses · {counts.aggregate} aggregate sources. Several
+                    links can come from one source.
+                  </p>
                   {problem.evidence.some(
                     (e) => evidenceCondition(e) !== "CURRENT",
                   ) && (

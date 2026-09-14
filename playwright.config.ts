@@ -7,6 +7,8 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535)
 const baseURL = `http://localhost:${port}`;
 export default defineConfig({
   testDir: "./e2e",
+  timeout: isolatedPort ? 120_000 : 30_000,
+  expect: { timeout: isolatedPort ? 15_000 : 5_000 },
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

@@ -14,6 +14,8 @@ export type DirectionOptionKind =
   | "season"
   | "domain"
   | "company"
+  | "person"
+  | "segment"
   | "niche"
   | "project"
   | "workSource"

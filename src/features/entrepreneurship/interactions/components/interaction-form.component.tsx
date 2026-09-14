@@ -9,7 +9,11 @@ import { useState } from "react";
 import { useBusinessRouter as useRouter } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import {
+  AudienceFields,
+  type AudienceFieldValue,
+  type AudienceOption,
+} from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import {
   BusinessField,
   BusinessFormSection,
@@ -18,7 +22,6 @@ import {
 import {
   logInteractionAction,
   correctInteractionAction,
-  searchCompaniesAction,
 } from "@/features/entrepreneurship/interactions/actions/interaction.action";
 import {
   interactionKinds,
@@ -30,7 +33,7 @@ import {
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
 
-export type InteractionFormValue = {
+export type InteractionFormValue = AudienceFieldValue & {
   id: string;
   version: number;
   kind: string;
@@ -46,6 +49,8 @@ export type InteractionFormValue = {
 };
 export function CaptureFields({
   companies,
+  people = [],
+  segments = [],
   niches,
   problems,
   replies,
@@ -55,8 +60,12 @@ export function CaptureFields({
   respondsTo,
   sourceNicheId,
   prefill,
+  conversationOnly = false,
+  initialKind,
 }: {
   companies: BusinessOption[];
+  people?: BusinessOption[];
+  segments?: AudienceOption[];
   niches: BusinessOption[];
   problems: BusinessOption[];
   replies: BusinessOption[];
@@ -65,6 +74,8 @@ export function CaptureFields({
   companyName?: string;
   respondsTo?: string;
   sourceNicheId?: string | null;
+  conversationOnly?: boolean;
+  initialKind?: string;
   prefill?: {
     summary: string;
     date: string;
@@ -95,20 +106,28 @@ export function CaptureFields({
         title="The event"
         description="Start with what happened, when, and who it involved."
       >
-        <div className="gap-lg grid grid-cols-2">
-          <BusinessSelect
-            label="What happened?"
-            name="kind"
-            value={
-              value?.kind ?? (respondsTo ? "REPLY_RECEIVED" : "CONVERSATION")
-            }
-          >
-            {interactionKinds.map((kind) => (
-              <option key={kind} value={kind}>
-                {humanize(kind)}
-              </option>
-            ))}
-          </BusinessSelect>
+        <div
+          className={`gap-lg grid${conversationOnly ? "" : "sm:grid-cols-2"}`}
+        >
+          {conversationOnly ? (
+            <input type="hidden" name="kind" value="CONVERSATION" />
+          ) : (
+            <BusinessSelect
+              label="What happened?"
+              name="kind"
+              value={
+                value?.kind ??
+                initialKind ??
+                (respondsTo ? "REPLY_RECEIVED" : "CONVERSATION")
+              }
+            >
+              {interactionKinds.map((kind) => (
+                <option key={kind} value={kind}>
+                  {humanize(kind)}
+                </option>
+              ))}
+            </BusinessSelect>
+          )}
           <BusinessField
             label="Date"
             name="occurredAt"
@@ -124,17 +143,17 @@ export function CaptureFields({
           required
           value={value?.summary ?? prefill?.summary}
         />
-        <ReusableEntityCombobox
-          label="Company"
-          entityName="company"
-          idFieldName="companyId"
-          queryFieldName="companyName"
-          options={companies}
-          initialId={value?.companyId ?? companyId}
-          initialName={value?.companyName ?? companyName}
-          searchAction={searchCompaniesAction}
-          deferCreation
-          placeholder="Find or add a company…"
+        <AudienceFields
+          allowAggregate={false}
+          people={people}
+          segments={segments}
+          companies={companies}
+          value={
+            value ??
+            (companyId
+              ? { companyId, companyName, identityKind: "BUSINESS" }
+              : undefined)
+          }
         />
       </BusinessFormSection>
       <details className="business-disclosure" open={value ? true : undefined}>
@@ -152,7 +171,7 @@ export function CaptureFields({
             ))}
           </BusinessSelect>
           <BusinessSelect
-            label="Niche · optional"
+            label="Exploration · optional"
             name="nicheId"
             value={
               value
@@ -166,7 +185,7 @@ export function CaptureFields({
                       : (exploration?.id ?? "")
             }
           >
-            <option value="">No niche</option>
+            <option value="">No exploration</option>
             {niches.map((niche) => (
               <option key={niche.id} value={niche.id}>
                 {niche.name}
@@ -205,7 +224,7 @@ export function CaptureFields({
       </details>
       {!value && (
         <>
-          <ObservationEntries problems={problems} />
+          <ObservationEntries problems={problems} segments={segments} />
           <details className="business-disclosure">
             <summary>Choose a next action</summary>
             <div>
@@ -229,8 +248,8 @@ export function CaptureFields({
             <strong>Correcting the recorded event</strong>
             <p>Current summary: {value.summary}</p>
             <p>
-              Changing company, date, channel, participants or reply links marks
-              affected evidence for review. Notes and company labels do not.
+              Changing audience, identity, date, channel, participants or reply
+              links may mark affected evidence for review.
             </p>
           </div>
           <BusinessField

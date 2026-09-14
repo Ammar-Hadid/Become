@@ -1,3 +1,12 @@
+import {
+  getAudienceRecords,
+  getAudienceDetail,
+} from "@/features/entrepreneurship/audiences/queries/audience.query";
+import { AudiencePage } from "@/features/entrepreneurship/audiences/components/audience-page.component";
+import { AudienceDetail } from "@/features/entrepreneurship/audiences/components/audience-detail.component";
+import { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import { EvidencePage } from "@/features/entrepreneurship/evidence/components/evidence-page.component";
+import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { notFound } from "next/navigation";
 import { getExploration } from "@/features/entrepreneurship/explorations/queries/exploration.query";
 import { ExplorationOverview } from "@/features/entrepreneurship/explorations/components/exploration-overview.component";
@@ -11,7 +20,6 @@ import { OfferList } from "@/features/entrepreneurship/offers/components/offer-l
 import { OfferDetail } from "@/features/entrepreneurship/offers/components/offer-detail.component";
 import { ObservationDetail } from "@/features/entrepreneurship/observations/components/observation-detail.component";
 
-
 export async function ExplorationPage({
   userId,
   nicheId,
@@ -23,7 +31,6 @@ export async function ExplorationPage({
   view?: string[];
   query: Record<string, string | string[] | undefined>;
 }) {
-
   if (!(await getExploration(userId, nicheId)) || view.length > 2) notFound();
 
   const [section, id] = view;
@@ -40,6 +47,52 @@ export async function ExplorationPage({
   };
 
   if (!section) return <ExplorationOverview {...common} />;
+  if (section === "audience" && !id) {
+    const kind = value("kind") === "person" ? "person" : "segment";
+    const data = await getAudienceRecords(userId, {
+      ...list,
+      kind,
+      search: value("q"),
+    });
+    return (
+      <AudiencePage
+        data={data}
+        kind={kind}
+        nicheId={nicheId}
+        search={value("q")}
+        archived={list.archived}
+      />
+    );
+  }
+  if ((section === "people" || section === "segments") && id) {
+    const kind = section === "people" ? "person" : "segment";
+    const data = await getAudienceDetail(userId, kind, id, nicheId);
+    if (!data) notFound();
+    return <AudienceDetail data={data} kind={kind} nicheId={nicheId} />;
+  }
+  if (section === "evidence" && !id) {
+    const filters = {
+      nicheId,
+      cursor: value("cursor"),
+      sourceKind: value("sourceKind"),
+      marketType: value("marketType"),
+      segmentId: value("segmentId"),
+      personId: value("personId"),
+      companyId: value("companyId"),
+    };
+    const [data, options] = await Promise.all([
+      getEvidenceJournal(userId, filters),
+      getInteractionOptions(userId, nicheId),
+    ]);
+    return (
+      <EvidencePage
+        data={data}
+        options={options}
+        nicheId={nicheId}
+        query={filters}
+      />
+    );
+  }
 
   if (section === "companies")
     return id ? (

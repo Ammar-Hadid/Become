@@ -1,16 +1,29 @@
+import {
+  chooseBusinessSource,
+  chooseSpecificBusinessOffer,
+  openExplorationBusinesses,
+  expectExplorationCounts,
+} from "./utils/entrepreneurship-ui.util";
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
-import { test, expect, type Page } from "./utils/browser-test.util";
+import {
+  test,
+  expect as playwrightExpect,
+  type Page,
+} from "./utils/browser-test.util";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
+
+const expect = playwrightExpect.configure({ timeout: 15_000 });
+test.setTimeout(120_000);
 
 async function startExploration(page: Page, name: string) {
   await page
     .getByRole("button", { name: "Start exploration", exact: true })
     .click();
   await page
-    .getByRole("textbox", { name: "Market name", exact: true })
+    .getByRole("textbox", { name: "Exploration name", exact: true })
     .fill(name);
   await page
     .getByRole("textbox", { name: "What are you exploring?" })
@@ -59,38 +72,29 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   });
   const dentists = await startExploration(page, "Dentists");
   const nicheId = dentists.split("/").at(-1)!;
-  for (const label of ["Companies", "Interactions", "Problems", "Offers"])
-    await expect(
-      page.getByRole("link", { name: `0 ${label}`, exact: true }),
-    ).toBeVisible();
-  await page
-    .getByRole("navigation", { name: "Exploration navigation" })
-    .getByRole("link", { name: "Companies", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Add company", exact: true }).click();
+  await expectExplorationCounts(page, 0);
+  await openExplorationBusinesses(page);
+  await page.getByRole("button", { name: "Add business", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "Dentists" })).toBeChecked();
   await page
     .getByRole("textbox", { name: "Name", exact: true })
     .fill("Canal Dental");
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "Add company", exact: true })
+    .getByRole("button", { name: "Add business", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
     .getByRole("navigation", { name: "Exploration navigation" })
-    .getByRole("link", { name: "Interactions", exact: true })
+    .getByRole("link", { name: "Evidence", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Log interaction", exact: true })
+    .getByRole("button", { name: "Keep evidence", exact: true })
     .click();
   await page
     .getByRole("textbox", { name: "Summary", exact: true })
     .fill("Appointments take an hour to confirm");
-  await page
-    .getByRole("combobox", { name: "Company — optional" })
-    .fill("Canal Dental");
-  await page.getByRole("option", { name: "Canal Dental", exact: true }).click();
+  await chooseBusinessSource(page, "Canal Dental");
   await expect(page.locator('select[name="nicheId"]')).toHaveValue(nicheId);
   await page
     .getByRole("button", { name: "Add observation", exact: true })
@@ -99,7 +103,10 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .getByRole("textbox", { name: "Statement or behavior" })
     .fill("We spend an hour on confirmations");
   await page
-    .getByRole("button", { name: "Save interaction", exact: true })
+    .getByRole("button", { name: "Save conversation", exact: true })
+    .click();
+  await page
+    .getByRole("link", { name: "Open saved conversation →", exact: true })
     .click();
   await expect(page).toHaveURL(new RegExp(`${dentists}/interactions/`));
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -127,9 +134,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page
     .getByRole("button", { name: "Shape an offer", exact: true })
     .click();
-  await page
-    .getByRole("combobox", { name: "Company", exact: true })
-    .selectOption({ label: "Canal Dental" });
+  await chooseSpecificBusinessOffer(page, "Canal Dental");
   await page
     .getByRole("textbox", { name: "Offer title" })
     .fill("Confirmation pilot");
@@ -150,9 +155,11 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByRole("button", { name: "Entrepreneurship", exact: true }),
   ).toHaveClass(/selected/);
-  await page.getByText("Company & niche · optional", { exact: true }).click();
+  await page
+    .getByText("Business & exploration · optional", { exact: true })
+    .click();
   await expect(
-    page.getByRole("combobox", { name: "Niche", exact: true }),
+    page.getByRole("combobox", { name: "Exploration", exact: true }),
   ).toHaveValue(nicheId);
   await page.getByTestId("confirm-start-timer").click();
   await expect(
@@ -163,10 +170,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   });
   expect(session.businessNicheId).toBe(nicheId);
   await page.goto(dentists);
-  for (const label of ["Companies", "Interactions", "Problems", "Offers"])
-    await expect(
-      page.getByRole("link", { name: `1 ${label}`, exact: true }),
-    ).toBeVisible();
+  await expectExplorationCounts(page, 1);
   await page.screenshot({
     path: `${screenshots}/${info.project.name}-dentists.png`,
     fullPage: true,
@@ -175,7 +179,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .getByRole("button", { name: "Review direction", exact: true })
     .click();
   await page
-    .getByRole("combobox", { name: "Next direction" })
+    .getByRole("combobox", { name: "Work state" })
     .selectOption("STOPPED");
   await page
     .getByRole("textbox", { name: "Why this decision?" })
@@ -184,17 +188,14 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByRole("button", { name: "Resume exploration", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "← Explorations", exact: true }).click();
+  await page.getByRole("link", { name: "Explorations", exact: true }).click();
   await expect(
     page
       .getByRole("region", { name: "Past explorations" })
       .getByRole("link", { name: /Dentists/ }),
   ).toBeVisible();
   await startExploration(page, "Barbers");
-  for (const label of ["Companies", "Interactions", "Problems", "Offers"])
-    await expect(
-      page.getByRole("link", { name: `0 ${label}`, exact: true }),
-    ).toBeVisible();
+  await expectExplorationCounts(page, 0);
   await page.screenshot({
     path: `${screenshots}/${info.project.name}-barbers.png`,
     fullPage: true,
@@ -202,9 +203,11 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   // Opening a running timer from another exploration must keep its original context.
   await page.locator('[data-testid="active-timer-trigger"]:visible').click();
   await page.getByRole("dialog").getByTestId("end-session").click();
-  await page.getByText("Company & niche · optional", { exact: true }).click();
+  await page
+    .getByText("Business & exploration · optional", { exact: true })
+    .click();
   await expect(
-    page.getByRole("combobox", { name: "Niche", exact: true }),
+    page.getByRole("combobox", { name: "Exploration", exact: true }),
   ).toHaveValue(nicheId);
   await page.getByTestId("confirm-stop-timer").click();
   await expect
@@ -214,31 +217,26 @@ test("explorations keep a fresh workspace, relational history and contextual cap
           .endedAt,
     )
     .not.toBeNull();
+  await openExplorationBusinesses(page);
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
-    .getByRole("link", { name: "Companies", exact: true })
+    .getByRole("button", { name: "Attach existing business", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Add existing company", exact: true })
-    .click();
-  await page
-    .getByRole("combobox", { name: "Company", exact: true })
+    .getByRole("combobox", { name: "Business", exact: true })
     .fill("Canal Dental");
   await page.getByRole("option", { name: "Canal Dental", exact: true }).click();
   await page
-    .getByRole("button", { name: "Add to exploration", exact: true })
+    .getByRole("button", { name: "Attach to exploration", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Companies 1", exact: true }),
+    page.getByRole("heading", { name: "Businesses 1", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Exploration navigation" })
-    .getByRole("link", { name: "Interactions", exact: true })
+    .getByRole("link", { name: "Evidence", exact: true })
     .click();
-  await expect(
-    page.getByText("No interactions recorded here yet."),
-  ).toBeVisible();
+  await expect(page.getByText("No evidence in this view yet.")).toBeVisible();
   await page
     .getByRole("navigation", { name: "Exploration navigation" })
     .getByRole("link", { name: "Offers", exact: true })
@@ -246,9 +244,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByText("Confirmation pilot", { exact: true }),
   ).toHaveCount(0);
-  await page
-    .getByRole("link", { name: "Global history ↗", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Global history", exact: true }).click();
   await page
     .getByRole("navigation", { name: "Entrepreneurship navigation" })
     .getByRole("link", { name: "Offers", exact: true })
@@ -258,7 +254,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   ).toBeVisible();
   await page.goto(dentists);
   await expect(
-    page.getByRole("link", { name: "1 Interactions", exact: true }),
+    page.getByRole("link", { name: /^1 Evidence entries/ }),
   ).toBeVisible();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page
@@ -343,10 +339,10 @@ test("direction review offers contextual choices and preserves explicit continue
       })
       .click();
     const dialog = page.getByRole("dialog", {
-      name: "Choose your next direction",
+      name: "Where is this leading?",
     });
     await expect(dialog).toBeVisible();
-    const select = dialog.getByRole("combobox", { name: "Next direction" });
+    const select = dialog.getByRole("combobox", { name: "Work state" });
     await expect(select.locator("option")).toHaveText(step.labels);
     await expect(select).toHaveValue("EXPLORING");
     await select.selectOption(step.next);

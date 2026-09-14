@@ -1,8 +1,12 @@
+import { audienceInputSchema } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
+import { captureAudience } from "@/features/entrepreneurship/audiences/services/audience.service";
 import { z } from "zod";
 import { captureOnce } from "@/features/entrepreneurship/shared/services/capture.service";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { occurredDaySchema } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 const correction = z.object({
+  ...audienceInputSchema.shape,
+  audienceOverride: z.boolean().default(false),
   expectedVersion: z.number().int().positive(),
   statement: z.string().trim().min(1).max(6000),
   sourceDescription: z.string().trim().min(1).max(6000),
@@ -27,7 +31,11 @@ export async function correctObservation(
         "This observation changed. Your edits are preserved; review its latest version first.",
       );
     const prior = observation.revisions[0];
+    const audience = data.audienceOverride
+      ? await captureAudience(tx, userId, data, prior.nicheId)
+      : null;
     const materialChange =
+      data.audienceOverride ||
       data.observedAt.getTime() !== prior.observedAt.getTime() ||
       (!data.meaningUnchanged &&
         (data.statement !== prior.statement ||
@@ -38,6 +46,7 @@ export async function correctObservation(
     await tx.observationRevision.create({
       data: {
         ...values,
+        ...(audience ?? {}),
         version: observation.version + 1,
         statement: data.statement,
         sourceDescription: data.sourceDescription,

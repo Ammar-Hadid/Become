@@ -16,7 +16,10 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
     where,
     select: { storageKey: true },
   });
-  const scriptImages = await prisma.contentScriptImage.findMany({ where, select: { storageKey: true } });
+  const scriptImages = await prisma.contentScriptImage.findMany({
+    where,
+    select: { storageKey: true },
+  });
   const jobs = await prisma.seasonCotsSelection.findMany({
     where,
     select: { storageKey: true },
@@ -66,6 +69,8 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.content.deleteMany({ where });
       await tx.companyWorkSource.deleteMany({ where });
       await tx.companyNiche.deleteMany({ where });
+      await tx.personNiche.deleteMany({ where });
+      await tx.audienceSegmentNiche.deleteMany({ where });
       await tx.nicheDecision.deleteMany({ where });
       await tx.company.deleteMany({ where });
       await tx.niche.deleteMany({ where });
@@ -78,6 +83,9 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.counterparty.deleteMany({ where });
       await tx.engineeringProject.deleteMany({ where });
       await tx.technology.deleteMany({ where });
+      await tx.audienceContext.deleteMany({ where });
+      await tx.audienceSegment.deleteMany({ where });
+      await tx.person.deleteMany({ where });
       await tx.user.delete({ where: { id, email } });
     },
     { timeout: 15000 },

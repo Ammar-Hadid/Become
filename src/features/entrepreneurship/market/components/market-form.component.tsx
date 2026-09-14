@@ -32,12 +32,13 @@ export function MarketForm({
   niches?: BusinessOption[];
 }) {
   const exploration = useExploration();
+  const entityLabel = kind === "company" ? "business" : "exploration";
   return (
     <RecordDialog
       eyebrow="Market"
-      title={`${record ? "Edit" : "Add"} ${kind}`}
+      title={`${record ? "Edit" : "Add"} ${entityLabel}`}
       triggerIcon={record ? <Pencil aria-hidden="true" /> : undefined}
-      triggerLabel={record ? "Edit details" : `Add ${kind}`}
+      triggerLabel={record ? "Edit details" : `Add ${entityLabel}`}
       variant={kind === "niche" || record ? "secondary" : "primary"}
       description={
         kind === "company"
@@ -48,7 +49,7 @@ export function MarketForm({
       <RecordForm
         action={saveMarketAction.bind(null, kind, record?.id)}
         closeOnSuccess
-        submitLabel={record ? "Save details" : `Add ${kind}`}
+        submitLabel={record ? "Save details" : `Add ${entityLabel}`}
       >
         {record && (
           <input
@@ -59,7 +60,9 @@ export function MarketForm({
         )}
         <BusinessFormSection
           eyebrow={kind === "company" ? "Company context" : "Exploration"}
-          title={kind === "company" ? "The company" : "The market boundary"}
+          title={
+            kind === "company" ? "The business" : "The exploration boundary"
+          }
           description={
             kind === "company"
               ? "Keep identity and useful context together."
@@ -88,7 +91,9 @@ export function MarketForm({
               />
               {niches.length > 0 && (
                 <fieldset>
-                  <legend className="field-label">Niches · optional</legend>
+                  <legend className="field-label">
+                    Explorations · optional
+                  </legend>
                   <div className="business-checks">
                     {niches.map((niche) => (
                       <label key={niche.id}>

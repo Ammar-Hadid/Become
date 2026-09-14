@@ -1,3 +1,4 @@
+import { getReceiptHandoff } from "@/features/finance/business-receipts/queries/receipt-handoff.query";
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
@@ -57,6 +58,8 @@ export async function TransactionsPage({
 }: {
   userId: string;
   filters: {
+    engagement?: string;
+    exploration?: string;
     company?: string;
     offer?: string;
     cursor?: string;
@@ -76,23 +79,8 @@ export async function TransactionsPage({
       getCounterpartyOptions(userId),
       getFinanceWorkOptions(userId),
     ]);
-  const company = filters.company
-    ? await prisma.company.findFirst({
-        where: { id: filters.company, userId },
-        include: { workSources: true },
-      })
-    : null;
-  const offer =
-    company && filters.offer
-      ? await prisma.offer.findFirst({
-          where: { id: filters.offer, userId, companyId: company.id },
-        })
-      : null;
-  const returnPath = company
-    ? offer
-      ? `/entrepreneurship/offers/${offer.id}#receipts`
-      : `/entrepreneurship/market/companies/${company.id}#receipts`
-    : null;
+  const handoff = await getReceiptHandoff(userId, filters);
+  const returnPath = handoff?.returnPath ?? null;
   const next = new URLSearchParams(
     Object.entries(filters).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
@@ -110,12 +98,9 @@ export async function TransactionsPage({
       categories={categories}
       counterparties={counterparties}
       initial={{
-        type: company ? "INCOME" : "EXPENSE",
-        inflowKind: company ? "BUSINESS_REVENUE" : undefined,
-        workSourceId:
-          company?.workSources.length === 1
-            ? company.workSources[0].workSourceId
-            : undefined,
+        type: handoff ? "INCOME" : "EXPENSE",
+        inflowKind: handoff ? "BUSINESS_REVENUE" : undefined,
+        workSourceId: handoff?.workSourceId,
         amount: "",
         accountId: accounts[0].id,
         currency: accounts[0].currency,
@@ -128,12 +113,12 @@ export async function TransactionsPage({
 
   return (
     <>
-      {company && returnPath && (
+      {handoff && returnPath && (
         <p className="business-hint">
-          Recording a receipt for {company.name}. Save actual Income classified
+          Recording a receipt for {handoff.label}. Save actual Income classified
           as Business revenue or Paid work, then{" "}
           <Link className="business-text-link" href={returnPath}>
-            Return to {offer ? "offer" : "company"} to attribute receipt ↗
+            Return to {handoff.returnLabel} to attribute receipt ↗
           </Link>
           . Attribution requires a separate confirmation.
         </p>
@@ -181,8 +166,22 @@ export async function TransactionsPage({
         }
       >
         <form className="finance-filter-bar">
-          {company && <input type="hidden" name="company" value={company.id} />}
-          {offer && <input type="hidden" name="offer" value={offer.id} />}
+          {handoff?.companyId && (
+            <input type="hidden" name="company" value={handoff.companyId} />
+          )}
+          {handoff?.offerId && (
+            <input type="hidden" name="offer" value={handoff.offerId} />
+          )}
+          {handoff?.engagementId && (
+            <input
+              type="hidden"
+              name="engagement"
+              value={handoff.engagementId}
+            />
+          )}
+          {handoff?.nicheId && (
+            <input type="hidden" name="exploration" value={handoff.nicheId} />
+          )}
           <div className="finance-filter-label">
             <Filter aria-hidden="true" />
             <span>Filter</span>

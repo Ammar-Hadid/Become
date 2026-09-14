@@ -4,6 +4,12 @@ import { WorkSourceChoiceFields } from "@/features/entrepreneurship/market/compo
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import { ObservationEntries } from "@/features/entrepreneurship/observations/components/observation-entries.component";
 import { useState } from "react";
+import {
+  AudienceFields,
+  AudienceSummary,
+  type AudienceFieldValue,
+  type AudienceOption,
+} from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import { useBusinessRouter as useRouter } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
@@ -17,13 +23,15 @@ import {
   saveOfferAction,
   offerEventAction,
   offerContinuationAction,
+  addOfferResponseAction,
 } from "@/features/entrepreneurship/offers/actions/offer.action";
 import {
   businessToday,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
-type QuoteInitial = {
+type QuoteInitial = AudienceFieldValue & {
+  version: number;
   title: string;
   scope: string;
   terms: string | null;
@@ -33,23 +41,38 @@ type QuoteInitial = {
   unitLabel: string | null;
   intervalUnit: string | null;
   intervalCount: number | null;
+  mode?: string;
+  problems?: { problemId: string }[];
+  expiresOn?: Date | null;
 };
 function QuoteFields({
   companies,
+  people = [],
+  segments = [],
   problems,
   companyId,
   initial,
+  mode: initialMode,
 }: {
   companies: BusinessOption[];
+  people?: BusinessOption[];
+  segments?: AudienceOption[];
   problems: BusinessOption[];
   companyId?: string;
   initial?: QuoteInitial;
+  mode?: string;
 }) {
   const exploration = useExploration();
   const [basis, setBasis] = useState(initial?.priceBasis ?? "FIXED");
+  const [mode, setMode] = useState(
+    initialMode ?? initial?.mode ?? (companyId ? "SPECIFIC" : "AUDIENCE_TEST"),
+  );
   return (
     <>
       <CaptureKey />
+      {initial && (
+        <input type="hidden" name="expectedVersion" value={initial.version} />
+      )}
       {!initial && exploration && !exploration.archived && (
         <>
           <input type="hidden" name="nicheId" value={exploration.id} />
@@ -61,18 +84,90 @@ function QuoteFields({
         title="What you are offering"
         description="Keep the promise and its boundary together."
       >
-        {companyId ? (
-          <input type="hidden" name="companyId" value={companyId} />
+        {initial || initialMode ? (
+          <input type="hidden" name="mode" value={mode} />
         ) : (
-          <BusinessSelect label="Company" name="companyId" required>
-            <option value="">Choose a company</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+          <fieldset className="gap-sm grid sm:grid-cols-2">
+            <legend className="mb-sm text-body font-medium">
+              How do you want to try this offer?
+            </legend>
+            {[
+              [
+                "AUDIENCE_TEST",
+                "With an audience",
+                "One set of terms, separate responses.",
+              ],
+              [
+                "SPECIFIC",
+                "With someone specific",
+                "A proposal for a person or business.",
+              ],
+            ].map(([id, label, hint]) => (
+              <label
+                key={id}
+                className={`rounded-control p-lg text-body cursor-pointer border ${mode === id ? "border-primary/40 bg-primary/5" : "border-border text-text-secondary"}`}
+              >
+                <span className="gap-sm flex items-center">
+                  <input
+                    type="radio"
+                    name="mode"
+                    value={id}
+                    checked={mode === id}
+                    onChange={() => setMode(id)}
+                    className="accent-primary"
+                  />
+                  {label}
+                </span>
+                <span className="mt-sm text-body-sm text-text-muted block">
+                  {hint}
+                </span>
+              </label>
             ))}
-          </BusinessSelect>
+          </fieldset>
         )}
+        {initial && mode === "SPECIFIC" && (
+          <div className="rounded-control border-border p-lg border">
+            <p className="field-label">Specific recipient</p>
+            <p className="text-body mt-sm">
+              <AudienceSummary {...initial} />
+            </p>
+            <p className="business-hint mt-sm">
+              These revisions keep the original recipient. Create another offer
+              for someone else.
+            </p>
+            {initial.personId && (
+              <input type="hidden" name="personId" value={initial.personId} />
+            )}
+            {initial.companyId && (
+              <input type="hidden" name="companyId" value={initial.companyId} />
+            )}
+            <input
+              type="hidden"
+              name="identityKind"
+              value={initial.identityKind ?? "UNSPECIFIED"}
+            />
+            {initial.audienceLabel && (
+              <input
+                type="hidden"
+                name="audienceLabel"
+                value={initial.audienceLabel}
+              />
+            )}
+          </div>
+        )}
+        <AudienceFields
+          people={people}
+          companies={companies}
+          segments={segments}
+          target={mode === "AUDIENCE_TEST" || Boolean(initial)}
+          recipient={mode === "SPECIFIC" && !initial}
+          identityLabel="Specific recipient"
+          open
+          value={
+            initial ??
+            (companyId ? { companyId, identityKind: "BUSINESS" } : undefined)
+          }
+        />
         <BusinessField
           label="Offer title"
           name="title"
@@ -113,7 +208,11 @@ function QuoteFields({
             value={initial?.amount}
             hint="Blank = unknown. Zero = free."
           />
-          <CurrencySelect name="currency" defaultValue={initial?.currency ?? "EUR"} required />
+          <CurrencySelect
+            name="currency"
+            defaultValue={initial?.currency ?? "EUR"}
+            required
+          />
         </div>
         {basis === "PER_UNIT" && (
           <BusinessField
@@ -154,7 +253,12 @@ function QuoteFields({
             multiline
             value={initial?.terms}
           />
-          <BusinessField label="Quote expiry" name="expiresOn" type="date" />
+          <BusinessField
+            label="Quote expiry"
+            name="expiresOn"
+            type="date"
+            value={initial?.expiresOn?.toISOString().slice(0, 10)}
+          />
           <fieldset>
             <legend className="field-label">
               Problems addressed · optional
@@ -162,7 +266,14 @@ function QuoteFields({
             <div className="business-evidence-choices">
               {problems.map((problem) => (
                 <label key={problem.id}>
-                  <input name="problemIds" type="checkbox" value={problem.id} />
+                  <input
+                    name="problemIds"
+                    type="checkbox"
+                    value={problem.id}
+                    defaultChecked={initial?.problems?.some(
+                      (link) => link.problemId === problem.id,
+                    )}
+                  />
                   {problem.name}
                 </label>
               ))}
@@ -171,8 +282,8 @@ function QuoteFields({
         </div>
       </details>
       <p className="business-hint">
-        Saving creates a draft revision. Record a proposal only after you
-        actually share these terms.
+        Saving creates a draft revision. Record sharing only after you actually
+        share these terms.
       </p>
     </>
   );
@@ -207,19 +318,37 @@ export function OfferEventForm({
   revisions,
   interactions,
   problems,
+  mode = "SPECIFIC",
+  engagementId,
+  segments = [],
 }: {
   offerId: string;
   revisions: BusinessOption[];
   problems: BusinessOption[];
   interactions: { id: string; revisionId: string; name: string }[];
+  mode?: string;
+  engagementId?: string;
+  segments?: AudienceOption[];
 }) {
   const exploration = useExploration();
   return (
     <RecordDialog
       eyebrow="An actual outcome"
-      triggerLabel="Record outcome"
-      title="What happened to this offer?"
-      description="Acceptance records a choice. Only an actual Finance receipt records money received."
+      triggerLabel={
+        mode === "AUDIENCE_TEST" && !engagementId
+          ? "Record sharing or closure"
+          : "Record outcome"
+      }
+      title={
+        mode === "AUDIENCE_TEST" && !engagementId
+          ? "Where is this offer test?"
+          : "What happened to this proposal?"
+      }
+      description={
+        mode === "AUDIENCE_TEST" && !engagementId
+          ? "Keep the test’s sharing and closure separate from each recipient’s response."
+          : "Acceptance records a choice. Only an actual Finance receipt records money received."
+      }
     >
       <RecordForm
         action={offerEventAction.bind(null, offerId)}
@@ -227,12 +356,15 @@ export function OfferEventForm({
         submitLabel="Record outcome"
       >
         <CaptureKey />
+        {engagementId && (
+          <input type="hidden" name="engagementId" value={engagementId} />
+        )}
         {exploration && !exploration.archived && (
           <>
             <input type="hidden" name="nicheId" value={exploration.id} />
             <p className="business-hint">
               New observations belong to {exploration.name}. A selected source
-              interaction keeps its original niche context.
+              interaction keeps its original exploration context.
             </p>
           </>
         )}
@@ -255,15 +387,26 @@ export function OfferEventForm({
           </BusinessSelect>
           <div className="gap-lg grid grid-cols-2">
             <BusinessSelect label="Event" name="kind">
-              {[
-                "PROPOSED",
-                "ACCEPTED",
-                "REJECTED",
-                "WITHDRAWN",
-                "EXPIRED",
-                "SUPERSEDED",
-                "CANCELLED",
-              ].map((kind) => (
+              {(mode === "AUDIENCE_TEST"
+                ? !engagementId
+                  ? ["SHARED", "CLOSED", "REOPENED"]
+                  : [
+                      "INTERESTED",
+                      "ACCEPTED",
+                      "REJECTED",
+                      "WITHDRAWN",
+                      "CANCELLED",
+                    ]
+                : [
+                    "PROPOSED",
+                    "ACCEPTED",
+                    "REJECTED",
+                    "WITHDRAWN",
+                    "EXPIRED",
+                    "SUPERSEDED",
+                    "CANCELLED",
+                  ]
+              ).map((kind) => (
                 <option key={kind} value={kind}>
                   {humanize(kind)}
                 </option>
@@ -305,7 +448,7 @@ export function OfferEventForm({
           If you add an observation, select its source interaction above or
           describe what you directly saw or heard in the source field.
         </p>
-        <ObservationEntries problems={problems} />
+        <ObservationEntries problems={problems} segments={segments} />
       </RecordForm>
     </RecordDialog>
   );
@@ -313,9 +456,11 @@ export function OfferEventForm({
 export function OfferContinuationForm({
   offerId,
   workSources,
+  engagementId,
 }: {
   offerId: string;
   workSources: BusinessOption[];
+  engagementId?: string;
 }) {
   const [choice, setChoice] = useState("NOT_NOW");
   return (
@@ -332,6 +477,9 @@ export function OfferContinuationForm({
         submitLabel="Save choice"
       >
         <CaptureKey />
+        {engagementId && (
+          <input type="hidden" name="engagementId" value={engagementId} />
+        )}
 
         <label className="field-label">
           Next step
@@ -349,6 +497,97 @@ export function OfferContinuationForm({
         {choice === "LINKED" && (
           <WorkSourceChoiceFields workSources={workSources} />
         )}
+      </RecordForm>
+    </RecordDialog>
+  );
+}
+
+export function OfferResponseForm({
+  offerId,
+  revisions,
+  interactions,
+  people = [],
+  companies = [],
+  segments = [],
+}: {
+  offerId: string;
+  revisions: BusinessOption[];
+  interactions: { id: string; revisionId: string; name: string }[];
+  people?: BusinessOption[];
+  companies?: BusinessOption[];
+  segments?: AudienceOption[];
+}) {
+  return (
+    <RecordDialog
+      eyebrow="One recipient’s response"
+      title="Add a response"
+      triggerLabel="Add response"
+      description="Keep this person’s or business’s response against the exact terms they saw. Each response has its own history."
+    >
+      <RecordForm
+        action={addOfferResponseAction.bind(null, offerId)}
+        submitLabel="Save response"
+        closeOnSuccess
+      >
+        <CaptureKey />
+        <BusinessSelect
+          label="Terms they responded to"
+          name="offerRevisionId"
+          value={revisions[0]?.id}
+          required
+        >
+          {revisions.map((revision) => (
+            <option key={revision.id} value={revision.id}>
+              {revision.name}
+            </option>
+          ))}
+        </BusinessSelect>
+        <AudienceFields
+          people={people}
+          companies={companies}
+          segments={segments}
+          identityLabel="Who responded?"
+          recipient
+          open
+        />
+        <div className="gap-lg grid sm:grid-cols-2">
+          <BusinessSelect label="Response" name="kind">
+            <option value="INTERESTED">Interested</option>
+            <option value="ACCEPTED">Accepted</option>
+            <option value="REJECTED">Declined</option>
+          </BusinessSelect>
+          <BusinessField
+            label="Date"
+            name="occurredAt"
+            type="date"
+            required
+            value={businessToday()}
+          />
+        </div>
+        <BusinessField
+          label="What did they say or do?"
+          name="sourceDescription"
+          multiline
+          required
+        />
+        <BusinessSelect
+          label="Recorded source interaction · optional"
+          name="interaction"
+        >
+          <option value="">Recorded manually</option>
+          {interactions.map((interaction) => (
+            <option
+              key={interaction.id}
+              value={`${interaction.id}:${interaction.revisionId}`}
+            >
+              {interaction.name}
+            </option>
+          ))}
+        </BusinessSelect>
+        <p className="business-hint">
+          A declined response belongs to this recipient. It does not reject the
+          whole audience test. Link an actual Finance receipt to record payment.
+        </p>
       </RecordForm>
     </RecordDialog>
   );

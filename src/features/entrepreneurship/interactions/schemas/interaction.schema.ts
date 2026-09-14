@@ -1,3 +1,7 @@
+import {
+  audienceInputSchema,
+  audienceContextSchema,
+} from "@/features/entrepreneurship/audiences/schemas/audience.schema";
 import { z } from "zod";
 import { DateTime } from "luxon";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -40,6 +44,8 @@ export const calendarDaySchema = z
   .transform((value) => DateTime.fromISO(value, { zone: "UTC" }).toJSDate());
 export const observationInputSchema = z
   .object({
+    audience: audienceInputSchema.optional(),
+    audienceReason: optionalText(2000),
     kind: z
       .enum([
         "CUSTOMER_STATEMENT",
@@ -69,6 +75,7 @@ export const observationInputSchema = z
     "Explain how this observation relates to the problem.",
   );
 export const interactionSchema = z.object({
+  ...audienceInputSchema.shape,
   sourceSessionId: optionalText(80),
   kind: z.enum(interactionKinds),
   channel: z.enum(channels).default("OTHER"),
@@ -82,6 +89,7 @@ export const interactionSchema = z.object({
   participants: z
     .array(
       z.object({
+        personId: optionalText(80),
         name: z.string().trim().min(1).max(120),
         role: optionalText(120),
         email: z.email().optional(),
@@ -101,6 +109,7 @@ export const interactionSchema = z.object({
     .optional(),
 });
 export const correctionSchema = interactionSchema.extend({
+  audienceScopeEdited: z.boolean().default(false),
   expectedVersion: z.number().int().positive(),
   correctionReason: z
     .string()
@@ -109,38 +118,44 @@ export const correctionSchema = interactionSchema.extend({
     .max(2000),
   meaningUnchanged: z.boolean().default(false),
 });
-export const batchOutreachSchema = z.object({
-  nicheId: optionalText(80),
-  notes: optionalText(),
-  overrides: z
-    .record(
-      z.string(),
-      z.object({
-        summary: z
-          .string()
-          .trim()
-          .min(1, "Add a summary.")
-          .max(3000)
-          .optional(),
-        channel: z.enum(channels).optional(),
-        occurredAt: occurredDaySchema.optional(),
-        notes: z
-          .string()
-          .trim()
-          .max(6000)
-          .transform((v) => v || null)
-          .optional(),
-      }),
-    )
-    .default({}),
-  companyIds: z
-    .array(z.string().min(1))
-    .min(1, "Select the companies you actually contacted.")
-    .max(200),
-  occurredAt: occurredDaySchema,
-  summary: z.string().trim().min(1).max(3000),
-  channel: z.enum(channels),
-  confirmedSent: z.literal(true, {
-    error: "Confirm these messages were actually sent.",
-  }),
-});
+export const batchOutreachSchema = z
+  .object({
+    ...audienceContextSchema.shape,
+    personIds: z.array(z.string().min(1)).max(200).default([]),
+    nicheId: optionalText(80),
+    notes: optionalText(),
+    overrides: z
+      .record(
+        z.string(),
+        z.object({
+          summary: z
+            .string()
+            .trim()
+            .min(1, "Add a summary.")
+            .max(3000)
+            .optional(),
+          channel: z.enum(channels).optional(),
+          occurredAt: occurredDaySchema.optional(),
+          notes: z
+            .string()
+            .trim()
+            .max(6000)
+            .transform((v) => v || null)
+            .optional(),
+        }),
+      )
+      .default({}),
+    companyIds: z.array(z.string().min(1)).max(200).default([]),
+    occurredAt: occurredDaySchema,
+    summary: z.string().trim().min(1).max(3000),
+    channel: z.enum(channels),
+    confirmedSent: z.literal(true, {
+      error: "Confirm these messages were actually sent.",
+    }),
+  })
+  .refine(
+    (v) =>
+      v.companyIds.length + v.personIds.length > 0 &&
+      v.companyIds.length + v.personIds.length <= 200,
+    "Select up to 200 recipients you actually contacted.",
+  );

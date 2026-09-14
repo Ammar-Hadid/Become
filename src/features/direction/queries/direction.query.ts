@@ -352,6 +352,20 @@ export async function getDirectionOptions(
         ...options,
       })
     ).map((r) => ({ id: r.id, name: r.name }));
+  else if (kind === "person")
+    rows = (
+      await prisma.person.findMany({
+        where: { ...common, archivedAt: null, name },
+        ...options,
+      })
+    ).map((r) => ({ id: r.id, name: r.name }));
+  else if (kind === "segment")
+    rows = (
+      await prisma.audienceSegment.findMany({
+        where: { ...common, archivedAt: null, name },
+        ...options,
+      })
+    ).map((r) => ({ id: r.id, name: r.name }));
   else if (kind === "company")
     rows = (
       await prisma.company.findMany({

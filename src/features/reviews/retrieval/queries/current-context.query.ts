@@ -1,3 +1,4 @@
+import { readAudienceCurrentContext } from "@/features/entrepreneurship/measurements/queries/audience-current-context.query";
 import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { getPeriod } from "@/lib/dates/utils/period.util";
@@ -60,6 +61,9 @@ export async function getCurrentContext(
         : [];
       const moments = await readReviewMoments(tx, scope, domains, []);
       const packet: CurrentContextSummary = {
+        entrepreneurship: domains.includes("entrepreneurship")
+          ? await readAudienceCurrentContext(tx, userId, scope)
+          : undefined,
         schemaVersion: 1,
         metricVersion: 1,
         fingerprint: "",
@@ -114,6 +118,7 @@ export async function getCurrentContext(
       const seal = () => {
         packet.fingerprint = reviewFingerprint({
           season: packet.season,
+          entrepreneurship: packet.entrepreneurship,
           priorities: packet.priorities,
           active: packet.activeIntentions,
           aggregate,

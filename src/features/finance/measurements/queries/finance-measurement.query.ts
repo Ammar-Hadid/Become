@@ -7,6 +7,10 @@ export type FinanceMetricScope = {
   currency: string;
   workSourceId?: string;
   companyId?: string;
+  personId?: string;
+  nicheId?: string;
+  segmentId?: string;
+  marketType?: string;
   offerRevisionId?: string;
 };
 export async function readSourceIncome(
@@ -54,6 +58,30 @@ export async function readBusinessIncome(
   const where: Prisma.BusinessReceiptAllocationWhereInput = {
     userId: s.userId,
     companyId: s.companyId,
+    ...(s.personId ? { personId: s.personId } : {}),
+    ...(s.nicheId
+      ? {
+          OR: [
+            { nicheId: s.nicheId },
+            {
+              nicheId: null,
+              offerRevision: {
+                offer: { niches: { some: { nicheId: s.nicheId } } },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(s.segmentId || s.marketType
+      ? {
+          audienceContext: {
+            ...(s.marketType ? { marketType: s.marketType } : {}),
+            ...(s.segmentId
+              ? { segments: { some: { segmentId: s.segmentId } } }
+              : {}),
+          },
+        }
+      : {}),
     ...(s.offerRevisionId ? { offerRevisionId: s.offerRevisionId } : {}),
     withdrawnAt: null,
     needsReviewAt: null,
@@ -82,7 +110,7 @@ export async function readBusinessIncome(
       where: { ...where, needsReviewAt: { not: null } },
     }),
     tx.$queryRaw<{ hash: string }[]>(
-      Prisma.sql`SELECT md5(COALESCE(string_agg(a.id || ':' || a."amountMinor"::text || ':' || t."occurredAt"::text,',' ORDER BY a.id),'')) AS hash FROM business_receipt_allocation a JOIN financial_transaction t ON t.id=a."transactionId" AND t."userId"=a."userId" WHERE a."userId"=${s.userId} ${s.companyId ? Prisma.sql`AND a."companyId"=${s.companyId}` : Prisma.empty} ${s.offerRevisionId ? Prisma.sql`AND a."offerRevisionId"=${s.offerRevisionId}` : Prisma.empty} AND a."withdrawnAt" IS NULL AND a."needsReviewAt" IS NULL AND t.type='INCOME' AND t."inflowKind" IN ('EARNED_WORK','BUSINESS_REVENUE') AND t.currency=${s.currency} AND t."occurredAt">=${s.start} AND t."occurredAt"<${s.end}`,
+      Prisma.sql`SELECT md5(COALESCE(string_agg(a.id || ':' || a."amountMinor"::text || ':' || t."occurredAt"::text,',' ORDER BY a.id),'')) AS hash FROM business_receipt_allocation a JOIN financial_transaction t ON t.id=a."transactionId" AND t."userId"=a."userId" WHERE a."userId"=${s.userId} ${s.companyId ? Prisma.sql`AND a."companyId"=${s.companyId}` : Prisma.empty} ${s.offerRevisionId ? Prisma.sql`AND a."offerRevisionId"=${s.offerRevisionId}` : Prisma.empty} ${s.personId ? Prisma.sql`AND a."personId"=${s.personId}` : Prisma.empty} ${s.nicheId ? Prisma.sql`AND (a."nicheId"=${s.nicheId} OR (a."nicheId" IS NULL AND EXISTS(SELECT 1 FROM offer_revision v JOIN offer_niche n ON n."offerId"=v."offerId" AND n."userId"=v."userId" WHERE v.id=a."offerRevisionId" AND n."nicheId"=${s.nicheId})))` : Prisma.empty} ${s.segmentId ? Prisma.sql`AND EXISTS(SELECT 1 FROM audience_context_segment acs WHERE acs."audienceContextId"=a."audienceContextId" AND acs."segmentId"=${s.segmentId})` : Prisma.empty} ${s.marketType ? Prisma.sql`AND EXISTS(SELECT 1 FROM audience_context ac WHERE ac.id=a."audienceContextId" AND ac."marketType"=${s.marketType})` : Prisma.empty} AND a."withdrawnAt" IS NULL AND a."needsReviewAt" IS NULL AND t.type='INCOME' AND t."inflowKind" IN ('EARNED_WORK','BUSINESS_REVENUE') AND t.currency=${s.currency} AND t."occurredAt">=${s.start} AND t."occurredAt"<${s.end}`,
     ),
   ]);
   return {

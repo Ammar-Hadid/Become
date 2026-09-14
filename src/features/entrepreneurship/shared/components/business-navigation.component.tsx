@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 const links = [
   ["/history", "Overview", Compass],
-  ["/market", "Market", Building2],
-  ["/interactions", "Interactions", MessagesSquare],
+  ["/audience", "Audience", Building2],
+  ["/evidence", "Evidence", MessagesSquare],
   ["/problems", "Problems", ScanSearch],
   ["/offers", "Offers", FileText],
 ] as const;
@@ -25,7 +25,16 @@ export function BusinessNavigation() {
     >
       {links.map(([suffix, label, Icon]) => {
         const href = `/entrepreneurship${suffix}`;
-        const current = suffix ? path.startsWith(href) : path === href;
+        const current =
+          suffix === "/audience"
+            ? ["/audience", "/people", "/segments", "/market"].some((section) =>
+                path.startsWith(`/entrepreneurship${section}`),
+              )
+            : suffix === "/evidence"
+              ? ["/evidence", "/interactions", "/observations"].some(
+                  (section) => path.startsWith(`/entrepreneurship${section}`),
+                )
+              : path.startsWith(href);
         return (
           <Link
             href={href}

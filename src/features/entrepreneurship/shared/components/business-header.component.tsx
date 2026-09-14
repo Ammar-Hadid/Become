@@ -23,7 +23,7 @@ export function BusinessHeader() {
         <p>
           {home
             ? "Explore. Listen. Decide what’s worth pursuing."
-            : "The companies, conversations and ideas you’ve kept."}
+            : "The audiences, evidence and offers you’ve kept."}
         </p>
       </header>
       {!home && <BusinessNavigation />}

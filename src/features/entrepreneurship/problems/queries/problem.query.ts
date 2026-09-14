@@ -1,9 +1,15 @@
+import {
+  audienceInclude,
+  audienceName,
+} from "@/features/entrepreneurship/audiences/utils/audience.util";
 import { problemExplorationWhere } from "@/features/entrepreneurship/explorations/queries/exploration-scope.query";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import type { Prisma } from "@/generated/prisma/client";
 
 export const evidenceInclude = {
-  receiptAllocation: { include: { transaction: true } },
+  receiptAllocation: {
+    include: { transaction: true, audienceContext: audienceInclude },
+  },
   observation: {
     include: {
       revisions: {
@@ -19,6 +25,7 @@ export const evidenceInclude = {
   },
   observationRevision: {
     include: {
+      audienceContext: audienceInclude,
       interactionRevision: {
         include: {
           interaction: {
@@ -80,10 +87,16 @@ export function getProblemDetail(userId: string, id: string) {
   return prisma.problem.findFirst({
     where: { id, userId },
     include: {
+      audienceContext: audienceInclude,
+      audienceRevisions: {
+        orderBy: { version: "desc" },
+        include: { audienceContext: audienceInclude },
+      },
       niche: true,
       evidence: { include: evidenceInclude, orderBy: { createdAt: "desc" } },
       assessments: {
         include: {
+          audienceRevision: { include: { audienceContext: audienceInclude } },
           basis: { include: { evidence: { include: evidenceInclude } } },
         },
         orderBy: [{ assessedAt: "desc" }, { createdAt: "desc" }],
@@ -110,6 +123,11 @@ export async function getProblems(
     take: 26,
     ...(owned ? { cursor: { id: owned.id }, skip: 1 } : {}),
     include: {
+      audienceContext: audienceInclude,
+      audienceRevisions: {
+        orderBy: { version: "desc" },
+        include: { audienceContext: audienceInclude },
+      },
       niche: true,
       evidence: {
         include: evidenceInclude,
@@ -153,7 +171,7 @@ export async function getObservationChoices(userId: string) {
   return observations.map((observation) => ({
     id: observation.id,
     revisionId: observation.revisions[0].id,
-    name: `${observation.revisions[0].companySnapshot ?? "No company"} · ${observation.revisions[0].statement.slice(0, 100)}`,
+    name: `${audienceName(observation.revisions[0])} · ${observation.revisions[0].statement.slice(0, 100)}`,
   }));
 }
 
@@ -174,5 +192,26 @@ export function evidenceCompanyCounts(evidence: LoadedEvidence[]) {
     supporting: ids("SUPPORTS"),
     contradicting: ids("CONTRADICTS"),
     sources: current.length,
+    supportingSources: current.filter((e) => e.stance === "SUPPORTS").length,
+    contradictingSources: current.filter((e) => e.stance === "CONTRADICTS")
+      .length,
+    people: new Set(
+      current.flatMap((e) => {
+        const id =
+          e.observationRevision?.personId ?? e.receiptAllocation?.personId;
+        return id ? [id] : [];
+      }),
+    ).size,
+    businesses: ids(),
+    anonymous: current.filter((e) =>
+      ["ANONYMOUS", "UNSPECIFIED"].includes(
+        e.observationRevision?.identityKind ??
+          e.receiptAllocation?.identityKind ??
+          "UNSPECIFIED",
+      ),
+    ).length,
+    aggregate: current.filter(
+      (e) => e.observationRevision?.identityKind === "GROUP",
+    ).length,
   };
 }

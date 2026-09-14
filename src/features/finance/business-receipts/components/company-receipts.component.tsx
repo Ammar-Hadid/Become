@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getEntrepreneurshipReceiptPanel } from "@/features/finance/business-receipts/queries/business-receipt.query";
+import {
+  AudienceSummary,
+  type AudienceFieldValue,
+} from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import { formatMoney } from "@/lib/money/utils/money.util";
 import { businessDate } from "@/features/entrepreneurship/shared/utils/business.util";
 import { CompanyReceiptForm } from "@/features/finance/business-receipts/components/company-receipt-form.component";
@@ -8,71 +12,53 @@ export async function CompanyReceipts({
   companyId,
   offerId,
   offerRevisionId,
+  engagementId,
+  nicheId,
+  audience,
+  explorationOptions,
 }: {
   userId: string;
-  companyId: string;
+  companyId?: string;
   offerId?: string;
   offerRevisionId?: string;
+  engagementId?: string;
+  nicheId?: string;
+  audience?: AudienceFieldValue;
+  explorationOptions?: { id: string; name: string }[];
 }) {
-  const [income, offers, allocations] = await Promise.all([
-    prisma.financialTransaction.findMany({
-      where: {
-        userId,
-        type: "INCOME",
-        inflowKind: { in: ["BUSINESS_REVENUE", "EARNED_WORK"] },
-      },
-      include: {
-        account: true,
-        businessReceiptAllocations: { where: { withdrawnAt: null } },
-      },
-      orderBy: { occurredAt: "desc" },
-    }),
-    prisma.offerRevision.findMany({
-      where: {
-        userId,
-        companyId,
-        proposedAt: { not: null },
-        ...(offerId ? { offerId } : {}),
-      },
-      orderBy: { version: "desc" },
-      select: { id: true, title: true, version: true },
-    }),
-    prisma.businessReceiptAllocation.findMany({
-      where: {
-        userId,
-        companyId,
-        ...(offerId ? { offerRevision: { offerId } } : {}),
-      },
-      include: { transaction: true, offerRevision: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
-  const receipts = income
-    .map((r) => ({
-      id: r.id,
-      currency: r.currency,
-      remaining: (
-        r.amountMinor -
-        r.businessReceiptAllocations.reduce((s, a) => s + a.amountMinor, 0n)
-      ).toString(),
-      name: `${businessDate(r.occurredAt)} · ${formatMoney(r.amountMinor, r.currency)} · ${r.account.name}${r.notes ? ` · ${r.notes}` : ""}`,
-    }))
-    .filter((r) => BigInt(r.remaining) > 0n);
+  const { receipts, offers, allocations } =
+    await getEntrepreneurshipReceiptPanel(userId, {
+      companyId,
+      offerId,
+      engagementId,
+      nicheId,
+    });
   const context = new URLSearchParams({
-    company: companyId,
+    ...(companyId ? { company: companyId } : {}),
     ...(offerId ? { offer: offerId } : {}),
+    ...(engagementId ? { engagement: engagementId } : {}),
+    ...(nicheId ? { exploration: nicheId } : {}),
   });
   return (
-    <section className="business-detail-section" id="receipts">
+    <section
+      className="business-detail-section"
+      id={engagementId ? `receipts-${engagementId}` : "receipts"}
+    >
       <div className="business-row-heading">
         <h3>Actual receipts</h3>
         <div className="business-actions">
-          <CompanyReceiptForm
-            companyId={companyId}
-            offers={offers}
-            receipts={receipts}
-            offerRevisionId={offerRevisionId}
-          />
+          {(!offerId || offers.length > 0) && (
+            <CompanyReceiptForm
+              companyId={companyId}
+              offers={offers}
+              receipts={receipts}
+              offerRevisionId={offerRevisionId}
+              engagementId={engagementId}
+              nicheId={nicheId}
+              audience={audience}
+              explorationOptions={explorationOptions}
+            />
+          )}
           <Link
             className="business-text-link"
             href={`/finance/transactions?${context}`}
@@ -85,6 +71,13 @@ export async function CompanyReceipts({
         Explicit parts of the same Finance income. Acceptance and WorkSource
         linking do not create payments.
       </p>
+      {offerId && offers.length === 0 && (
+        <p className="business-hint mt-lg">
+          No current shared terms available for attribution. Keep the actual
+          income in Finance; connect it to this offer when the relevant terms
+          and source are recorded.
+        </p>
+      )}
       {allocations.length ? (
         allocations.map((a) => (
           <article key={a.id} className="business-outcome">
@@ -99,7 +92,10 @@ export async function CompanyReceipts({
             <p className="business-hint">
               {a.offerRevision
                 ? `${a.offerRevision.title} · revision ${a.offerRevision.version}`
-                : "Company only"}
+                : "Audience context only"}
+            </p>
+            <p className="business-hint">
+              <AudienceSummary {...a} />
             </p>
             {a.transactionId && (
               <Link
