@@ -1705,7 +1705,8 @@
   margin-top: var(--spacing-md);
 }
 
-.exploration-facts a {
+.exploration-facts a,
+.exploration-facts > div {
   display: grid;
   gap: var(--spacing-sm);
   padding: var(--spacing-lg) 0;

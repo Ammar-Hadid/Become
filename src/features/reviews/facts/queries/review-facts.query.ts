@@ -1,3 +1,4 @@
+import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import { readSessionReviewDomainTime } from "@/features/sessions/measurements/queries/session-review-domain-time.query";
 import { measurePacket } from "@/features/reviews/facts/utils/review-payload.util";
 import { reviewMetrics } from "@/features/reviews/facts/mappers/review-metrics.mapper";
@@ -134,6 +135,9 @@ export async function readReviewFacts(
   const facts: PeriodReviewFacts = {
     schemaVersion: 1,
     metricVersion: 1,
+    audience: domains.includes("entrepreneurship")
+      ? { version: 1, summary: await getAudienceMetrics(userId, scope, tx) }
+      : undefined,
     fingerprint: "",
     referenceTime: at.toISOString(),
     period,
@@ -214,6 +218,7 @@ export async function readReviewFacts(
       intentions: facts.intentions,
       moments: facts.moments,
       time: facts.time,
+      audience: facts.audience,
       coverage: facts.coverage,
       omitted: facts.omitted,
     });

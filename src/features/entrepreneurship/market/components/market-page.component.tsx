@@ -12,6 +12,7 @@ import {
   humanize,
   businessDate,
 } from "@/features/entrepreneurship/shared/utils/business.util";
+import { AudienceNavigation } from "@/features/entrepreneurship/audiences/components/audience-page.component";
 export async function MarketPage({
   userId,
   search,
@@ -49,21 +50,23 @@ export async function MarketPage({
   };
   return (
     <MarketFilters initial={params.toString()}>
+      <header className="business-section-heading business-page-heading">
+        <div>
+          <p className="eyebrow">Audience · businesses</p>
+          <h2>Know the businesses behind the need.</h2>
+          <p>
+            Keep useful identity and context. Conversations, observations and
+            offers preserve what actually happened.
+          </p>
+        </div>
+      </header>
+      <AudienceNavigation kind="business" nicheId={nicheId} />
       {!nicheId && (
-        <>
-          <header className="business-section-heading business-page-heading">
-            <div>
-              <p className="eyebrow">The field</p>
-              <h2>Know the people behind the market.</h2>
-              <p>
-                Keep useful context close. Let actual conversations shape what
-                comes next.
-              </p>
-            </div>
-          </header>
+        <details className="business-disclosure mb-2xl">
+          <summary>Browse explorations</summary>
           <section
             className={`business-niches business-zone business-zone--primary${nicheArchived ? "business-zone--archived" : ""}`}
-            aria-label="Niches"
+            aria-label="Explorations"
           >
             <div className="business-row-heading">
               <h3>
@@ -76,7 +79,9 @@ export async function MarketPage({
                   value={String(!nicheArchived)}
                   href={filterHref("nicheArchived", String(!nicheArchived))}
                 >
-                  {nicheArchived ? "Active niches" : "View archived niches"}
+                  {nicheArchived
+                    ? "Active explorations"
+                    : "View archived explorations"}
                 </MarketArchiveLink>
                 <MarketForm kind="niche" />
               </div>
@@ -96,7 +101,7 @@ export async function MarketPage({
                     <p>{niche.scope ?? "Scope not recorded yet."}</p>
                     <span className="business-meta">
                       {niche._count.companies}{" "}
-                      {niche._count.companies === 1 ? "company" : "companies"}{" "}
+                      {niche._count.companies === 1 ? "business" : "businesses"}{" "}
                       <ArrowUpRight aria-hidden="true" />
                     </span>
                   </Link>
@@ -104,19 +109,19 @@ export async function MarketPage({
               </div>
             ) : (
               <p className="business-inline-empty">
-                A niche gives your research a boundary. Start with a market
-                you’re curious about.
+                An exploration gives your research a boundary. Start with a
+                market you’re curious about.
               </p>
             )}
           </section>
-        </>
+        </details>
       )}
       <section
         className={`business-zone business-zone--ledger business-market-companies${archived ? "business-zone--archived" : ""}`}
       >
         <div className="business-row-heading">
           <h3>
-            Companies{" "}
+            Businesses{" "}
             <span className="business-count">{data.companyCount}</span>
           </h3>
           <div className="business-actions">
@@ -125,7 +130,7 @@ export async function MarketPage({
               value={String(!archived)}
               href={filterHref("archived", String(!archived))}
             >
-              {archived ? "Active companies" : "View archived companies"}
+              {archived ? "Active businesses" : "View archived businesses"}
             </MarketArchiveLink>
             <ExplorationCompanyForm />
             <MarketForm kind="company" niches={data.activeNiches} />
@@ -134,7 +139,7 @@ export async function MarketPage({
         <div className="business-company-results">
           <CompanySearch search={search} />
           {data.companies.length ? (
-            <div className="business-company-list" aria-label="Companies">
+            <div className="business-company-list" aria-label="Businesses">
               {data.companies.map((company) => (
                 <Link
                   key={company.id}
@@ -154,7 +159,7 @@ export async function MarketPage({
                   </div>
                   <span className="business-company-niches">
                     {company.niches.map((n) => n.niche.name).join(" · ") ||
-                      "No niche linked"}
+                      "No exploration linked"}
                     <span className="business-meta mt-sm">
                       {!nicheId &&
                       data.contact.find((c) => c.companyId === company.id)
@@ -186,10 +191,10 @@ export async function MarketPage({
               <Building2 aria-hidden="true" />
               <h3>
                 {search
-                  ? "No companies match that search."
+                  ? "No businesses match that search."
                   : archived
-                    ? "No archived companies."
-                    : "Start with one company."}
+                    ? "No archived businesses."
+                    : "Keep a business when it helps."}
               </h3>
               <p>
                 {search
@@ -205,7 +210,7 @@ export async function MarketPage({
                 scroll={false}
                 href={`${filterHref("cursor", data.next)}`}
               >
-                Next companies →
+                Next businesses →
               </Link>
             )}
           </div>

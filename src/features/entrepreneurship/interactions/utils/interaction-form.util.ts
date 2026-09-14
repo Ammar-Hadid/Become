@@ -14,6 +14,8 @@ export function interactionForm(form: FormData) {
   const values = Object.fromEntries(form);
   return {
     ...values,
+    segmentIds: form.getAll("segmentIds").map(String),
+    segmentNames: form.getAll("segmentNames").map(String),
     participants: JSON.parse(String(values.participants ?? "[]")),
     observations: observationFormEntries(form),
     followUp: values.followUpTitle

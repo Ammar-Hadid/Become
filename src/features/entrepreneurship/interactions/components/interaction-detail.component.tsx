@@ -18,6 +18,7 @@ import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 
 export async function InteractionDetail({
   userId,
@@ -51,8 +52,8 @@ export async function InteractionDetail({
     : [];
   return (
     <>
-      <Link href="/entrepreneurship/interactions" className="business-back">
-        ← Interactions
+      <Link href="/entrepreneurship/evidence" className="business-back">
+        ← Evidence journal
       </Link>
       <header className="business-section-heading business-page-heading">
         <div>
@@ -60,7 +61,12 @@ export async function InteractionDetail({
             {record.voidedAt ? "Withdrawn · " : ""}
             {humanize(revision.kind)}
           </p>
-          <h2>{revision.companySnapshot ?? "Interaction"}</h2>
+          <h2>
+            {revision.personSnapshot ??
+              revision.companySnapshot ??
+              revision.audienceLabel ??
+              humanize(revision.kind)}
+          </h2>
           <p>
             {businessDate(revision.occurredAt)} · {humanize(revision.channel)}
           </p>
@@ -69,6 +75,7 @@ export async function InteractionDetail({
           <InteractionForm
             {...options}
             value={{
+              ...revision,
               id,
               version: record.version,
               kind: revision.kind,
@@ -100,6 +107,14 @@ export async function InteractionDetail({
               />
             </div>
             <p className="business-prose">{revision.summary}</p>
+            <p className="mt-lg text-body-sm text-text-secondary">
+              <AudienceSummary {...revision} />
+            </p>
+            {revision.audienceContext?.description && (
+              <p className="business-hint mt-sm">
+                {revision.audienceContext.description}
+              </p>
+            )}
             {revision.notes && (
               <p className="business-prose mt-xl">{revision.notes}</p>
             )}
@@ -124,6 +139,18 @@ export async function InteractionDetail({
                   <blockquote className="business-prose">
                     {observation.statement}
                   </blockquote>
+                  <p className="business-hint">
+                    <AudienceSummary {...observation} />
+                  </p>
+                  {observation.audienceContextId !==
+                    revision.audienceContextId && (
+                    <p className="business-hint mt-sm">
+                      Audience attributed from this source
+                      {observation.audienceContext?.description
+                        ? ` · ${observation.audienceContext.description}`
+                        : ""}
+                    </p>
+                  )}
                   <p className="business-hint">
                     Source: {observation.sourceDescription}
                   </p>
@@ -195,7 +222,8 @@ export async function InteractionDetail({
                     </p>
                     <p className="business-prose">{old.summary}</p>
                     <p className="business-hint">
-                      {old.companySnapshot} · {businessDate(old.occurredAt)}
+                      <AudienceSummary {...old} /> ·{" "}
+                      {businessDate(old.occurredAt)}
                     </p>
                   </article>
                 ))}
@@ -206,6 +234,17 @@ export async function InteractionDetail({
         <aside className="business-aside">
           <section className="business-aside-section">
             <p className="eyebrow">Context at the time</p>
+            <p className="mt-lg text-body text-text-secondary">
+              <AudienceSummary {...revision} />
+            </p>
+            {revision.personId && (
+              <Link
+                className="business-text-link mt-lg"
+                href={`/entrepreneurship/people/${revision.personId}`}
+              >
+                Open person ↗
+              </Link>
+            )}
             {revision.companyId && (
               <Link
                 className="business-text-link mt-lg inline-block"
@@ -215,7 +254,7 @@ export async function InteractionDetail({
               </Link>
             )}
             <p className="mt-lg">
-              {revision.nicheSnapshot ?? "No niche recorded"}
+              {revision.nicheSnapshot ?? "No exploration recorded"}
             </p>
             <p className="mt-lg">
               {participants.length

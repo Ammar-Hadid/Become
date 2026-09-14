@@ -16,6 +16,7 @@ import {
   OfferForm,
   OfferEventForm,
   OfferContinuationForm,
+  OfferResponseForm,
 } from "@/features/entrepreneurship/offers/components/offer-forms.component";
 import {
   quoteLabel,
@@ -26,6 +27,8 @@ import {
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import { moneyDecimal } from "@/lib/money/utils/money.util";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
+import { OfferResponseJournal } from "@/features/entrepreneurship/offers/components/offer-response-journal.component";
 export async function OfferDetail({
   userId,
   id,
@@ -44,10 +47,22 @@ export async function OfferDetail({
     }),
   ]);
   if (!offer) notFound();
-  const { quote, latest, acceptance, status } = offerPresentation(
-    offer.revisions,
-    offer.events,
+  const presentation = offerPresentation(offer.revisions, offer.events);
+  const audienceTest = offer.mode === "AUDIENCE_TEST";
+  const { latest, status } = presentation;
+  const acceptance = audienceTest ? null : presentation.acceptance;
+  const quote = audienceTest ? offer.revisions[0] : presentation.quote;
+  const sharedRevisions = offer.revisions.filter((revision) =>
+    offer.events.some(
+      (event) =>
+        !event.retractedAt &&
+        event.offerRevisionId === revision.id &&
+        event.kind === "SHARED",
+    ),
   );
+  const receiptNicheId =
+    nicheId ??
+    (offer.niches.length === 1 ? offer.niches[0].niche.id : undefined);
   const interactions = await prisma.interactionRevision.findMany({
     where: {
       userId: userId,
@@ -66,17 +81,39 @@ export async function OfferDetail({
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">
-            {offer.company.name} · {humanize(status)}
+            {audienceTest ? "Audience test" : humanize(status)}
             {acceptance && status !== "ACCEPTED"
               ? " · acceptance retained"
               : ""}
           </p>
           <h2>{quote.title}</h2>
+          <p>
+            <AudienceSummary {...quote} />
+          </p>
         </div>
         <div className="business-actions">
+          {audienceTest && sharedRevisions.length > 0 && (
+            <OfferResponseForm
+              offerId={id}
+              revisions={sharedRevisions.map((revision) => ({
+                id: revision.id,
+                name: `${revision.title} · revision ${revision.version}`,
+              }))}
+              interactions={interactions.map((i) => ({
+                id: i.interactionId,
+                revisionId: i.id,
+                name: i.summary.slice(0, 100),
+              }))}
+              people={options.people}
+              companies={options.companies}
+              segments={options.segments}
+            />
+          )}
           <OfferEventForm
             offerId={id}
+            mode={offer.mode}
             problems={options.problems}
+            segments={options.segments}
             revisions={offer.revisions.map((revision) => ({
               id: revision.id,
               name: `${revision.title} · revision ${revision.version}`,
@@ -94,37 +131,44 @@ export async function OfferDetail({
           />
         </div>
       </header>
-      {offer.events.some(
-        (event) => event.kind === "ACCEPTED" && !event.retractedAt,
-      ) && (
-        <section className="business-zone business-continuation-zone">
-          <h3>Continue into work</h3>
-          <p>
-            {offer.continuationChoice
-              ? humanize(offer.continuationChoice)
-              : "Choose whether a Finance work-source link would help."}
-          </p>
-          <div className="mt-lg">
-            <OfferContinuationForm offerId={id} workSources={workSources} />
-          </div>
-        </section>
-      )}
+      {!audienceTest &&
+        offer.events.some(
+          (event) => event.kind === "ACCEPTED" && !event.retractedAt,
+        ) && (
+          <section className="business-zone business-continuation-zone">
+            <h3>Continue into work</h3>
+            <p>
+              {offer.continuationChoice
+                ? humanize(offer.continuationChoice)
+                : "Choose whether a Finance work-source link would help."}
+            </p>
+            <div className="mt-lg">
+              <OfferContinuationForm offerId={id} workSources={workSources} />
+            </div>
+          </section>
+        )}
       <div className="business-detail-grid">
         <div className="business-detail-main">
           <section className="business-offer-quote">
             <p className="eyebrow">
-              {acceptance
-                ? "Accepted terms"
-                : quote.proposedAt
-                  ? offer.events.some(
-                      (event) =>
-                        event.offerRevisionId === quote.id &&
-                        event.kind === "PROPOSED" &&
-                        !event.retractedAt,
-                    )
-                    ? "Proposed terms"
-                    : "Retained terms · proposal corrected"
-                  : "Draft terms"}{" "}
+              {audienceTest
+                ? sharedRevisions.some((revision) => revision.id === quote.id)
+                  ? "Shared test terms"
+                  : quote.proposedAt
+                    ? "Retained terms · sharing corrected"
+                    : "Draft test terms"
+                : acceptance
+                  ? "Accepted terms"
+                  : quote.proposedAt
+                    ? offer.events.some(
+                        (event) =>
+                          event.offerRevisionId === quote.id &&
+                          event.kind === "PROPOSED" &&
+                          !event.retractedAt,
+                      )
+                      ? "Proposed terms"
+                      : "Retained terms · proposal corrected"
+                    : "Draft terms"}{" "}
               · revision {quote.version}
             </p>
             <h3>{quoteLabel(quote)}</h3>
@@ -144,8 +188,11 @@ export async function OfferDetail({
             <div className="business-actions mt-xl">
               <OfferForm
                 offerId={id}
-                companyId={offer.companyId}
+                companyId={offer.companyId ?? undefined}
+                mode={offer.mode}
                 companies={options.companies}
+                people={options.people}
+                segments={options.segments}
                 problems={options.problems}
                 initial={{
                   ...quote,
@@ -158,40 +205,69 @@ export async function OfferDetail({
               />
             </div>
           </section>
+          {audienceTest && (
+            <OfferResponseJournal
+              offer={offer}
+              workSources={workSources}
+              problems={options.problems}
+              segments={options.segments}
+              interactions={interactions.map((i) => ({
+                id: i.interactionId,
+                revisionId: i.id,
+                name: i.summary.slice(0, 100),
+              }))}
+              renderReceipts={(engagement) => (
+                <CompanyReceipts
+                  userId={userId}
+                  companyId={engagement.companyId ?? undefined}
+                  offerId={id}
+                  engagementId={engagement.id}
+                  nicheId={receiptNicheId}
+                  audience={engagement}
+                  explorationOptions={options.niches}
+                  offerRevisionId={engagement.events[0]?.offerRevisionId}
+                />
+              )}
+            />
+          )}
           <section className="business-detail-section">
-            <h3>What happened</h3>
+            <h3>
+              {audienceTest ? "Sharing & closure history" : "What happened"}
+            </h3>
             {offer.events.length ? (
-              offer.events.map((event) => (
-                <article key={event.id} className="business-outcome">
-                  <div className="business-row-heading">
-                    <div className="business-meta">
-                      <strong>
-                        {humanize(event.kind)}
-                        {event.retractedAt ? " · corrected / withdrawn" : ""}
-                      </strong>
-                      <time>{businessDate(event.occurredAt)}</time>
-                      <span>Revision {event.revision.version}</span>
+              offer.events
+                .filter((event) => !audienceTest || !event.engagementId)
+                .map((event) => (
+                  <article key={event.id} className="business-outcome">
+                    <div className="business-row-heading">
+                      <div className="business-meta">
+                        <strong>
+                          {humanize(event.kind)}
+                          {event.retractedAt ? " · corrected / withdrawn" : ""}
+                        </strong>
+                        <time>{businessDate(event.occurredAt)}</time>
+                        <span>Revision {event.revision.version}</span>
+                      </div>
+                      {!event.retractedAt && (
+                        <CorrectionMenu
+                          label="Outcome actions"
+                          title="Retract outcome"
+                          description="Correct an outcome without erasing what was originally recorded."
+                          action={retractOfferEventAction.bind(null, event.id)}
+                        />
+                      )}
                     </div>
-                    {!event.retractedAt && (
-                      <CorrectionMenu
-                        label="Outcome actions"
-                        title="Retract outcome"
-                        description="Correct an outcome without erasing what was originally recorded."
-                        action={retractOfferEventAction.bind(null, event.id)}
-                      />
+                    <p className="business-prose">{event.sourceDescription}</p>
+                    {event.interactionId && (
+                      <Link
+                        className="business-text-link"
+                        href={`/entrepreneurship/interactions/${event.interactionId}`}
+                      >
+                        Source interaction ↗
+                      </Link>
                     )}
-                  </div>
-                  <p className="business-prose">{event.sourceDescription}</p>
-                  {event.interactionId && (
-                    <Link
-                      className="business-text-link"
-                      href={`/entrepreneurship/interactions/${event.interactionId}`}
-                    >
-                      Source interaction ↗
-                    </Link>
-                  )}
-                </article>
-              ))
+                  </article>
+                ))
             ) : (
               <p className="business-inline-empty">
                 No proposal or outcome recorded. This is still a draft.
@@ -201,12 +277,18 @@ export async function OfferDetail({
               <p className="business-hint">No response recorded.</p>
             )}
           </section>
-          <CompanyReceipts
-            userId={userId}
-            companyId={offer.companyId}
-            offerId={id}
-            offerRevisionId={quote.proposedAt ? quote.id : undefined}
-          />
+          {!audienceTest && (
+            <CompanyReceipts
+              userId={userId}
+              companyId={offer.companyId ?? undefined}
+              offerId={id}
+              offerRevisionId={quote.proposedAt ? quote.id : undefined}
+              engagementId={offer.engagements[0]?.id}
+              nicheId={receiptNicheId}
+              audience={offer.engagements[0] ?? quote}
+              explorationOptions={options.niches}
+            />
+          )}
           {offer.revisions[0].id !== quote.id && (
             <section className="business-detail-section">
               <p className="eyebrow">
@@ -223,7 +305,11 @@ export async function OfferDetail({
           )}
           <OfferRevisionComparison
             revisions={offer.revisions}
-            events={offer.events}
+            events={
+              audienceTest
+                ? offer.events.filter((event) => !event.engagementId)
+                : offer.events
+            }
           />
         </div>
         <aside className="business-aside">
@@ -235,13 +321,33 @@ export async function OfferDetail({
             ))}
           </section>
           <section className="business-aside-section">
-            <p className="eyebrow">For this company</p>
-            <Link
-              className="business-text-link mt-lg inline-block"
-              href={`/entrepreneurship/market/companies/${offer.companyId}`}
-            >
-              {offer.company.name}
-            </Link>
+            <p className="eyebrow">
+              {audienceTest ? "Intended audience" : "Specific recipient"}
+            </p>
+            <p className="mt-lg text-body text-text-secondary">
+              <AudienceSummary {...quote} />
+            </p>
+            {quote.audienceContext?.description && (
+              <p className="business-hint mt-lg">
+                {quote.audienceContext.description}
+              </p>
+            )}
+            {offer.companyId && (
+              <Link
+                className="business-text-link mt-lg inline-block"
+                href={`/entrepreneurship/market/companies/${offer.companyId}`}
+              >
+                {offer.company?.name ?? offer.companySnapshot}
+              </Link>
+            )}
+            {offer.personId && (
+              <Link
+                className="business-text-link mt-lg"
+                href={`/entrepreneurship/people/${offer.personId}`}
+              >
+                Open person ↗
+              </Link>
+            )}
             <div className="business-aside-divider">
               <h3>Problems addressed</h3>
               {quote.problems.length ? (

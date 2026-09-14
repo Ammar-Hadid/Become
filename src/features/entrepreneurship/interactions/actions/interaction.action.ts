@@ -28,6 +28,7 @@ export async function correctInteractionAction(
     correctInteraction(userId, id, String(form.get("captureKey")), {
       ...interactionForm(form),
       expectedVersion: version,
+      audienceScopeEdited: form.get("audienceScopeEdited") === "true",
       meaningUnchanged: form.get("meaningUnchanged") === "on",
     }),
   );
@@ -37,6 +38,9 @@ export async function batchOutreachAction(form: FormData) {
     logBatchOutreach(userId, String(form.get("captureKey")), {
       ...Object.fromEntries(form),
       companyIds: form.getAll("companyIds"),
+      personIds: form.getAll("personIds"),
+      segmentIds: form.getAll("segmentIds"),
+      segmentNames: form.getAll("segmentNames").map(String),
       overrides: JSON.parse(String(form.get("overrides") ?? "{}")),
       confirmedSent: form.get("confirmedSent") === "on",
     }),

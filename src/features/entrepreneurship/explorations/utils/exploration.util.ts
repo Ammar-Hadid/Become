@@ -13,7 +13,7 @@ export function contextualBusinessHref(href: string, nicheId?: string) {
       relative.replace(/^\/market(?:\/companies)?/, "/companies"),
     );
   if (
-    /^\/(interactions|problems|offers|observations)(?:[/?#]|$)/.test(
+    /^\/(interactions|problems|offers|observations|audience|evidence|people|segments)(?:[/?#]|$)/.test(
       relative,
     ) ||
     !relative ||

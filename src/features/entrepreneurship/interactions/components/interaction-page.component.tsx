@@ -53,7 +53,11 @@ export async function InteractionPage({
               </select>
               <button type="submit">Filter</button>
             </form>
-            <BatchOutreachForm companies={options.companies} />
+            <BatchOutreachForm
+              companies={options.companies}
+              people={options.people}
+              segments={options.segments}
+            />
           </div>
         </div>
         <InteractionJournal userId={userId} nicheId={nicheId} {...query} />

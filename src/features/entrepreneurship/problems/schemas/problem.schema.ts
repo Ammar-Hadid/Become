@@ -1,3 +1,4 @@
+import { audienceInputSchema } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
 import { z } from "zod";
 import { optionalText } from "@/features/entrepreneurship/market/schemas/market.schema";
 import {
@@ -5,6 +6,7 @@ import {
   observationInputSchema,
 } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 export const problemSchema = z.object({
+  ...audienceInputSchema.shape,
   title: z.string().trim().min(1).max(200),
   initialStatement: z
     .string()
@@ -26,6 +28,9 @@ export const evidenceSchema = z.object({
     .max(6000),
 });
 export const sourcedObservationSchema = observationInputSchema.safeExtend({
+  ...audienceInputSchema.shape,
+  audienceOverride: z.boolean().default(false),
+  audienceReason: optionalText(2000),
   sourceKind: z.enum(["INTERACTION", "DIRECT_OBSERVATION", "PUBLIC_SOURCE"]),
   observedAt: occurredDaySchema,
   companyId: optionalText(80),

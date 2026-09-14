@@ -10,6 +10,7 @@ import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 export async function InteractionJournal({
   userId,
   kind,
@@ -60,7 +61,7 @@ export async function InteractionJournal({
                     <time>{businessDate(revision.occurredAt)}</time>
                     <span>·</span>
                     <span>
-                      {revision.companySnapshot ?? "No company recorded"}
+                      <AudienceSummary {...revision} />
                     </span>
                   </div>
                   <Link

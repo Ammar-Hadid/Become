@@ -20,7 +20,7 @@ async function createDisposableDirectionUser(page: Page) {
   if (page.url().includes("/opening")) {
     await page.getByRole("button", { name: "Not now" }).click();
   }
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL((url) => url.pathname === "/");
 }
 
 async function expectStyledHomeSeasonCard(page: Page) {

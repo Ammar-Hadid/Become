@@ -15,10 +15,9 @@ export async function allocateBusinessReceiptAction(
       transactionId,
       String(form.get("captureKey")),
       {
-        companyId: String(form.get("companyId")),
-        offerRevisionId: String(form.get("offerRevisionId") ?? ""),
-        amount: String(form.get("amount")),
-        note: String(form.get("note") ?? ""),
+        ...Object.fromEntries(form),
+        segmentIds: form.getAll("segmentIds"),
+        segmentNames: form.getAll("segmentNames").map(String),
       },
     ),
   );

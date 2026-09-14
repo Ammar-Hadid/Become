@@ -46,6 +46,10 @@ enum TechnologyCategory {
 }
 
 model User {
+  audienceContexts AudienceContext[]
+  offerEngagements OfferEngagement[]
+  marketPeople Person[]
+  audienceSegments AudienceSegment[]
   reviews Review[]
   reviewMutations ReviewMutation[]
   seasonTransitions SeasonTransition[]
@@ -108,6 +112,8 @@ model User {
 }
 
 model Company {
+  engagements OfferEngagement[]
+  problems Problem[]
   directionCriteria DirectionCriterion[]
   businessSessions Session[] @relation("BusinessSessionCompany")
   offers Offer[]
@@ -134,6 +140,11 @@ model Company {
 }
 
 model Niche {
+  receipts BusinessReceiptAllocation[]
+  marketFocus String? @default("UNKNOWN")
+  marketConclusion String? @default("UNDECIDED")
+  people PersonNiche[]
+  segments AudienceSegmentNiche[]
   journalDecisions Decision[]
 
   directionCriteria DirectionCriterion[]
@@ -177,6 +188,17 @@ model Interaction {
 }
 
 model InteractionRevision {
+  linkedParticipants InteractionParticipant[]
+  sampleUnit String?
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  sampleSize Int?
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   sourceSessionId String?
   sourceSession Session? @relation(fields: [sourceSessionId, userId], references: [id, userId], onDelete: Restrict)
   offerEvents OfferEvent[]
@@ -227,6 +249,16 @@ model Observation {
 }
 
 model ObservationRevision {
+  sampleUnit String?
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  sampleSize Int?
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   id String @id @default(cuid())
   userId String
   observationId String
@@ -258,6 +290,18 @@ model ObservationRevision {
 }
 
 model Problem {
+  audienceRevisions ProblemAudienceRevision[]
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  companyId String?
+  companySnapshot String?
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   offerRevisions OfferRevisionProblem[]
   id String @id @default(cuid())
   userId String
@@ -304,6 +348,8 @@ model ProblemEvidence {
 }
 
 model ProblemAssessment {
+  audienceRevisionId String?
+  audienceRevision ProblemAudienceRevision? @relation(fields: [audienceRevisionId, problemId, userId], references: [id, problemId, userId], onDelete: Restrict)
   id String @id @default(cuid())
   userId String
   problemId String
@@ -361,6 +407,10 @@ model CompanyNiche {
 }
 
 model NicheDecision {
+  sourceSnapshots Json @default("[]")
+  conclusionScope String?
+  marketFocus String? @default("UNKNOWN")
+  marketConclusion String? @default("UNDECIDED")
   id String @id @default(cuid())
   userId String
   nicheId String
@@ -489,7 +539,6 @@ model Session {
   contentActivitySnapshot String?
   content Content? @relation(fields: [contentId, userId], references: [id, userId], onDelete: Restrict)
   contentVariant ContentVariant? @relation(fields: [contentVariantId, contentId, userId], references: [id, contentId, userId], onDelete: Restrict)
-  @@index([userId, contentId, startedAt])
 
   entrepreneurshipActivityKind String?
   businessCompanyId String?
@@ -527,6 +576,7 @@ model Session {
   paymentAllocations           PaymentSessionAllocation[]
 
   @@unique([id, userId])
+  @@index([userId, contentId, startedAt])
   @@index([userId, startedAt])
   @@index([userId, endedAt])
   @@index([domainId, startedAt])
@@ -948,6 +998,7 @@ enum IncomeOpportunityChannel {
 }
 
 model WorkSource {
+  offerEngagements OfferEngagement[]
   directionCriteria DirectionCriterion[]
   businessCompanies CompanyWorkSource[]
   id                      String                  @id @default(cuid())
@@ -970,15 +1021,26 @@ model WorkSource {
 }
 
 model Offer {
+  companySnapshot String?
+  mode String @default("SPECIFIC")
+  engagements OfferEngagement[]
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   niches OfferNiche[]
   id String @id @default(cuid())
   userId String
-  companyId String
+  companyId String?
   archivedAt DateTime?
   continuationChoice String?
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
   revisions OfferRevision[]
   events OfferEvent[]
   followUps FollowUp[]
@@ -1002,16 +1064,24 @@ model OfferNiche {
 }
 
 model OfferRevision {
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   directionCriteria DirectionCriterion[]
   id String @id @default(cuid())
   userId String
   offerId String
-  companyId String
+  companyId String?
   version Int
   title String
   scope String
   terms String?
-  companySnapshot String
+  companySnapshot String?
   priceBasis String
   priceMinor BigInt?
   currency String?
@@ -1021,7 +1091,7 @@ model OfferRevision {
   expiresOn DateTime? @db.Date
   proposedAt DateTime?
   createdAt DateTime @default(now())
-  offer Offer @relation(fields: [offerId, companyId, userId], references: [id, companyId, userId], onDelete: Cascade)
+  offer Offer @relation(fields: [offerId, userId], references: [id, userId], onDelete: Cascade)
   problems OfferRevisionProblem[]
   events OfferEvent[]
   receipts BusinessReceiptAllocation[]
@@ -1044,6 +1114,8 @@ model OfferRevisionProblem {
 }
 
 model OfferEvent {
+  engagementId String?
+  engagement OfferEngagement? @relation(fields: [engagementId, offerId, userId], references: [id, offerId, userId], onDelete: Restrict)
   id String @id @default(cuid())
   userId String
   offerId String
@@ -1076,17 +1148,31 @@ model CompanyWorkSource {
 }
 
 model BusinessReceiptAllocation {
+  attributionFingerprint String?
+  nicheId String?
+  nicheSnapshot String?
+  niche Niche? @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+  engagementId String?
+  engagement OfferEngagement? @relation(fields: [engagementId, userId], references: [id, userId], onDelete: Restrict)
+  audienceContextId String?
+  audienceContext AudienceContext? @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  identityKind String @default("UNSPECIFIED")
+  personId String?
+  personSnapshot String?
+  audienceLabel String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
   sourceChangedAt DateTime?
   id String @id @default(cuid())
   userId String
   transactionId String?
   originalTransactionId String
-  companyId String
+  companyId String?
   offerRevisionId String?
   amountMinor BigInt
   currencySnapshot String
   occurredAtSnapshot DateTime
-  companySnapshot String
+  companySnapshot String?
   note String?
   confirmedAt DateTime @default(now())
   needsReviewAt DateTime?
@@ -1095,8 +1181,8 @@ model BusinessReceiptAllocation {
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   transaction FinancialTransaction? @relation(fields: [transactionId, userId], references: [id, userId], onDelete: Restrict)
-  company Company @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
-  offerRevision OfferRevision? @relation(fields: [offerRevisionId, companyId, userId], references: [id, companyId, userId], onDelete: Restrict)
+  company Company? @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  offerRevision OfferRevision? @relation(fields: [offerRevisionId, userId], references: [id, userId], onDelete: Restrict)
   evidence ProblemEvidence[]
   @@unique([id, userId])
   @@index([transactionId, withdrawnAt])
@@ -1156,7 +1242,6 @@ model PaymentSessionAllocation {
   @@index([userId, sessionId])
   @@map("payment_session_allocation")
 }
-
 
 model UserSeason {
   decisions Decision[]
@@ -1526,6 +1611,11 @@ model ExperimentChange {
 }
 
 model DirectionCriterion {
+  personId String?
+  person Person? @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+  segmentId String?
+  segment AudienceSegment? @relation(fields: [segmentId, userId], references: [id, userId], onDelete: Restrict)
+  marketType String?
   contentId String?
   channelId String?
   contentFormat String?
@@ -1595,7 +1685,6 @@ model CriterionAssessment {
   @@index([criterionId, createdAt])
   @@map("criterion_assessment")
 }
-
 
 model Content {
   workspaceVersion Int @default(1)
@@ -2017,4 +2106,168 @@ model SeasonTransition {
   @@unique([userId, fromStartOn])
   @@unique([id, userId])
   @@map("season_transition")
+}
+
+model Person {
+  engagements          OfferEngagement[]
+  directionCriteria    DirectionCriterion[]
+  participants         InteractionParticipant[]
+  id                   String                      @id @default(cuid())
+  userId               String
+  name                 String
+  normalizedName       String
+  archivedAt           DateTime?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  user                 User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interactionRevisions InteractionRevision[]
+  observationRevisions ObservationRevision[]
+  problems             Problem[]
+  offers               Offer[]
+  offerRevisions       OfferRevision[]
+  receipts             BusinessReceiptAllocation[]
+  email                String?
+  notes                String?
+  niches               PersonNiche[]
+
+  @@unique([id, userId])
+  @@index([userId, normalizedName])
+  @@map("market_person")
+}
+
+model AudienceSegment {
+  marketType        String                   @default("UNKNOWN")
+  contexts          AudienceContextSegment[]
+  directionCriteria DirectionCriterion[]
+  id                String                   @id @default(cuid())
+  userId            String
+  name              String
+  normalizedName    String
+  archivedAt        DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description       String?
+  niches            AudienceSegmentNiche[]
+
+  @@unique([id, userId])
+  @@index([userId, normalizedName])
+  @@map("audience_segment")
+}
+
+model PersonNiche {
+  userId   String
+  personId String
+  nicheId  String
+  person   Person @relation(fields: [personId, userId], references: [id, userId], onDelete: Cascade)
+  niche    Niche  @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@id([personId, nicheId])
+  @@map("person_niche")
+}
+
+model AudienceSegmentNiche {
+  userId    String
+  segmentId String
+  nicheId   String
+  segment   AudienceSegment @relation(fields: [segmentId, userId], references: [id, userId], onDelete: Cascade)
+  niche     Niche           @relation(fields: [nicheId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@id([segmentId, nicheId])
+  @@map("audience_segment_niche")
+}
+
+// Immutable capture of audience meaning; editing a segment never rewrites it.
+model AudienceContext {
+  id               String                      @id @default(cuid())
+  userId           String
+  marketType       String
+  description      String?
+  createdAt        DateTime                    @default(now())
+  user             User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  segments         AudienceContextSegment[]
+  interactions     InteractionRevision[]
+  observations     ObservationRevision[]
+  problems         Problem[]
+  problemRevisions ProblemAudienceRevision[]
+  offers           Offer[]
+  offerRevisions   OfferRevision[]
+  engagements      OfferEngagement[]
+  receipts         BusinessReceiptAllocation[]
+
+  @@unique([id, userId])
+  @@map("audience_context")
+}
+
+model AudienceContextSegment {
+  userId              String
+  audienceContextId   String
+  segmentId           String
+  nameSnapshot        String
+  descriptionSnapshot String?
+  context             AudienceContext @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Cascade)
+  segment             AudienceSegment @relation(fields: [segmentId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@id([audienceContextId, segmentId])
+  @@index([userId, segmentId])
+  @@map("audience_context_segment")
+}
+
+model InteractionParticipant {
+  userId                String
+  interactionRevisionId String
+  personId              String
+  nameSnapshot          String
+  roleSnapshot          String?
+  revision              InteractionRevision @relation(fields: [interactionRevisionId, userId], references: [id, userId], onDelete: Cascade)
+  person                Person              @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+
+  @@id([interactionRevisionId, personId])
+  @@map("interaction_participant")
+}
+
+model ProblemAudienceRevision {
+  id                String              @id @default(cuid())
+  userId            String
+  problemId         String
+  audienceContextId String?
+  version           Int
+  rationale         String
+  createdAt         DateTime            @default(now())
+  problem           Problem             @relation(fields: [problemId, userId], references: [id, userId], onDelete: Cascade)
+  audienceContext   AudienceContext?    @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  assessments       ProblemAssessment[]
+
+  @@unique([problemId, version])
+  @@unique([id, problemId, userId])
+  @@map("problem_audience_revision")
+}
+
+model OfferEngagement {
+  id                 String                      @id @default(cuid())
+  userId             String
+  offerId            String
+  audienceContextId  String?
+  identityKind       String
+  personId           String?
+  personSnapshot     String?
+  companyId          String?
+  companySnapshot    String?
+  audienceLabel      String?
+  continuationChoice String?
+  workSourceId       String?
+  createdAt          DateTime                    @default(now())
+  user               User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer              Offer                       @relation(fields: [offerId, userId], references: [id, userId], onDelete: Cascade)
+  audienceContext    AudienceContext?            @relation(fields: [audienceContextId, userId], references: [id, userId], onDelete: Restrict)
+  person             Person?                     @relation(fields: [personId, userId], references: [id, userId], onDelete: Restrict)
+  company            Company?                    @relation(fields: [companyId, userId], references: [id, userId], onDelete: Restrict)
+  workSource         WorkSource?                 @relation(fields: [workSourceId, userId], references: [id, userId], onDelete: Restrict)
+  events             OfferEvent[]
+  receipts           BusinessReceiptAllocation[]
+
+  @@unique([id, userId])
+  @@unique([id, offerId, userId])
+  @@index([userId, offerId, createdAt])
+  @@map("offer_engagement")
 }

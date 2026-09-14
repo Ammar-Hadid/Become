@@ -6,7 +6,35 @@ const id = z.string().min(1).max(200);
 const cursor = z.string().max(1500).optional();
 const fingerprint = z.string().length(64).optional();
 const period = reviewIdentitySchema.shape;
+const audienceScope = {
+  nicheId: id.optional(),
+  personId: id.optional(),
+  companyId: id.optional(),
+  segmentId: id.optional(),
+  marketType: z
+    .enum(["UNKNOWN", "B2C", "B2B", "BOTH", "UNRECORDED"])
+    .optional(),
+};
 export const targetedRetrievalSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("ENTREPRENEURSHIP_EVIDENCE"),
+      ...period,
+      ...audienceScope,
+      cursor,
+      fingerprint,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("ENTREPRENEURSHIP_RECEIPTS"),
+      ...period,
+      ...audienceScope,
+      currency: currencySchema,
+      cursor,
+      fingerprint,
+    })
+    .strict(),
   z
     .object({
       type: z.literal("FOCUSED_TIME"),

@@ -8,6 +8,7 @@ export type MetricKey =
   | "NEW_RECURRING_COMPANY"
   | "CONVERSATIONS"
   | "CONVERSATION_COMPANIES"
+  | "CONVERSATION_PEOPLE"
   | "SESSION_TIME"
   | "ENGINEERING_EVIDENCE"
   | "ENGINEERING_PROJECT_COMPLETED"
@@ -38,6 +39,9 @@ export type CriterionDraft = {
   endOn?: string;
   workSourceId?: string;
   companyId?: string;
+  personId?: string;
+  segmentId?: string;
+  marketType?: "UNKNOWN" | "B2C" | "B2B" | "BOTH";
   offerRevisionId?: string;
   nicheId?: string;
   projectId?: string;
@@ -136,6 +140,8 @@ export type CriterionScopes = Record<
       | "channelId"
       | "workSourceId"
       | "companyId"
+      | "personId"
+      | "segmentId"
       | "offerRevisionId"
       | "nicheId"
       | "projectId"

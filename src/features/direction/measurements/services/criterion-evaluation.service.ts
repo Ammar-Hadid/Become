@@ -59,6 +59,9 @@ export function criterionDraft(row: DirectionCriterion): CriterionDraft {
     endOn: dateLabel(row.endOn),
     workSourceId: row.workSourceId ?? undefined,
     companyId: row.companyId ?? undefined,
+    personId: row.personId ?? undefined,
+    segmentId: row.segmentId ?? undefined,
+    marketType: (row.marketType as CriterionDraft["marketType"]) ?? undefined,
     offerRevisionId: row.offerRevisionId ?? undefined,
     nicheId: row.nicheId ?? undefined,
     projectId: row.projectId ?? undefined,
@@ -242,7 +245,7 @@ export async function evaluateCriterion(
     const company = await tx.company.findFirst({
       where: { id: c.companyId ?? "", userId },
     });
-    if (!company)
+    if (c.companyId && !company)
       throw new DirectionError(
         "Choose the company.",
         `criteria.${c.key}.companyId`,
@@ -253,7 +256,11 @@ export async function evaluateCriterion(
         userId,
         ...window,
         currency: c.currency!,
-        companyId: company.id,
+        companyId: c.companyId,
+        personId: c.personId,
+        segmentId: c.segmentId,
+        nicheId: c.nicheId,
+        marketType: c.marketType,
         offerRevisionId: c.offerRevisionId,
       },
       offset,
@@ -266,7 +273,7 @@ export async function evaluateCriterion(
       data.hash,
     );
     e.targetLabel = formatMoney(e.target!, c.currency!);
-    e.qualification = `Only confirmed ${c.currency} receipt portions attributed to ${company.name}${c.offerRevisionId ? " and the selected offer revision" : ""}, received ${window.wording}.`;
+    e.qualification = `Only confirmed ${c.currency} receipt portions attributed to ${company?.name ?? "the selected audience"}${c.offerRevisionId ? " and the selected offer revision" : ""}, received ${window.wording}.`;
     e.exclusions = [
       "The unallocated remainder of a receipt",
       "Other companies/revisions, withdrawn allocations, and pending attribution review",
@@ -281,7 +288,10 @@ export async function evaluateCriterion(
     e.sources = data.rows.map((a) =>
       source(
         a.id,
-        a.company.name,
+        a.personSnapshot ??
+          a.companySnapshot ??
+          a.audienceLabel ??
+          "Attributed receipt",
         `/finance/transactions/${a.transactionId}`,
         a.transaction!.occurredAt,
         formatMoney(a.amountMinor, c.currency!),
@@ -289,7 +299,8 @@ export async function evaluateCriterion(
     );
   } else if (
     c.metric === "CONVERSATIONS" ||
-    c.metric === "CONVERSATION_COMPANIES"
+    c.metric === "CONVERSATION_COMPANIES" ||
+    c.metric === "CONVERSATION_PEOPLE"
   ) {
     const niche = c.nicheId
       ? await tx.niche.findFirst({
@@ -310,6 +321,10 @@ export async function evaluateCriterion(
         ...window,
         nicheId: c.nicheId,
         companyId: c.companyId,
+        personId: c.personId,
+        segmentId: c.segmentId,
+        marketType: c.marketType,
+        distinctPeople: c.metric === "CONVERSATION_PEOPLE",
         distinctCompanies: c.metric === "CONVERSATION_COMPANIES",
         outreachIds,
       },
@@ -322,7 +337,7 @@ export async function evaluateCriterion(
       data.recordCount,
       data.hash,
     );
-    e.qualification = `${c.metric === "CONVERSATION_COMPANIES" ? "Distinct companies with" : "Logical records of"} conversations${niche ? ` in ${niche.name}` : ""}${company ? ` with ${company.name}` : ""}, ${window.wording}${outreachIds ? ", directly linked to this trial's selected outreach at the same company and in the same exploration" : ""}.`;
+    e.qualification = `${c.metric === "CONVERSATION_COMPANIES" ? "Distinct companies with" : c.metric === "CONVERSATION_PEOPLE" ? "Distinct identified people with" : "Logical records of"} conversations${niche ? ` in ${niche.name}` : ""}${company ? ` with ${company.name}` : ""}, ${window.wording}${outreachIds ? ", directly linked to this trial's selected outreach for the same recorded recipient and exploration" : ""}.`;
     e.exclusions = [
       "Outreach attempts, replies, session time, superseded revisions and withdrawn interactions",
       ...(niche ? ["Conversations recorded in another exploration"] : []),
@@ -584,6 +599,7 @@ export async function evaluateCriterion(
       hasReceipt = false,
       hasNew = false;
     for (const revision of candidates.slice(0, 100)) {
+      if (!revision.companyId || !revision.offer.company) continue;
       const acceptance = revision.events.find(
         (event) =>
           event.kind === "ACCEPTED" &&
@@ -666,7 +682,7 @@ export async function evaluateCriterion(
           ...receipts.records.map((r) =>
             source(
               r.id,
-              `${revision.offer.company.name} · attributed receipt`,
+              `${revision.offer.company!.name} · attributed receipt`,
               `/finance/transactions/${r.transactionId}`,
               r.occurredAt,
               formatMoney(r.amountMinor, c.currency!),
@@ -676,7 +692,7 @@ export async function evaluateCriterion(
         matched.push(
           source(
             revision.id,
-            `${revision.offer.company.name} · ${formatMoney(revision.priceMinor!, c.currency!)} / month`,
+            `${revision.offer.company!.name} · ${formatMoney(revision.priceMinor!, c.currency!)} / month`,
             `/entrepreneurship/offers/${revision.offerId}`,
             acceptance.occurredAt,
             `${formatMoney(amount, c.currency!)} received`,

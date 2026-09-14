@@ -1,3 +1,6 @@
+import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
+import { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import { audienceInclude } from "@/features/entrepreneurship/audiences/utils/audience.util";
 import { timerSessionInclude } from "@/features/sessions/timer/queries/timer-snapshot.query";
 import { toSessionListItem } from "@/features/sessions/mappers/session.mapper";
 import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
@@ -8,13 +11,57 @@ import {
   offerExplorationWhere,
 } from "@/features/entrepreneurship/explorations/queries/exploration-scope.query";
 
-export function getExploration(userId: string, id: string) {
-  return prisma.niche.findFirst({
+export async function getExploration(userId: string, id: string) {
+  const exploration = await prisma.niche.findFirst({
     where: { id, userId },
     include: {
       decisions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
     },
   });
+  if (!exploration) return null;
+  const journal = await getEvidenceJournal(userId, { nicheId: id });
+  const sourceOptions = journal.entries.flatMap((e) => [
+    { id: `${e.type}:${e.revisionId}`, name: e.title.slice(0, 160) },
+    ...e.observations.map((o) => ({
+      id: `OBSERVATION:${o.revisionId}`,
+      name: o.statement.slice(0, 160),
+    })),
+  ]);
+  const outcomes = await prisma.offerEvent.findMany({
+    where: {
+      userId,
+      retractedAt: null,
+      offer: { niches: { some: { nicheId: id } } },
+    },
+    orderBy: { occurredAt: "desc" },
+    take: 25,
+    include: { revision: { select: { title: true } } },
+  });
+  sourceOptions.push(
+    ...outcomes.map((e) => ({
+      id: `OFFER_EVENT:${e.id}`,
+      name: `${e.kind} · ${e.revision.title}`,
+    })),
+  );
+  const captured = exploration.decisions[0]?.sourceSnapshots;
+  const initialSourceKeys: string[] = [];
+  if (Array.isArray(captured))
+    for (const source of captured) {
+      if (
+        !source ||
+        typeof source !== "object" ||
+        Array.isArray(source) ||
+        typeof source.key !== "string"
+      )
+        continue;
+      initialSourceKeys.push(source.key);
+      if (!sourceOptions.some((o) => o.id === source.key))
+        sourceOptions.push({
+          id: source.key,
+          name: `Previously captured · ${String(source.label ?? "Source").slice(0, 160)}`,
+        });
+    }
+  return { ...exploration, sourceOptions, initialSourceKeys };
 }
 export async function getExplorationSummary(userId: string, nicheId: string) {
   const [companies, problems, offers, events, time] = await Promise.all([
@@ -34,7 +81,25 @@ export async function getExplorationSummary(userId: string, nicheId: string) {
       { seconds: number; sessions: number }[]
     >`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
   ]);
-  return { companies, problems, offers, ...events[0], ...time[0] };
+  const [audience, segments, people] = await Promise.all([
+    getAudienceMetrics(userId, { nicheId }),
+    prisma.audienceSegment.count({
+      where: { userId, archivedAt: null, niches: { some: { nicheId } } },
+    }),
+    prisma.person.count({
+      where: { userId, archivedAt: null, niches: { some: { nicheId } } },
+    }),
+  ]);
+  return {
+    companies,
+    problems,
+    offers,
+    ...events[0],
+    ...time[0],
+    ...audience,
+    segments,
+    people,
+  };
 }
 export async function getExplorations(userId: string) {
   const niches = await prisma.niche.findMany({
@@ -75,8 +140,71 @@ export async function getExplorationSignals(userId: string, nicheId: string) {
     where: { userId, id: { in: followUps.map((f) => f.id) } },
     orderBy: [{ dueOn: "asc" }, { id: "asc" }],
   });
+  const [recentJournal, audienceSegments, recentProblems, recentOffers] =
+    await Promise.all([
+      getEvidenceJournal(userId, { nicheId }),
+      prisma.audienceSegment.findMany({
+        where: { userId, archivedAt: null, niches: { some: { nicheId } } },
+        select: { id: true, name: true, description: true, marketType: true },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 5,
+      }),
+      prisma.problem.findMany({
+        where: {
+          userId,
+          archivedAt: null,
+          ...problemExplorationWhere(nicheId),
+        },
+        orderBy: [{ formulatedAt: "desc" }, { id: "desc" }],
+        take: 3,
+        include: {
+          audienceContext: audienceInclude,
+          assessments: {
+            orderBy: [{ assessedAt: "desc" }, { id: "desc" }],
+            take: 1,
+          },
+        },
+      }),
+      prisma.offer.findMany({
+        where: { userId, archivedAt: null, ...offerExplorationWhere(nicheId) },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 3,
+        include: {
+          audienceContext: audienceInclude,
+          revisions: { orderBy: { version: "desc" }, take: 1 },
+        },
+      }),
+    ]);
+  const voiceSources = await prisma.observation.findMany({
+    where: { userId, id: { in: voice.map((v) => v.id) } },
+    include: {
+      revisions: {
+        orderBy: { version: "desc" },
+        take: 1,
+        include: { audienceContext: audienceInclude },
+      },
+    },
+  });
   return {
-    voice,
+    recentEvidence: recentJournal.entries.slice(0, 5),
+    audienceSegments,
+    investigateProblems: recentProblems.map((p) => ({
+      id: p.id,
+      title: p.title,
+      status: p.assessments[0]?.state ?? "INVESTIGATING",
+      audienceContext: p.audienceContext,
+    })),
+    testedOffers: recentOffers.map((o) => ({
+      id: o.id,
+      title: o.revisions[0]?.title ?? "Offer draft",
+      mode: o.mode,
+      audienceContext: o.audienceContext,
+    })),
+    voice: voice.map((v) => ({
+      ...v,
+      ...voiceSources.find((o) => o.id === v.id)?.revisions[0],
+      id: v.id,
+    })),
     nextActions,
     sessions: sessions.map((session) => toSessionListItem(session)),
   };

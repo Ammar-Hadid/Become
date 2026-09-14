@@ -1,3 +1,4 @@
+import { audienceInclude } from "@/features/entrepreneurship/audiences/utils/audience.util";
 import { offerExplorationWhere } from "@/features/entrepreneurship/explorations/queries/exploration-scope.query";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 export async function getOffers(
@@ -19,8 +20,30 @@ export async function getOffers(
     take: 26,
     ...(owned ? { cursor: { id: owned.id }, skip: 1 } : {}),
     include: {
+      niches: { include: { niche: { select: { id: true, name: true } } } },
       company: true,
-      revisions: { orderBy: { version: "desc" } },
+      audienceContext: audienceInclude,
+      engagements: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        include: {
+          audienceContext: audienceInclude,
+          workSource: true,
+          events: {
+            where: { retractedAt: null },
+            orderBy: [
+              { occurredAt: "desc" },
+              { createdAt: "desc" },
+              { id: "desc" },
+            ],
+            include: { revision: true },
+          },
+          receipts: { include: { transaction: true } },
+        },
+      },
+      revisions: {
+        orderBy: { version: "desc" },
+        include: { audienceContext: audienceInclude },
+      },
       events: {
         where: { retractedAt: null },
         orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
@@ -36,10 +59,30 @@ export function getOfferDetail(userId: string, id: string) {
   return prisma.offer.findFirst({
     where: { id, userId },
     include: {
+      niches: { include: { niche: { select: { id: true, name: true } } } },
       company: true,
+      audienceContext: audienceInclude,
+      engagements: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        include: {
+          audienceContext: audienceInclude,
+          workSource: true,
+          events: {
+            where: { retractedAt: null },
+            orderBy: [
+              { occurredAt: "desc" },
+              { createdAt: "desc" },
+              { id: "desc" },
+            ],
+            include: { revision: true },
+          },
+          receipts: { include: { transaction: true } },
+        },
+      },
       revisions: {
         orderBy: { version: "desc" },
         include: {
+          audienceContext: audienceInclude,
           problems: { include: { problem: true } },
           receipts: {
             include: { transaction: true },

@@ -4,11 +4,29 @@ import {
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { OfferRevision } from "@/generated/prisma/client";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
+import { marketTypeLabel } from "@/features/entrepreneurship/audiences/utils/audience-label.util";
+import type { AudienceView } from "@/features/entrepreneurship/audiences/types/audience.types";
+
+function audienceDescription(revision: AudienceView) {
+  return [
+    revision.personSnapshot,
+    revision.companySnapshot,
+    revision.audienceLabel,
+    revision.audienceContext?.segments
+      .map((segment) => segment.nameSnapshot)
+      .join(" · "),
+    marketTypeLabel(revision.audienceContext?.marketType),
+    revision.audienceContext?.description,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
 export function OfferRevisionComparison({
   revisions,
   events,
 }: {
-  revisions: OfferRevision[];
+  revisions: (OfferRevision & AudienceView)[];
   events: { offerRevisionId: string; kind: string; retractedAt: Date | null }[];
 }) {
   if (revisions.length < 2) return null;
@@ -19,6 +37,7 @@ export function OfferRevisionComparison({
         {revisions.slice(0, -1).map((next, i) => {
           const prior = revisions[i + 1];
           const fields = [
+            ["Audience", audienceDescription(prior), audienceDescription(next)],
             ["Title", prior.title, next.title],
             ["Scope", prior.scope, next.scope],
             ["Price", quoteLabel(prior), quoteLabel(next)],
@@ -92,6 +111,17 @@ export function OfferRevisionComparison({
                     <div>
                       <dt>Price</dt>
                       <dd>{quoteLabel(revision)}</dd>
+                    </div>
+                    <div className="business-revision-term--wide">
+                      <dt>Audience & recipient</dt>
+                      <dd>
+                        <AudienceSummary {...revision} />
+                        {revision.audienceContext?.description && (
+                          <p className="mt-sm">
+                            {revision.audienceContext.description}
+                          </p>
+                        )}
+                      </dd>
                     </div>
                     <div className="business-revision-term--wide">
                       <dt>Scope</dt>

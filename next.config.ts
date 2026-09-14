@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   // non-secret configuration and changing it requires a rebuild.
   env: { APP_TIMEZONE: process.env.APP_TIMEZONE ?? "Europe/Amsterdam" },
   // Let isolated browser checks coexist with the regular development server.
-  distDir: process.env.BECOME_E2E_PORT ? ".next-e2e" : undefined,
+  distDir: process.env.BECOME_E2E_PORT ? `.next-e2e-${process.env.BECOME_E2E_PORT}` : undefined,
   experimental: {
     typedEnv: true,
   },

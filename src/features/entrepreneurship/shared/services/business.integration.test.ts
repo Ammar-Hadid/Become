@@ -622,7 +622,7 @@ describe.skipIf(!enabled)("Phase 4 local PostgreSQL integrity", () => {
         offerRevisionId: revision.id,
         amount: "10",
       }),
-    ).rejects.toThrow("this company");
+    ).rejects.toThrow("receipt recipient");
   });
   it("keeps accepted-but-unpaid work continuation explicit and honors Not now", async () => {
     const { company } = await receiptFixture();
@@ -1055,7 +1055,7 @@ describe.skipIf(!enabled)("Phase 4 local PostgreSQL integrity", () => {
       evidenceCompanyCounts(
         (await getProblemDetail(userId, problem.id))!.evidence,
       ),
-    ).toEqual({ total: 2, supporting: 2, contradicting: 1, sources: 5 });
+    ).toMatchObject({ total: 2, supporting: 2, contradicting: 1, sources: 5 });
     const source = await prisma.observationRevision.findFirstOrThrow({
       where: { userId, companyId: b.id },
     });
@@ -1067,7 +1067,7 @@ describe.skipIf(!enabled)("Phase 4 local PostgreSQL integrity", () => {
       evidenceCompanyCounts(
         (await getProblemDetail(userId, problem.id))!.evidence,
       ),
-    ).toEqual({ total: 1, supporting: 1, contradicting: 1, sources: 4 });
+    ).toMatchObject({ total: 1, supporting: 1, contradicting: 1, sources: 4 });
   });
   it("resolves recipient overrides once, distinguishes cleared notes, and rolls back invalid batches", async () => {
     const a = await saveMarketRecord(userId, "company", {

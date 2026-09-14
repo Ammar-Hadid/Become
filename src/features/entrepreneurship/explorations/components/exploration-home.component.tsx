@@ -7,6 +7,7 @@ import {
   explorationHref,
 } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { StartExplorationForm } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
+import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import {
   businessDate,
   humanize,
@@ -38,7 +39,13 @@ export async function ExplorationHome({ userId }: { userId: string }) {
               </h2>
               <p className="exploration-scope">
                 {current.scope ||
-                  "Get to know the people. Find a question worth pursuing."}
+                  "Learn who needs this and whether there is a path worth pursuing."}
+              </p>
+              <p className="text-body-sm text-text-muted">
+                <ExplorationDirectionSummary
+                  marketFocus={current.marketFocus}
+                  marketConclusion={current.marketConclusion}
+                />
               </p>
               <Link
                 href={explorationHref(current.id)}
@@ -51,23 +58,22 @@ export async function ExplorationHome({ userId }: { userId: string }) {
             <>
               <h2>What are you curious about?</h2>
               <p className="exploration-scope">
-                Pick a corner of the market. Meet the people in it. Let what you
-                learn shape your next move.
+                Begin with a question. Learn from people and businesses. Let
+                their experience shape what comes next.
               </p>
             </>
           )}
         </div>
         {current ? (
-          <aside className="exploration-current-pulse" aria-label="Progress">
-            <p className="eyebrow">What’s taking shape</p>
+          <aside
+            className="exploration-current-pulse"
+            aria-label="Recorded activity"
+          >
+            <p className="eyebrow">What you’ve recorded</p>
             <dl className="exploration-current-facts">
               <div>
-                <dd>{current.summary.companies}</dd>
-                <dt>Companies</dt>
-              </div>
-              <div>
-                <dd>{current.summary.contacted}</dd>
-                <dt>Contacted</dt>
+                <dd>{current.summary.evidenceEntries}</dd>
+                <dt>Evidence entries</dt>
               </div>
               <div>
                 <dd>{current.summary.conversations}</dd>
@@ -87,8 +93,8 @@ export async function ExplorationHome({ userId }: { userId: string }) {
           <aside className="exploration-current-guide">
             <p className="eyebrow">A useful starting point</p>
             <p>
-              Choose people you can reach and a real workflow you want to
-              understand. Specific curiosity creates better conversations.
+              You can begin without choosing a customer. Explore consumers,
+              businesses, or both in the same workspace.
             </p>
           </aside>
         )}
@@ -138,8 +144,8 @@ export async function ExplorationHome({ userId }: { userId: string }) {
                 <h3>{n.name}</h3>
                 <p>{n.scope || "No scope was recorded."}</p>
                 <span className="exploration-active-meta">
-                  {n.summary.companies}{" "}
-                  {n.summary.companies === 1 ? "company" : "companies"}
+                  {n.summary.problems}{" "}
+                  {n.summary.problems === 1 ? "problem" : "problems"}
                   <span aria-hidden="true">·</span>
                   {n.summary.conversations}{" "}
                   {n.summary.conversations === 1
@@ -162,7 +168,7 @@ export async function ExplorationHome({ userId }: { userId: string }) {
             href: explorationHref(exploration.id),
             name: exploration.name,
             scope: exploration.scope ?? "",
-            companies: exploration.summary.companies,
+            evidenceEntries: exploration.summary.evidenceEntries,
             conversations: exploration.summary.conversations,
             direction: humanize(exploration.direction),
             statusDate: businessDate(statusDate),

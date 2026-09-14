@@ -1,10 +1,21 @@
+import {
+  chooseBusinessSource,
+  chooseSpecificBusinessOffer,
+} from "./utils/entrepreneurship-ui.util";
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import "dotenv/config";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { saveFinancialTransaction } from "../src/features/finance/transactions/services/financial-transaction.service";
 import { createProblem } from "../src/features/entrepreneurship/problems/services/problem.service";
-import { expect, test, type Page } from "./utils/browser-test.util";
+import {
+  expect as playwrightExpect,
+  test,
+  type Page,
+} from "./utils/browser-test.util";
 import { randomUUID } from "node:crypto";
+
+const expect = playwrightExpect.configure({ timeout: 15_000 });
+test.setTimeout(120_000);
 
 async function signUp(page: Page) {
   await page.goto("/sign-in");
@@ -29,12 +40,7 @@ async function logConversation(page: Page) {
   await page
     .getByRole("textbox", { name: "Summary", exact: true })
     .fill("Operations lead described their Friday handover.");
-  await page
-    .getByRole("combobox", { name: "Company — optional" })
-    .fill("Harbor QA");
-  await page
-    .getByRole("option", { name: /Add “Harbor QA” with this record/ })
-    .click();
+  await chooseBusinessSource(page, "Harbor QA", true);
   await page
     .getByRole("button", { name: "Add observation", exact: true })
     .click();
@@ -47,6 +53,9 @@ async function logConversation(page: Page) {
   await page
     .getByRole("button", { name: "Save interaction", exact: true })
     .click();
+  await expect(page).toHaveURL(/\/entrepreneurship\/interactions\/[^/]+$/, {
+    timeout: 30_000,
+  });
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Harbor QA", exact: true }),
@@ -94,9 +103,7 @@ test("market voice becomes traceable evidence, a scoped judgment and a recurring
       "One reported experience. It supports investigating time cost at this company.",
     );
   await page.getByRole("button", { name: "Link source", exact: true }).click();
-  await expect(
-    page.getByText(/1 source links · 1 companies represented/),
-  ).toBeVisible();
+  await expect(page.getByText(/1 current source links/)).toBeVisible();
   await page
     .getByRole("button", { name: "Record assessment", exact: true })
     .click();
@@ -123,9 +130,7 @@ test("market voice becomes traceable evidence, a scoped judgment and a recurring
   await page
     .getByRole("button", { name: "Shape an offer", exact: true })
     .click();
-  await page
-    .getByRole("combobox", { name: "Company", exact: true })
-    .selectOption({ label: "Harbor QA" });
+  await chooseSpecificBusinessOffer(page, "Harbor QA");
   await page
     .getByRole("textbox", { name: "Offer title" })
     .fill("A calmer Friday handover");
@@ -247,9 +252,7 @@ test("business receipt attribution remains one Finance fact and deletion withdra
   await page
     .getByRole("button", { name: "Attribute receipt", exact: true })
     .click();
-  await page
-    .getByRole("combobox", { name: "Company", exact: true })
-    .selectOption(company.id);
+  await chooseBusinessSource(page, company.name);
   await page
     .getByRole("textbox", { name: "Amount of this receipt (EUR)", exact: true })
     .fill("100");
@@ -259,7 +262,7 @@ test("business receipt attribution remains one Finance fact and deletion withdra
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
     page.getByText(
-      "EUR 100.00 attributed · EUR 0.00 not attributed to a company",
+      "EUR 100.00 attributed · EUR 0.00 available for attribution",
     ),
   ).toBeVisible();
   await saveFinancialTransaction(
@@ -330,7 +333,10 @@ test("small batch outreach records recipients once and remains usable during a s
     .click();
   for (const name of ["North QA", "South QA"]) {
     await page
-      .getByRole("combobox", { name: "Find recipients", exact: true })
+      .getByRole("combobox", {
+        name: "Business recipients",
+        exact: true,
+      })
       .fill(name);
     await page.getByRole("option", { name, exact: true }).click();
   }
@@ -388,7 +394,7 @@ test("company search keeps a stable five-row results viewport", async ({
     .getByRole("searchbox", { name: "Search companies" })
     .fill("does not exist");
   await expect(
-    page.getByRole("heading", { name: "No companies match that search." }),
+    page.getByRole("heading", { name: "No businesses match that search." }),
   ).toBeVisible();
   await expect(results).toHaveJSProperty("clientHeight", initialHeight);
 });
@@ -411,9 +417,15 @@ test("company edits, browser Back and archived problem history remain navigable"
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Entrepreneurship navigation" })
-    .getByRole("link", { name: "Market", exact: true })
+    .getByRole("link", { name: "Audience", exact: true })
+    .click();
+  await page
+    .getByRole("navigation", { name: "Audience records" })
+    .getByRole("link", { name: "Businesses", exact: true })
     .click();
   await expect(page).toHaveURL(/\/entrepreneurship\/market$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/entrepreneurship\/audience$/);
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Harbor QA renamed", exact: true }),

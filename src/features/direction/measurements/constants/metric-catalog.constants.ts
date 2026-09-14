@@ -52,11 +52,18 @@ export const METRIC_CATALOG: MetricCapability[] = [
   },
   {
     key: "BUSINESS_RECEIPTS",
-    name: "Received from a company",
+    name: "Attributed Entrepreneurship receipts",
     description:
-      "Confirmed amounts explicitly attributed to a company and optional offer revision.",
+      "Confirmed amounts explicitly attributed to the selected exploration, audience or recipient.",
     unit: "money",
-    scopes: ["companyId", "offerRevisionId"],
+    scopes: [
+      "companyId",
+      "personId",
+      "segmentId",
+      "nicheId",
+      "marketType",
+      "offerRevisionId",
+    ],
     monetary: true,
     caveat: "Only the qualifying portion of a receipt counts.",
   },
@@ -77,9 +84,19 @@ export const METRIC_CATALOG: MetricCapability[] = [
     description:
       "Recorded conversations in the selected exploration or company.",
     unit: "conversations",
-    scopes: ["nicheId", "companyId"],
+    scopes: ["nicheId", "companyId", "personId", "segmentId", "marketType"],
     monetary: false,
     caveat: "Outreach attempts, replies and timer hours are not conversations.",
+  },
+  {
+    key: "CONVERSATION_PEOPLE",
+    name: "People conversed with",
+    description: "Distinct identified people in qualifying conversations.",
+    unit: "people",
+    scopes: ["nicheId", "personId", "companyId", "segmentId", "marketType"],
+    monetary: false,
+    caveat:
+      "Anonymous interviews and reported group sizes do not establish unique identities.",
   },
   {
     key: "CONVERSATION_COMPANIES",

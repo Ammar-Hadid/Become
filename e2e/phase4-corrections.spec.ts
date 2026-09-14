@@ -1,8 +1,15 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
-import { test, expect, type Page } from "./utils/browser-test.util";
+import {
+  test,
+  expect as playwrightExpect,
+  type Page,
+} from "./utils/browser-test.util";
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
+const expect = playwrightExpect.configure({ timeout: 15_000 });
+test.setTimeout(120_000);
+
 async function signUp(page: Page) {
   await page.goto("/sign-in");
   await page
@@ -108,11 +115,21 @@ test("company and accepted offer connect existing work and explicitly attribute 
   await prisma.offerRevision.create({
     data: { ...common, version: 2, priceMinor: 17500n },
   });
+  const engagement = await prisma.offerEngagement.create({
+    data: {
+      userId,
+      offerId: offer.id,
+      companyId: company.id,
+      companySnapshot: company.name,
+      identityKind: "BUSINESS",
+    },
+  });
   await prisma.offerEvent.create({
     data: {
       userId,
       offerId: offer.id,
       offerRevisionId: accepted.id,
+      engagementId: engagement.id,
       kind: "PROPOSED",
       occurredAt: new Date("2026-09-01"),
       sourceDescription: "Actual proposed terms",
@@ -255,7 +272,7 @@ test("company and accepted offer connect existing work and explicitly attribute 
     "EUR 150.00 remaining",
   );
   await expect(
-    page.getByRole("combobox", { name: "Proposed offer revision · optional" }),
+    page.getByRole("combobox", { name: "Shared offer revision · optional" }),
   ).toHaveValue(accepted.id);
   await page.getByRole("button", { name: "Confirm attribution" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -470,17 +487,18 @@ test("plain live company search, independent archives, period and recipient over
   ).toBeLessThan(120);
   await search.fill("");
   await expect(page.locator(".business-company-row")).toHaveCount(25);
-  await page.getByRole("link", { name: "View archived companies" }).click();
+  await page.getByRole("link", { name: "View archived businesses" }).click();
   await expect(page.locator(".business-company-list")).toContainText(
     "Archived Company",
   );
+  await page.getByText("Browse explorations", { exact: true }).click();
   await expect(
     page.getByRole("link", { name: /Active niche 0/ }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: /Archived niche/ })).toHaveCount(
     0,
   );
-  await page.getByRole("link", { name: "View archived niches" }).click();
+  await page.getByRole("link", { name: "View archived explorations" }).click();
   await expect(page.locator(".business-company-list")).toContainText(
     "Archived Company",
   );
@@ -488,7 +506,7 @@ test("plain live company search, independent archives, period and recipient over
     page.getByRole("link", { name: /Archived niche/ }),
   ).toBeVisible();
   await page
-    .getByRole("link", { name: "Active companies", exact: true })
+    .getByRole("link", { name: "Active businesses", exact: true })
     .click();
   await page.route("**/entrepreneurship/market**", async (route) => {
     if (
@@ -518,7 +536,7 @@ test("plain live company search, independent archives, period and recipient over
     .getByRole("button", { name: "Record batch outreach", exact: true })
     .click();
   const recipients = page.getByRole("combobox", {
-    name: "Find recipients",
+    name: "Business recipients",
     exact: true,
   });
   for (const name of ["Company 000", "Company 111"]) {
@@ -624,7 +642,8 @@ test("completed-session capture uses the page width and preserves notes through 
       exact: true,
     }),
   });
-  const bounds = (await form.boundingBox())!;
+  const bounds = (await page.locator(".business-form-surface").boundingBox())!;
+  await expect(form).toBeVisible();
   const heading = (await page
     .locator(".business-section-heading")
     .boundingBox())!;

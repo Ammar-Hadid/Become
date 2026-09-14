@@ -1,7 +1,9 @@
 "use server";
+import { audienceForm } from "@/features/entrepreneurship/audiences/utils/audience.util";
 import { businessMutation } from "@/features/entrepreneurship/shared/services/business-mutation.service";
 import {
   createProblem,
+  changeProblemAudience,
   linkEvidence,
   recordObservation,
   assessProblem,
@@ -23,11 +25,7 @@ export async function linkReceiptEvidenceAction(
 }
 export async function createProblemAction(form: FormData) {
   return businessMutation((userId) =>
-    createProblem(
-      userId,
-      String(form.get("captureKey")),
-      Object.fromEntries(form),
-    ),
+    createProblem(userId, String(form.get("captureKey")), audienceForm(form)),
   );
 }
 export async function linkEvidenceAction(problemId: string, form: FormData) {
@@ -36,7 +34,7 @@ export async function linkEvidenceAction(problemId: string, form: FormData) {
   ).split(":");
   return businessMutation((userId) =>
     linkEvidence(userId, problemId, String(form.get("captureKey")), {
-      ...Object.fromEntries(form),
+      ...audienceForm(form),
       observationId,
       observationRevisionId,
     }),
@@ -51,16 +49,17 @@ export async function recordObservationAction(
   ).split(":");
   return businessMutation((userId) =>
     recordObservation(userId, problemId, String(form.get("captureKey")), {
-      ...Object.fromEntries(form),
+      ...audienceForm(form),
       interactionId,
       interactionRevisionId,
+      audienceOverride: form.get("audienceOverride") === "on",
     }),
   );
 }
 export async function assessProblemAction(problemId: string, form: FormData) {
   return businessMutation((userId) =>
     assessProblem(userId, problemId, String(form.get("captureKey")), {
-      ...Object.fromEntries(form),
+      ...audienceForm(form),
       evidenceIds: form.getAll("evidenceIds"),
     }),
   );
@@ -84,5 +83,18 @@ export async function reconfirmEvidenceAction(
       problemId,
       form.getAll("evidenceIds").map(String),
     ),
+  );
+}
+
+export async function changeProblemAudienceAction(
+  problemId: string,
+  expectedVersion: number,
+  form: FormData,
+) {
+  return businessMutation((userId) =>
+    changeProblemAudience(userId, problemId, String(form.get("captureKey")), {
+      ...audienceForm(form),
+      expectedVersion,
+    }),
   );
 }

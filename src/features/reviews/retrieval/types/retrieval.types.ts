@@ -1,3 +1,4 @@
+import type { readAudienceCurrentContext } from "@/features/entrepreneurship/measurements/queries/audience-current-context.query";
 import type { PersonaInput } from "@/features/seasons/persona/schemas/persona.schema";
 import type {
   ReviewPeriod,
@@ -18,6 +19,7 @@ export type ContextIntention = {
   version: number;
 };
 export type CurrentContextSummary = {
+  entrepreneurship?: Awaited<ReturnType<typeof readAudienceCurrentContext>>;
   schemaVersion: 1;
   metricVersion: 1;
   fingerprint: string;

@@ -15,16 +15,37 @@ import {
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
+import { searchPeopleAction } from "@/features/entrepreneurship/audiences/actions/audience.action";
+import {
+  AudienceFields,
+  type AudienceOption,
+} from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 type Values = {
   summary: string;
   channel: string;
   occurredAt: string;
   notes: string;
 };
-function BatchFields({ companies }: { companies: BusinessOption[] }) {
+function BatchFields({
+  companies,
+  people = [],
+  segments = [],
+}: {
+  companies: BusinessOption[];
+  people?: BusinessOption[];
+  segments?: AudienceOption[];
+}) {
   const exploration = useExploration();
   const [key] = useState(() => crypto.randomUUID());
   const [selected, setSelected] = useState<BusinessOption[]>([]);
+  const [selectedPeople, setSelectedPeople] = useState<BusinessOption[]>([]);
+  const recipients = [
+    ...selected,
+    ...selectedPeople.map((person) => ({
+      ...person,
+      id: `person:${person.id}`,
+    })),
+  ];
   const [shared, setShared] = useState<Values>({
     summary: "",
     channel: "EMAIL",
@@ -88,7 +109,7 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
         value={JSON.stringify(
           Object.fromEntries(
             Object.entries(overrides).filter(([id]) =>
-              selected.some((c) => c.id === id),
+              recipients.some((c) => c.id === id),
             ),
           ),
         )}
@@ -96,29 +117,42 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
       <BusinessFormSection
         eyebrow="Recipients"
         title="Who you actually contacted"
-        description="Select only companies that received this outreach."
+        description="Select only people and businesses that received this outreach."
       >
         <ReusableEntityCombobox
-          label="Find recipients"
+          label="Business recipients"
           optional={false}
-          entityName="company"
+          entityName="business"
           idFieldName="companyIds"
           queryFieldName="recipientSearch"
           options={companies}
           searchAction={searchCompaniesAction}
           selectedOptions={selected}
           onSelectionChange={setSelected}
-          placeholder="Search all active companies…"
+          placeholder="Search active businesses…"
+        />
+        <ReusableEntityCombobox
+          label="People contacted directly"
+          entityName="person"
+          idFieldName="personIds"
+          queryFieldName="personRecipientSearch"
+          options={people}
+          searchAction={searchPeopleAction}
+          selectedOptions={selectedPeople}
+          onSelectionChange={setSelectedPeople}
+          allowDuplicateNames
+          placeholder="Search active people…"
         />
         <p className="business-hint">
-          {selected.length} {selected.length === 1 ? "company" : "companies"}{" "}
-          selected
+          {recipients.length}{" "}
+          {recipients.length === 1 ? "recipient" : "recipients"} selected
         </p>
+        <AudienceFields target segments={segments} />
       </BusinessFormSection>
       <BusinessFormSection
         eyebrow="Shared record"
         title="Defaults for every message"
-        description="You can override any field for an individual company below."
+        description="You can override any field for an individual recipient below."
       >
         {(["occurredAt", "channel", "summary", "notes"] as const).map(
           (name) => (
@@ -140,7 +174,7 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
           ),
         )}
       </BusinessFormSection>
-      {selected.map((company) => {
+      {recipients.map((company) => {
         const own = overrides[company.id] ?? {};
         const effective = { ...shared, ...own };
         return (
@@ -203,7 +237,7 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
       })}
       <label className="business-choice-row business-choice-row--confirm">
         <input type="checkbox" name="confirmedSent" required />I actually sent
-        this message to each selected company. This records outreach already
+        this message to each selected recipient. This records outreach already
         sent; it does not send messages.
       </label>
     </>
@@ -211,8 +245,12 @@ function BatchFields({ companies }: { companies: BusinessOption[] }) {
 }
 export function BatchOutreachForm({
   companies,
+  people,
+  segments,
 }: {
   companies: BusinessOption[];
+  people?: BusinessOption[];
+  segments?: AudienceOption[];
 }) {
   return (
     <RecordDialog
@@ -220,14 +258,18 @@ export function BatchOutreachForm({
       triggerLabel="Record batch outreach"
       title="Record messages already sent"
       variant="secondary"
-      description="One shared summary, one actual event per company. This records outreach; it doesn’t send messages."
+      description="One shared summary, one actual event per recipient. This records outreach; it doesn’t send messages."
     >
       <RecordForm
         action={batchOutreachAction}
         closeOnSuccess
         submitLabel="Record sent outreach"
       >
-        <BatchFields companies={companies} />
+        <BatchFields
+          companies={companies}
+          people={people}
+          segments={segments}
+        />
       </RecordForm>
     </RecordDialog>
   );

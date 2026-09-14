@@ -12,7 +12,7 @@ type PastExploration = {
   href: string;
   name: string;
   scope: string;
-  companies: number;
+  evidenceEntries: number;
   conversations: number;
   direction: string;
   statusDate: string;
@@ -158,9 +158,11 @@ export function PastExplorations({
               </div>
               <dl className="exploration-history-facts">
                 <div>
-                  <dd>{exploration.companies}</dd>
+                  <dd>{exploration.evidenceEntries}</dd>
                   <dt>
-                    {exploration.companies === 1 ? "company" : "companies"}
+                    {exploration.evidenceEntries === 1
+                      ? "evidence entry"
+                      : "evidence entries"}
                   </dt>
                 </div>
                 <div>

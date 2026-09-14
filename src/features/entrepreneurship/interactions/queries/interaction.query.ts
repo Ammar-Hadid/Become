@@ -1,3 +1,8 @@
+import { getAudienceOptions } from "@/features/entrepreneurship/audiences/queries/audience.query";
+import {
+  audienceInclude,
+  audienceName,
+} from "@/features/entrepreneurship/audiences/utils/audience.util";
 import {
   companyExplorationWhere,
   problemExplorationWhere,
@@ -30,6 +35,7 @@ export async function getInteractionOptions(userId: string, nicheId?: string) {
     }),
   ]);
   return {
+    ...(await getAudienceOptions(userId, nicheId)),
     companies,
     niches,
     problems: problems.map((p) => ({ id: p.id, name: p.title })),
@@ -37,7 +43,7 @@ export async function getInteractionOptions(userId: string, nicheId?: string) {
       .filter((item) => !nicheId || item.revisions[0]?.nicheId === nicheId)
       .map((item) => ({
         id: item.id,
-        name: `${item.revisions[0].companySnapshot ?? "No company"} · ${item.revisions[0].summary.slice(0, 80)}`,
+        name: `${audienceName(item.revisions[0])} · ${item.revisions[0].summary.slice(0, 80)}`,
       })),
   };
 }
@@ -70,7 +76,12 @@ export async function getInteractionJournal(
     include: {
       revisions: {
         orderBy: { version: "desc" },
-        include: { observations: { include: { observation: true } } },
+        include: {
+          audienceContext: audienceInclude,
+          observations: {
+            include: { observation: true, audienceContext: audienceInclude },
+          },
+        },
       },
     },
   });
@@ -89,9 +100,11 @@ export function getInteractionDetail(userId: string, id: string) {
       revisions: {
         orderBy: { version: "desc" },
         include: {
+          audienceContext: audienceInclude,
           observations: {
             include: {
               observation: true,
+              audienceContext: audienceInclude,
               evidence: { include: { problem: true } },
             },
           },

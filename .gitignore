@@ -14,3 +14,5 @@ src/generated/prisma
 *.tsbuildinfo
 .DS_Store
 .data/become/
+
+.next-e2e-*

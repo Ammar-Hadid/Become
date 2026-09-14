@@ -1,3 +1,11 @@
+import { z } from "zod";
+import { createHash } from "node:crypto";
+import { audienceInputSchema } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
+import {
+  captureAudience,
+  audienceSnapshot,
+  targetAudience,
+} from "@/features/entrepreneurship/audiences/services/audience.service";
 import type { Prisma, FinancialTransaction } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { lockFinancialTransaction } from "@/features/finance/transactions/services/transaction-lock.service";
@@ -75,19 +83,30 @@ export async function withdrawDeletedReceipt(
   });
 }
 
+const receiptAttributionSchema = audienceInputSchema.extend({
+  nicheId: z.string().optional(),
+  offerRevisionId: z.string().nullish(),
+  engagementId: z.string().nullish(),
+  amount: z.string().min(1),
+  note: z.string().max(6000).nullish(),
+});
 export async function allocateBusinessReceipt(
   userId: string,
   transactionId: string,
   key: string,
-  input: {
-    companyId: string;
-    offerRevisionId?: string | null;
-    amount: string;
-    note?: string | null;
-  },
+  input: unknown,
 ) {
+  const data = receiptAttributionSchema.parse(input);
   if (!/^[a-zA-Z0-9-]{16,80}$/.test(key))
     throw new FinanceError("Reopen this form before saving.");
+  const fingerprint = createHash("sha256")
+    .update(
+      JSON.stringify({
+        ...data,
+        segmentIds: [...new Set(data.segmentIds)].sort(),
+      }),
+    )
+    .digest("hex");
   return prisma.$transaction(async (tx) => {
     await lockFinancialTransaction(tx, userId, transactionId);
     const receipt = await tx.financialTransaction.findFirstOrThrow({
@@ -95,9 +114,9 @@ export async function allocateBusinessReceipt(
     });
     let amountMinor: bigint;
     try {
-      amountMinor = parseMoney(input.amount, receipt.currency);
-    } catch (error) {
-      throw new FinanceError((error as Error).message);
+      amountMinor = parseMoney(data.amount, receipt.currency);
+    } catch (e) {
+      throw new FinanceError((e as Error).message);
     }
     const prior = await tx.businessReceiptAllocation.findUnique({
       where: { id: key },
@@ -106,10 +125,12 @@ export async function allocateBusinessReceipt(
       if (
         prior.userId !== userId ||
         prior.originalTransactionId !== transactionId ||
-        prior.companyId !== input.companyId ||
-        prior.offerRevisionId !== (input.offerRevisionId || null) ||
-        prior.amountMinor !== amountMinor ||
-        prior.note !== (input.note?.trim() || null)
+        (prior.attributionFingerprint
+          ? prior.attributionFingerprint !== fingerprint
+          : prior.companyId !== (data.companyId || null) ||
+            prior.offerRevisionId !== (data.offerRevisionId || null) ||
+            prior.amountMinor !== amountMinor ||
+            prior.note !== (data.note?.trim() || null))
       )
         throw new FinanceError(
           "This submission was already saved with different attribution. Reopen the form for a correction.",
@@ -122,23 +143,84 @@ export async function allocateBusinessReceipt(
       );
     if (amountMinor <= 0n)
       throw new FinanceError("Allocate a positive amount.");
-    const company = await tx.company.findFirst({
-      where: { id: input.companyId, userId, archivedAt: null },
-    });
-    if (!company) throw new FinanceError("Choose an active company you own.");
+    const revision = data.offerRevisionId
+      ? await tx.offerRevision.findFirst({
+          where: {
+            id: data.offerRevisionId,
+            userId,
+            proposedAt: { not: null },
+          },
+          include: { offer: { include: { niches: true, engagements: true } } },
+        })
+      : null;
+    if (data.offerRevisionId && !revision)
+      throw new FinanceError(
+        "Choose terms that were actually proposed or shared.",
+      );
+    const engagement = data.engagementId
+      ? await tx.offerEngagement.findFirst({
+          where: { id: data.engagementId, userId },
+        })
+      : revision?.offer.mode === "SPECIFIC"
+        ? revision.offer.engagements[0]
+        : null;
     if (
-      input.offerRevisionId &&
-      !(await tx.offerRevision.findFirst({
+      data.engagementId &&
+      (!engagement || !revision || engagement.offerId !== revision.offerId)
+    )
+      throw new FinanceError(
+        "Choose a recipient belonging to these exact offer terms.",
+      );
+    if (revision?.offer.mode === "AUDIENCE_TEST" && !engagement)
+      throw new FinanceError("Choose the response this payment belongs to.");
+    if (
+      engagement &&
+      revision &&
+      !(await tx.offerEvent.findFirst({
         where: {
-          id: input.offerRevisionId,
-          companyId: company.id,
           userId,
-          proposedAt: { not: null },
+          engagementId: engagement.id,
+          offerRevisionId: revision.id,
+          retractedAt: null,
         },
       }))
     )
       throw new FinanceError(
-        "Choose a proposed revision belonging to this company.",
+        "This recipient has no recorded response to these terms.",
+      );
+    const target = engagement ?? revision;
+    if (
+      target &&
+      ((data.companyId && target.companyId !== data.companyId) ||
+        (data.personId && target.personId !== data.personId))
+    )
+      throw new FinanceError(
+        "The receipt recipient must match the selected offer response.",
+      );
+    const nicheId =
+      data.nicheId ||
+      (revision?.offer.niches.length === 1
+        ? revision.offer.niches[0].nicheId
+        : null);
+    const niche = nicheId
+      ? await tx.niche.findFirst({
+          where: { id: nicheId, userId, archivedAt: null },
+        })
+      : null;
+    if (nicheId && !niche)
+      throw new FinanceError("Choose an available exploration you own.");
+    if (
+      niche &&
+      revision &&
+      !revision.offer.niches.some((n) => n.nicheId === niche.id)
+    )
+      throw new FinanceError("This offer belongs to a different exploration.");
+    const audience = target
+      ? targetAudience(audienceSnapshot(target))
+      : targetAudience(await captureAudience(tx, userId, data, niche?.id));
+    if (!audience.companyId && !niche)
+      throw new FinanceError(
+        "Choose the exploration this consumer or audience receipt belongs to.",
       );
     const sum = await tx.businessReceiptAllocation.aggregate({
       where: { userId, transactionId, withdrawnAt: null },
@@ -154,13 +236,16 @@ export async function allocateBusinessReceipt(
         userId,
         transactionId,
         originalTransactionId: transactionId,
-        companyId: company.id,
-        companySnapshot: company.name,
-        offerRevisionId: input.offerRevisionId || null,
+        attributionFingerprint: fingerprint,
+        ...audience,
+        nicheId: niche?.id,
+        nicheSnapshot: niche?.name,
+        offerRevisionId: revision?.id,
+        engagementId: engagement?.id,
         amountMinor,
         currencySnapshot: receipt.currency,
         occurredAtSnapshot: receipt.occurredAt,
-        note: input.note?.trim().slice(0, 6000) || null,
+        note: data.note?.trim() || null,
       },
     });
     return { id: record.id };

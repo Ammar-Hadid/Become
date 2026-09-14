@@ -1,3 +1,8 @@
+import {
+  audienceName,
+  audienceInclude,
+} from "@/features/entrepreneurship/audiences/utils/audience.util";
+import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import { sessionFocusedSecondsSql } from "@/features/sessions/timing/utils/session-duration-sql.util";
 import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -40,18 +45,22 @@ export async function getBusinessAttention(userId: string) {
       take: 10,
       orderBy: { needsReviewAt: "asc" },
     }),
-    prisma.offer.findMany({
+    prisma.offerEngagement.findMany({
       where: {
         userId,
         continuationChoice: null,
-        archivedAt: null,
+        offer: { archivedAt: null },
         events: { some: { kind: "ACCEPTED", retractedAt: null } },
       },
       include: {
-        company: true,
+        offer: { select: { mode: true } },
         events: {
           where: { retractedAt: null },
-          orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+          orderBy: [
+            { occurredAt: "desc" },
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
           take: 1,
         },
       },
@@ -79,16 +88,16 @@ export async function getBusinessAttention(userId: string) {
   for (const item of receipts)
     items.push({
       id: item.id,
-      text: `Review receipt attribution: ${item.companySnapshot}`,
+      text: `Review receipt attribution: ${audienceName(item)}`,
       href: `/finance/transactions/${item.transactionId}`,
     });
   for (const item of accepted.filter(
     (offer) => offer.events[0]?.kind === "ACCEPTED",
   ))
     items.push({
-      id: item.id,
-      text: `Choose the work continuation for ${item.company.name}`,
-      href: `/entrepreneurship/offers/${item.id}`,
+      id: item.offer.mode === "SPECIFIC" ? item.offerId : item.id,
+      text: `Choose the work continuation for ${audienceName(item)}`,
+      href: `/entrepreneurship/offers/${item.offerId}`,
     });
   return items;
 }
@@ -110,6 +119,7 @@ async function periodFacts(userId: string, start: Date, end: Date) {
       getConfirmedBusinessReceipts(userId, start, end),
     ]);
   return {
+    audience: await getAudienceMetrics(userId, { start, end }),
     interactions,
     time,
     companiesAdded,
@@ -165,6 +175,16 @@ export async function getBusinessOverview(
       }),
       getBusinessAttention(userId),
     ]);
+  const voiceSources = await prisma.observation.findMany({
+    where: { userId, id: { in: voice.map((v) => v.id) } },
+    include: {
+      revisions: {
+        orderBy: { version: "desc" },
+        take: 1,
+        include: { audienceContext: audienceInclude },
+      },
+    },
+  });
   return {
     period,
     previous,
@@ -172,7 +192,11 @@ export async function getBusinessOverview(
     facts,
     previousFacts,
     niches,
-    voice,
+    voice: voice.map((v) => ({
+      ...v,
+      ...voiceSources.find((o) => o.id === v.id)?.revisions[0],
+      id: v.id,
+    })),
     nextActions,
     attention,
   };

@@ -11,24 +11,24 @@ export function ExplorationCompanyForm() {
   return (
     <RecordDialog
       eyebrow="Company context"
-      title="Add an existing company"
-      triggerLabel="Add existing company"
+      title="Attach an existing business"
+      triggerLabel="Attach existing business"
       variant="secondary"
-      description={`Explore a company you already know in ${exploration.name}.`}
+      description={`Explore a business you already know in ${exploration.name}.`}
     >
       <RecordForm
         action={addCompanyToExplorationAction.bind(null, exploration.id)}
-        submitLabel="Add to exploration"
+        submitLabel="Attach to exploration"
         closeOnSuccess
       >
         <ReusableEntityCombobox
-          label="Company"
-          entityName="company"
+          label="Business"
+          entityName="business"
           idFieldName="companyId"
           queryFieldName="companyName"
           options={[]}
           searchAction={searchCompaniesAction}
-          placeholder="Find an existing company…"
+          placeholder="Find an existing business…"
           optional={false}
           required
         />

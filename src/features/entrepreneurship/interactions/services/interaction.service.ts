@@ -1,9 +1,13 @@
+import {
+  captureAudience,
+  captureAudienceContext,
+  audienceSnapshot,
+} from "@/features/entrepreneurship/audiences/services/audience.service";
 import { saveCapturedObservations } from "@/features/entrepreneurship/observations/services/captured-observation.service";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
 import { captureOnce } from "@/features/entrepreneurship/shared/services/capture.service";
-import { resolveCompany } from "@/features/entrepreneurship/market/services/market.service";
 import {
   interactionSchema,
   correctionSchema,
@@ -17,6 +21,7 @@ async function validateReply(
   parentId: string | null,
   interactionId: string | null,
   companyId: string | null,
+  personId: string | null,
 ) {
   if (!parentId) return;
   const visited = new Set(interactionId ? [interactionId] : []);
@@ -29,6 +34,7 @@ async function validateReply(
       voidedAt: Date | null;
       revisions: {
         companyId: string | null;
+        personId: string | null;
         respondsToInteractionId: string | null;
       }[];
     } | null = await tx.interaction.findFirst({
@@ -39,6 +45,7 @@ async function validateReply(
       throw new BusinessError("Choose an available interaction you own.");
     const revision: {
       companyId: string | null;
+      personId: string | null;
       respondsToInteractionId: string | null;
     } = parent.revisions[0];
     if (
@@ -50,6 +57,15 @@ async function validateReply(
       throw new BusinessError(
         "A reply and its source must refer to the same company.",
       );
+    if (
+      next === parentId &&
+      personId &&
+      revision.personId &&
+      personId !== revision.personId
+    )
+      throw new BusinessError(
+        "A reply and its source must refer to the same person.",
+      );
     next = revision.respondsToInteractionId;
   }
 }
@@ -59,6 +75,9 @@ async function interactionValues(
   userId: string,
   data: z.output<typeof interactionSchema>,
   interactionId: string | null,
+  preservedContext?: Prisma.AudienceContextGetPayload<{
+    include: { segments: true };
+  }> | null,
 ) {
   if (
     data.sourceSessionId &&
@@ -72,12 +91,17 @@ async function interactionValues(
     }))
   )
     throw new BusinessError("Choose your completed Entrepreneurship session.");
-  const company = await resolveCompany(
+  const audience = await captureAudience(
     tx,
     userId,
-    data.companyId,
-    data.companyName,
+    data,
+    data.nicheId,
+    preservedContext,
   );
+  if (audience.identityKind === "GROUP")
+    throw new BusinessError(
+      "Keep aggregate findings as an observation or public source.",
+    );
   const niche = data.nicheId
     ? await tx.niche.findFirst({
         where: { id: data.nicheId, userId, archivedAt: null },
@@ -90,13 +114,13 @@ async function interactionValues(
     userId,
     data.respondsToInteractionId ?? null,
     interactionId,
-    company?.id ?? null,
+    audience.companyId,
+    audience.personId,
   );
   return {
     userId,
     sourceSessionId: data.sourceSessionId,
-    companyId: company?.id ?? null,
-    companySnapshot: company?.name ?? null,
+    ...audience,
     nicheId: niche?.id ?? null,
     nicheSnapshot: niche?.name ?? null,
     kind: data.kind,
@@ -105,6 +129,32 @@ async function interactionValues(
     summary: data.summary,
     notes: data.notes,
     participants: data.participants,
+    linkedParticipants: {
+      create: await Promise.all(
+        data.participants
+          .filter((p) => p.personId)
+          .map(async (p) => {
+            const person = await tx.person.findFirst({
+              where: { id: p.personId!, userId, archivedAt: null },
+            });
+            if (!person)
+              throw new BusinessError("Choose participants you own.");
+            if (niche)
+              await tx.personNiche.upsert({
+                where: {
+                  personId_nicheId: { personId: person.id, nicheId: niche.id },
+                },
+                create: { userId, personId: person.id, nicheId: niche.id },
+                update: {},
+              });
+            return {
+              personId: person.id,
+              nameSnapshot: person.name,
+              roleSnapshot: p.role,
+            };
+          }),
+      ),
+    },
     respondsToInteractionId: data.respondsToInteractionId,
   };
 }
@@ -124,6 +174,7 @@ export async function logInteraction(
       data: { ...values, interactionId: interaction.id, version: 1 },
     });
     await saveCapturedObservations(tx, userId, data.observations, {
+      ...audienceSnapshot(values),
       observedAt: values.occurredAt,
       companyId: values.companyId,
       companySnapshot: values.companySnapshot,
@@ -161,13 +212,20 @@ export async function logBatchOutreach(
   }
   const data = parsed.data;
   const ids = [...new Set(data.companyIds)].sort();
+  const personIds = [...new Set(data.personIds)].sort();
   return captureOnce(userId, key, input, async (tx) => {
     const companies = await tx.company.findMany({
       where: { id: { in: ids }, userId, archivedAt: null },
     });
     if (companies.length !== ids.length)
       throw new BusinessError("Choose active companies you own.");
-    if (Object.keys(data.overrides).some((id) => !ids.includes(id)))
+    const people = await tx.person.findMany({
+      where: { userId, id: { in: personIds }, archivedAt: null },
+    });
+    if (people.length !== personIds.length)
+      throw new BusinessError("Choose active people you own.");
+    const recipientKeys = [...ids, ...personIds.map((id) => `person:${id}`)];
+    if (Object.keys(data.overrides).some((id) => !recipientKeys.includes(id)))
       throw new BusinessError("Overrides must belong to selected recipients.");
     let first = "";
     const niche = data.nicheId
@@ -177,25 +235,47 @@ export async function logBatchOutreach(
       : null;
     if (data.nicheId && !niche)
       throw new BusinessError("Choose an active exploration you own.");
-    for (const company of companies) {
+    const audienceContext = await captureAudienceContext(tx, userId, data);
+    const recipients = [
+      ...companies.map((c) => ({
+        key: c.id,
+        companyId: c.id,
+        companySnapshot: c.name,
+        personId: null as string | null,
+        personSnapshot: null as string | null,
+      })),
+      ...people.map((p) => ({
+        key: `person:${p.id}`,
+        companyId: null as string | null,
+        companySnapshot: null as string | null,
+        personId: p.id,
+        personSnapshot: p.name,
+      })),
+    ];
+    for (const recipient of recipients) {
       const interaction = await tx.interaction.create({ data: { userId } });
       await tx.interactionRevision.create({
         data: {
           userId,
           interactionId: interaction.id,
           version: 1,
-          companyId: company.id,
-          companySnapshot: company.name,
+          audienceContextId: audienceContext.id,
+          identityKind: recipient.personId ? "PERSON" : "BUSINESS",
+          companyId: recipient.companyId,
+          companySnapshot: recipient.companySnapshot,
+          personId: recipient.personId,
+          personSnapshot: recipient.personSnapshot,
           nicheId: niche?.id,
           nicheSnapshot: niche?.name,
           kind: "OUTREACH_SENT",
-          channel: data.overrides[company.id]?.channel ?? data.channel,
-          occurredAt: data.overrides[company.id]?.occurredAt ?? data.occurredAt,
-          summary: data.overrides[company.id]?.summary ?? data.summary,
+          channel: data.overrides[recipient.key]?.channel ?? data.channel,
+          occurredAt:
+            data.overrides[recipient.key]?.occurredAt ?? data.occurredAt,
+          summary: data.overrides[recipient.key]?.summary ?? data.summary,
           notes:
-            data.overrides[company.id] &&
-            Object.hasOwn(data.overrides[company.id], "notes")
-              ? data.overrides[company.id].notes
+            data.overrides[recipient.key] &&
+            Object.hasOwn(data.overrides[recipient.key], "notes")
+              ? data.overrides[recipient.key].notes
               : data.notes,
         },
       });
@@ -223,17 +303,46 @@ export async function correctInteraction(
         "This interaction changed. Your edits are preserved; open its latest version before correcting it.",
       );
     const prior = record.revisions[0];
-    const values = await interactionValues(
+    const oldContext = prior.audienceContextId
+      ? await tx.audienceContext.findUnique({
+          where: { id: prior.audienceContextId },
+          include: { segments: true },
+        })
+      : null;
+    const sameScope =
+      !data.audienceScopeEdited &&
+      data.segmentNames.length === 0 &&
+      data.marketType === (oldContext?.marketType ?? "UNKNOWN") &&
+      data.audienceDescription === (oldContext?.description ?? null) &&
+      JSON.stringify([...new Set(data.segmentIds)].sort()) ===
+        JSON.stringify(
+          (oldContext?.segments.map((s) => s.segmentId) ?? []).sort(),
+        );
+    const captured = await interactionValues(
       tx,
       userId,
       { ...data, sourceSessionId: prior.sourceSessionId },
       id,
+      sameScope ? oldContext : undefined,
     );
+    const values: { audienceContextId: string | null } & Omit<
+      typeof captured,
+      "audienceContextId"
+    > = { ...captured };
+    if (prior.personId === values.personId)
+      values.personSnapshot = prior.personSnapshot;
+    if (prior.companyId === values.companyId)
+      values.companySnapshot = prior.companySnapshot;
     const hardChange =
       [
         "kind",
         "channel",
         "companyId",
+        "personId",
+        "identityKind",
+        "audienceLabel",
+        "sampleSize",
+        "sampleUnit",
         "nicheId",
         "respondsToInteractionId",
       ].some(
@@ -244,8 +353,25 @@ export async function correctInteraction(
       prior.occurredAt.getTime() !== values.occurredAt.getTime() ||
       JSON.stringify(prior.participants) !==
         JSON.stringify(values.participants);
+    const newContext = values.audienceContextId
+      ? await tx.audienceContext.findUnique({
+          where: { id: values.audienceContextId },
+          include: { segments: true },
+        })
+      : null;
+    const contextMeaning = (c: typeof oldContext) =>
+      JSON.stringify(
+        c && {
+          marketType: c.marketType,
+          description: c.description,
+          segments: c.segments
+            .map((s) => [s.segmentId, s.nameSnapshot, s.descriptionSnapshot])
+            .sort(),
+        },
+      );
     const materialChange =
       hardChange ||
+      contextMeaning(oldContext) !== contextMeaning(newContext) ||
       (prior.summary !== values.summary && !data.meaningUnchanged);
     // Correcting a source company must also be consistent with its current replies.
     if (prior.companyId !== values.companyId && values.companyId) {
@@ -255,6 +381,15 @@ export async function correctInteraction(
       if (replies.some((r) => r.companyId && r.companyId !== values.companyId))
         throw new BusinessError(
           "A linked reply has a different company. Correct the reply context first.",
+        );
+    }
+    if (prior.personId !== values.personId && values.personId) {
+      const replies = await tx.$queryRaw<
+        { personId: string | null }[]
+      >`SELECT r."personId" FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."respondsToInteractionId"=${id}`;
+      if (replies.some((r) => r.personId && r.personId !== values.personId))
+        throw new BusinessError(
+          "A linked reply has a different person. Correct the reply first.",
         );
     }
     await tx.interactionRevision.create({

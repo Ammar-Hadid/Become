@@ -1,3 +1,4 @@
+import { readAudienceRetrieval } from "@/features/entrepreneurship/measurements/queries/audience-retrieval.query";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
@@ -111,6 +112,40 @@ export async function getTargetedRetrieval(
         result.warnings.push(
           "Decision discovery searches choice and the bounded reason excerpt within the requested period. Retrieve a decision to inspect its changes and reflections.",
         );
+      } else if (
+        c.type === "ENTREPRENEURSHIP_EVIDENCE" ||
+        c.type === "ENTREPRENEURSHIP_RECEIPTS"
+      ) {
+        const d = await readAudienceRetrieval(
+          tx,
+          userId,
+          c,
+          new Date(period!.start),
+          new Date(period!.evaluatedThrough),
+          at,
+        );
+        result.sources = d.sources;
+        result.total = d.total;
+        result.nextCursor = d.nextCursor;
+        result.metrics = reviewMetrics(
+          d.aggregates,
+          [],
+          {
+            ...period!,
+            comparison: { ...period!.comparison, available: false },
+          },
+          ["entrepreneurship"],
+        ).filter(
+          (m) =>
+            m.key ===
+            (c.type === "ENTREPRENEURSHIP_EVIDENCE"
+              ? "entrepreneurship.evidence"
+              : `entrepreneurship.receipts:${c.currency}`),
+        );
+        result.warnings.push(
+          "Audience scopes use captured context, not current membership. Overlapping segment results must not be added. Reported samples do not establish unique contacts or corroboration. Receipt allocations are a perspective on existing Finance income.",
+        );
+        contentFingerprint = d.aggregates;
       } else if (c.type === "SOURCE") {
         if (c.editionId) {
           const edition = await tx.reviewEdition.findFirst({

@@ -66,6 +66,8 @@ function ScopePicker({
   field:
     | "workSourceId"
     | "companyId"
+    | "personId"
+    | "segmentId"
     | "offerRevisionId"
     | "nicheId"
     | "projectId"
@@ -231,6 +233,11 @@ export function CriterionBuilder({
           const isContentTime =
             criterion.metric === "SESSION_TIME" &&
             Boolean(criterion.contentId || criterion.selectedContentOnly);
+          const hasAudienceScope = [
+            "CONVERSATIONS",
+            "CONVERSATION_PEOPLE",
+            "BUSINESS_RECEIPTS",
+          ].includes(criterion.metric);
           const patch = (value: Partial<CriterionDraft>) =>
             patchCriterion(criterion.key, value);
           return (
@@ -470,14 +477,12 @@ export function CriterionBuilder({
                       onChange={patch}
                     />
                   )}
-                  {["BUSINESS_RECEIPTS", "NEW_RECURRING_COMPANY"].includes(
-                    criterion.metric,
-                  ) && (
+                  {criterion.metric === "NEW_RECURRING_COMPANY" && (
                     <ScopePicker
                       criterion={criterion}
                       field="companyId"
-                      label="Company scope"
-                      entityName="company"
+                      label="Business scope"
+                      entityName="business"
                       optionKind="company"
                       initial={resolvedScopes.companyId}
                       onChange={(value) =>
@@ -495,9 +500,7 @@ export function CriterionBuilder({
                       }
                     />
                   )}
-                  {["BUSINESS_RECEIPTS", "NEW_RECURRING_COMPANY"].includes(
-                    criterion.metric,
-                  ) && (
+                  {criterion.metric === "NEW_RECURRING_COMPANY" && (
                     <ScopePicker
                       criterion={criterion}
                       field="offerRevisionId"
@@ -510,7 +513,6 @@ export function CriterionBuilder({
                     />
                   )}
                   {[
-                    "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
                     ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
@@ -525,24 +527,136 @@ export function CriterionBuilder({
                     />
                   )}
                   {[
-                    "CONVERSATIONS",
                     "CONVERSATION_COMPANIES",
                     ...(isContentTime ? [] : ["SESSION_TIME"]),
                   ].includes(criterion.metric) && (
                     <ScopePicker
                       criterion={criterion}
                       field="companyId"
-                      label="Company scope"
-                      entityName="company"
+                      label="Business scope"
+                      entityName="business"
                       optionKind="company"
                       initial={resolvedScopes.companyId}
                       onChange={patch}
                     />
                   )}
+                  {hasAudienceScope && (
+                    <details
+                      className="direction-field-wide rounded-control border-border p-lg border"
+                      open={
+                        Boolean(
+                          criterion.nicheId ||
+                          criterion.personId ||
+                          criterion.companyId ||
+                          criterion.segmentId ||
+                          criterion.marketType ||
+                          criterion.offerRevisionId,
+                        ) || undefined
+                      }
+                    >
+                      <summary className="text-body cursor-pointer font-medium">
+                        Audience scope
+                        {criterion.metric === "BUSINESS_RECEIPTS"
+                          ? " · choose a boundary"
+                          : " · optional"}
+                      </summary>
+                      <div className="direction-form-grid mt-xl">
+                        <p className="direction-field-wide text-body-sm text-text-secondary">
+                          {criterion.metric === "BUSINESS_RECEIPTS"
+                            ? "Choose an exploration, person, business, segment, or exact offer terms to define which actual receipts count."
+                            : "Leave these open to count every qualifying conversation, or limit the definition to the audience you examined."}{" "}
+                          Identity and buying context remain separate.
+                        </p>
+                        <ScopePicker
+                          criterion={criterion}
+                          field="nicheId"
+                          label="Exploration"
+                          entityName="exploration"
+                          optionKind="niche"
+                          initial={resolvedScopes.nicheId}
+                          onChange={patch}
+                        />
+                        <ScopePicker
+                          criterion={criterion}
+                          field="personId"
+                          label="Person"
+                          entityName="person"
+                          optionKind="person"
+                          initial={resolvedScopes.personId}
+                          onChange={patch}
+                        />
+                        <ScopePicker
+                          criterion={criterion}
+                          field="companyId"
+                          label="Business"
+                          entityName="business"
+                          optionKind="company"
+                          initial={resolvedScopes.companyId}
+                          onChange={(value) =>
+                            patch({
+                              ...value,
+                              ...(criterion.metric === "BUSINESS_RECEIPTS"
+                                ? {
+                                    offerRevisionId:
+                                      value.companyId === criterion.companyId
+                                        ? criterion.offerRevisionId
+                                        : undefined,
+                                  }
+                                : {}),
+                            })
+                          }
+                        />
+                        <ScopePicker
+                          criterion={criterion}
+                          field="segmentId"
+                          label="Audience segment"
+                          entityName="segment"
+                          optionKind="segment"
+                          initial={resolvedScopes.segmentId}
+                          onChange={patch}
+                        />
+                        <label>
+                          <span className="field-label">
+                            Recorded buying context
+                          </span>
+                          <select
+                            className="text-input"
+                            value={criterion.marketType ?? ""}
+                            onChange={(event) =>
+                              patch({
+                                marketType: (event.target.value ||
+                                  undefined) as CriterionDraft["marketType"],
+                              })
+                            }
+                          >
+                            <option value="">Every recorded context</option>
+                            <option value="UNKNOWN">Not sure yet</option>
+                            <option value="B2C">Consumers</option>
+                            <option value="B2B">Businesses</option>
+                            <option value="BOTH">Consumers & businesses</option>
+                          </select>
+                        </label>
+                        {criterion.metric === "BUSINESS_RECEIPTS" && (
+                          <ScopePicker
+                            criterion={criterion}
+                            field="offerRevisionId"
+                            label="Exact shared offer terms"
+                            entityName="offer revision"
+                            optionKind="offerRevision"
+                            initial={resolvedScopes.offerRevisionId}
+                            scope={{ companyId: criterion.companyId }}
+                            onChange={patch}
+                          />
+                        )}
+                      </div>
+                    </details>
+                  )}
                   {context === "EXPERIMENT" &&
-                    ["CONVERSATIONS", "CONVERSATION_COMPANIES"].includes(
-                      criterion.metric,
-                    ) && (
+                    [
+                      "CONVERSATIONS",
+                      "CONVERSATION_COMPANIES",
+                      "CONVERSATION_PEOPLE",
+                    ].includes(criterion.metric) && (
                       <label className="direction-outreach-only direction-field-wide">
                         <input
                           type="checkbox"
@@ -559,9 +673,9 @@ export function CriterionBuilder({
                             outreach
                           </strong>
                           <small>
-                            Same company, exploration, and evidence window.
-                            Choose at least one outreach record before this
-                            definition can be evaluated.
+                            Same recorded recipient, exploration, and evidence
+                            window. Choose at least one outreach record before
+                            this definition can be evaluated.
                           </small>
                         </span>
                       </label>

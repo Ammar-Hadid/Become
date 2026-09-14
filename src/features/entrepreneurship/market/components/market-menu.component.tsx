@@ -18,7 +18,7 @@ export function MarketMenu({
   return (
     <div>
       <SubMenu
-        label={`${kind} actions`}
+        label={`${kind === "company" ? "Business" : "Exploration"} actions`}
         placement="bottom-end"
         trigger={(props) => (
           <button {...props} className="business-icon-button">
@@ -35,7 +35,8 @@ export function MarketMenu({
             })
           }
         >
-          {archived ? "Restore" : "Archive"} {kind}
+          {archived ? "Restore" : "Archive"}{" "}
+          {kind === "company" ? "business" : "exploration"}
         </MenuItem>
       </SubMenu>
       {error && (

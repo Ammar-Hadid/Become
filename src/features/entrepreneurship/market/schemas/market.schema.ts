@@ -1,3 +1,4 @@
+import { marketTypes } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
 import { z } from "zod";
 export const optionalText = (max = 6000) =>
   z
@@ -12,6 +13,7 @@ export const nameSchema = z
   .min(1, "Give this a name.")
   .max(120);
 export const marketSchema = z.object({
+  marketFocus: z.enum(marketTypes).optional(),
   expectedUpdatedAt: optionalText(80),
   name: nameSchema,
   website: z
@@ -23,6 +25,12 @@ export const marketSchema = z.object({
   nicheIds: z.array(z.string()).max(30).default([]),
 });
 export const directionSchema = z.object({
+  marketFocus: z.enum(marketTypes).optional(),
+  marketConclusion: z
+    .enum(["UNDECIDED", "B2C", "B2B", "BOTH", "NEITHER"])
+    .optional(),
+  conclusionScope: optionalText(),
+  sourceKeys: z.array(z.string().max(200)).max(100).default([]),
   expectedUpdatedAt: optionalText(80),
   direction: z.enum(["EXPLORING", "PURSUING", "PAUSED", "STOPPED"]),
   rationale: z

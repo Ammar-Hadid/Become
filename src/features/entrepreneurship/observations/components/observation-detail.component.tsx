@@ -2,7 +2,7 @@ import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/c
 import { notFound } from "next/navigation";
 import { DateTime } from "luxon";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
-import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getObservationDetail } from "@/features/entrepreneurship/observations/queries/observation.query";
 import {
   businessDate,
   humanize,
@@ -10,6 +10,8 @@ import {
 import { ObservationCorrection } from "@/features/entrepreneurship/observations/components/observation-correction.component";
 import { CorrectionMenu } from "@/features/entrepreneurship/shared/components/correction-menu.component";
 import { withdrawObservationAction } from "@/features/entrepreneurship/observations/actions/observation.action";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
+import { getAudienceOptions } from "@/features/entrepreneurship/audiences/queries/audience.query";
 export async function ObservationDetail({
   userId,
   id,
@@ -19,28 +21,18 @@ export async function ObservationDetail({
   id: string;
   revisionId?: string;
 }) {
-  const observation = await prisma.observation.findFirst({
-    where: { id, userId: userId },
-    include: {
-      revisions: {
-        orderBy: { version: "desc" },
-        include: {
-          interactionRevision: true,
-          evidence: { include: { problem: true } },
-        },
-      },
-    },
-  });
+  const observation = await getObservationDetail(userId, id);
   if (!observation) notFound();
   const source = revisionId
     ? observation.revisions.find((r) => r.id === revisionId)
     : observation.revisions[0];
   if (!source) notFound();
+  const audienceOptions = await getAudienceOptions(userId);
   const usedEvidence = observation.revisions.flatMap((r) => r.evidence);
   return (
     <>
-      <Link className="business-back" href="/entrepreneurship/interactions">
-        ← Field notes
+      <Link className="business-back" href="/entrepreneurship/evidence">
+        ← Evidence journal
       </Link>
       <header className="business-section-heading business-page-heading">
         <div>
@@ -48,7 +40,12 @@ export async function ObservationDetail({
             {observation.voidedAt ? "Withdrawn source" : humanize(source.kind)}{" "}
             · {humanize(source.wordingMode)}
           </p>
-          <h2>{source.companySnapshot ?? "Observation"}</h2>
+          <h2>
+            {source.personSnapshot ??
+              source.companySnapshot ??
+              source.audienceLabel ??
+              "Observation"}
+          </h2>
           <p>Observed {businessDate(source.observedAt)}</p>
         </div>
         {!observation.voidedAt && source.version === observation.version && (
@@ -58,6 +55,8 @@ export async function ObservationDetail({
               version={observation.version}
               statement={source.statement}
               sourceDescription={source.sourceDescription}
+              audience={source}
+              segments={audienceOptions.segments}
               date={DateTime.fromJSDate(source.observedAt, {
                 zone: APP_TIMEZONE,
               }).toISODate()!}
@@ -97,11 +96,29 @@ export async function ObservationDetail({
             </div>
           </div>
           <p className="business-prose">{source.sourceDescription}</p>
+          <p className="mt-lg text-body-sm text-text-secondary">
+            <AudienceSummary {...source} />
+          </p>
+          {source.audienceContext?.description && (
+            <p className="business-hint mt-sm">
+              {source.audienceContext.description}
+            </p>
+          )}
           {source.interactionRevision && (
             <div className="business-source-context">
               <p className="business-hint">
                 From this exact interaction version
               </p>
+              <p className="business-hint mt-sm">
+                <AudienceSummary {...source.interactionRevision} />
+              </p>
+              {source.audienceContextId !==
+                source.interactionRevision.audienceContextId && (
+                <p className="business-hint mt-sm">
+                  This observation has an attributed audience boundary. The
+                  original interaction's context remains above.
+                </p>
+              )}
               <p className="business-prose">
                 {source.interactionRevision.summary}
               </p>

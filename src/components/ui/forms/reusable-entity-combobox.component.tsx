@@ -40,6 +40,7 @@ export function ReusableEntityCombobox({
   queryValue,
   optional = true,
   required = false,
+  allowDuplicateNames = false,
 }: {
   selectedOptions?: ReusableEntityOption[];
   selectedOptionsDisplay?: ReactNode;
@@ -49,6 +50,7 @@ export function ReusableEntityCombobox({
   queryValue?: string;
   optional?: boolean;
   required?: boolean;
+  allowDuplicateNames?: boolean;
   label: string;
   entityName: string;
   idFieldName: string;
@@ -67,6 +69,7 @@ export function ReusableEntityCombobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const initialMatch = initialOptions.find(
     (option) =>
+      !allowDuplicateNames &&
       initialName &&
       normalizeReusableEntityName(option.name) ===
         normalizeReusableEntityName(initialName),
@@ -147,7 +150,7 @@ export function ReusableEntityCombobox({
   const canCreate =
     Boolean(createAction || deferCreation) &&
     Boolean(normalizedQuery) &&
-    !exactMatch;
+    (!exactMatch || allowDuplicateNames);
   const optionCount = matches.length + (canCreate ? 1 : 0);
 
   function selectOption(option: ReusableEntityOption) {
@@ -375,7 +378,7 @@ export function ReusableEntityCombobox({
       )}
       {deferCreation && query.trim() && !selectedId && !open && (
         <p className="mt-sm text-body-sm text-text-secondary">
-          This company will be matched or added when you save.
+          This {entityName} will be added when you save.
         </p>
       )}
       {error && (

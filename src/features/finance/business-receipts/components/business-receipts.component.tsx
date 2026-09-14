@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getBusinessReceiptWorkspace } from "@/features/finance/business-receipts/queries/business-receipt.query";
+import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import { formatMoney } from "@/lib/money/utils/money.util";
 import { FinanceSection } from "@/features/finance/components/finance-field.component";
 import {
@@ -9,7 +10,6 @@ import {
 export async function BusinessReceipts({
   userId,
   transactionId,
-  amountMinor,
   currency,
 }: {
   userId: string;
@@ -17,36 +17,15 @@ export async function BusinessReceipts({
   amountMinor: bigint;
   currency: string;
 }) {
-  const [companies, offers, allocations] = await Promise.all([
-    prisma.company.findMany({
-      where: { userId, archivedAt: null },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.offerRevision.findMany({
-      where: { userId, proposedAt: { not: null } },
-      select: { id: true, companyId: true, title: true, version: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.businessReceiptAllocation.findMany({
-      where: { userId, transactionId },
-      include: { offerRevision: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
-  const active = allocations.filter((allocation) => !allocation.withdrawnAt);
-  const attributed = active.reduce(
-    (sum, allocation) => sum + allocation.amountMinor,
-    0n,
-  );
+  const workspace = await getBusinessReceiptWorkspace(userId, transactionId);
+  const { allocations, attributed, remaining } = workspace;
   return (
     <FinanceSection
-      title="Business receipt attribution"
-      description="A company and offer perspective on this same income. Work-session allocation is a separate dimension: never add the two totals."
+      title="Entrepreneurship receipt attribution"
+      description="The audience and offer perspective on this same income. Work-session allocation is a separate dimension: never add the two totals."
       action={
         <BusinessReceiptForm
-          companies={companies}
-          offers={offers}
+          {...workspace}
           transactionId={transactionId}
           currency={currency}
         />
@@ -54,24 +33,28 @@ export async function BusinessReceipts({
     >
       <p className="text-body text-text-secondary mb-xl">
         {formatMoney(attributed, currency)} attributed ·{" "}
-        {formatMoney(amountMinor - attributed, currency)} not attributed to a
-        company
+        {formatMoney(remaining, currency)} available for attribution
       </p>
       {allocations.length ? (
         allocations.map((allocation) => (
           <article key={allocation.id} className="border-border py-xl border-t">
             <div className="gap-lg flex flex-wrap items-center justify-between">
               <div>
-                <Link
-                  className="text-body font-medium"
-                  href={`/entrepreneurship/market/companies/${allocation.companyId}`}
-                >
-                  {allocation.companySnapshot}
-                </Link>
+                <p className="text-body font-medium">
+                  <AudienceSummary {...allocation} />
+                </p>
+                {allocation.companyId && (
+                  <Link
+                    className="text-body-sm text-primary mt-sm inline-flex hover:underline"
+                    href={`/entrepreneurship/market/companies/${allocation.companyId}`}
+                  >
+                    View business ↗
+                  </Link>
+                )}
                 <p className="text-body-sm text-text-muted mt-sm">
                   {allocation.offerRevision
                     ? `${allocation.offerRevision.title} · revision ${allocation.offerRevision.version}`
-                    : "Company only"}
+                    : "Audience context only"}
                 </p>
               </div>
               <strong className="finance-number">
@@ -85,7 +68,7 @@ export async function BusinessReceipts({
               {allocation.withdrawnAt
                 ? `Withdrawn · ${allocation.withdrawalReason}`
                 : allocation.needsReviewAt
-                  ? "Source changed · excluded from confirmed business totals until reviewed"
+                  ? "Source changed · excluded from confirmed receipt totals until reviewed"
                   : "Confirmed attribution"}
             </p>
             {!allocation.withdrawnAt && (
@@ -98,7 +81,7 @@ export async function BusinessReceipts({
         ))
       ) : (
         <p className="text-body text-text-secondary">
-          No company attribution yet. Unattributed money remains part of
+          No audience attribution yet. Unattributed money remains part of
           Finance’s recorded income.
         </p>
       )}

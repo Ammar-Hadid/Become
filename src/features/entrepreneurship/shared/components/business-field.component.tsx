@@ -31,6 +31,8 @@ export function BusinessField({
   multiline,
   type = "text",
   hint,
+  min,
+  step,
 }: {
   label: string;
   name: string;
@@ -39,6 +41,8 @@ export function BusinessField({
   multiline?: boolean;
   type?: string;
   hint?: string;
+  min?: number;
+  step?: number;
 }) {
   const id = useId();
   const props = {
@@ -50,7 +54,7 @@ export function BusinessField({
     "aria-describedby": hint ? `${id}-hint` : undefined,
   };
   return (
-    <div className="business-form-field">
+    <div className="business-form-field gap-sm grid">
       <label htmlFor={id} className="field-label">
         {label}
         {!required && (
@@ -63,11 +67,16 @@ export function BusinessField({
         <input
           {...props}
           type={type}
+          min={min}
+          step={step}
           maxLength={type === "text" ? 120 : undefined}
         />
       )}
       {hint && (
-        <p id={`${id}-hint`} className="business-hint">
+        <p
+          id={`${id}-hint`}
+          className="business-hint text-body-sm text-text-muted"
+        >
           {hint}
         </p>
       )}
@@ -89,7 +98,7 @@ export function BusinessSelect({
 }) {
   const id = useId();
   return (
-    <div className="business-form-field">
+    <div className="business-form-field gap-sm grid">
       <label className="field-label" htmlFor={id}>
         {label}
       </label>

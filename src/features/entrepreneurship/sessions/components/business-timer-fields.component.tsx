@@ -32,7 +32,7 @@ export function BusinessTimerFields({
   return (
     <details className="border-border bg-surface-input rounded-control p-lg border">
       <summary className="text-body text-text-secondary cursor-pointer font-medium">
-        Company & niche · optional
+        Exploration & business · optional
       </summary>
       <div className="border-border gap-lg mt-lg pt-lg grid border-t">
         {!options ? (
@@ -44,7 +44,7 @@ export function BusinessTimerFields({
         ) : (
           <>
             <label className="field-label">
-              Company
+              Business
               <select
                 className="text-input mt-sm"
                 value={value.businessCompanyId}
@@ -52,13 +52,13 @@ export function BusinessTimerFields({
                   onChange({ ...value, businessCompanyId: event.target.value })
                 }
               >
-                <option value="">No company</option>
+                <option value="">No specific business</option>
                 {!options.companies.some(
                   (c) => c.id === value.businessCompanyId,
                 ) &&
                   value.businessCompanyId && (
                     <option value={value.businessCompanyId}>
-                      Recorded company
+                      Recorded business
                     </option>
                   )}
                 {options.companies.map((c) => (
@@ -69,7 +69,7 @@ export function BusinessTimerFields({
               </select>
             </label>
             <label className="field-label">
-              Niche
+              Exploration
               <select
                 className="text-input mt-sm"
                 value={value.businessNicheId}
@@ -77,11 +77,11 @@ export function BusinessTimerFields({
                   onChange({ ...value, businessNicheId: event.target.value })
                 }
               >
-                <option value="">No niche</option>
+                <option value="">No exploration</option>
                 {!options.niches.some((n) => n.id === value.businessNicheId) &&
                   value.businessNicheId && (
                     <option value={value.businessNicheId}>
-                      Recorded niche
+                      Recorded exploration
                     </option>
                   )}
                 {options.niches.map((n) => (
