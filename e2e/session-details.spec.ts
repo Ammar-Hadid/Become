@@ -209,6 +209,7 @@ test("corrects a forgotten stop time from session details", async ({
   const hours = page.getByRole("spinbutton", { name: "Hours" });
   const minutes = page.getByRole("spinbutton", { name: "Minutes" });
   const seconds = page.getByRole("spinbutton", { name: "Seconds" });
+  const hoursInput = page.getByTestId("session-duration-hours-input");
   await hours.focus();
   await hours.press("Home");
   await hours.press("ArrowDown");
@@ -231,9 +232,14 @@ test("corrects a forgotten stop time from session details", async ({
   expect(minuteBounds).not.toBeNull();
   const minuteCenterX = minuteBounds!.x + minuteBounds!.width / 2;
   const minuteCenterY = minuteBounds!.y + minuteBounds!.height / 2;
+  const minuteRowHeight = await minutes.evaluate(
+    (element) => element.parentElement!.parentElement!.clientHeight / 5,
+  );
   await page.mouse.move(minuteCenterX, minuteCenterY);
   await page.mouse.down();
-  await page.mouse.move(minuteCenterX, minuteCenterY - 48, { steps: 4 });
+  await page.mouse.move(minuteCenterX, minuteCenterY - minuteRowHeight, {
+    steps: 4,
+  });
   await page.waitForTimeout(120);
   await page.mouse.up();
   await expect(minutes).toHaveAttribute("aria-valuenow", "1");
@@ -242,6 +248,52 @@ test("corrects a forgotten stop time from session details", async ({
   await expect(hours).toHaveAttribute("aria-valuenow", "24");
   await expect(minutes).toHaveAttribute("aria-valuemax", "0");
   await expect(seconds).toHaveAttribute("aria-valuemax", "0");
+
+  async function hardSwipeHours(direction: -1 | 1) {
+    const bounds = await hours.boundingBox();
+    expect(bounds).not.toBeNull();
+    const x = bounds!.x + bounds!.width / 2;
+    const y = bounds!.y + bounds!.height / 2;
+    const rowHeight = await hours.evaluate(
+      (element) => element.parentElement!.parentElement!.clientHeight / 5,
+    );
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + direction * 8);
+    await page.mouse.move(x, y + direction * rowHeight * 3.5);
+    const offset = await hours.evaluate((element) =>
+      Number.parseFloat(
+        (element.parentElement as HTMLElement).style.getPropertyValue(
+          "--duration-wheel-offset",
+        ),
+      ),
+    );
+    expect(offset * direction).toBeGreaterThanOrEqual(0);
+    expect(Math.abs(offset)).toBeLessThanOrEqual(rowHeight / 3 + 1);
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    expect(
+      await hours.evaluate((element) =>
+        Number.parseFloat(
+          (element.parentElement as HTMLElement).style.getPropertyValue(
+            "--duration-wheel-offset",
+          ),
+        ),
+      ),
+    ).toBe(0);
+  }
+
+  await hours.dblclick();
+  await hoursInput.fill("23");
+  await hoursInput.press("Enter");
+  await hardSwipeHours(-1);
+  await expect(hours).toHaveAttribute("aria-valuenow", "24");
+  await hours.dblclick();
+  await hoursInput.fill("1");
+  await hoursInput.press("Enter");
+  await hardSwipeHours(1);
+  await expect(hours).toHaveAttribute("aria-valuenow", "0");
+  await hours.press("End");
   await hours.press("ArrowDown");
   await minutes.press("ArrowDown");
   await expect(hours).toHaveAttribute("aria-valuenow", "24");
@@ -250,7 +302,6 @@ test("corrects a forgotten stop time from session details", async ({
     page.getByRole("button", { name: "Set hours to 25" }),
   ).toHaveCount(0);
   await hours.dblclick();
-  const hoursInput = page.getByTestId("session-duration-hours-input");
   await hoursInput.fill("1");
   await hoursInput.press("Enter");
   await expect(hours).toHaveAttribute("aria-valuenow", "1");

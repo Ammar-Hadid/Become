@@ -110,6 +110,36 @@ export function normalizeWheelDistance(
   return direction * Math.min(rowHeight * 3, pixels);
 }
 
+export function resolveWheelTravel(
+  value: number,
+  offset: number,
+  distance: number,
+  stepHeight: number,
+  maximum: number,
+  wrapAt?: number,
+) {
+  let nextOffset = offset + distance;
+  let steps = 0;
+
+  while (nextOffset <= -stepHeight) {
+    nextOffset += stepHeight;
+    steps += 1;
+  }
+  while (nextOffset >= stepHeight) {
+    nextOffset -= stepHeight;
+    steps -= 1;
+  }
+
+  const nextValue = stepDurationValue(value, steps, wrapAt, maximum);
+  const hitBoundary = wrapAt === undefined && nextValue - value !== steps;
+
+  if (hitBoundary) {
+    nextOffset = (-Math.sign(steps) * stepHeight) / 3;
+  }
+
+  return { value: nextValue, offset: nextOffset, hitBoundary };
+}
+
 export function DurationPicker({
   value,
   onChange,
@@ -248,37 +278,18 @@ function DurationColumn({
 
   function applyTravel(distance: number) {
     const stepHeight = rowHeight();
-    let nextOffset = offsetRef.current + distance;
-    let steps = 0;
+    const travel = resolveWheelTravel(
+      valueRef.current,
+      offsetRef.current,
+      distance,
+      stepHeight,
+      maximum,
+      wrapAt,
+    );
 
-    while (nextOffset <= -stepHeight) {
-      nextOffset += stepHeight;
-      steps += 1;
-    }
-    while (nextOffset >= stepHeight) {
-      nextOffset -= stepHeight;
-      steps -= 1;
-    }
-
-    if (steps !== 0) {
-      const nextValue = stepDurationValue(
-        valueRef.current,
-        steps,
-        wrapAt,
-        maximum,
-      );
-      if (nextValue === valueRef.current) {
-        const boundaryOffset = stepHeight / 3;
-        updateOffset(
-          Math.max(-boundaryOffset, Math.min(boundaryOffset, nextOffset)),
-        );
-        return false;
-      }
-      emitValue(nextValue);
-    }
-
-    updateOffset(nextOffset);
-    return true;
+    if (travel.value !== valueRef.current) emitValue(travel.value);
+    updateOffset(travel.offset);
+    return !travel.hitBoundary;
   }
 
   function animateStep(delta: number) {

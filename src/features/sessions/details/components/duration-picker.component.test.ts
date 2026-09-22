@@ -3,6 +3,7 @@ import {
   composeDurationSeconds,
   normalizeWheelDistance,
   parseDurationEntry,
+  resolveWheelTravel,
   splitDurationSeconds,
   stepDurationValue,
 } from "@/features/sessions/details/components/duration-picker.component";
@@ -40,5 +41,23 @@ describe("duration picker values", () => {
     expect(normalizeWheelDistance(3, 1, 48)).toBe(48);
     expect(normalizeWheelDistance(-1, 2, 48)).toBe(-144);
     expect(normalizeWheelDistance(1_000, 0, 48)).toBe(144);
+  });
+
+  it("limits visual travel when a fast gesture reaches an hours boundary", () => {
+    expect(resolveWheelTravel(23, 0, -150, 48, 24)).toEqual({
+      value: 24,
+      offset: -16,
+      hitBoundary: true,
+    });
+    expect(resolveWheelTravel(1, 0, 150, 48, 24)).toEqual({
+      value: 0,
+      offset: 16,
+      hitBoundary: true,
+    });
+    expect(resolveWheelTravel(1, 0, -55, 48, 24)).toEqual({
+      value: 2,
+      offset: -7,
+      hitBoundary: false,
+    });
   });
 });
