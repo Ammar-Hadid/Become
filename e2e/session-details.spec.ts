@@ -249,6 +249,31 @@ test("corrects a forgotten stop time from session details", async ({
   await expect(minutes).toHaveAttribute("aria-valuemax", "0");
   await expect(seconds).toHaveAttribute("aria-valuemax", "0");
 
+  async function wheelOffset() {
+    return hours.evaluate((element) =>
+      Number.parseFloat(
+        (element.parentElement as HTMLElement).style.getPropertyValue(
+          "--duration-wheel-offset",
+        ),
+      ),
+    );
+  }
+
+  await page.waitForTimeout(250);
+  await hours.hover();
+  for (let tick = 0; tick < 3; tick += 1) {
+    await page.mouse.wheel(0, 120);
+    await expect(hours).toHaveAttribute("aria-valuenow", "24");
+    expect(await wheelOffset()).toBe(0);
+    await page.waitForTimeout(120);
+  }
+  await page.mouse.wheel(0, -120);
+  await expect(hours).toHaveAttribute("aria-valuenow", "23");
+  await page.mouse.wheel(0, 400);
+  await expect(hours).toHaveAttribute("aria-valuenow", "24");
+  expect(await wheelOffset()).toBe(0);
+  await hours.press("End");
+
   async function hardSwipeHours(direction: -1 | 1) {
     const bounds = await hours.boundingBox();
     expect(bounds).not.toBeNull();
@@ -293,6 +318,18 @@ test("corrects a forgotten stop time from session details", async ({
   await hoursInput.press("Enter");
   await hardSwipeHours(1);
   await expect(hours).toHaveAttribute("aria-valuenow", "0");
+  await hours.hover();
+  for (let tick = 0; tick < 3; tick += 1) {
+    await page.mouse.wheel(0, -120);
+    await expect(hours).toHaveAttribute("aria-valuenow", "0");
+    expect(await wheelOffset()).toBe(0);
+    await page.waitForTimeout(120);
+  }
+  await page.mouse.wheel(0, 120);
+  await expect(hours).toHaveAttribute("aria-valuenow", "1");
+  await page.mouse.wheel(0, -400);
+  await expect(hours).toHaveAttribute("aria-valuenow", "0");
+  expect(await wheelOffset()).toBe(0);
   await hours.press("End");
   await hours.press("ArrowDown");
   await minutes.press("ArrowDown");

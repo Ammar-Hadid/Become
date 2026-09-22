@@ -60,4 +60,49 @@ describe("duration picker values", () => {
       hitBoundary: false,
     });
   });
+
+  it("holds a hard boundary still during repeated outward travel", () => {
+    const upperBoundary = resolveWheelTravel(23, 0, -150, 48, 24);
+    const heldUpperBoundary = resolveWheelTravel(
+      upperBoundary.value,
+      upperBoundary.offset,
+      -12,
+      48,
+      24,
+    );
+    const lowerBoundary = resolveWheelTravel(1, 0, 150, 48, 24);
+    const heldLowerBoundary = resolveWheelTravel(
+      lowerBoundary.value,
+      lowerBoundary.offset,
+      12,
+      48,
+      24,
+    );
+
+    expect(heldUpperBoundary).toEqual({
+      value: 24,
+      offset: 0,
+      hitBoundary: true,
+    });
+    expect(resolveWheelTravel(24, 0, -144, 48, 24)).toEqual(heldUpperBoundary);
+    expect(heldLowerBoundary).toEqual({
+      value: 0,
+      offset: 0,
+      hitBoundary: true,
+    });
+    expect(resolveWheelTravel(0, 0, 144, 48, 24)).toEqual(heldLowerBoundary);
+  });
+
+  it("continues inward from a hard boundary", () => {
+    expect(resolveWheelTravel(24, 0, 48, 48, 24)).toEqual({
+      value: 23,
+      offset: 0,
+      hitBoundary: false,
+    });
+    expect(resolveWheelTravel(0, 0, -48, 48, 24)).toEqual({
+      value: 1,
+      offset: 0,
+      hitBoundary: false,
+    });
+  });
 });

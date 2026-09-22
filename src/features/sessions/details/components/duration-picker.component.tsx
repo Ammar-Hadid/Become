@@ -118,6 +118,15 @@ export function resolveWheelTravel(
   maximum: number,
   wrapAt?: number,
 ) {
+  const continuingPastMinimum =
+    wrapAt === undefined && value <= 0 && distance > 0;
+  const continuingPastMaximum =
+    wrapAt === undefined && value >= maximum && distance < 0;
+
+  if (continuingPastMinimum || continuingPastMaximum) {
+    return { value, offset: 0, hitBoundary: true };
+  }
+
   let nextOffset = offset + distance;
   let steps = 0;
 
@@ -439,9 +448,13 @@ function DurationColumn({
       cancelMotion();
       setEntry(null);
       setSettling(false);
-      applyTravel(
+      const moved = applyTravel(
         -normalizeWheelDistance(event.deltaY, event.deltaMode, rowHeight()),
       );
+      if (!moved) {
+        updateOffset(0);
+        return;
+      }
       wheelSettleTimer.current = window.setTimeout(() => {
         settleWheel();
         wheelSettleTimer.current = null;
