@@ -1,4 +1,5 @@
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import { notFound } from "next/navigation";
 import { DateTime } from "luxon";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -17,11 +18,13 @@ export async function ObservationDetail({
   id,
   revisionId,
   nicheId,
+  returnTo,
 }: {
   userId: string;
   id: string;
   revisionId?: string;
   nicheId?: string;
+  returnTo?: string;
 }) {
   const observation = await getObservationDetail(userId, id);
   if (
@@ -37,9 +40,13 @@ export async function ObservationDetail({
   const usedEvidence = observation.revisions.flatMap((r) => r.evidence);
   return (
     <>
-      <Link className="business-back" href="/entrepreneurship/evidence">
+      <BusinessBackLink
+        className="business-back"
+        returnTo={returnTo}
+        fallbackHref="/entrepreneurship/evidence"
+      >
         ← Evidence journal
-      </Link>
+      </BusinessBackLink>
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">

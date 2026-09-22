@@ -1,48 +1,60 @@
 "use client";
 
 import { useCallback, useEffect, useState, type AnimationEvent } from "react";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
+import {
+  resolveMotionFallbackMs,
+  type MotionDuration,
+} from "@/components/ui/motion/utils/motion-time.util";
 
 export type MotionPresenceState = "open" | "closed";
 
 export function usePresence(
   open: boolean,
-  exitDuration: number = MOTION_DURATION_MS.fast,
+  exitDuration: MotionDuration = "control",
 ) {
   const [retained, setRetained] = useState(open);
   const isPresent = open || retained;
 
+  const completeExit = useCallback(() => {
+    if (!open) setRetained(false);
+  }, [open]);
+
   useEffect(() => {
     if (open) {
       if (retained) return;
-      const frame = window.requestAnimationFrame(() => setRetained(true));
-      return () => window.cancelAnimationFrame(frame);
+      const retainFrame = window.requestAnimationFrame(() => setRetained(true));
+      return () => window.cancelAnimationFrame(retainFrame);
     }
     if (!retained) return;
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const finishForReducedMotion = () => {
+      if (reducedMotion.matches) setRetained(false);
+    };
+    finishForReducedMotion();
     const fallback = window.setTimeout(
       () => setRetained(false),
-      exitDuration + MOTION_DURATION_MS.feedback,
+      resolveMotionFallbackMs(exitDuration),
     );
-    return () => window.clearTimeout(fallback);
+    reducedMotion.addEventListener("change", finishForReducedMotion);
+    return () => {
+      window.clearTimeout(fallback);
+      reducedMotion.removeEventListener("change", finishForReducedMotion);
+    };
   }, [exitDuration, open, retained]);
 
-  const onPresenceAnimationEnd = useCallback(
+  const onPresenceAnimationComplete = useCallback(
     (event: AnimationEvent<HTMLElement>) => {
-      if (
-        !open &&
-        event.target === event.currentTarget &&
-        event.animationName.includes("out")
-      ) {
-        setRetained(false);
-      }
+      if (event.target === event.currentTarget) completeExit();
     },
-    [open],
+    [completeExit],
   );
 
   return {
     isPresent,
+    isExiting: isPresent && !open,
     presenceState: (open ? "open" : "closed") as MotionPresenceState,
-    onPresenceAnimationEnd,
+    completeExit,
+    onPresenceAnimationEnd: onPresenceAnimationComplete,
   };
 }

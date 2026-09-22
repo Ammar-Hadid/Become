@@ -85,23 +85,35 @@ export function getExplorationDirectionEditor(userId: string, id: string) {
   return getExploration(userId, id);
 }
 export async function getExplorationSummary(userId: string, nicheId: string) {
-  const [companies, problems, offers, events, time] = await Promise.all([
-    prisma.company.count({
-      where: { userId, archivedAt: null, ...companyExplorationWhere(nicheId) },
-    }),
-    prisma.problem.count({
-      where: { userId, archivedAt: null, ...problemExplorationWhere(nicheId) },
-    }),
-    prisma.offer.count({
-      where: { userId, archivedAt: null, ...offerExplorationWhere(nicheId) },
-    }),
-    prisma.$queryRaw<
-      { interactions: number; contacted: number; conversations: number }[]
-    >`SELECT COUNT(*)::int AS interactions, COUNT(DISTINCT r."companyId") FILTER (WHERE r.kind <> 'ATTEMPT_NO_CONTACT')::int AS contacted, COUNT(*) FILTER (WHERE r.kind='CONVERSATION')::int AS conversations FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,
-    prisma.$queryRaw<
-      { seconds: number; sessions: number }[]
-    >`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
-  ]);
+  const [companies, problems, offers, events, time, evidence] =
+    await Promise.all([
+      prisma.company.count({
+        where: {
+          userId,
+          archivedAt: null,
+          ...companyExplorationWhere(nicheId),
+        },
+      }),
+      prisma.problem.count({
+        where: {
+          userId,
+          archivedAt: null,
+          ...problemExplorationWhere(nicheId),
+        },
+      }),
+      prisma.offer.count({
+        where: { userId, archivedAt: null, ...offerExplorationWhere(nicheId) },
+      }),
+      prisma.$queryRaw<
+        { interactions: number; contacted: number; conversations: number }[]
+      >`SELECT COUNT(*)::int AS interactions, COUNT(DISTINCT r."companyId") FILTER (WHERE r.kind <> 'ATTEMPT_NO_CONTACT')::int AS contacted, COUNT(*) FILTER (WHERE r.kind='CONVERSATION')::int AS conversations FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,
+      prisma.$queryRaw<
+        { seconds: number; sessions: number }[]
+      >`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
+      prisma.$queryRaw<
+        { count: number }[]
+      >`SELECT COUNT(*)::int AS count FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,
+    ]);
   const [audience, segments, people] = await Promise.all([
     getAudienceMetrics(userId, { nicheId }),
     prisma.audienceSegment.count({
@@ -113,6 +125,7 @@ export async function getExplorationSummary(userId: string, nicheId: string) {
   ]);
   return {
     companies,
+    evidence: evidence[0]?.count ?? 0,
     problems,
     offers,
     ...events[0],
@@ -149,7 +162,7 @@ export async function getExplorationSignals(userId: string, nicheId: string) {
     >`SELECT o.id, r.statement, r."companySnapshot", r."wordingMode" FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."nicheId"=${nicheId} AND NOT EXISTS (SELECT 1 FROM interaction i WHERE i.id=r."interactionId" AND i."voidedAt" IS NOT NULL) ORDER BY r."observedAt" DESC, o.id DESC LIMIT 3`,
     prisma.$queryRaw<
       { id: string }[]
-    >`SELECT f.id FROM follow_up f LEFT JOIN interaction i ON i.id=f."interactionId" LEFT JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE f."userId"=${userId} AND f."completedAt" IS NULL AND f."cancelledAt" IS NULL AND (r."nicheId"=${nicheId} OR EXISTS (SELECT 1 FROM offer_niche n WHERE n."offerId"=f."offerId" AND n."nicheId"=${nicheId})) ORDER BY f."dueOn" ASC NULLS LAST, f.id LIMIT 5`,
+    >`SELECT f.id FROM follow_up f LEFT JOIN interaction i ON i.id=f."interactionId" LEFT JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE f."userId"=${userId} AND f."completedAt" IS NULL AND f."cancelledAt" IS NULL AND i."voidedAt" IS NULL AND (r."nicheId"=${nicheId} OR EXISTS (SELECT 1 FROM offer_niche n WHERE n."offerId"=f."offerId" AND n."nicheId"=${nicheId}) OR EXISTS (SELECT 1 FROM company_niche n WHERE n."companyId"=f."companyId" AND n."nicheId"=${nicheId} AND n."userId"=${userId})) ORDER BY f."dueOn" ASC NULLS LAST, f.id LIMIT 5`,
     prisma.session.findMany({
       where: { userId, businessNicheId: nicheId },
       orderBy: { startedAt: "desc" },

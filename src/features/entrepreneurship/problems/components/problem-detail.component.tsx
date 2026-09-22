@@ -173,7 +173,11 @@ export async function ProblemDetail({
             </p>
           </div>
           <div className="business-actions">
-            <LinkEvidenceForm problemId={id} observations={observations} />
+            <LinkEvidenceForm
+              problemId={id}
+              observations={observations}
+              nicheId={nicheId}
+            />
             {receipts.length > 0 && (
               <ReceiptEvidenceForm
                 problemId={id}

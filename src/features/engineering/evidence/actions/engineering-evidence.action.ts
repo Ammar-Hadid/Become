@@ -27,7 +27,7 @@ export async function createEngineeringEvidenceAction(
     return { error: "The selected project or session is not valid." };
 
   revalidateEngineeringPaths();
-  redirect("/engineering/evidence");
+  redirect(`/engineering/evidence?created=${encodeURIComponent(result.evidenceId)}`);
 }
 
 export async function updateEngineeringEvidenceAction(

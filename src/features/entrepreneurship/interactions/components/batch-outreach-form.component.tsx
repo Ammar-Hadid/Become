@@ -3,19 +3,15 @@ import { useExploration } from "@/features/entrepreneurship/explorations/compone
 import { useState } from "react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import { BusinessFormSection } from "@/features/entrepreneurship/shared/components/business-field.component";
-import {
-  batchOutreachAction,
-  searchCompaniesAction,
-} from "@/features/entrepreneurship/interactions/actions/interaction.action";
+import { batchOutreachAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
 import { channels } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 import {
   businessToday,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
-import { searchPeopleAction } from "@/features/entrepreneurship/audiences/actions/audience.action";
 import {
   AudienceFields,
   type AudienceOption,
@@ -119,28 +115,26 @@ function BatchFields({
         title="Who you actually contacted"
         description="Select only people and businesses that received this outreach."
       >
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind="company"
           label="Business recipients"
-          optional={false}
-          entityName="business"
-          idFieldName="companyIds"
-          queryFieldName="recipientSearch"
+          name="companyIds"
+          nicheId={exploration?.id}
           options={companies}
-          searchAction={searchCompaniesAction}
-          selectedOptions={selected}
-          onSelectionChange={setSelected}
+          values={selected.map((company) => company.id)}
+          multiple
+          onSelectionChange={(items) => setSelected(items)}
           placeholder="Search active businesses…"
         />
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind="person"
           label="People contacted directly"
-          entityName="person"
-          idFieldName="personIds"
-          queryFieldName="personRecipientSearch"
+          name="personIds"
+          nicheId={exploration?.id}
           options={people}
-          searchAction={searchPeopleAction}
-          selectedOptions={selectedPeople}
-          onSelectionChange={setSelectedPeople}
-          allowDuplicateNames
+          values={selectedPeople.map((person) => person.id)}
+          multiple
+          onSelectionChange={(items) => setSelectedPeople(items)}
           placeholder="Search active people…"
         />
         <p className="business-hint">

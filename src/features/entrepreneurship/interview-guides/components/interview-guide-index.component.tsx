@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, BookOpenText, Building2, UserRound } from "lucide-react";
 import { getInterviewGuideIndex } from "@/features/entrepreneurship/interview-guides/queries/interview-guide.query";
 import { getAudienceOptions } from "@/features/entrepreneurship/audiences/queries/audience.query";
-import { LearnNavigation } from "@/features/entrepreneurship/learn/components/learn-navigation.component";
 import {
   InterviewGuideCreateForm,
   EnsureStarterGuides,
@@ -24,14 +23,17 @@ export async function InterviewGuideIndex({
   const active = guides.filter((guide) => !guide.archivedAt);
   const starter = (market: "B2C" | "B2B") =>
     active.find((guide) => guide.marketType === market);
+  const guideHref = (suffix = "") =>
+    explorationHref(nicheId, `/conversations/guides${suffix}`);
   return (
-    <div className="exploration-stage">
-      <header className="exploration-stage-heading">
+    <div className="interview-guide-index">
+      <header className="interview-guide-index-heading">
         <div>
-          <h2>Prepare questions without scripting the person.</h2>
+          <p className="eyebrow">Conversation guides</p>
+          <h1>Prepare enough to listen well.</h1>
           <p>
-            A published revision stays pinned to the interview that used it.
-            Later edits never rewrite an earlier exchange.
+            Write context, reminders, and optional questions in one document.
+            Published editions stay pinned to the conversations that used them.
           </p>
         </div>
         <div className="business-actions">
@@ -44,14 +46,13 @@ export async function InterviewGuideIndex({
           )}
         </div>
       </header>
-      <LearnNavigation nicheId={nicheId} active="guides" />
       <section
         className="interview-guide-starters"
         aria-labelledby="starter-guides-title"
       >
         <header>
           <p className="eyebrow">Starting points</p>
-          <h3 id="starter-guides-title">Consumer and business discovery</h3>
+          <h2 id="starter-guides-title">Starting points</h2>
         </header>
         <div>
           {(["B2C", "B2B"] as const).map((market) => {
@@ -60,41 +61,38 @@ export async function InterviewGuideIndex({
             return guide ? (
               <Link
                 key={market}
-                href={explorationHref(
-                  nicheId,
-                  `/learn/guides/${guide.id}/edit`,
-                )}
+                href={guideHref(`/${guide.id}/edit`)}
               >
                 <Icon aria-hidden="true" />
                 <span>{market === "B2C" ? "Consumers" : "Businesses"}</span>
-                <h3>{guide.title}</h3>
-                <p>{guide.objective}</p>
-                <small>
-                  {guide.revisions[0]
-                    ? `Published revision ${guide.revisions[0].version}`
-                    : "Draft only"}
-                </small>
+                <div>
+                  <strong>{guide.title}</strong>
+                  <small>
+                    {guide.revisions[0]
+                      ? `Published edition ${guide.revisions[0].version}`
+                      : "Draft only"}
+                  </small>
+                </div>
                 <ArrowRight aria-hidden="true" />
               </Link>
             ) : (
               <div key={market} className="interview-guide-starter-empty">
                 <Icon aria-hidden="true" />
                 <span>{market === "B2C" ? "Consumers" : "Businesses"}</span>
-                <h3>No starter yet</h3>
-                <p>
-                  Create both starter guides, then adapt the questions to this
-                  exploration.
-                </p>
+                <div>
+                  <strong>No starter yet</strong>
+                  <small>Create the starters, then adapt them here.</small>
+                </div>
               </div>
             );
           })}
         </div>
       </section>
-      <section className="exploration-stage-section">
+      <section className="interview-guide-ledger-section">
         <header>
           <div>
             <p className="eyebrow">Guide ledger</p>
-            <h3>Every guide</h3>
+            <h2>Every guide</h2>
           </div>
           <BookOpenText aria-hidden="true" />
         </header>
@@ -104,10 +102,7 @@ export async function InterviewGuideIndex({
               <Link
                 key={guide.id}
                 className="exploration-ledger-row"
-                href={explorationHref(
-                  nicheId,
-                  `/learn/guides/${guide.id}/edit`,
-                )}
+                href={guideHref(`/${guide.id}/edit`)}
               >
                 <div className="exploration-ledger-primary">
                   <span>
@@ -126,7 +121,7 @@ export async function InterviewGuideIndex({
                   </time>
                   <small>
                     {guide.revisions[0]
-                      ? `Revision ${guide.revisions[0].version}`
+                      ? `Edition ${guide.revisions[0].version}`
                       : "Unpublished draft"}
                   </small>
                 </div>

@@ -57,7 +57,7 @@
   display: none;
 }
 .panel[data-recompose] {
-  animation: reading-reveal var(--duration-spatial) var(--ease-enter) backwards;
+  animation: reading-reveal var(--duration-surface) var(--ease-enter) backwards;
 }
 .journal,
 .ledger {
@@ -86,7 +86,7 @@
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-enter);
 }
 .index > button::after {
   content: "";
@@ -138,7 +138,7 @@
   border-left: 1px solid var(--color-border);
 }
 .focusReading[data-recompose] {
-  animation: reading-recompose var(--duration-standard) var(--ease-enter)
+  animation: reading-recompose var(--duration-content) var(--ease-enter)
     backwards;
 }
 .focusReading h3 {

@@ -16,5 +16,6 @@ export const INTERVIEW_GUIDE_ALLOWED_MARKS = [
   "bold",
   "italic",
   "strike",
+  "underline",
   "link",
 ] as const;

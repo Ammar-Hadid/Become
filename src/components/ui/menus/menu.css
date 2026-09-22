@@ -16,12 +16,12 @@
 }
 
 .menu[data-state="open"] {
-  animation: menu-in var(--duration-fast) var(--ease-enter);
+  animation: menu-in var(--duration-control) var(--ease-enter);
 }
 
 .menu[data-state="closed"] {
   pointer-events: none;
-  animation: menu-out var(--duration-feedback) var(--ease-exit) both;
+  animation: menu-out var(--duration-response) var(--ease-exit) both;
 }
 
 .menu--top-stretch {
@@ -43,7 +43,7 @@
 .menu-item {
   display: flex;
   width: 100%;
-  min-height: var(--spacing-control-height);
+  min-height: var(--spacing-input-height-sm);
   align-items: center;
   justify-content: flex-start;
   gap: var(--spacing-sm);
@@ -56,7 +56,9 @@
   color: var(--color-text-secondary);
   text-align: left;
   white-space: nowrap;
-  transition: var(--duration-fast) var(--ease-standard);
+  transition:
+    background-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move);
 }
 
 .menu-item:hover,
@@ -71,7 +73,7 @@
   height: 1rem;
   flex: 0 0 auto;
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .menu-item:hover > svg,
@@ -82,13 +84,14 @@
 @keyframes menu-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.98);
+    transform: translateY(var(--distance-control)) scale(var(--scale-pressed));
   }
 }
 
 @keyframes menu-out {
   to {
-    transform: translateY(2px) scale(0.99);
+    transform: translateY(calc(var(--distance-control) / 2))
+      scale(var(--scale-pressed));
     opacity: 0;
   }
 }

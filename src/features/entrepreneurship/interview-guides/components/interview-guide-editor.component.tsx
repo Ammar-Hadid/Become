@@ -1,39 +1,41 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Archive,
-  Copy,
-  Eye,
-  MoreHorizontal,
-  Plus,
-  Save,
-  Send,
-} from "lucide-react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { Archive, Copy, Eye, MoreHorizontal, Save, Send } from "lucide-react";
 import { DocumentEditorStage } from "@/components/ui/document-editor/components/document-editor-stage.component";
 import { useDocumentAutosave } from "@/components/ui/document-editor/hooks/document-autosave.hook";
 import { useDocumentNavigationGuard } from "@/components/ui/document-editor/hooks/document-navigation-guard.hook";
-import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
+import { SubMenu } from "@/components/ui/menus/submenu.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import {
   archiveInterviewGuideAction,
   duplicateInterviewGuideAction,
   publishInterviewGuideAction,
   saveInterviewGuideDraftAction,
 } from "@/features/entrepreneurship/interview-guides/actions/interview-guide.action";
+import { InterviewGuideToolbar } from "@/features/entrepreneurship/interview-guides/components/interview-guide-toolbar.component";
+import { getInterviewGuideEditorExtensions } from "@/features/entrepreneurship/interview-guides/config/interview-guide-editor.config";
 import type {
   InterviewGuideDocument,
   InterviewGuideDraftView,
-  InterviewGuideQuestionIndexItem,
 } from "@/features/entrepreneurship/interview-guides/types/interview-guide.types";
 import {
+  interviewGuideHasContent,
   interviewGuideQuestionIndex,
   validateInterviewGuideDocument,
 } from "@/features/entrepreneurship/interview-guides/utils/interview-guide-document.util";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 
 type GuideEditorData = {
   id: string;
@@ -42,12 +44,12 @@ type GuideEditorData = {
   objective: string;
   marketType: "B2C" | "B2B";
   segmentId: string | null;
+  segmentName: string | null;
   expectedDurationMinutes: number;
   version: number;
   savedAt: string;
   archived: boolean;
   document: InterviewGuideDocument;
-  questions: InterviewGuideQuestionIndexItem[];
   publishedVersion: number | null;
 };
 
@@ -59,7 +61,7 @@ type GuideEditorDocument = {
     segmentId: string;
     expectedDurationMinutes: number;
   };
-  questions: InterviewGuideQuestionIndexItem[];
+  content: InterviewGuideDocument;
 };
 
 type GuideDocumentView = {
@@ -68,30 +70,9 @@ type GuideDocumentView = {
   savedAt: string | null;
 };
 
-function toDocument(
-  questions: InterviewGuideQuestionIndexItem[],
-): InterviewGuideDocument {
-  return {
-    schemaVersion: 1,
-    content: {
-      type: "doc",
-      content: questions.map((question) => ({
-        type: "interviewQuestion",
-        attrs: {
-          questionId: question.questionId,
-          prompt: question.prompt,
-          intent: question.intent ?? "",
-          probes: question.probes,
-        },
-      })),
-    },
-  };
-}
-
 function editorDocumentFromDraft(
   guide: InterviewGuideDraftView,
 ): GuideEditorDocument {
-  const document = validateInterviewGuideDocument(guide.draftDocument);
   return {
     metadata: {
       title: guide.title,
@@ -100,8 +81,18 @@ function editorDocumentFromDraft(
       segmentId: guide.segmentId ?? "",
       expectedDurationMinutes: guide.expectedDurationMinutes,
     },
-    questions: interviewGuideQuestionIndex(document),
+    content: validateInterviewGuideDocument(guide.draftDocument),
   };
+}
+
+function guideHref(nicheId: string, suffix = "") {
+  return explorationHref(nicheId, `/conversations/guides${suffix}`);
+}
+
+function serializeEditorContent(
+  content: InterviewGuideDocument["content"],
+): InterviewGuideDocument["content"] {
+  return JSON.parse(JSON.stringify(content)) as InterviewGuideDocument["content"];
 }
 
 export function InterviewGuideEditor({
@@ -120,13 +111,43 @@ export function InterviewGuideEditor({
     segmentId: initial.segmentId ?? "",
     expectedDurationMinutes: initial.expectedDurationMinutes,
   });
-  const [questions, setQuestions] = useState(initial.questions);
+  const [content, setContent] = useState(initial.document);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const readOnly = initial.archived || Boolean(exploration?.archived);
+  const extensions = useMemo(() => getInterviewGuideEditorExtensions(), []);
+  const editor = useEditor({
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
+    extensions,
+    content: initial.document.content,
+    editable: !readOnly,
+    editorProps: {
+      attributes: {
+        class: "interview-guide-prose",
+        role: "textbox",
+        "aria-label": "Interview guide document",
+        "aria-multiline": "true",
+        "aria-readonly": readOnly ? "true" : "false",
+        spellcheck: "true",
+      },
+    },
+    onUpdate({ editor: current }) {
+      setContent({
+        schemaVersion: 1,
+        content: serializeEditorContent(current.getJSON()),
+      });
+    },
+  });
+
+  useEffect(() => {
+    editor?.setEditable(!readOnly);
+  }, [editor, readOnly]);
+
   const editorDocument = useMemo<GuideEditorDocument>(
-    () => ({ metadata, questions }),
-    [metadata, questions],
+    () => ({ metadata, content }),
+    [content, metadata],
   );
   const initialView = useMemo<GuideDocumentView>(
     () => ({
@@ -138,7 +159,7 @@ export function InterviewGuideEditor({
           segmentId: initial.segmentId ?? "",
           expectedDurationMinutes: initial.expectedDurationMinutes,
         },
-        questions: initial.questions,
+        content: initial.document,
       },
       version: initial.version,
       savedAt: initial.savedAt,
@@ -163,10 +184,10 @@ export function InterviewGuideEditor({
           expectedDurationMinutes:
             request.document.metadata.expectedDurationMinutes,
           expectedVersion: request.expectedVersion,
-          document: toDocument(request.document.questions),
+          document: request.document.content,
         },
       );
-      if (result.kind === "saved")
+      if (result.kind === "saved") {
         return {
           kind: "saved" as const,
           view: {
@@ -175,7 +196,8 @@ export function InterviewGuideEditor({
             savedAt: result.guide.savedAt,
           },
         };
-      if (result.kind === "conflict")
+      }
+      if (result.kind === "conflict") {
         return {
           kind: "conflict" as const,
           message: result.message,
@@ -185,6 +207,7 @@ export function InterviewGuideEditor({
             savedAt: result.latest.savedAt,
           },
         };
+      }
       return result;
     },
     [initial.id, initial.nicheId],
@@ -201,17 +224,20 @@ export function InterviewGuideEditor({
     historyKey: "__becomeInterviewGuideGuard",
   });
 
-  const updateQuestion = (
-    questionId: string,
-    update: Partial<InterviewGuideQuestionIndexItem>,
-  ) =>
-    setQuestions((current) =>
-      current.map((question) =>
-        question.questionId === questionId
-          ? { ...question, ...update }
-          : question,
-      ),
-    );
+  const questions = interviewGuideQuestionIndex(content);
+  const meaningful = interviewGuideHasContent(content);
+  const savedLabel =
+    autosave.status === "saving"
+      ? "Saving…"
+      : autosave.status === "dirty"
+        ? "Unsaved changes"
+        : autosave.status === "error"
+          ? "Save needs attention"
+          : autosave.status === "conflict"
+            ? "Draft conflict"
+            : autosave.savedAt
+              ? `Saved ${new Date(autosave.savedAt).toLocaleDateString()}`
+              : "Saved";
 
   return (
     <section
@@ -219,11 +245,9 @@ export function InterviewGuideEditor({
       data-read-only={readOnly || undefined}
     >
       <header className="interview-guide-editor-header">
-        <div>
-          <Link href={explorationHref(initial.nicheId, "/learn/guides")}>
-            ← Interview guides
-          </Link>
-          <p className="eyebrow">Guide authoring · {initial.marketType}</p>
+        <div className="interview-guide-editor-heading">
+          <Link href={guideHref(initial.nicheId)}>← All guides</Link>
+          <p className="eyebrow">Interview guide · {metadata.marketType}</p>
           <input
             aria-label="Guide title"
             value={metadata.title}
@@ -242,24 +266,20 @@ export function InterviewGuideEditor({
             data-status={autosave.status}
             role="status"
           >
-            {autosave.status === "saving"
-              ? "Saving…"
-              : autosave.status === "dirty"
-                ? "Unsaved changes"
-                : autosave.status === "error"
-                  ? "Save needs attention"
-                  : autosave.status === "conflict"
-                    ? "Draft conflict"
-                    : autosave.savedAt
-                      ? `Saved ${new Date(autosave.savedAt).toLocaleDateString()}`
-                      : "Saved"}
+            {savedLabel}
           </span>
+          <button
+            type="button"
+            className="finance-dialog-trigger finance-dialog-trigger--secondary interview-guide-details-trigger"
+            aria-expanded={detailsOpen}
+            aria-controls="interview-guide-details"
+            onClick={() => setDetailsOpen((current) => !current)}
+          >
+            Guide details
+          </button>
           <Link
             className="finance-dialog-trigger finance-dialog-trigger--secondary"
-            href={explorationHref(
-              initial.nicheId,
-              `/learn/guides/${initial.id}/preview`,
-            )}
+            href={guideHref(initial.nicheId, `/${initial.id}/preview`)}
           >
             <Eye aria-hidden="true" /> Preview
           </Link>
@@ -297,10 +317,7 @@ export function InterviewGuideEditor({
                     );
                     if (result.id)
                       router.push(
-                        explorationHref(
-                          initial.nicheId,
-                          `/learn/guides/${result.id}/edit`,
-                        ),
+                        guideHref(initial.nicheId, `/${result.id}/edit`),
                       );
                   }}
                 >
@@ -324,22 +341,21 @@ export function InterviewGuideEditor({
           </SubMenu>
         </div>
       </header>
+
       {(autosave.message || actionMessage) && (
-        <p
+        <div
           className="interview-guide-editor-message"
           role={autosave.status === "error" ? "alert" : "status"}
         >
-          {autosave.message ?? actionMessage}
-        </p>
-      )}
-      {autosave.status === "error" && (
-        <div className="interview-guide-save-recovery">
-          <p>Your local questions are still here.</p>
-          <button type="button" onClick={() => void autosave.retry()}>
-            Retry the same save
-          </button>
+          <p>{autosave.message ?? actionMessage}</p>
+          {autosave.status === "error" && (
+            <button type="button" onClick={() => void autosave.retry()}>
+              Retry save
+            </button>
+          )}
         </div>
       )}
+
       {autosave.conflict && (
         <section
           className="interview-guide-conflict"
@@ -350,20 +366,27 @@ export function InterviewGuideEditor({
             <p className="eyebrow">Version conflict</p>
             <h2 id="guide-conflict-title">This guide changed elsewhere.</h2>
             <p>
-              Your local draft is preserved. Choose which copy should become
-              current.
+              Your complete local document is still here. Review the versions,
+              then choose which one should become the current draft.
             </p>
           </div>
           <div className="interview-guide-conflict-comparison">
             <article>
               <span>Your local draft</span>
               <strong>{metadata.title}</strong>
-              <p>{questions.length} questions</p>
+              <p>{questions.length} optional questions</p>
             </article>
             <article>
               <span>Latest saved copy</span>
               <strong>{autosave.conflict.document.metadata.title}</strong>
-              <p>Version {autosave.conflict.version}</p>
+              <p>
+                {
+                  interviewGuideQuestionIndex(
+                    autosave.conflict.document.content,
+                  ).length
+                }{" "}
+                optional questions · version {autosave.conflict.version}
+              </p>
             </article>
           </div>
           <div className="business-actions">
@@ -374,7 +397,8 @@ export function InterviewGuideEditor({
                 const accepted = autosave.acceptLatest();
                 if (!accepted) return;
                 setMetadata(accepted.document.metadata);
-                setQuestions(accepted.document.questions);
+                setContent(accepted.document.content);
+                editor?.commands.setContent(accepted.document.content.content);
               }}
             >
               Use latest copy
@@ -389,16 +413,37 @@ export function InterviewGuideEditor({
           </div>
         </section>
       )}
+
       {readOnly && (
         <div className="interview-guide-readonly" role="note">
           {exploration?.archived
             ? "This exploration is archived. The guide remains readable as a historical record."
-            : "This guide is archived. Its draft and published revisions remain readable."}
+            : "This guide is archived. Restore it from Guide actions to edit or publish again."}
         </div>
       )}
 
       <div className="interview-guide-editor-layout">
-        <aside className="interview-guide-metadata" aria-label="Guide details">
+        <aside
+          id="interview-guide-details"
+          className="interview-guide-metadata"
+          data-open={detailsOpen || undefined}
+          aria-hidden={!detailsOpen}
+          inert={!detailsOpen ? true : undefined}
+          aria-label="Guide details"
+        >
+          <header>
+            <div>
+              <p className="eyebrow">Guide details</p>
+              <h2>Conversation context</h2>
+            </div>
+            <button
+              type="button"
+              aria-label="Close guide details"
+              onClick={() => setDetailsOpen(false)}
+            >
+              ×
+            </button>
+          </header>
           <label>
             Objective
             <textarea
@@ -428,26 +473,28 @@ export function InterviewGuideEditor({
               <option value="B2B">Businesses</option>
             </select>
           </label>
-          <label>
-            Segment
-            <select
-              value={metadata.segmentId}
-              disabled={readOnly}
-              onChange={(event) =>
-                setMetadata((current) => ({
-                  ...current,
-                  segmentId: event.target.value,
-                }))
-              }
-            >
-              <option value="">Any relevant segment</option>
-              {segments.map((segment) => (
-                <option key={segment.id} value={segment.id}>
-                  {segment.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <BusinessRecordPicker
+            kind="segment"
+            label="Segment"
+            name="segmentId"
+            nicheId={initial.nicheId}
+            options={
+              initial.segmentId &&
+              initial.segmentName &&
+              !segments.some((segment) => segment.id === initial.segmentId)
+                ? [
+                    { id: initial.segmentId, name: initial.segmentName },
+                    ...segments,
+                  ]
+                : segments
+            }
+            value={metadata.segmentId}
+            placeholder="Any relevant segment"
+            disabled={readOnly}
+            onValueChange={(segmentId) =>
+              setMetadata((current) => ({ ...current, segmentId }))
+            }
+          />
           <label>
             Expected minutes
             <input
@@ -469,125 +516,42 @@ export function InterviewGuideEditor({
             <span>
               {initial.publishedVersion
                 ? `Published revision ${initial.publishedVersion}`
-                : "Not published"}
+                : "No published revision"}
             </span>
+            <span>{questions.length} optional questions</span>
           </div>
         </aside>
 
-        <DocumentEditorStage
-          label="Interview guide questions"
-          className="interview-guide-document-stage"
-          canvasClassName="interview-guide-canvas"
-        >
-          <header>
-            <p className="eyebrow">Conversation path</p>
-            <h2>Questions, intent and useful probes</h2>
-            <p>
-              Keep prompts open. Intent is for the interviewer; probes are
-              optional ways to go deeper.
-            </p>
-          </header>
-          <ol className="interview-question-list">
-            {questions.map((question, index) => (
-              <li key={question.questionId}>
-                <span className="interview-question-handle" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <label>
-                    Prompt
-                    <textarea
-                      value={question.prompt}
-                      disabled={readOnly}
-                      onChange={(event) =>
-                        updateQuestion(question.questionId, {
-                          prompt: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Intent
-                    <textarea
-                      value={question.intent ?? ""}
-                      disabled={readOnly}
-                      onChange={(event) =>
-                        updateQuestion(question.questionId, {
-                          intent: event.target.value || null,
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Probes · one per line
-                    <textarea
-                      value={question.probes.join("\n")}
-                      disabled={readOnly}
-                      onChange={(event) =>
-                        updateQuestion(question.questionId, {
-                          probes: event.target.value
-                            .split("\n")
-                            .map((value) => value.trim())
-                            .filter(Boolean),
-                        })
-                      }
-                    />
-                  </label>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuestions((current) =>
-                          current.filter(
-                            (item) => item.questionId !== question.questionId,
-                          ),
-                        )
-                      }
-                    >
-                      Remove question
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
-          {!readOnly && (
-            <button
-              type="button"
-              className="interview-guide-add-question"
-              onClick={() =>
-                setQuestions((current) => [
-                  ...current,
-                  {
-                    questionId: `question-${crypto.randomUUID()}`,
-                    prompt: "",
-                    intent: null,
-                    probes: [],
-                    position: current.length,
-                  },
-                ])
-              }
-            >
-              <Plus aria-hidden="true" /> Add question
-            </button>
+        <div className="interview-guide-writing-surface">
+          {editor && (
+            <InterviewGuideToolbar editor={editor} readOnly={readOnly} />
           )}
-        </DocumentEditorStage>
+          <DocumentEditorStage
+            label="Interview guide document"
+            className="interview-guide-document-stage"
+            canvasClassName="interview-guide-canvas"
+          >
+            {editor ? (
+              <EditorContent editor={editor} />
+            ) : (
+              <div className="interview-guide-loading" role="status">
+                Opening guide…
+              </div>
+            )}
+          </DocumentEditorStage>
+        </div>
       </div>
 
       {!readOnly && (
         <footer className="interview-guide-publish">
           <div>
-            <p className="eyebrow">Immutable revision</p>
-            <h3>Ready to use this guide in a conversation?</h3>
-            <p>
-              Save the draft first. Publishing pins this exact question set for
-              future interviews.
-            </p>
+            <p className="eyebrow">Published edition</p>
+            <p>Conversations keep the edition they started with.</p>
           </div>
           <button
             type="button"
             className="finance-dialog-trigger"
-            disabled={autosave.dirty || pending || questions.length === 0}
+            disabled={autosave.dirty || pending || !meaningful}
             onClick={() =>
               startTransition(async () => {
                 const result = await publishInterviewGuideAction(
@@ -595,12 +559,12 @@ export function InterviewGuideEditor({
                   crypto.randomUUID(),
                   { expectedVersion: autosave.version },
                 );
-                setActionMessage(result.error ?? "Published revision created.");
+                setActionMessage(result.error ?? "Published edition created.");
                 if (!result.error) router.refresh();
               })
             }
           >
-            <Send aria-hidden="true" /> Publish guide
+            <Send aria-hidden="true" /> Publish edition
           </button>
         </footer>
       )}

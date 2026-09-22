@@ -2,16 +2,17 @@ import Link from "next/link";
 import {
   ArrowRight,
   AlertTriangle,
-  Clock3,
   FileClock,
   MessageCircleQuestion,
   Quote,
 } from "lucide-react";
 import { getExplorationSnapshot } from "@/features/entrepreneurship/exploration-snapshots/queries/exploration-snapshot.query";
 import { getObservationChoices } from "@/features/entrepreneurship/problems/queries/problem.query";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
-import { businessDate } from "@/features/entrepreneurship/shared/utils/business.util";
-import { ExplorationFieldNotes } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-field-notes.component";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import {
+  businessDate,
+  humanize,
+} from "@/features/entrepreneurship/shared/utils/business.util";
 import { ExplorationSnapshotLanes } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-snapshot-lanes.component";
 import {
   SnapshotClaimForm,
@@ -23,6 +24,12 @@ import {
   SnapshotClaimActions,
   SnapshotUncertaintyActions,
 } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-snapshot-row-actions.component";
+import { getSynthesisWorkspace } from "@/features/entrepreneurship/synthesis/queries/synthesis-workspace.query";
+import { SynthesisReview } from "@/features/entrepreneurship/synthesis/components/synthesis-review.component";
+import {
+  synthesisSourceSchema,
+  type SynthesisSource,
+} from "@/features/entrepreneurship/synthesis/schemas/synthesis.schema";
 
 type Snapshot = NonNullable<Awaited<ReturnType<typeof getExplorationSnapshot>>>;
 type SnapshotClaim = Snapshot["claims"][number];
@@ -45,35 +52,22 @@ const laneCopy = {
   },
 } as const;
 
-function recommendationHref(snapshot: Snapshot, nicheId: string) {
-  const recommendation = snapshot.recommendation;
-  if (recommendation.code === "RESUME_INTERVIEW" && recommendation.targetId)
-    return explorationHref(
-      nicheId,
-      `/learn/conversations/${recommendation.targetId}/conduct`,
-    );
-  if (recommendation.code === "RECORD_TEST_OUTCOME" && recommendation.targetId)
-    return explorationHref(nicheId, `/test/offers/${recommendation.targetId}`);
-  if (recommendation.code === "START_TEST" && recommendation.targetId)
-    return explorationHref(
-      nicheId,
-      `/decide/problems/${recommendation.targetId}`,
-    );
-  if (recommendation.code === "START_CONVERSATION" && recommendation.targetId)
-    return `${explorationHref(nicheId, "/learn/conversations")}?linkedInteractionId=${encodeURIComponent(recommendation.targetId)}`;
-  if (recommendation.code === "REVIEW_SNAPSHOT")
-    return explorationHref(nicheId, "/snapshot/review");
-  return explorationHref(nicheId, `/${recommendation.stage.toLowerCase()}`);
+function sourceManifest(value: unknown): SynthesisSource[] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  const sources = (value as { sources?: unknown }).sources;
+  if (!Array.isArray(sources)) return [];
+  return sources.flatMap((source) => {
+    const parsed = synthesisSourceSchema.safeParse(source);
+    return parsed.success ? [parsed.data] : [];
+  });
 }
 
 function SnapshotClaimRow({
   claim,
-  featured = false,
   editable = false,
   observations,
 }: {
   claim: SnapshotClaim;
-  featured?: boolean;
   editable?: boolean;
   observations: ObservationChoice[];
 }) {
@@ -85,17 +79,13 @@ function SnapshotClaimRow({
   const contradicts = revision.citations.filter(
     (citation) => citation.stance === "CONTRADICTS",
   );
+  const manifest = sourceManifest(revision.sourceManifest);
 
   return (
-    <article
-      className="exploration-snapshot-claim"
-      data-featured={featured || undefined}
-    >
+    <article className="exploration-snapshot-claim">
       <div className="exploration-snapshot-claim-copy">
         <div className="exploration-snapshot-claim-label">
-          <span>
-            {revision.kind === "OBSERVED" ? "Observed" : "Interpretation"}
-          </span>
+          <span>{humanize(revision.kind)}</span>
           {claim.needsReview && (
             <span className="exploration-snapshot-review-flag" role="note">
               <AlertTriangle aria-hidden="true" /> Source changed · review
@@ -115,7 +105,9 @@ function SnapshotClaimRow({
                   observationRevisionId: citation.observationRevisionId,
                   stance: citation.stance,
                   note: citation.note,
+                  sourceName: citation.observationRevision.statement,
                 })),
+                sourceManifest: sourceManifest(revision.sourceManifest),
               }}
               observations={observations}
             />
@@ -134,7 +126,7 @@ function SnapshotClaimRow({
           {businessDate(revision.createdAt)}
         </time>
       </div>
-      {revision.citations.length > 0 && (
+      {(revision.citations.length > 0 || manifest.length > 0) && (
         <details className="exploration-snapshot-sources">
           <summary>Review source trail</summary>
           <ul>
@@ -149,6 +141,18 @@ function SnapshotClaimRow({
                       citation.observationRevision.sourceDescription}
                   </small>
                 )}
+              </li>
+            ))}
+            {manifest.map((source) => (
+              <li key={source.key}>
+                <span>
+                  {humanize(source.type)} ·{" "}
+                  {claim.sourceStates[source.key] ?? "unavailable"}
+                </span>
+                <p>{source.excerpt}</p>
+                <Link href={source.href}>
+                  Open original source <ArrowRight aria-hidden="true" />
+                </Link>
               </li>
             ))}
           </ul>
@@ -170,12 +174,6 @@ function SnapshotLane({
   observations: ObservationChoice[];
 }) {
   const copy = laneCopy[lane];
-  const featuredId = claims.reduce<SnapshotClaim | null>((strongest, claim) => {
-    if (!strongest) return claim;
-    const count = claim.revisions[0]?.citations.length ?? 0;
-    const strongestCount = strongest.revisions[0]?.citations.length ?? 0;
-    return count > strongestCount ? claim : strongest;
-  }, null)?.id;
   return (
     <section
       className="exploration-snapshot-lane"
@@ -194,7 +192,6 @@ function SnapshotLane({
             <SnapshotClaimRow
               key={claim.id}
               claim={claim}
-              featured={claim.id === featuredId && lane !== "CROSS_MARKET"}
               editable={editable}
               observations={observations}
             />
@@ -204,7 +201,9 @@ function SnapshotLane({
         <div className="exploration-snapshot-lane-empty">
           <Quote aria-hidden="true" />
           <p>No current finding for this market yet.</p>
-          <span>Keep a source in Learn, then decide what it changes here.</span>
+          <span>
+            Keep a source in Evidence, then decide what it changes here.
+          </span>
         </div>
       )}
     </section>
@@ -220,9 +219,10 @@ export async function ExplorationSnapshot({
   nicheId: string;
   review?: boolean;
 }) {
-  const [snapshot, observations] = await Promise.all([
+  const [snapshot, observations, synthesis] = await Promise.all([
     getExplorationSnapshot(userId, nicheId),
     review ? getObservationChoices(userId, nicheId) : Promise.resolve([]),
+    getSynthesisWorkspace(userId, nicheId),
   ]);
   if (!snapshot) return null;
   const latestDate = snapshot.latestEdition?.publishedAt ?? new Date();
@@ -243,11 +243,10 @@ export async function ExplorationSnapshot({
   );
   const lane = (value: string) =>
     snapshot.claims.filter((claim) => claim.revisions[0]?.lane === value);
-  const nextHref = recommendationHref(snapshot, nicheId);
   const editable = review && !snapshot.niche.archivedAt;
 
   return (
-    <div className="exploration-snapshot-layout">
+    <div className="exploration-snapshot-layout direct-workspace">
       <section className="exploration-snapshot-editorial">
         <header className="exploration-snapshot-heading">
           <div>
@@ -255,14 +254,12 @@ export async function ExplorationSnapshot({
               {review ? "Review the record" : "So far we know"}
             </p>
             <h2>
-              {review
-                ? "What belongs in the next edition?"
-                : "Current understanding from real conversations"}
+              {review ? "What belongs in the next edition?" : "So Far We Know"}
             </h2>
             <p>
               {review
                 ? "Add findings and unknowns, trace them to observations, then publish a historical edition when the picture is useful."
-                : "A living record of what you observed, what you infer, and where the evidence still pulls in different directions."}
+                : "Accepted findings, open questions, and the sources behind them."}
             </p>
           </div>
           <div className="exploration-snapshot-edition">
@@ -283,6 +280,17 @@ export async function ExplorationSnapshot({
             </span>
           </div>
         </header>
+
+        <SynthesisReview
+          key={
+            synthesis.proposal
+              ? `${synthesis.proposal.id}:${synthesis.proposal.status}`
+              : (synthesis.latest?.editionId ?? "empty")
+          }
+          nicheId={nicheId}
+          workspace={synthesis}
+          archived={Boolean(snapshot.niche.archivedAt)}
+        />
 
         {editable && (
           <div className="exploration-snapshot-authoring">
@@ -320,143 +328,138 @@ export async function ExplorationSnapshot({
             />
           </ExplorationSnapshotLanes>
         ) : (
-          <div className="exploration-snapshot-empty">
-            <Quote aria-hidden="true" />
+          <div className="snapshot-manual-empty">
             <div>
-              <h3>Your understanding is still open.</h3>
-              <p>
-                Define who you are exploring, then keep a real conversation or
-                source. Snapshot will become useful as those records turn into
-                explicit observations and findings.
-              </p>
+              <p className="eyebrow">Manual record</p>
+              <h3>No accepted findings yet.</h3>
             </div>
-            <div className="business-actions">
-              <Link
-                className="finance-dialog-trigger"
-                href={explorationHref(nicheId, "/scope")}
-              >
-                Define the scope
-              </Link>
-              <Link
-                className="finance-dialog-trigger finance-dialog-trigger--secondary"
-                href={explorationHref(nicheId, "/learn/sources")}
-              >
-                Record a source
-              </Link>
-            </div>
+            <Link
+              className="business-text-link"
+              href={explorationWorkspaceHref(
+                nicheId,
+                "so-far-we-know",
+                "/review",
+              )}
+            >
+              Review the record <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
         )}
 
-        <ExplorationFieldNotes inline>
-          <section className="exploration-field-note exploration-field-note--major">
-            <p className="eyebrow">Largest uncertainty</p>
-            {snapshot.uncertainties.length > 0 ? (
-              <>
-                <ul className="exploration-uncertainty-list">
-                  {snapshot.uncertainties.map((uncertainty, index) => {
-                    const revision = uncertainty.revisions[0];
-                    if (!revision) return null;
-                    return (
-                      <li key={uncertainty.id}>
-                        <div>
-                          <span>
-                            {index === 0
-                              ? "Largest unknown"
-                              : `Open question ${index + 1}`}
-                          </span>
-                          <h3>{revision.statement}</h3>
-                        </div>
-                        {editable && (
-                          <SnapshotUncertaintyActions
-                            uncertainty={{
-                              id: uncertainty.id,
-                              nicheId: uncertainty.nicheId,
-                              version: uncertainty.version,
-                              lane: revision.lane,
-                              statement: revision.statement,
-                            }}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p>
-                  Keep this visible until evidence resolves it. An unknown is
-                  not a problem claim and does not become one automatically.
-                </p>
-              </>
-            ) : (
-              <>
-                <h3>What could still change your mind?</h3>
-                <p>Name the highest-value unknown during snapshot review.</p>
-              </>
-            )}
-          </section>
-          <section className="exploration-field-note exploration-field-note--action">
-            <p className="eyebrow">Next useful move</p>
-            <h3>{snapshot.recommendation.title}</h3>
-            <p>{snapshot.recommendation.reason}</p>
-            <Link className="exploration-next-move" href={nextHref}>
-              {snapshot.recommendation.title} <ArrowRight aria-hidden="true" />
-            </Link>
-          </section>
-          <section className="exploration-field-note exploration-field-note--coverage">
-            <p className="eyebrow">Coverage</p>
-            <dl className="exploration-snapshot-coverage">
-              {[
-                ["Targets", snapshot.coverage.targets],
-                ["Conversations", snapshot.coverage.conversations],
-                ["Observations", snapshot.coverage.observations],
-                ["Problems", snapshot.coverage.problems],
-                ["Tests", snapshot.coverage.tests],
-                ["Outcomes", snapshot.coverage.outcomes],
-              ].map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-          <nav
-            className="exploration-field-note-links"
-            aria-label="Snapshot actions"
-          >
-            <Link href={explorationHref(nicheId, "/snapshot/review")}>
-              <MessageCircleQuestion aria-hidden="true" /> Review living record
-            </Link>
-            <Link href={explorationHref(nicheId, "/snapshot/history")}>
-              <FileClock aria-hidden="true" /> Snapshot history
-            </Link>
-            {snapshot.latestMaterialAt && (
-              <p>
-                <Clock3 aria-hidden="true" /> Latest material{" "}
-                {businessDate(snapshot.latestMaterialAt)}
-              </p>
-            )}
-          </nav>
-        </ExplorationFieldNotes>
-
-        <footer
-          className="exploration-snapshot-lineage"
-          aria-label="Insight lineage"
-        >
-          <p className="eyebrow">Insight lineage</p>
-          {[
-            ["Reach", "Outreach"],
-            ["Learn", "Conversation"],
-            ["Observation", "What was noticed"],
-            ["Decide", "Problem shaped"],
-            ["Test", "Offer tried"],
-          ].map(([label, detail], index) => (
-            <div key={label}>
-              <strong>{label}</strong>
-              <small>{detail}</small>
-              {index < 4 && <ArrowRight aria-hidden="true" />}
-            </div>
-          ))}
-        </footer>
+        <details className="snapshot-secondary-context">
+          <summary>Questions, coverage, and history</summary>
+          <div>
+            <section>
+              <p className="eyebrow">Open questions</p>
+              {snapshot.uncertainties.length > 0 ? (
+                <>
+                  <ul className="exploration-uncertainty-list">
+                    {snapshot.uncertainties.map((uncertainty, index) => {
+                      const revision = uncertainty.revisions[0];
+                      if (!revision) return null;
+                      const manifest = sourceManifest(revision.sourceManifest);
+                      return (
+                        <li key={uncertainty.id}>
+                          <div>
+                            <span>
+                              {humanize(revision.kind)} ·{" "}
+                              {index === 0
+                                ? "Largest unknown"
+                                : `Open question ${index + 1}`}
+                            </span>
+                            <h3>{revision.statement}</h3>
+                            {manifest.length > 0 && (
+                              <details className="exploration-snapshot-sources">
+                                <summary>
+                                  Review source trail · {manifest.length}
+                                </summary>
+                                <ul>
+                                  {manifest.map((source) => (
+                                    <li key={source.key}>
+                                      <span>
+                                        {humanize(source.type)} ·{" "}
+                                        {uncertainty.sourceStates[source.key] ??
+                                          "unavailable"}
+                                      </span>
+                                      <p>{source.excerpt}</p>
+                                      <Link href={source.href}>
+                                        Open original source{" "}
+                                        <ArrowRight aria-hidden="true" />
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </details>
+                            )}
+                          </div>
+                          {editable && (
+                            <SnapshotUncertaintyActions
+                              uncertainty={{
+                                id: uncertainty.id,
+                                nicheId: uncertainty.nicheId,
+                                version: uncertainty.version,
+                                lane: revision.lane,
+                                kind: revision.kind,
+                                statement: revision.statement,
+                                sourceManifest: sourceManifest(
+                                  revision.sourceManifest,
+                                ),
+                              }}
+                            />
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : (
+                <p>No open question has been recorded.</p>
+              )}
+            </section>
+            <section>
+              <p className="eyebrow">Coverage</p>
+              <dl className="exploration-snapshot-coverage">
+                {[
+                  ["Targets", snapshot.coverage.targets],
+                  ["Conversations", snapshot.coverage.conversations],
+                  ["Observations", snapshot.coverage.observations],
+                  ["Problems", snapshot.coverage.problems],
+                  ["Tests", snapshot.coverage.tests],
+                  ["Outcomes", snapshot.coverage.outcomes],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+            <nav
+              className="snapshot-secondary-links"
+              aria-label="Understanding actions"
+            >
+              <Link
+                href={explorationWorkspaceHref(
+                  nicheId,
+                  "so-far-we-know",
+                  "/review",
+                )}
+              >
+                <MessageCircleQuestion aria-hidden="true" /> Review living
+                record
+              </Link>
+              <Link
+                href={explorationWorkspaceHref(
+                  nicheId,
+                  "so-far-we-know",
+                  "/history",
+                )}
+              >
+                <FileClock aria-hidden="true" /> Snapshot history
+              </Link>
+            </nav>
+          </div>
+        </details>
       </section>
     </div>
   );

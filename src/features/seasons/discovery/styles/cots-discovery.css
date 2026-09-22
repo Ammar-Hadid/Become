@@ -47,7 +47,7 @@
     transparent
   );
   transform-origin: left;
-  animation: cots-arrival-line var(--duration-signature) var(--ease-enter) both;
+  animation: cots-arrival-line var(--duration-emphasis) var(--ease-enter) both;
 }
 
 .season-arrival-mark span {
@@ -67,7 +67,7 @@
   background: var(--color-primary);
   box-shadow: 0 0 2rem rgba(232, 168, 62, 0.42);
   animation: cots-arrival-mark var(--duration-emphasis) var(--ease-enter)
-    var(--duration-spatial) both;
+    var(--duration-surface) both;
 }
 
 .season-preview-edit-actions {
@@ -109,8 +109,8 @@
   width: 44%;
   height: 100%;
   background: var(--color-primary);
-  animation: cots-progress var(--duration-signature) var(--ease-move) infinite
-    alternate;
+  animation: cots-progress var(--duration-active-cycle) var(--ease-move)
+    infinite alternate;
 }
 
 .cots-subnav {
@@ -134,8 +134,8 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .cots-subnav button + button {
@@ -182,7 +182,7 @@
 
 .cots-panel {
   min-width: 0;
-  animation: direction-stage-in var(--duration-spatial) var(--ease-enter) both;
+  animation: direction-stage-in var(--duration-surface) var(--ease-enter) both;
 }
 
 .cots-identity-fields {
@@ -262,9 +262,9 @@
   color: var(--color-text-secondary);
   text-align: left;
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    border-color var(--duration-control) var(--ease-enter),
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .cots-identity-optional-trigger:hover {
@@ -364,8 +364,8 @@
   color: var(--color-text-secondary);
   text-align: left;
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .cots-identity-suggestions button:hover {
@@ -423,8 +423,8 @@
     0 0 0 1px rgba(255, 255, 255, 0.018) inset,
     0 0.8rem 2.25rem rgba(0, 0, 0, 0.18);
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    box-shadow var(--duration-fast) var(--ease-enter);
+    border-color var(--duration-control) var(--ease-enter),
+    box-shadow var(--duration-control) var(--ease-enter);
 }
 
 .cots-identity-selected:hover,
@@ -476,12 +476,12 @@
   border-radius: 50%;
   color: var(--color-text-muted);
   opacity: 0;
-  transform: translateX(var(--spacing-xs)) scale(0.88);
+  transform: translateX(var(--spacing-xs)) scale(var(--scale-pressed));
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter),
-    opacity var(--duration-fast) var(--ease-enter),
-    transform var(--duration-fast) var(--ease-move);
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter),
+    opacity var(--duration-control) var(--ease-enter),
+    transform var(--duration-control) var(--ease-move);
 }
 
 .cots-identity-selected:hover .cots-identity-selected-remove,
@@ -677,9 +677,9 @@
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   transition:
-    border-color var(--duration-standard) var(--ease-enter),
-    background var(--duration-standard) var(--ease-enter),
-    transform var(--duration-feedback) var(--ease-move);
+    border-color var(--duration-content) var(--ease-enter),
+    background var(--duration-content) var(--ease-enter),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .cots-image-card.is-selected {
@@ -1199,7 +1199,7 @@
   max-width: 60rem;
   margin: 0 auto;
   outline: none;
-  animation: cots-word-reveal var(--duration-spatial) var(--ease-enter) both;
+  animation: cots-word-reveal var(--duration-surface) var(--ease-enter) both;
 }
 
 .cots-word-frame::before {
@@ -1212,7 +1212,7 @@
   filter: blur(2.25rem);
   opacity: 0.14;
   transform: scale(1);
-  animation: cots-word-frame-glow var(--duration-signature) var(--ease-enter)
+  animation: cots-word-frame-glow var(--duration-emphasis) var(--ease-enter)
     both;
 }
 
@@ -1259,8 +1259,8 @@
     inset -2px 0 1px rgba(48, 26, 3, 0.62),
     0 20px 52px rgba(0, 0, 0, 0.52);
   transition:
-    border-color var(--duration-standard) var(--ease-enter),
-    box-shadow var(--duration-standard) var(--ease-enter);
+    border-color var(--duration-content) var(--ease-enter),
+    box-shadow var(--duration-content) var(--ease-enter);
 }
 
 .cots-word-frame-bezel::before {
@@ -1561,7 +1561,7 @@
   border: 1px solid var(--color-border);
   border-radius: 50%;
   color: var(--color-text-muted);
-  transition: var(--duration-fast) var(--ease-standard);
+  transition: var(--duration-control) var(--ease-move);
 }
 
 .cots-word-manage-action:hover,
@@ -1851,8 +1851,8 @@
   color: var(--color-text-secondary);
   text-align: left;
   transition:
-    border-color var(--duration-standard) var(--ease-enter),
-    transform var(--duration-feedback) var(--ease-move);
+    border-color var(--duration-content) var(--ease-enter),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .cots-reuse-grid > button:hover {
@@ -1952,8 +1952,8 @@
   background: var(--color-surface);
   padding: var(--spacing-sm) var(--spacing-md);
   transition:
-    border-color var(--duration-standard) var(--ease-enter),
-    background var(--duration-standard) var(--ease-enter);
+    border-color var(--duration-content) var(--ease-enter),
+    background var(--duration-content) var(--ease-enter);
 }
 
 .cots-pending-artwork-copy {
@@ -1986,8 +1986,7 @@
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: var(--radius-control);
-  opacity: 0;
-  animation: cots-pending-reveal 0s linear var(--delay-pending-visual) forwards;
+  opacity: 1;
 }
 
 .cots-pending-artwork-visual img {
@@ -2008,8 +2007,8 @@
     transparent
   );
   transform: translateX(-160%);
-  animation: cots-pending-sweep var(--duration-pending-cycle) var(--ease-move)
-    var(--delay-pending-visual) infinite;
+  animation: cots-pending-sweep var(--duration-active-cycle) var(--ease-move)
+    infinite;
 }
 
 .cots-pending-artwork-visual[data-alpha] > span {
@@ -2078,7 +2077,7 @@
 
 .cots-finalization {
   min-width: 0;
-  animation: direction-stage-in var(--duration-spatial) var(--ease-enter) both;
+  animation: direction-stage-in var(--duration-surface) var(--ease-enter) both;
 }
 
 .cots-finalization-note {
@@ -2177,9 +2176,9 @@
   background: var(--color-surface);
   padding: var(--spacing-sm);
   transition:
-    border-color var(--duration-standard) var(--ease-enter),
-    box-shadow var(--duration-standard) var(--ease-enter),
-    background var(--duration-standard) var(--ease-enter);
+    border-color var(--duration-content) var(--ease-enter),
+    box-shadow var(--duration-content) var(--ease-enter),
+    background var(--duration-content) var(--ease-enter);
 }
 
 .cots-final-image-input {
@@ -2562,12 +2561,6 @@
   }
 }
 
-@keyframes cots-pending-reveal {
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes cots-pending-sweep {
   0% {
     transform: translateX(-160%);
@@ -2583,14 +2576,14 @@
 @keyframes cots-arrival-line {
   from {
     opacity: 0;
-    transform: scaleX(0.12);
+    clip-path: inset(0 44%);
   }
 }
 
 @keyframes cots-arrival-mark {
   from {
     opacity: 0;
-    transform: scale(0.68);
+    transform: scale(var(--scale-pressed));
   }
 }
 
@@ -2604,7 +2597,7 @@
 @keyframes cots-word-frame-glow {
   0% {
     opacity: 0;
-    transform: scale(0.94);
+    transform: scale(var(--scale-pressed));
   }
   58% {
     opacity: 0.38;

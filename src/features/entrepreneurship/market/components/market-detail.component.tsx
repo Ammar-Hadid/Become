@@ -9,6 +9,7 @@ import { InteractionJournal } from "@/features/entrepreneurship/interactions/com
 import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { notFound } from "next/navigation";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import {
   MarketForm,
@@ -24,11 +25,13 @@ export async function MarketDetail({
   kind,
   id,
   nicheId,
+  returnTo,
 }: {
   userId: string;
   id: string;
   kind: string;
   nicheId?: string;
+  returnTo?: string;
 }) {
   if (kind !== "companies" && kind !== "niches") notFound();
   const company =
@@ -73,9 +76,13 @@ export async function MarketDetail({
   });
   return (
     <>
-      <Link href="/entrepreneurship/market" className="business-back">
+      <BusinessBackLink
+        returnTo={returnTo}
+        fallbackHref="/entrepreneurship/market"
+        className="business-back"
+      >
         ← Market
-      </Link>
+      </BusinessBackLink>
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">

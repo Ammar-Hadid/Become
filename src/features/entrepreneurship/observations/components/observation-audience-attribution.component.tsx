@@ -1,13 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
-import {
-  ReusableEntityCombobox,
-  type ReusableEntityOption,
-} from "@/components/ui/forms/reusable-entity-combobox.component";
-import { searchSegmentsAction } from "@/features/entrepreneurship/audiences/actions/audience.action";
 import type { AudienceOption } from "@/features/entrepreneurship/audiences/types/audience.types";
 import { DeferredSegments } from "@/features/entrepreneurship/audiences/components/deferred-segments.component";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
+import type { BusinessRecordOption } from "@/features/entrepreneurship/shared/schemas/business-record-search.schema";
 
 export type ObservationAudienceAttribution = {
   marketType: string;
@@ -29,8 +27,9 @@ export function ObservationAudienceAttributionFields({
   onChange: (value: ObservationAudienceAttribution) => void;
   onReasonChange: (reason: string) => void;
 }) {
+  const exploration = useExploration();
   const prefix = useId();
-  const [selected, setSelected] = useState<ReusableEntityOption[]>(
+  const [selected, setSelected] = useState<BusinessRecordOption[]>(
     segments
       .filter((segment) => value.segmentIds.includes(segment.id))
       .map((segment) => ({
@@ -59,17 +58,17 @@ export function ObservationAudienceAttributionFields({
           <option value="BOTH">Consumers & businesses</option>
         </select>
       </label>
-      <ReusableEntityCombobox
+      <BusinessRecordPicker
+        kind="segment"
         label="Audience segments"
-        entityName="segment"
-        idFieldName={`${prefix}-segmentIds`}
-        queryFieldName={`${prefix}-segmentQuery`}
+        name={`${prefix}-segmentIds`}
+        nicheId={exploration?.id}
         options={segments.map((segment) => ({
           ...segment,
           description: segment.description ?? undefined,
         }))}
-        selectedOptions={selected}
-        searchAction={searchSegmentsAction}
+        values={selected.map((segment) => segment.id)}
+        multiple
         placeholder="Find a segment…"
         onSelectionChange={(items) => {
           setSelected(items);

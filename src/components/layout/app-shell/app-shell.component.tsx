@@ -13,7 +13,7 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useRef, useState, ViewTransition } from "react";
+import { Fragment, useRef, useState, ViewTransition } from "react";
 import { BrandMark } from "@/components/layout/branding/brand-mark.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
@@ -22,6 +22,11 @@ import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
 import type { EngineeringProjectOption } from "@/features/engineering/types/engineering.types";
+import { EXPLORATION_WORKSPACES } from "@/features/entrepreneurship/explorations/constants/exploration-workspace.constants";
+import {
+  explorationRouteState,
+  explorationWorkspaceHref,
+} from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { ActiveTimerProvider } from "@/features/sessions/timer/components/active-timer-provider.component";
 import { SessionDetailsProvider } from "@/features/sessions/details/components/session-details-provider.component";
 import { TimerController } from "@/features/sessions/timer/components/timer-controller.component";
@@ -55,6 +60,7 @@ export function AppShell({
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationPresence = usePresence(mobileOpen);
+  const explorationRoute = explorationRouteState(pathname);
 
   useModalLayer({
     open: mobileOpen,
@@ -72,7 +78,10 @@ export function AppShell({
 
   const renderNavigation = (indicatorName: string) => (
     <>
-      <nav className="mt-4xl flex-1" aria-label="Primary navigation">
+      <nav
+        className="app-shell-primary-navigation"
+        aria-label="Primary navigation"
+      >
         <div className="nav-section" data-testid="nav-section-overview">
           <p className="nav-label">Overview</p>
           <Link
@@ -152,29 +161,77 @@ export function AppShell({
             const href = getDomainHref(domain.slug);
             const current =
               pathname === href || pathname.startsWith(`${href}/`);
+            const showsExplorationWorkspaces =
+              domain.slug === "entrepreneurship" && Boolean(explorationRoute);
             return (
-              <Link
-                key={domain.id}
-                className={cn("nav-link", current && "active")}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-              >
-                {current && (
-                  <ViewTransition
-                    name={indicatorName}
-                    share="motion-guide"
-                    default="none"
+              <Fragment key={domain.id}>
+                <Link
+                  className={cn(
+                    "nav-link",
+                    current && "active",
+                    showsExplorationWorkspaces && "nav-link--workspace-parent",
+                  )}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {current && !showsExplorationWorkspaces && (
+                    <ViewTransition
+                      name={indicatorName}
+                      share="motion-guide"
+                      default="none"
+                    >
+                      <span className="nav-link-indicator" aria-hidden="true" />
+                    </ViewTransition>
+                  )}
+                  <DomainIcon slug={domain.slug} /> {domain.name}
+                </Link>
+                {showsExplorationWorkspaces && explorationRoute && (
+                  <nav
+                    className="nav-domain-workspaces"
+                    aria-label="Exploration workspaces"
                   >
-                    <span className="nav-link-indicator" aria-hidden="true" />
-                  </ViewTransition>
+                    {EXPLORATION_WORKSPACES.map((workspace, index) => {
+                      const active =
+                        explorationRoute.workspace === workspace.slug;
+                      return (
+                        <Link
+                          key={workspace.slug}
+                          className={cn(
+                            "nav-sub-link",
+                            active && "active",
+                            index === 2 && "nav-sub-link--group-start",
+                          )}
+                          href={explorationWorkspaceHref(
+                            explorationRoute.nicheId,
+                            workspace.slug,
+                          )}
+                          aria-current={active ? "page" : undefined}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          {active && (
+                            <ViewTransition
+                              name={indicatorName}
+                              share="motion-guide"
+                              default="none"
+                            >
+                              <span
+                                className="nav-sub-link-indicator"
+                                aria-hidden="true"
+                              />
+                            </ViewTransition>
+                          )}
+                          {workspace.label}
+                        </Link>
+                      );
+                    })}
+                  </nav>
                 )}
-                <DomainIcon slug={domain.slug} /> {domain.name}
-              </Link>
+              </Fragment>
             );
           })}
         </div>
       </nav>
-      <div className="border-border pt-xl border-t">
+      <div className="app-shell-account border-border pt-xl border-t">
         <SubMenu
           label="Account"
           placement="top-stretch"
@@ -218,9 +275,11 @@ export function AppShell({
     <ActiveTimerProvider timerSnapshot={timerSnapshot}>
       <div className="bg-background text-text-primary min-h-screen">
         <aside className="sidebar hidden lg:flex">
-          <BrandMark />
+          <div className="app-shell-brand">
+            <BrandMark />
+          </div>
           {renderNavigation("primary-navigation-indicator-desktop")}
-          <div className="mt-xl">
+          <div className="app-shell-timer mt-xl">
             <TimerTrigger />
           </div>
         </aside>
@@ -242,6 +301,7 @@ export function AppShell({
             className="mobile-navigation-layer fixed inset-0 z-50 bg-black/60 lg:hidden"
             data-state={mobileNavigationPresence.presenceState}
             aria-hidden={!mobileOpen}
+            inert={mobileNavigationPresence.isExiting}
             onAnimationEnd={mobileNavigationPresence.onPresenceAnimationEnd}
             onMouseDown={() => setMobileOpen(false)}
           >
@@ -250,7 +310,7 @@ export function AppShell({
               className="mobile-drawer"
               onMouseDown={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center justify-between">
+              <div className="mobile-drawer-header flex items-center justify-between">
                 <BrandMark />
                 <button
                   ref={mobileCloseRef}

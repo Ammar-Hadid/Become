@@ -40,9 +40,9 @@
   border-radius: 50%;
   color: var(--color-text-secondary);
   transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    transform var(--duration-feedback) var(--ease-move);
+    color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .content-script-back:hover,
@@ -171,9 +171,9 @@
   color: var(--color-text-primary);
   font-weight: 620;
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    transform var(--duration-feedback) var(--ease-move);
+    border-color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .content-script-save:hover:not(:disabled),
@@ -273,8 +273,8 @@
   line-height: var(--text-body-sm--line-height);
   font-weight: 580;
   transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
+    color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move);
 }
 
 .content-script-style-trigger:hover:not(:disabled),
@@ -503,7 +503,7 @@
   border-radius: 99px;
   background: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(232, 168, 62, 0.07);
-  transition: transform var(--duration-standard) var(--ease-move);
+  transition: transform var(--duration-content) var(--ease-move);
 }
 
 .content-script-prose {
@@ -717,8 +717,8 @@ body:has(.content-script-dialog[open]) {
   border-radius: var(--radius-control);
   background: var(--color-surface-elevated);
   transition:
-    color var(--duration-fast) var(--ease-move),
-    border-color var(--duration-fast) var(--ease-move);
+    color var(--duration-control) var(--ease-move),
+    border-color var(--duration-control) var(--ease-move);
 }
 
 .content-script-image-handle {
@@ -791,7 +791,7 @@ body:has(.content-script-dialog[open]) {
   background: var(--color-surface-elevated);
   color: var(--color-primary);
   opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-move);
+  transition: opacity var(--duration-control) var(--ease-move);
 }
 
 .content-script-table-edge:hover > span,
@@ -837,13 +837,14 @@ body:has(.content-script-dialog[open]) .content-script-block-controls {
   padding: 0;
   color: var(--color-text-primary);
   box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.55);
-  animation: content-script-dialog-in var(--duration-spatial) var(--ease-enter);
+  animation: content-script-dialog-in var(--duration-surface) var(--ease-enter);
 }
 
 .content-script-dialog::backdrop {
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(5px);
-  animation: content-script-backdrop-in var(--duration-fast) var(--ease-enter);
+  animation: content-script-backdrop-in var(--duration-content)
+    var(--ease-enter);
 }
 
 .content-script-dialog-heading {
@@ -1186,7 +1187,7 @@ body:has(.content-script-dialog[open]) .content-script-block-controls {
 
 @keyframes content-script-dialog-in {
   from {
-    transform: translateY(calc(-1 * var(--spacing-lg)));
+    transform: translateY(calc(-1 * var(--distance-dialog)));
     opacity: 0;
   }
   to {

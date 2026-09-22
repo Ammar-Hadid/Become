@@ -40,7 +40,7 @@
   overflow: visible;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  transition: border-color var(--duration-fast) var(--ease-standard);
+  transition: border-color var(--duration-control) var(--ease-move);
 }
 
 .frame[data-dragging] {
@@ -75,8 +75,8 @@
 .emptyAction {
   cursor: pointer;
   transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
+    color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move);
 }
 
 .emptyAction:hover {
@@ -127,7 +127,7 @@
   border-radius: var(--radius-panel);
   background: transparent;
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .manageTrigger::before {
@@ -138,8 +138,8 @@
   background: color-mix(in srgb, var(--color-background) 84%, transparent);
   content: "";
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move);
 }
 
 .manageTrigger:hover {

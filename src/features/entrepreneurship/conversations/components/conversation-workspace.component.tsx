@@ -7,24 +7,27 @@ import {
   FileText,
   MessageSquareDashed,
   NotebookPen,
+  Search,
 } from "lucide-react";
 import {
-  getConversationIndex,
+  getConversationPage,
   getConversationWorkspace,
 } from "@/features/entrepreneurship/conversations/queries/conversation.query";
 import { getInterviewGuideOptions } from "@/features/entrepreneurship/interview-guides/queries/interview-guide.query";
-import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import {
+  explorationWorkspaceHref,
+  withExplorationReturn,
+} from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
+import { searchBusinessRecords } from "@/features/entrepreneurship/shared/queries/business-record-search.query";
 import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
-import { LearnNavigation } from "@/features/entrepreneurship/learn/components/learn-navigation.component";
 import { ConversationStartForm } from "@/features/entrepreneurship/conversations/components/conversation-start-form.component";
 import { ConversationComposer } from "@/features/entrepreneurship/conversations/components/conversation-composer.component";
 import { ConversationMessageMenu } from "@/features/entrepreneurship/conversations/components/conversation-message-menu.component";
 import { ConversationStateControls } from "@/features/entrepreneurship/conversations/components/conversation-state-controls.component";
-import { ExplorationFieldNotes } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-field-notes.component";
 
 function participant(revision: {
   personSnapshot?: string | null;
@@ -40,26 +43,72 @@ function participant(revision: {
   );
 }
 
+function conversationStatus(status: string, interviewSession: boolean) {
+  return status === "CANCELLED" && interviewSession
+    ? "Paused"
+    : humanize(status);
+}
+
+function conversationsHref(
+  nicheId: string,
+  query: Record<string, string | undefined> = {},
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(query))
+    if (value) search.set(key, value);
+  const suffix = search.toString();
+  return `${explorationWorkspaceHref(nicheId, "conversations")}${suffix ? `?${suffix}` : ""}`;
+}
+
 export async function ConversationWorkspace({
   userId,
   nicheId,
   conversationId,
   initialLinkedInteractionId,
+  query,
+  status,
+  cursor,
+  before,
+  history = false,
+  message,
+  fullDetail = false,
+  returnTo,
 }: {
   userId: string;
   nicheId: string;
   conversationId?: string;
   initialLinkedInteractionId?: string;
+  query?: string;
+  status?: string;
+  cursor?: string;
+  before?: string;
+  history?: boolean;
+  message?: string;
+  fullDetail?: boolean;
+  returnTo?: string;
 }) {
-  const [conversations, guides, interactionOptions, conversation] =
-    await Promise.all([
-      getConversationIndex(userId, nicheId),
-      getInterviewGuideOptions(userId, nicheId),
-      getInteractionOptions(userId, nicheId),
-      conversationId
-        ? getConversationWorkspace(userId, conversationId, nicheId)
-        : Promise.resolve(null),
-    ]);
+  const beforePosition = Number(before);
+  const [page, guides, reachRecords, conversation] = await Promise.all([
+    getConversationPage(userId, nicheId, { q: query, status, cursor }),
+    getInterviewGuideOptions(userId, nicheId),
+    searchBusinessRecords(userId, {
+      kind: "interaction",
+      nicheId,
+      interactionKinds: ["OUTREACH_SENT", "REPLY_RECEIVED"],
+      selectedIds: initialLinkedInteractionId
+        ? [initialLinkedInteractionId]
+        : [],
+    }),
+    conversationId
+      ? getConversationWorkspace(userId, conversationId, nicheId, {
+          before: Number.isSafeInteger(beforePosition)
+            ? beforePosition
+            : undefined,
+          history,
+          message,
+        })
+      : Promise.resolve(null),
+  ]);
   const guideOptions = guides.flatMap((guide) =>
     guide.revisions[0]
       ? [
@@ -74,23 +123,63 @@ export async function ConversationWorkspace({
   );
 
   return (
-    <div className="exploration-stage conversation-page">
-      <header className="exploration-stage-heading">
+    <div className="direct-workspace conversation-page">
+      <header className="workspace-heading conversation-page-heading">
         <div>
-          <h2>Preserve the two-sided exchange.</h2>
-          <p>
-            Messages are the conversation. Observations are separate records you
-            deliberately keep from an exact message.
-          </p>
+          <p className="eyebrow">Conversations</p>
+          <h2>Keep the exchange intact.</h2>
+          <p>Review the words, context, and observations in one place.</p>
         </div>
-        <ConversationStartForm
-          nicheId={nicheId}
-          guides={guideOptions}
-          reachRecords={interactionOptions.replies}
-          initialLinkedInteractionId={initialLinkedInteractionId}
-        />
+        <div className="business-actions">
+          <Link
+            className="finance-dialog-trigger finance-dialog-trigger--secondary"
+            href={explorationWorkspaceHref(nicheId, "conversations", "/guides")}
+          >
+            Interview guides
+          </Link>
+          <ConversationStartForm
+            nicheId={nicheId}
+            guides={guideOptions}
+            reachRecords={reachRecords.items}
+            initialLinkedInteractionId={initialLinkedInteractionId}
+          />
+        </div>
       </header>
-      <LearnNavigation nicheId={nicheId} active="conversations" />
+
+      <form className="workspace-toolbar conversation-toolbar">
+        <label className="workspace-search">
+          <Search aria-hidden="true" />
+          <span className="sr-only">Search conversations</span>
+          <input
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder="Search people, businesses, or summaries"
+          />
+        </label>
+        <label className="workspace-filter">
+          <span className="sr-only">Conversation status</span>
+          <select name="status" defaultValue={status ?? ""}>
+            <option value="">All statuses</option>
+            <option value="PLANNED">Planned</option>
+            <option value="IN_PROGRESS">In progress</option>
+            <option value="PAUSED">Paused</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </label>
+        <button className="workspace-filter-button" type="submit">
+          Filter
+        </button>
+        {(query || status) && (
+          <Link
+            className="business-text-link"
+            href={explorationWorkspaceHref(nicheId, "conversations")}
+          >
+            Clear
+          </Link>
+        )}
+        <span className="workspace-toolbar-count">{page.total} total</span>
+      </form>
 
       <div
         className="conversation-workspace"
@@ -98,27 +187,33 @@ export async function ConversationWorkspace({
       >
         <aside className="conversation-index" aria-label="Conversations">
           <header>
-            <span>{conversations.length} conversations</span>
+            <span>{page.items.length} shown</span>
           </header>
-          {conversations.length > 0 ? (
+          {page.items.length > 0 ? (
             <ol>
-              {conversations.map((item) => {
+              {page.items.map((item) => {
                 const revision = item.revisions[0];
                 const latest = item.conversationMessages[0]?.revisions[0];
                 const active = item.id === conversationId;
                 return (
                   <li key={item.id}>
                     <Link
-                      href={explorationHref(
-                        nicheId,
-                        `/learn/conversations/${item.id}`,
-                      )}
+                      scroll={false}
+                      href={conversationsHref(nicheId, {
+                        selected: item.id,
+                        q: query,
+                        status,
+                        cursor,
+                      })}
                       aria-current={active ? "page" : undefined}
                     >
                       <div>
                         <strong>{participant(revision)}</strong>
                         <span data-status={item.status.toLowerCase()}>
-                          {humanize(item.status)}
+                          {conversationStatus(
+                            item.status,
+                            Boolean(item.interviewSession),
+                          )}
                         </span>
                       </div>
                       <p>
@@ -135,27 +230,58 @@ export async function ConversationWorkspace({
           ) : (
             <div className="conversation-index-empty">
               <MessageSquareDashed aria-hidden="true" />
-              <p>No conversations yet.</p>
+              <p>No conversations match these filters.</p>
             </div>
+          )}
+          {page.next && (
+            <Link
+              className="conversation-index-more"
+              href={conversationsHref(nicheId, {
+                cursor: page.next,
+                q: query,
+                status,
+              })}
+            >
+              More conversations <ArrowRight aria-hidden="true" />
+            </Link>
           )}
         </aside>
 
         {conversation ? (
-          <ConversationDetail nicheId={nicheId} conversation={conversation} />
+          <ConversationDetail
+            nicheId={nicheId}
+            conversation={conversation}
+            fullDetail={fullDetail}
+            showHistory={history}
+            requestedMessageId={message}
+            returnTo={
+              returnTo ??
+              (fullDetail
+                ? undefined
+                : conversationsHref(nicheId, {
+                    selected: conversation.id,
+                    q: query,
+                    status,
+                    cursor,
+                  }))
+            }
+          />
         ) : (
           <section className="conversation-welcome">
             <MessageSquareDashed aria-hidden="true" />
             <h3>Open a conversation.</h3>
             <p>
-              Choose an exchange from the index, or begin with someone who
-              replied in Reach.
+              Choose an exchange to inspect the thread without leaving the list.
             </p>
-            {conversations[0] && (
+            {page.items[0] && (
               <Link
-                href={explorationHref(
-                  nicheId,
-                  `/learn/conversations/${conversations[0].id}`,
-                )}
+                scroll={false}
+                href={conversationsHref(nicheId, {
+                  selected: page.items[0].id,
+                  q: query,
+                  status,
+                  cursor,
+                })}
               >
                 Open latest conversation <ArrowRight aria-hidden="true" />
               </Link>
@@ -170,39 +296,34 @@ export async function ConversationWorkspace({
 function ConversationDetail({
   nicheId,
   conversation,
+  fullDetail,
+  showHistory,
+  requestedMessageId,
+  returnTo,
 }: {
   nicheId: string;
   conversation: NonNullable<
     Awaited<ReturnType<typeof getConversationWorkspace>>
   >;
+  fullDetail: boolean;
+  showHistory: boolean;
+  requestedMessageId?: string;
+  returnTo?: string;
 }) {
   const revision = conversation.revisions[0];
   const participantName = participant(revision);
   const currentMessages = conversation.conversationMessages.filter(
-    (message) => !message.voidedAt,
+    (entry) => !entry.voidedAt,
   );
-  const debriefMessages = currentMessages
-    .flatMap((message) => {
-      const current = message.revisions[0];
-      if (
-        !current ||
-        current.speakerRole !== "PARTICIPANT" ||
-        message.observationRevisions.length > 0
-      )
-        return [];
-      return [
-        {
-          id: message.id,
-          version: message.version,
-          body: current.body,
-          speakerName: current.speakerNameSnapshot,
-          bookmarked: Boolean(message.bookmarkedAt),
-        },
-      ];
-    })
-    .toSorted(
-      (left, right) => Number(right.bookmarked) - Number(left.bookmarked),
-    );
+  const detailHref = explorationWorkspaceHref(
+    nicheId,
+    "conversations",
+    `/${conversation.id}`,
+  );
+  const fullDetailHref = returnTo
+    ? withExplorationReturn(detailHref, returnTo)
+    : detailHref;
+
   return (
     <>
       <section
@@ -211,137 +332,171 @@ function ConversationDetail({
       >
         <header className="conversation-thread-heading">
           <div>
-            <Link
-              className="conversation-back"
-              href={explorationHref(nicheId, "/learn/conversations")}
-            >
-              <ArrowLeft aria-hidden="true" /> Conversations
-            </Link>
+            {fullDetail && (
+              <BusinessBackLink
+                className="conversation-back"
+                returnTo={returnTo}
+                fallbackHref={explorationWorkspaceHref(
+                  nicheId,
+                  "conversations",
+                )}
+              >
+                <ArrowLeft aria-hidden="true" /> Conversations
+              </BusinessBackLink>
+            )}
             <p className="eyebrow">
-              {humanize(revision.channel)} · {humanize(conversation.status)}
+              {humanize(revision.channel)} ·{" "}
+              {conversationStatus(
+                conversation.status,
+                Boolean(conversation.interviewSession),
+              )}
             </p>
             <h3 id="conversation-title">{participantName}</h3>
             {revision.summary && <p>{revision.summary}</p>}
           </div>
-          <ConversationStateControls
-            conversationId={conversation.id}
-            status={conversation.status}
-            observationMessages={debriefMessages}
-          />
+          <div className="conversation-heading-actions">
+            {!fullDetail && (
+              <Link className="business-text-link" href={fullDetailHref}>
+                Open full record <ArrowRight aria-hidden="true" />
+              </Link>
+            )}
+            <ConversationStateControls
+              conversationId={conversation.id}
+              status={conversation.status}
+              observationMessages={conversation.debriefMessages}
+              observationMessagesNext={conversation.debriefNext}
+              observationMessagesTotal={conversation.debriefTotal}
+            />
+          </div>
         </header>
 
         {conversation.historicalSummaryOnly ? (
           <div className="conversation-historical-summary" role="note">
             <FileText aria-hidden="true" />
             <div>
-              <strong>This conversation was captured as a summary.</strong>
-              <p>
-                The original exchange was not recorded message by message, so
-                Become does not invent a transcript.
-              </p>
+              <strong>Captured as a summary.</strong>
+              <p>The original exchange was not recorded message by message.</p>
               {revision.notes && <blockquote>{revision.notes}</blockquote>}
             </div>
           </div>
         ) : currentMessages.length > 0 ? (
-          <ol
-            className="conversation-message-list"
-            aria-label="Conversation messages"
-          >
-            {currentMessages.map((message) => {
-              const current = message.revisions[0];
-              if (!current) return null;
-              return (
-                <li
-                  key={message.id}
-                  data-speaker={current.speakerRole.toLowerCase()}
-                >
-                  <article>
-                    <header>
-                      <div>
-                        <strong>{current.speakerNameSnapshot}</strong>
-                        <span>
-                          {current.speakerRole === "ME"
-                            ? "Interviewer"
-                            : "Participant"}
-                        </span>
-                      </div>
-                      <div>
-                        {message.bookmarkedAt && (
-                          <Bookmark aria-label="Bookmarked" />
-                        )}
-                        <time dateTime={current.occurredAt.toISOString()}>
-                          {businessDate(current.occurredAt)}
-                        </time>
-                        <ConversationMessageMenu
-                          message={{
-                            id: message.id,
-                            version: message.version,
-                            bookmarked: Boolean(message.bookmarkedAt),
-                            speakerRole: current.speakerRole,
-                            speakerName: current.speakerNameSnapshot,
-                            body: current.body,
-                            occurredAt: current.occurredAt.toISOString(),
-                            channel: current.channel,
-                            guideQuestionId: current.guideQuestionId,
-                            hasObservation:
-                              message.observationRevisions.length > 0,
-                          }}
-                        />
-                      </div>
-                    </header>
-                    <p>{current.body}</p>
-                    {message.observationRevisions.length > 0 && (
-                      <div className="conversation-observation-links">
-                        <NotebookPen aria-hidden="true" />
-                        {message.observationRevisions.map((observation) => (
-                          <Link
-                            key={observation.id}
-                            href={explorationHref(
-                              nicheId,
-                              `/learn/observations/${observation.observationId}`,
-                            )}
-                          >
-                            Observation kept
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                    {message.sourceOutdated && (
-                      <p className="conversation-source-review" role="note">
-                        This message changed after an observation was kept.
-                        Review the linked observation before relying on it.
-                      </p>
-                    )}
-                    {message.revisions.length > 1 && (
-                      <details className="conversation-correction-history">
-                        <summary>
-                          {message.revisions.length - 1} earlier{" "}
-                          {message.revisions.length === 2
-                            ? "version"
-                            : "versions"}
-                        </summary>
-                        {message.revisions.slice(1).map((earlier) => (
-                          <div key={earlier.id}>
-                            <p>{earlier.body}</p>
-                            {earlier.correctionReason && (
-                              <small>{earlier.correctionReason}</small>
-                            )}
-                          </div>
-                        ))}
-                      </details>
-                    )}
-                  </article>
-                </li>
-              );
-            })}
-          </ol>
+          <>
+            {conversation.hasEarlier && conversation.earlierCursor !== null && (
+              <Link
+                className="conversation-load-earlier"
+                href={`${detailHref}?${new URLSearchParams({
+                  before: String(conversation.earlierCursor),
+                  ...(showHistory ? { history: "true" } : {}),
+                  ...(returnTo ? { returnTo } : {}),
+                })}`}
+              >
+                Load earlier messages
+              </Link>
+            )}
+            <ol
+              className="conversation-message-list"
+              aria-label="Conversation messages"
+            >
+              {currentMessages.map((entry) => {
+                const current = entry.revisions[0];
+                if (!current) return null;
+                const speakerRole =
+                  current.speakerRole === "ME" ? "Interviewer" : "Participant";
+                const showSpeakerRole = !current.speakerNameSnapshot
+                  .toLocaleLowerCase()
+                  .includes(speakerRole.toLocaleLowerCase());
+                return (
+                  <li
+                    key={entry.id}
+                    id={`message-${entry.id}`}
+                    data-speaker={current.speakerRole.toLowerCase()}
+                    data-requested={
+                      entry.id === requestedMessageId || undefined
+                    }
+                  >
+                    <article>
+                      <header>
+                        <div>
+                          <strong>{current.speakerNameSnapshot}</strong>
+                          {showSpeakerRole && <span>{speakerRole}</span>}
+                        </div>
+                        <div>
+                          {entry.bookmarkedAt && (
+                            <Bookmark aria-label="Bookmarked" />
+                          )}
+                          <time dateTime={current.occurredAt.toISOString()}>
+                            {businessDate(current.occurredAt)}
+                          </time>
+                          <ConversationMessageMenu
+                            message={{
+                              id: entry.id,
+                              version: entry.version,
+                              bookmarked: Boolean(entry.bookmarkedAt),
+                              speakerRole: current.speakerRole,
+                              speakerName: current.speakerNameSnapshot,
+                              body: current.body,
+                              occurredAt: current.occurredAt.toISOString(),
+                              channel: current.channel,
+                              guideQuestionId: current.guideQuestionId,
+                              hasObservation:
+                                entry.observationRevisions.length > 0,
+                            }}
+                          />
+                        </div>
+                      </header>
+                      <p>{current.body}</p>
+                      {entry.observationRevisions.length > 0 && (
+                        <div className="conversation-observation-links">
+                          <NotebookPen aria-hidden="true" />
+                          {entry.observationRevisions.map((observation) => (
+                            <Link
+                              key={observation.id}
+                              href={explorationWorkspaceHref(
+                                nicheId,
+                                "evidence",
+                                `/observations/${observation.observationId}`,
+                              )}
+                            >
+                              Observation kept
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                      {entry.sourceOutdated && (
+                        <p className="conversation-source-review" role="note">
+                          This message changed after an observation was kept.
+                        </p>
+                      )}
+                      {showHistory && entry.revisions.length > 1 && (
+                        <details className="conversation-correction-history">
+                          <summary>
+                            {entry.revisions.length - 1} earlier{" "}
+                            {entry.revisions.length === 2
+                              ? "version"
+                              : "versions"}
+                          </summary>
+                          {entry.revisions.slice(1).map((earlier) => (
+                            <div key={earlier.id}>
+                              <p>{earlier.body}</p>
+                              {earlier.correctionReason && (
+                                <small>{earlier.correctionReason}</small>
+                              )}
+                            </div>
+                          ))}
+                        </details>
+                      )}
+                    </article>
+                  </li>
+                );
+              })}
+            </ol>
+          </>
         ) : (
           <div className="conversation-thread-empty">
             <MessageSquareDashed aria-hidden="true" />
             <h3>The exchange starts with a message.</h3>
             <p>
-              Choose the speaker every time. A participant’s words and your
-              prompts remain visibly distinct.
+              Choose the speaker each time so the transcript stays reliable.
             </p>
           </div>
         )}
@@ -357,19 +512,31 @@ function ConversationDetail({
           )}
       </section>
 
-      <ExplorationFieldNotes label="Conversation context">
+      <aside className="conversation-context" aria-label="Conversation context">
+        <header>
+          <span>Context</span>
+          <Link
+            href={`${detailHref}?${new URLSearchParams({
+              ...(showHistory ? {} : { history: "true" }),
+              ...(returnTo ? { returnTo } : {}),
+            })}`}
+            className="business-text-link"
+          >
+            {showHistory ? "Current only" : "Revision history"}
+          </Link>
+        </header>
         {conversation.interviewSession?.guideRevision && (
-          <section className="exploration-field-note exploration-field-note--major">
+          <section>
             <p className="eyebrow">Pinned guide</p>
             <h3>{conversation.interviewSession.guideRevision.titleSnapshot}</h3>
             <p>
-              Revision {conversation.interviewSession.guideRevision.version}{" "}
-              stays attached to this exchange.
+              Revision {conversation.interviewSession.guideRevision.version}
             </p>
             <Link
-              href={explorationHref(
+              href={explorationWorkspaceHref(
                 nicheId,
-                `/learn/conversations/${conversation.id}/conduct`,
+                "conversations",
+                `/${conversation.id}/conduct`,
               )}
             >
               Conduct with guide <ArrowRight aria-hidden="true" />
@@ -377,28 +544,34 @@ function ConversationDetail({
           </section>
         )}
         {conversation.linkedReach?.revisions[0] && (
-          <section className="exploration-field-note">
-            <p className="eyebrow">Came from Reach</p>
+          <section>
+            <p className="eyebrow">From outreach</p>
             <h3>{humanize(conversation.linkedReach.revisions[0].kind)}</h3>
             <p>{conversation.linkedReach.revisions[0].summary}</p>
+            <Link
+              href={explorationWorkspaceHref(
+                nicheId,
+                "outreach",
+                `/${conversation.linkedReach.id}`,
+              )}
+            >
+              Open activity <ArrowRight aria-hidden="true" />
+            </Link>
           </section>
         )}
-        <section className="exploration-field-note">
-          <p className="eyebrow">Observations</p>
-          <h3>
+        <section>
+          <p className="eyebrow">Messages</p>
+          <h3>{conversation.totalMessages} in this exchange</h3>
+          <p>
             {conversation.conversationMessages.reduce(
-              (sum, message) => sum + message.observationRevisions.length,
+              (sum, entry) => sum + entry.observationRevisions.length,
               0,
             )}{" "}
-            kept from messages
-          </h3>
-          <p>
-            Promotion is explicit. The originating message and exact revision
-            remain traceable.
+            observations kept from this page.
           </p>
         </section>
         {conversation.followUps.length > 0 && (
-          <section className="exploration-field-note">
+          <section>
             <p className="eyebrow">Follow-up</p>
             {conversation.followUps.map((followUp) => (
               <p key={followUp.id}>
@@ -408,7 +581,7 @@ function ConversationDetail({
             ))}
           </section>
         )}
-      </ExplorationFieldNotes>
+      </aside>
     </>
   );
 }

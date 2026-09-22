@@ -1,7 +1,7 @@
 .thinking-page,
 .thinking-detail {
   --thinking-rule: rgba(232, 168, 62, 0.26);
-  animation: thinking-arrive var(--duration-standard) var(--ease-enter);
+  animation: thinking-arrive var(--duration-content) var(--ease-enter);
 }
 
 .thinking-masthead {
@@ -39,7 +39,7 @@
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-lg) 0;
   text-align: left;
-  transition: background-color var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-control) var(--ease-move);
 }
 
 .idea-capture-trigger:hover {
@@ -94,7 +94,7 @@
   border-top: 1px solid var(--color-primary);
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-2xl) 0;
-  animation: thinking-reveal var(--duration-spatial) var(--ease-enter);
+  animation: thinking-reveal var(--duration-surface) var(--ease-enter);
 }
 
 .idea-capture-form > header {
@@ -459,7 +459,7 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--spacing-xl);
-  transition: background-color var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-control) var(--ease-move);
 }
 
 .idea-stream a {

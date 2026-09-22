@@ -140,6 +140,7 @@ export function SubMenu({
       )
         return;
       event.preventDefault();
+      event.stopPropagation();
       close(true);
     };
 
@@ -189,6 +190,7 @@ export function SubMenu({
           placement={placement}
           className={menuClassName}
           data-state={menuPresence.presenceState}
+          inert={menuPresence.isExiting}
           onAnimationEnd={menuPresence.onPresenceAnimationEnd}
           onClickCapture={(event) => {
             if (

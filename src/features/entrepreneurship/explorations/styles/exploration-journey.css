@@ -106,92 +106,6 @@
   text-align: right;
 }
 
-.exploration-masthead-pause-note {
-  margin-top: var(--spacing-md);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.exploration-journey {
-  min-width: 0;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--color-border);
-  scrollbar-width: none;
-}
-
-.exploration-journey::-webkit-scrollbar {
-  display: none;
-}
-
-.exploration-journey ol {
-  display: grid;
-  min-width: 36rem;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-.exploration-journey li {
-  min-width: 0;
-}
-
-.exploration-journey a {
-  position: relative;
-  display: flex;
-  min-height: 3.25rem;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0 var(--spacing-md);
-  color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
-}
-
-.exploration-journey a:hover,
-.exploration-journey a[aria-current="page"] {
-  color: var(--color-text-primary);
-}
-
-.exploration-journey a[aria-current="page"] {
-  color: var(--color-primary);
-}
-
-.exploration-journey-marker {
-  flex: none;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
-}
-
-.exploration-journey a[aria-current="page"] .exploration-journey-marker {
-  color: var(--color-primary);
-  font-weight: 650;
-}
-
-.exploration-journey-copy {
-  display: inline-flex;
-  min-width: 0;
-}
-
-.exploration-journey-copy strong {
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
-  font-weight: 560;
-}
-
-.exploration-journey a[aria-current="page"] .exploration-journey-copy strong {
-  color: var(--color-primary);
-}
-
-.exploration-journey-indicator {
-  position: absolute;
-  right: var(--spacing-md);
-  bottom: -1px;
-  left: var(--spacing-md);
-  height: 2px;
-  background: var(--color-primary);
-}
-
 .exploration-snapshot-layout {
   min-width: 0;
 }
@@ -339,8 +253,7 @@
   gap: var(--spacing-lg);
 }
 
-.exploration-snapshot-claim-copy > span,
-.exploration-learn-index-number {
+.exploration-snapshot-claim-copy > span {
   color: var(--color-text-muted);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);

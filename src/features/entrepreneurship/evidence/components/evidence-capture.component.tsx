@@ -160,12 +160,19 @@ function EvidenceCaptureFields({
 export function EvidenceCapture(
   props: Parameters<typeof CaptureFields>[0] & {
     triggerLabel?: string;
+    triggerVariant?: "primary" | "secondary" | "quiet";
     captureLanes?: CaptureLane[];
   },
 ) {
   const exploration = useExploration();
   if (exploration?.archived) return null;
-  const captureLanes = props.captureLanes ?? [
+  const {
+    triggerLabel,
+    triggerVariant,
+    captureLanes: requestedCaptureLanes,
+    ...fieldProps
+  } = props;
+  const captureLanes = requestedCaptureLanes ?? [
     "conversation",
     "observation",
     "public",
@@ -174,10 +181,11 @@ export function EvidenceCapture(
     <RecordDialog
       eyebrow="From the field"
       title="Keep evidence"
-      triggerLabel={props.triggerLabel ?? "Keep evidence"}
+      triggerLabel={triggerLabel ?? "Keep evidence"}
+      variant={triggerVariant}
       description="Start with what happened or what you found. Identity and audience details can stay open while you learn."
     >
-      <EvidenceCaptureFields {...props} captureLanes={captureLanes} />
+      <EvidenceCaptureFields {...fieldProps} captureLanes={captureLanes} />
     </RecordDialog>
   );
 }

@@ -1,161 +1,230 @@
 # Become motion system
 
-Motion in Become communicates continuity, causality, and progress. It is not decoration. The interface should feel responsive and alive without turning routine work into spectacle.
+Motion in Become explains state, continuity, and cause. It follows confirmed
+application state and never delays saving, navigation, focus, timer truth, or a
+useful follow-up action.
+
+## Research and decisions
+
+This system is informed by public documentation. It is not presented as
+hands-on testing of authenticated products.
+
+- [Carbon motion](https://carbondesignsystem.com/elements/motion/overview/)
+  distinguishes frequent productive motion from rare expressive motion, maps
+  entrance, movement, and exit to different easing curves, and relates duration
+  to travel and element size.
+- [Apple motion](https://developer.apple.com/design/human-interface-guidelines/motion)
+  emphasizes continuity, purpose, and alternatives for people who reduce
+  motion.
+- [Fluent 2 motion](https://fluent2.microsoft.design/motion) treats motion as a
+  way to expose relationships and changes, keeps top-level navigation calm, and
+  recommends short, focused choreography.
+- [Next.js View Transitions](https://nextjs.org/docs/app/guides/view-transitions)
+  documents React View Transitions in the App Router, including shared elements,
+  stable anchors, content crossfades, transition types, progressive fallback,
+  and pointer-event behavior.
+- [React ViewTransition](https://react.dev/reference/react/ViewTransition)
+  defines the component contract. React coordinates the platform transition;
+  product code must not call `document.startViewTransition()` around the same
+  updates.
+
+The durations, distances, and choreography below are Become product decisions.
+They are not measurements copied from another product.
 
 ## Principles
 
-1. **Preserve the user’s anchor.** Keep stable headings, controls, timeline rails, and dialog context in place while the changed content moves.
-2. **Show cause and effect locally.** Animate the smallest region that explains the result of an action. Do not replay an entire page because one value changed.
-3. **Match expression to meaning.** Routine controls use restrained utility motion. Earned accomplishments may use stronger motion, but only when the underlying state is confirmed.
-4. **Truth before theatre.** Finance and other trust-sensitive surfaces favor precise recomposition, direct value changes, and calm confirmation.
-5. **Never delay the action.** Navigation, focus, validation, and server work start immediately. Motion follows state; it does not gate state.
-6. **Progressive enhancement.** Every interaction remains understandable and complete without animation or View Transition support.
+1. Keep the user's anchor. Shells, headings, controls, timelines, filters, and
+   collection scroll positions remain stable while the changed region moves.
+2. Show cause and effect locally. Animate the control or record whose state
+   changed, once.
+3. Use direction only for a real spatial relationship, such as collection to
+   detail or an adjacent drawer. Workspace changes use a ready-state crossfade.
+4. Report truth before motion. Pending, failed, cancelled, review-ready, and
+   confirmed states match the underlying operation.
+5. Let work continue. Decorative animation never gates input, focus,
+   navigation, persistence, timer state, or recovery.
+6. Preserve geometry while loading. An active indicator exists only while work
+   is pending and stops on completion, error, cancellation, or removal.
+7. Treat reduced motion as a behavior contract. State, focus, announcements,
+   and cleanup stay immediate when visual motion is disabled.
 
-## Vocabulary and intensity
+## Canonical contract
 
-Every authored motion maps to one semantic intent. The intent describes why an
-element moves; intensity describes how much expression the context allows.
+`src/app/styles/tokens.css` is the only numeric source of truth for visual
+motion. JavaScript lifecycle fallbacks read its computed CSS custom properties
+through `motion-time.util.ts`; they do not maintain a second duration table.
 
-| Intent      | Meaning                                                  |
-| ----------- | -------------------------------------------------------- |
-| **Respond** | Acknowledge direct input without delaying the action     |
-| **Reveal**  | Introduce or remove local content or a layer              |
-| **Carry**   | Preserve the identity of an object across related views  |
-| **Recompose** | Update a bounded data region while its anchors stay put |
-| **Resolve** | Settle an active or optimistic state into confirmed truth|
-| **Mark**    | Recognize a meaningful, confirmed result once            |
+| Token                     |  Value | Purpose                                     |
+| ------------------------- | -----: | ------------------------------------------- |
+| `--duration-response`     |   90ms | Press and immediate acknowledgement         |
+| `--duration-control`      |  150ms | Menus, toggles, and rapid detail swaps      |
+| `--duration-content`      |  220ms | Disclosure, filtering, selection, insertion |
+| `--duration-surface`      |  300ms | Dialogs, drawers, contextual panels         |
+| `--duration-emphasis`     |  420ms | One confirmed meaningful completion         |
+| `--duration-active-cycle` | 1400ms | Contained indicator while work is pending   |
+| `--delay-sequence`        |   32ms | Maximum offset in a two-beat sequence       |
 
-These intents are the approved vocabulary. Recipes and domain character choose
-among them; features do not create parallel motion semantics.
+The easing curves are:
 
-| Level | Vocabulary           | Purpose                                      | Typical examples                                                         |
-| ----- | -------------------- | -------------------------------------------- | ------------------------------------------------------------------------ |
-| 0     | Static / immediate   | Avoid motion where it adds no understanding  | text changes, validation copy, dense table cells, keyboard focus         |
-| 1     | Utility              | Confirm direct manipulation                  | press feedback, menu presence, short disclosure, inline status           |
-| 2     | Spatial / continuity | Explain where a layer or selection came from | dialogs, drawers, mobile navigation, tab indicator, local list insertion |
-| 3     | Expressive / earned  | Mark meaningful confirmed progress           | milestone, completed goal, evidence-producing accomplishment             |
+| Token             | Value                       | Use                               |
+| ----------------- | --------------------------- | --------------------------------- |
+| `--ease-enter`    | `cubic-bezier(0,0,.38,.9)`  | Content entering the view         |
+| `--ease-move`     | `cubic-bezier(.2,0,.38,.9)` | Visible content changing position |
+| `--ease-exit`     | `cubic-bezier(.2,0,1,.9)`   | Content leaving the view          |
+| `--ease-emphasis` | `cubic-bezier(.4,.14,.3,1)` | Confirmed completion              |
 
-Level 3 is a budget, not a default. Most sessions should contain no expressive motion.
+Control travel is at most `--distance-control` (6px), content travel is
+`--distance-content` (8px), and surface travel is at most
+`--distance-surface` (24px). Dialog entry uses `--distance-dialog` (12px).
+Authored scale never falls below `--scale-pressed` (`.985`).
 
-## Tokens
+Sequences use at most two beats with a 32ms offset. Do not stagger collection
+rows, animate each search keystroke, or create a longer signature sequence from
+visual duration tokens.
 
-The CSS source of truth is `src/app/styles/tokens.css`; TypeScript timing values live in `src/components/ui/motion/constants/motion.constants.ts` for lifecycle coordination.
+## Choreography
 
-| Token                  |                           Value | Use                               |
-| ---------------------- | ------------------------------: | --------------------------------- |
-| `--duration-feedback`  |                            90ms | press, exit, tiny acknowledgement |
-| `--duration-fast`      |                           140ms | menus, compact controls           |
-| `--duration-standard`  |                           180ms | data and state recomposition      |
-| `--duration-spatial`   |                           240ms | sheets, drawers, disclosures      |
-| `--duration-emphasis`  |                           360ms | earned local completion           |
-| `--duration-signature` |                           650ms | rare signature sequence ceiling   |
-| `--delay-pending-visual` | 300ms | delay before optional local pending artwork |
-| `--duration-pending-cycle` | 1600ms | 650ms pending sweep plus 950ms rest |
-| `--ease-enter`         | `cubic-bezier(0.16, 1, 0.3, 1)` | arriving content and layers       |
-| `--ease-exit`          |    `cubic-bezier(0.4, 0, 1, 1)` | short departures                  |
-| `--ease-move`          |    `cubic-bezier(0.2, 0, 0, 1)` | repositioning and continuity      |
+- **Controls:** color and border transitions use Control. Press transforms use
+  Response. Focus indicators appear immediately and do not transition in.
+- **Menus and popovers:** enter for 150ms from their trigger origin and exit for
+  90ms. The trigger stays anchored.
+- **Dialogs:** the surface enters for 300ms over a 220ms backdrop and exits for
+  150ms. Native dialogs use the same visual contract without replacing platform
+  modality.
+- **Drawers and contextual panels:** enter from the adjacent edge over 300ms and
+  exit over 220ms. A nonmodal inspector leaves its collection interactive.
+- **Workspace navigation:** keep the shell stable, carry the active indicator,
+  and crossfade ready destination content. Workspace peers do not slide.
+- **Collection and detail:** preserve selection and scroll. Adjacent record
+  details swap over 150ms. A supported full page transition may carry a stable
+  record ID; unsupported browsers use the local fallback.
+- **Filtering:** acknowledge the control immediately and recompose the bounded
+  result region over 220ms. Rows do not stagger.
+- **Disclosure:** keep the trigger in place and animate only the revealed
+  context over 220ms.
+- **Creation, correction, withdrawal, and removal:** preserve the operation's
+  meaning. A confirmed arriving record is identified by ID and receives one
+  local 420ms treatment.
+- **Loading:** retain stable geometry. The 1400ms loop is reserved for a visible,
+  currently pending operation.
+- **Nexo:** acknowledge generation immediately, distinguish pending, error, and
+  review-ready states, reveal the proposal as a review surface, and mark
+  acceptance once. Do not use typewriter output, fake percentages, or an
+  ambient loop after work stops.
 
-Use these values rather than local timing literals. A one-off value is justified only when the interaction cannot be expressed by this scale.
+## Shared lifecycle contract
 
-The pending-cycle token is a narrow loading exception rather than a longer
-expressive sequence. It may be used only for the current-season Direction
-poster handoff and confirmed season-image import status, after the 300ms reveal
-delay and with an eligible READY local derivative already available. The light
-sweep travels for the existing 650ms signature duration, then rests for 950ms
-to avoid rapid flashing. Only one pending artwork loop may be visible at once.
-It stops immediately when work succeeds, fails, is cancelled, or leaves the
-screen. Reduced motion removes the sweep while retaining status and geometry.
+Authored layers that animate out use `usePresence`.
 
-Springs are not part of the base system. Introduce a spring only for a direct-manipulation interaction whose velocity materially improves comprehension, and only after native CSS or View Transitions prove insufficient.
+- Opening mounts synchronously so focus can move in the opening commit.
+- Closing content remains mounted only for its explicit exit state.
+- The exiting root is `inert`, pointer-disabled, and hidden from accessibility.
+- `animationend` completes the exit by state and target. Animation names have no
+  semantic role.
+- A fallback is computed from the canonical CSS token. Reopening cancels the
+  prior fallback and returns the same mounted layer to `open` safely.
+- If reduced motion becomes active during an exit, cleanup completes
+  immediately.
 
-## Interaction recipes
+Non-native modal surfaces use `useModalLayer`.
 
-- **Menus and popovers:** 140ms or less, 4px maximum travel, no bounce. Keep content present for its exit and unavailable to pointer and accessibility interaction while closed.
-- **Dialogs and sheets:** backdrop opacity plus one spatial axis. Trap focus immediately, close on Escape, lock background scroll, and restore focus after exit.
-- **Disclosures:** animate the content region while its summary and surrounding structural anchor remain stable. Do not stagger children.
-- **Navigation and tabs:** move the selection guide when the destination shares context. Avoid whole-page fades as the default.
-- **Data changes:** acknowledge the control immediately, keep labels and axes stable, and recompose only the changing data region. Do not count every number from zero.
-- **Charts:** first paint is static. Animate only a user-requested change, and prefer a controlled crossfade or geometry interpolation to decorative drawing.
-- **Creation and insertion:** reveal the confirmed object near its destination. A short trace along an existing rail is appropriate when the layout already establishes that path.
-- **Deletion:** use immediate acknowledgement followed by a short collapse only after confirmation. Never make destructive work feel playful.
-- **Loading:** preserve geometry. Prefer local pending state, skeleton continuity, or subtle opacity over spinners and looping shimmer.
-- **Success, warning, and error:** keep copy readable immediately. Success may settle once; warnings and errors should not shake, flash, or pulse repeatedly.
-- **Timers:** the running timer is the ambient signal. A confirmed pause replaces it with a static pause mark while preserving the timer and action anchors; resume restores the live signal. Completion gets one confirmed settle before the refreshed record becomes authoritative.
-- **Hover, focus, and press:** color, border, shadow, or very small opacity changes. Never bounce ordinary controls. Focus indication stays immediate.
+- Modal layers form a stack. Only the top layer handles Escape and traps Tab.
+- Nested layers share a reference-counted document scroll lock.
+- Closing restores focus to the connected element that owned the layer, or the
+  explicit return target.
+- Modal state ends immediately; an inert visual copy may finish exiting without
+  retaining focus or interaction.
 
-## Signature ideas
+`RecordDialog` retains native `<dialog>` modality, cancel behavior, and focus
+semantics. Its visual close has explicit completion, a token-derived fallback,
+and cancellation-safe state rather than checking an animation name.
+It also joins the shared modal stack so nested dialogs and drawers agree on
+Escape handling, scroll locking, and focus restoration.
 
-Become’s recognizable motion should come from a small family of relationships:
+## React View Transition contract
 
-- **The guide:** a persistent selection or timeline marker moves to preserve direction across related states.
-- **The trace:** newly confirmed evidence briefly resolves along an existing chronology or progress path.
-- **The settle:** an optimistic or active state contracts into a calm, confirmed state once server truth arrives.
+Use the installed React/Next foundation and no feature-specific transition
+library. A transition remains an enhancement; the application must work when
+the browser lacks View Transition support.
 
-These are compositional ideas, not universal animations. A surface should use them only when its information architecture already provides the guide, path, or state transition.
+- `motion-guide` carries an active indicator while the surrounding shell stays
+  fixed.
+- `motion-data-recompose` crossfades a bounded result or analytics region.
+- `motion-workspace-content` crossfades ready peer-workspace content.
+- `motion-carry` preserves the identity of a supported record across a genuine
+  collection/detail relationship.
+- `motion-shell` explicitly anchors persistent shell content.
+- Named transitions use stable IDs and `default="none"` so unrelated updates do
+  not animate them.
 
-## Domain character
+React transitions activate through navigation, Suspense, and React Transitions.
+A normal immediate `setState` is a local CSS interaction and does not become a
+View Transition merely because it is wrapped.
 
-- **Shared shell:** restrained spatial continuity and immediate focus behavior.
-- **Engineering:** may use the guide, trace, and settle for evidence, projects, reviews, and meaningful completion. Routine CRUD remains quiet.
-- **Finance:** defaults to levels 0–2. Motion clarifies changing periods, data, disclosure, and confirmed transactions; it must never imply certainty the data does not have.
-- **Future domains:** use the same vocabulary with a domain-appropriate intensity budget. New visual languages may vary composition, not invent unrelated timing and easing systems.
+## Domain migration decisions
 
-Unfinished domain mockups are not motion-design evidence and receive no feature-specific motion. They may inherit shared shell behavior. Content uses the shared motion vocabulary for its implemented creator workflows.
+- Home keeps the running timer visually stable. The changing numerals are the
+  ambient signal; the former decorative orbit loop is static.
+- Engineering record arrival uses the confirmed evidence ID. A duplicate title
+  cannot animate the wrong record, and a failed create cannot leave a false
+  arrival marker.
+- Finance uses calm recomposition and surface motion. Motion never implies that
+  an offer, transfer, receivable, or pending amount is settled revenue.
+- Content uses the active-cycle token only while autosave is pending. Saved and
+  failed states are static and operation-scoped.
+- Direction uses surface entry only where a stage or layer actually appears.
+- Reviews keep reading facts available immediately; evidence drawers follow the
+  shared modal lifecycle.
+- Sessions and timer updates never wait for emphasis motion. A confirmed session
+  row can mark itself once by ID after timer truth is saved.
+- Settings uses content crossfade for the selected ready section.
+- COTS network polling, leases, debounce, retry, and reading cadence use semantic
+  constants owned by those workflows. They are independent of visual motion
+  tokens. Only pending imports and loading indicators use Active cycle. The
+  former ambient opening glow is static.
 
-## Technical contract
+## Reduced motion
 
-- Prefer CSS transitions and keyframes for local component state.
-- Use React View Transitions only for real continuity between related rendered states. Keep names unique and stable, and set an explicit fallback/default behavior.
-- Use `usePresence` for authored overlays that need an exit lifecycle. Entry must mount synchronously so focus can transfer in the opening commit.
-- Use `useModalLayer` for non-native modal layers. Native Finance dialogs retain native modal and focus behavior.
-- Keep motion ownership with the component or feature stylesheet. Only tokens, reduced-motion policy, and genuinely cross-cutting View Transition classes belong in global styles.
-- Do not turn a server component into a client component only to animate a broad page. Isolate the smallest interactive boundary.
-- Do not add an animation dependency until a shipped interaction requires capabilities that CSS, the platform, and React View Transitions cannot provide.
+Under `prefers-reduced-motion: reduce`, Become removes authored animations,
+transitions, spatial movement, scaling, sequencing, loops, smooth scrolling,
+and View Transition animation. Current state, focus movement, announcements,
+scroll locking, operation timing, and lifecycle cleanup remain correct and
+immediate.
 
-## Accessibility
+Do not use motion as the only signal. Avoid flashing, bounce, parallax, shaking,
+count-up numbers, ornamental chart drawing, confetti, and repeated peripheral
+movement.
 
-`prefers-reduced-motion: reduce` reduces authored animation and transition durations to effectively immediate and disables View Transition animation. The final state, focus order, announcements, and operation timing must not depend on animation events alone; presence helpers include a fallback lifecycle.
+## Review checklist
 
-Do not use motion as the only signal. Avoid flashing, large parallax, autoplaying movement, and repeated peripheral animation. Preserve focus on open/close and keep hidden exiting layers out of interaction.
+Before adding or changing motion, verify:
 
-## Performance constraints
+1. What state or relationship does the motion explain?
+2. Which anchor remains stable?
+3. Does it use the lowest suitable canonical duration, distance, and easing?
+4. Is the sequence at most two beats and 32ms apart?
+5. Does the loop exist only while work is actually pending?
+6. Does opening, rapid reopening, nested Escape, scroll lock, and focus restore
+   correctly?
+7. Does changing reduced-motion preference while open complete correctly?
+8. Does the interaction remain complete without View Transition support?
+9. Does saving, navigation, focus, or follow-up access proceed immediately?
 
-- Animate `transform` and `opacity` by default.
-- Layout animation is allowed only for small, bounded disclosures or insertions; never animate page-scale height or continuously measure layout.
-- Avoid simultaneous animation of large blurred backdrops, shadows, and charts.
-- Keep one ambient loop at most in the visible product shell. Pause or remove loops that do not communicate live state.
-- A normal interaction should finish within 240ms. Expressive sequences must remain under the 650ms signature ceiling and must not block the next action.
+Verify keyboard and touch behavior, 320/390/768/1024/1440px layouts, rapid
+reopening, cancelled animation, nested layers, and reduced motion in a rendered
+browser. Compilation alone is not motion evidence.
 
-## Rules for future work
+## Regression evidence
 
-Before adding motion, answer:
-
-1. What relationship or state change does this clarify?
-2. What remains anchored?
-3. What is the lowest sufficient intensity?
-4. Does the domain’s trust level allow that intensity?
-5. What is the reduced-motion result?
-6. Can the implementation stay local and avoid a broader client boundary?
-
-Reuse an existing recipe and token first. New recurring behavior belongs in this document and the shared foundation; feature-specific exceptions stay with their feature. Verify keyboard, touch, reduced-motion, and narrow-width behavior.
-
-Never add generic page fade-ups, arbitrary stagger, routine bounce, scroll-driven decoration, number slot machines, ornamental chart drawing, success confetti, or motion that masks latency.
-
-## Current rollout
-
-The first implementation establishes:
-
-- shared timing/easing tokens and reduced-motion policy;
-- reusable presence and modal-layer behavior;
-- tactile shared controls plus menu, mobile navigation, dialog, and
-  session-drawer lifecycles;
-- shell, Home, Engineering, and Finance selection guides;
-- Engineering period recomposition, project identity carry, evidence
-  disclosure, and confirmed evidence trace;
-- Finance navigation, user-requested data recomposition, confirmed progress,
-  and transaction-safe disclosure affordances;
-- local pending states for Engineering and Finance forms;
-- Settings content continuity;
-- timer completion settle and resolved-session acknowledgement.
-
-Expand only after these interactions have been used and tuned in the product.
+- `e2e/motion-system.spec.ts` exercises reduced-motion cleanup, rapid reopening,
+  nested menu and modal Escape order, nested scroll locking, focus restoration,
+  native-dialog cancellation, and confirmed-record arrival by ID.
+- `e2e/shared-motion-regression.spec.ts` renders Home, Engineering, Finance,
+  Content, Direction, Reviews, Sessions, Settings, Nexo settings, and the COTS
+  identity step at 390px and 1440px. It checks the runtime token values,
+  document overflow, layer focus, menus, dialogs, and browser errors.
+- The shared regression attaches named screenshots for every surface and open
+  layer through `testInfo.outputPath`, so a successful run preserves reviewable
+  evidence beneath the configured Playwright output directory.
+- The typography section of `src/app/styles/tokens.css` is compared with the
+  branch base during completion review. Motion work does not alter it.

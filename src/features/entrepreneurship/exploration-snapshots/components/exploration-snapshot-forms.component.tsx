@@ -16,6 +16,8 @@ import {
   publishExplorationSnapshotAction,
 } from "@/features/entrepreneurship/exploration-snapshots/actions/exploration-snapshot.action";
 import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
+import type { SynthesisSource } from "@/features/entrepreneurship/synthesis/schemas/synthesis.schema";
 
 export type ObservationChoice = {
   id: string;
@@ -28,6 +30,7 @@ export type CitationValue = {
   observationRevisionId: string;
   stance: string;
   note: string | null;
+  sourceName?: string;
 };
 
 export function readSnapshotCitations(
@@ -50,51 +53,115 @@ export function readSnapshotCitations(
   });
 }
 
+export function SnapshotSourceManifest({
+  sources,
+  refreshable = false,
+}: {
+  sources: SynthesisSource[];
+  refreshable?: boolean;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="snapshot-source-manifest">
+      <strong>Existing source record</strong>
+      <ul>
+        {sources.map((source) => (
+          <li key={source.key}>
+            <Link href={source.href}>{source.label}</Link>
+            <span>{source.type.toLowerCase().replaceAll("_", " ")}</span>
+            {source.excerpt && <p>{source.excerpt}</p>}
+          </li>
+        ))}
+      </ul>
+      {refreshable && (
+        <label className="business-choice-row">
+          <input type="checkbox" name="refreshSources" value="true" />
+          <span>
+            <strong>Use the latest versions of these sources</strong>
+            <small>
+              Check this when a linked record was corrected. Unavailable or
+              withdrawn sources must be replaced before saving.
+            </small>
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
 export function SnapshotCitationFields({
   observations,
   citationIds,
   setCitationIds,
   prefix = "citation",
   initial = [],
+  existingSources = [],
+  allowEmpty = false,
+  nicheId,
 }: {
   observations: ObservationChoice[];
   citationIds: string[];
   setCitationIds: React.Dispatch<React.SetStateAction<string[]>>;
   prefix?: string;
   initial?: CitationValue[];
+  existingSources?: SynthesisSource[];
+  allowEmpty?: boolean;
+  nicheId: string;
 }) {
   return (
     <fieldset className="snapshot-citation-editor">
       <legend>Sources</legend>
       <p>
-        Every finding needs an observation. Add more when evidence supports,
-        challenges or qualifies the same conclusion.
+        {allowEmpty
+          ? "The existing source record stays attached unless you add replacement observations below."
+          : "Every manual finding needs an observation. Add more when evidence supports, challenges or qualifies the same conclusion."}
       </p>
+      <SnapshotSourceManifest
+        sources={existingSources}
+        refreshable={existingSources.length > 0}
+      />
       <div className="snapshot-citation-list">
         {citationIds.map((id, index) => {
-          const citation = initial[index];
+          const initialIndex = id.startsWith("existing-")
+            ? Number(id.slice("existing-".length))
+            : -1;
+          const citation =
+            initialIndex >= 0 ? initial[initialIndex] : undefined;
           return (
             <div className="snapshot-citation-row" key={id}>
-              <BusinessSelect
+              <BusinessRecordPicker
+                kind="observation"
                 label={`Source ${index + 1}`}
                 name={`${prefix}-observation-${id}`}
+                nicheId={nicheId}
+                options={
+                  citation &&
+                  !observations.some(
+                    (observation) =>
+                      observation.id === citation.observationId &&
+                      observation.revisionId === citation.observationRevisionId,
+                  )
+                    ? [
+                        {
+                          id: citation.observationId,
+                          revisionId: citation.observationRevisionId,
+                          name:
+                            citation.sourceName ??
+                            "Previously linked observation",
+                        },
+                        ...observations,
+                      ]
+                    : observations
+                }
                 value={
                   citation
                     ? `${citation.observationId}:${citation.observationRevisionId}`
                     : ""
                 }
+                includeRevision
                 required
-              >
-                <option value="">Choose an observation</option>
-                {observations.map((observation) => (
-                  <option
-                    key={observation.id}
-                    value={`${observation.id}:${observation.revisionId}`}
-                  >
-                    {observation.name}
-                  </option>
-                ))}
-              </BusinessSelect>
+                placeholder="Choose an observation"
+              />
               <BusinessSelect
                 label="Relationship"
                 name={`${prefix}-stance-${id}`}
@@ -110,7 +177,7 @@ export function SnapshotCitationFields({
                 multiline
                 value={citation?.note}
               />
-              {citationIds.length > 1 && (
+              {citationIds.length > (allowEmpty ? 0 : 1) && (
                 <button
                   type="button"
                   className="snapshot-citation-remove"
@@ -137,7 +204,7 @@ export function SnapshotCitationFields({
           ])
         }
       >
-        <Plus aria-hidden="true" /> Add another source
+        <Plus aria-hidden="true" /> Add observation source
       </button>
     </fieldset>
   );
@@ -155,7 +222,7 @@ export function SnapshotClaimForm({
     return (
       <Link
         className="finance-dialog-trigger"
-        href={explorationHref(nicheId, "/learn/observations")}
+        href={explorationHref(nicheId, "/evidence/observations")}
       >
         Keep an observation first
       </Link>
@@ -191,12 +258,15 @@ export function SnapshotClaimForm({
         <BusinessSelect label="Finding type" name="kind">
           <option value="OBSERVED">Observed fact</option>
           <option value="INTERPRETATION">Interpretation</option>
+          <option value="DECISION">Decision</option>
+          <option value="CONTRADICTION">Contradiction</option>
         </BusinessSelect>
         <BusinessField label="Finding" name="statement" multiline required />
         <SnapshotCitationFields
           observations={observations}
           citationIds={citationIds}
           setCitationIds={setCitationIds}
+          nicheId={nicheId}
         />
       </RecordForm>
     </RecordDialog>
@@ -217,6 +287,7 @@ export function SnapshotUncertaintyForm({ nicheId }: { nicheId: string }) {
           createExplorationUncertaintyAction(String(data.get("captureKey")), {
             nicheId,
             lane: String(data.get("lane")),
+            kind: String(data.get("kind")),
             statement: String(data.get("statement")),
           })
         }
@@ -229,6 +300,10 @@ export function SnapshotUncertaintyForm({ nicheId }: { nicheId: string }) {
           <option value="B2C">Consumers</option>
           <option value="B2B">Businesses</option>
           <option value="CROSS_MARKET">Cross-market</option>
+        </BusinessSelect>
+        <BusinessSelect label="Open item type" name="kind">
+          <option value="QUESTION">Question</option>
+          <option value="HYPOTHESIS">Hypothesis</option>
         </BusinessSelect>
         <BusinessField
           label="What remains uncertain?"

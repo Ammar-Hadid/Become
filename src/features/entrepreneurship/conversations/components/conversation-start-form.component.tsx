@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import {
   BusinessField,
   BusinessSelect,
 } from "@/features/entrepreneurship/shared/components/business-field.component";
 import { startConversationAction } from "@/features/entrepreneurship/conversations/actions/conversation.action";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 
 export function ConversationStartForm({
@@ -27,9 +28,7 @@ export function ConversationStartForm({
   const router = useRouter();
   const exploration = useExploration();
   const [linkedInteractionId, setLinkedInteractionId] = useState(
-    reachRecords.some((record) => record.id === initialLinkedInteractionId)
-      ? initialLinkedInteractionId
-      : "",
+    initialLinkedInteractionId,
   );
   if (exploration?.archived) return null;
   return (
@@ -69,7 +68,11 @@ export function ConversationStartForm({
         onSaved={(result) => {
           if (result.id)
             router.push(
-              explorationHref(nicheId, `/learn/conversations/${result.id}`),
+              explorationWorkspaceHref(
+                nicheId,
+                "conversations",
+                `/${result.id}/conduct`,
+              ),
             );
         }}
       >
@@ -98,24 +101,17 @@ export function ConversationStartForm({
           <option value="OTHER">Other</option>
         </BusinessSelect>
         <div className="business-form-field gap-sm grid">
-          <label className="field-label" htmlFor="conversation-reach-record">
-            Continue from a reply{" "}
-            <span className="text-text-muted normal-case"> · optional</span>
-          </label>
-          <select
-            id="conversation-reach-record"
+          <BusinessRecordPicker
+            kind="interaction"
+            label="Continue from a reply · optional"
             name="linkedInteractionId"
-            className="text-input"
+            nicheId={nicheId}
+            options={reachRecords}
             value={linkedInteractionId}
-            onChange={(event) => setLinkedInteractionId(event.target.value)}
-          >
-            <option value="">No linked reach record</option>
-            {reachRecords.map((record) => (
-              <option key={record.id} value={record.id}>
-                {record.name}
-              </option>
-            ))}
-          </select>
+            placeholder="No linked reach record"
+            interactionKinds={["OUTREACH_SENT", "REPLY_RECEIVED"]}
+            onValueChange={setLinkedInteractionId}
+          />
           {linkedInteractionId && (
             <p className="business-hint text-body-sm text-text-muted">
               Participant and market context will be inherited from the Reach

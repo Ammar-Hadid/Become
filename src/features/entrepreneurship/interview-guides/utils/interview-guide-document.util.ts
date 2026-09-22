@@ -101,16 +101,25 @@ export function validateInterviewGuideDocument(
           "Every interview question needs a unique, stable question ID.",
         );
       questionIds.add(questionId);
-      text(candidate.attrs.prompt, 2_000, "The interview question");
+      if (
+        typeof candidate.attrs.prompt !== "string" ||
+        candidate.attrs.prompt.length > 2_000
+      )
+        throw new BusinessError(
+          "The interview question is too long or unreadable.",
+        );
       optionalText(candidate.attrs.intent, 2_000, "The question intent");
       if (
         !Array.isArray(candidate.attrs.probes) ||
         candidate.attrs.probes.length > 20
       )
         throw new BusinessError("A question can have up to 20 probes.");
-      candidate.attrs.probes.forEach((probe) =>
-        text(probe, 1_000, "An interview probe"),
-      );
+      candidate.attrs.probes.forEach((probe) => {
+        if (typeof probe !== "string" || probe.length > 1_000)
+          throw new BusinessError(
+            "An interview probe is too long or unreadable.",
+          );
+      });
     }
     const content = candidate.content;
     if (content != null && !Array.isArray(content))
@@ -158,7 +167,10 @@ export function interviewGuideQuestionIndex(
             ? node.attrs.intent.trim()
             : null,
         probes: Array.isArray(node.attrs.probes)
-          ? node.attrs.probes.map(String)
+          ? node.attrs.probes
+              .map(String)
+              .map((probe) => probe.trim())
+              .filter(Boolean)
           : [],
         position: questions.length,
       });
@@ -174,6 +186,17 @@ export function emptyInterviewGuideDocument(): InterviewGuideDocument {
     schemaVersion: 1,
     content: { type: "doc", content: [{ type: "paragraph" }] },
   };
+}
+
+export function interviewGuideHasContent(
+  document: InterviewGuideDocument,
+): boolean {
+  const hasContent = (node: InterviewGuideDocumentNode): boolean =>
+    Boolean(node.text?.trim()) ||
+    (node.type === "interviewQuestion" &&
+      Boolean(String(node.attrs?.prompt ?? "").trim())) ||
+    Boolean(node.content?.some(hasContent));
+  return hasContent(document.content);
 }
 
 export function starterInterviewGuideDocument(

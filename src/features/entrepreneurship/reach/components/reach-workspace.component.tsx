@@ -1,42 +1,85 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  ArrowUpRight,
   Building2,
   CalendarClock,
   Mail,
   MessageSquareText,
+  Search,
   Send,
   UserRound,
-  UsersRound,
+  X,
 } from "lucide-react";
-import { getReachWorkspace } from "@/features/entrepreneurship/reach/queries/reach-workspace.query";
+import {
+  getReachActivityDetail,
+  getReachWorkspace,
+} from "@/features/entrepreneurship/reach/queries/reach-workspace.query";
 import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { InteractionForm } from "@/features/entrepreneurship/interactions/components/interaction-form.component";
 import { BatchOutreachForm } from "@/features/entrepreneurship/interactions/components/batch-outreach-form.component";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import {
+  explorationWorkspaceHref,
+  withExplorationReturn,
+} from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
+import { FollowUpRecord } from "@/features/entrepreneurship/follow-ups/components/follow-up.component";
 
 export async function ReachWorkspace({
   userId,
   nicheId,
+  query,
+  cursor,
+  kind,
+  view = "activity",
+  selectedId,
 }: {
   userId: string;
   nicheId: string;
+  query?: string;
+  cursor?: string;
+  kind?: string;
+  view?: "activity" | "follow-ups";
+  selectedId?: string;
 }) {
-  const [workspace, options] = await Promise.all([
-    getReachWorkspace(userId, nicheId),
+  const [workspace, options, selected] = await Promise.all([
+    getReachWorkspace(userId, nicheId, {
+      q: query,
+      cursor,
+      kind,
+      view,
+    }),
     getInteractionOptions(userId, nicheId),
+    selectedId
+      ? getReachActivityDetail(userId, nicheId, selectedId)
+      : Promise.resolve(null),
   ]);
   if (!workspace) return null;
+  const base = explorationWorkspaceHref(nicheId, "outreach");
+  const params = new URLSearchParams({
+    ...(query ? { q: query } : {}),
+    ...(kind ? { kind } : {}),
+    ...(view === "follow-ups" ? { view } : {}),
+    ...(cursor ? { cursor } : {}),
+  });
+  const hrefWith = (next: Record<string, string | undefined>) => {
+    const value = new URLSearchParams(params);
+    for (const [key, item] of Object.entries(next)) {
+      if (item) value.set(key, item);
+      else value.delete(key);
+    }
+    const suffix = value.toString();
+    return `${base}${suffix ? `?${suffix}` : ""}`;
+  };
   const targets = [
     ...workspace.targets.people.map((target) => ({
       id: target.id,
       kind: "Person",
       name: target.name,
-      detail: target.email ?? "No contact detail recorded",
+      detail: target.email ?? "No contact detail",
       latest: target.latestActivity,
       icon: UserRound,
     })),
@@ -44,21 +87,19 @@ export async function ReachWorkspace({
       id: target.id,
       kind: "Business",
       name: target.name,
-      detail: target.website ?? "No website recorded",
+      detail: target.website ?? "No website",
       latest: target.latestActivity,
       icon: Building2,
     })),
   ];
 
   return (
-    <div className="exploration-stage exploration-reach">
-      <header className="exploration-stage-heading">
+    <div className="direct-workspace outreach-workspace">
+      <header className="workspace-heading">
         <div>
-          <h2>Turn a useful target into a real exchange.</h2>
-          <p>
-            Outreach, replies and no-contact attempts stay operational here.
-            Only an actual conversation moves into Learn.
-          </p>
+          <p className="eyebrow">Outreach</p>
+          <h2>Move the next exchange forward.</h2>
+          <p>Targets, replies and follow-ups in one working queue.</p>
         </div>
         {!workspace.niche.archivedAt && (
           <div className="business-actions">
@@ -72,7 +113,7 @@ export async function ReachWorkspace({
               ]}
               captureObservations={false}
               lockExploration={nicheId}
-              createdHrefPrefix={explorationHref(nicheId, "/reach/activity")}
+              createdHrefPrefix={explorationWorkspaceHref(nicheId, "outreach")}
               triggerLabel="Record outreach"
             />
             <BatchOutreachForm
@@ -84,156 +125,274 @@ export async function ReachWorkspace({
         )}
       </header>
 
-      <section
-        className="exploration-reach-queue"
-        aria-labelledby="reach-queue-title"
-      >
-        <header>
-          <div>
-            <p className="eyebrow">Operational queue</p>
-            <h3 id="reach-queue-title">Who deserves the next attempt?</h3>
-          </div>
-          <span>{targets.length} current targets</span>
-        </header>
-        {targets.length > 0 ? (
-          <div className="exploration-ledger">
-            {targets.map((target) => {
-              const revision = target.latest?.revisions[0];
-              const Icon = target.icon;
-              return (
-                <div
-                  className="exploration-ledger-row"
-                  key={`${target.kind}-${target.id}`}
-                >
-                  <Icon aria-hidden="true" />
-                  <div className="exploration-ledger-primary">
-                    <span>{target.kind}</span>
-                    <strong>{target.name}</strong>
-                    <small>{target.detail}</small>
-                  </div>
-                  <div className="exploration-ledger-secondary">
-                    {revision ? (
-                      <>
-                        <span>{humanize(revision.kind)}</span>
-                        <time dateTime={revision.occurredAt.toISOString()}>
-                          {businessDate(revision.occurredAt)}
-                        </time>
-                      </>
-                    ) : (
-                      <span>Not contacted yet</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="exploration-stage-empty">
-            <UsersRound aria-hidden="true" />
-            <div>
-              <h3>No reach targets yet.</h3>
-              <p>
-                Add a person or business in Scope before recording outreach.
-              </p>
-            </div>
-            <Link
-              className="business-text-link"
-              href={explorationHref(nicheId, "/scope")}
-            >
-              Add a target <ArrowRight aria-hidden="true" />
-            </Link>
-          </div>
-        )}
-      </section>
+      <div className="workspace-toolbar">
+        <form action={base} className="workspace-search">
+          {view === "follow-ups" && (
+            <input type="hidden" name="view" value="follow-ups" />
+          )}
+          <Search aria-hidden="true" />
+          <input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder="Search targets and activity"
+            aria-label="Search outreach"
+          />
+        </form>
+        <nav className="workspace-view-switcher" aria-label="Outreach view">
+          <Link
+            href={hrefWith({ view: undefined, cursor: undefined })}
+            aria-current={view === "activity" ? "page" : undefined}
+          >
+            Activity <span>{workspace.total}</span>
+          </Link>
+          <Link
+            href={hrefWith({ view: "follow-ups", cursor: undefined })}
+            aria-current={view === "follow-ups" ? "page" : undefined}
+          >
+            Follow-ups <span>{workspace.followUpTotal}</span>
+          </Link>
+        </nav>
+      </div>
 
-      <div className="exploration-stage-columns">
-        <section className="exploration-stage-section">
-          <header>
+      <div
+        className="outreach-layout"
+        data-detail={selected ? "open" : undefined}
+        data-targets={targets.length > 0 ? "present" : undefined}
+      >
+        <section className="workspace-collection outreach-queue">
+          <header className="workspace-collection-heading">
             <div>
-              <p className="eyebrow">Due and open</p>
-              <h3>Follow-ups</h3>
+              <p className="eyebrow">
+                {view === "activity" ? "Latest contact" : "Due and open"}
+              </p>
+              <h3>{view === "activity" ? "Contact activity" : "Follow-ups"}</h3>
             </div>
-            <CalendarClock aria-hidden="true" />
+            {view === "activity" && targets.length === 0 ? (
+              <Link
+                className="workspace-inline-action"
+                href={explorationWorkspaceHref(nicheId, "audience")}
+              >
+                Manage audience <ArrowRight aria-hidden="true" />
+              </Link>
+            ) : view === "activity" ? (
+              <Send aria-hidden="true" />
+            ) : (
+              <CalendarClock aria-hidden="true" />
+            )}
           </header>
-          {workspace.followUps.length > 0 ? (
-            <ol className="exploration-timeline">
+          {view === "activity" ? (
+            workspace.activity.length ? (
+              <div className="workspace-record-list">
+                {workspace.activity.map((activity) => {
+                  const revision = activity.revisions[0];
+                  return (
+                    <article
+                      className="workspace-record-row"
+                      data-selected={selectedId === activity.id || undefined}
+                      key={activity.id}
+                    >
+                      <Link
+                        className="workspace-record-main"
+                        scroll={false}
+                        href={hrefWith({ selected: activity.id })}
+                      >
+                        <span className="workspace-record-kicker">
+                          {humanize(revision.kind)} ·{" "}
+                          {humanize(revision.channel)} ·{" "}
+                          {businessDate(revision.occurredAt)}
+                        </span>
+                        <strong>{revision.summary}</strong>
+                      </Link>
+                      <Link
+                        className="workspace-record-open"
+                        href={withExplorationReturn(
+                          explorationWorkspaceHref(
+                            nicheId,
+                            "outreach",
+                            `/${activity.id}`,
+                          ),
+                          hrefWith({ selected: activity.id }),
+                        )}
+                        aria-label="Open outreach record"
+                      >
+                        <ArrowUpRight aria-hidden="true" />
+                      </Link>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="workspace-empty-line">No outreach activity yet.</p>
+            )
+          ) : workspace.followUps.length ? (
+            <div className="workspace-record-list">
               {workspace.followUps.map((followUp) => {
                 const source = followUp.interaction?.revisions[0];
+                const sourceHref = followUp.interactionId
+                  ? explorationWorkspaceHref(
+                      nicheId,
+                      "outreach",
+                      `/${followUp.interactionId}`,
+                    )
+                  : followUp.offerId
+                    ? explorationWorkspaceHref(
+                        nicheId,
+                        "offers",
+                        `/${followUp.offerId}`,
+                      )
+                    : followUp.companyId
+                      ? explorationWorkspaceHref(
+                          nicheId,
+                          "audience",
+                          `/businesses/${followUp.companyId}`,
+                        )
+                      : null;
+                const sourceLabel =
+                  source?.summary ??
+                  followUp.offer?.revisions[0]?.title ??
+                  followUp.company?.name ??
+                  "Related record";
                 return (
-                  <li key={followUp.id}>
-                    <span aria-hidden="true" />
-                    <div>
-                      <strong>{followUp.title}</strong>
-                      <p>{source?.summary ?? "Related outreach"}</p>
-                    </div>
-                    {followUp.dueOn && (
-                      <time dateTime={followUp.dueOn.toISOString()}>
-                        {businessDate(followUp.dueOn)}
-                      </time>
+                  <div
+                    className="outreach-follow-up"
+                    key={followUp.id}
+                    data-follow-up-id={followUp.id}
+                  >
+                    <FollowUpRecord record={followUp} />
+                    {sourceHref && (
+                      <Link
+                        className="workspace-inline-action"
+                        href={withExplorationReturn(sourceHref, hrefWith({}))}
+                      >
+                        {sourceLabel} <ArrowUpRight aria-hidden="true" />
+                      </Link>
                     )}
-                  </li>
+                  </div>
                 );
               })}
-            </ol>
+            </div>
           ) : (
-            <p className="exploration-inline-empty">
-              Nothing is waiting for a follow-up.
+            <p className="workspace-empty-line">
+              Nothing is waiting for follow-up.
             </p>
+          )}
+          {((view === "activity" && workspace.next) ||
+            (view === "follow-ups" && workspace.followUpNext)) && (
+            <Link
+              className="workspace-pagination"
+              href={hrefWith({
+                cursor:
+                  view === "activity"
+                    ? (workspace.next ?? undefined)
+                    : (workspace.followUpNext ?? undefined),
+              })}
+            >
+              More {view === "activity" ? "activity" : "follow-ups"}
+              <ArrowRight aria-hidden="true" />
+            </Link>
           )}
         </section>
 
-        <section className="exploration-stage-section">
-          <header>
-            <div>
-              <p className="eyebrow">What happened</p>
-              <h3>Contact activity</h3>
+        {selected ? (
+          <aside className="workspace-inspector outreach-inspector">
+            <header className="workspace-inspector-heading">
+              <div>
+                <p className="eyebrow">
+                  {humanize(selected.revisions[0].kind)}
+                </p>
+                <h3>{selected.revisions[0].summary}</h3>
+              </div>
+              <Link
+                className="business-icon-button"
+                href={hrefWith({ selected: undefined })}
+                scroll={false}
+                aria-label="Close details"
+              >
+                <X aria-hidden="true" />
+              </Link>
+            </header>
+            <div className="workspace-inspector-body">
+              <p>{selected.revisions[0].notes || "No additional notes."}</p>
+              <dl className="workspace-inspector-facts">
+                <div>
+                  <dt>Channel</dt>
+                  <dd>{humanize(selected.revisions[0].channel)}</dd>
+                </div>
+                <div>
+                  <dt>Date</dt>
+                  <dd>{businessDate(selected.revisions[0].occurredAt)}</dd>
+                </div>
+              </dl>
+              {selected.conversation ? (
+                <Link
+                  className="workspace-inline-action"
+                  href={explorationWorkspaceHref(
+                    nicheId,
+                    "conversations",
+                    `/${selected.conversation.conversationId}`,
+                  )}
+                >
+                  <MessageSquareText aria-hidden="true" /> Open conversation
+                </Link>
+              ) : selected.revisions[0].kind === "REPLY_RECEIVED" ? (
+                <Link
+                  className="workspace-inline-action"
+                  href={`${explorationWorkspaceHref(nicheId, "conversations")}?linkedInteractionId=${encodeURIComponent(selected.id)}`}
+                >
+                  <Mail aria-hidden="true" /> Start conversation
+                </Link>
+              ) : null}
             </div>
-            <Send aria-hidden="true" />
-          </header>
-          {workspace.activity.length > 0 ? (
-            <ol className="exploration-timeline">
-              {workspace.activity.map((activity) => {
-                const revision = activity.revisions[0];
+            <Link
+              className="workspace-inspector-primary"
+              href={withExplorationReturn(
+                explorationWorkspaceHref(
+                  nicheId,
+                  "outreach",
+                  `/${selected.id}`,
+                ),
+                hrefWith({ selected: selected.id }),
+              )}
+            >
+              Open full record <ArrowRight aria-hidden="true" />
+            </Link>
+          </aside>
+        ) : targets.length > 0 ? (
+          <aside className="outreach-targets">
+            <header className="workspace-collection-heading">
+              <div>
+                <p className="eyebrow">Reach next</p>
+                <h3>Targets</h3>
+              </div>
+              <span>{targets.length}</span>
+            </header>
+            <div className="outreach-target-list">
+              {targets.slice(0, 12).map((target) => {
+                const Icon = target.icon;
+                const revision = target.latest?.revisions[0];
                 return (
-                  <li key={activity.id}>
-                    <span aria-hidden="true" />
+                  <article key={`${target.kind}-${target.id}`}>
+                    <Icon aria-hidden="true" />
                     <div>
-                      <strong>{humanize(revision.kind)}</strong>
-                      <p>{revision.summary}</p>
-                      <small>{humanize(revision.channel)}</small>
+                      <strong>{target.name}</strong>
+                      <small>{target.detail}</small>
                     </div>
-                    <div className="exploration-timeline-action">
-                      <time dateTime={revision.occurredAt.toISOString()}>
-                        {businessDate(revision.occurredAt)}
-                      </time>
-                      {activity.conversation ? (
-                        <Link
-                          href={explorationHref(
-                            nicheId,
-                            `/learn/conversations/${activity.conversation.conversationId}`,
-                          )}
-                        >
-                          <MessageSquareText aria-hidden="true" /> Open
-                          conversation
-                        </Link>
-                      ) : revision.kind === "REPLY_RECEIVED" ? (
-                        <Link
-                          href={`${explorationHref(nicheId, "/learn/conversations")}?linkedInteractionId=${encodeURIComponent(activity.id)}`}
-                        >
-                          <Mail aria-hidden="true" /> Start conversation
-                        </Link>
-                      ) : null}
-                    </div>
-                  </li>
+                    <span>
+                      {revision ? businessDate(revision.occurredAt) : "New"}
+                    </span>
+                  </article>
                 );
               })}
-            </ol>
-          ) : (
-            <p className="exploration-inline-empty">
-              No outreach activity has been recorded.
-            </p>
-          )}
-        </section>
+            </div>
+            <Link
+              className="workspace-inline-action"
+              href={explorationWorkspaceHref(nicheId, "audience")}
+            >
+              Manage audience <ArrowRight aria-hidden="true" />
+            </Link>
+          </aside>
+        ) : null}
       </div>
     </div>
   );

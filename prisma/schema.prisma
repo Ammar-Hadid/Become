@@ -46,6 +46,9 @@ enum TechnologyCategory {
 }
 
 model User {
+  nexoSettings NexoSettings?
+  nexoSettingsRevisions NexoSettingsRevision[]
+  nexoRuns NexoRun[]
   interviewGuides             InterviewGuide[]
   conversationMessages        ConversationMessage[]
   explorationClaims           ExplorationClaim[]
@@ -200,6 +203,7 @@ model ExplorationClaim {
 }
 
 model ExplorationClaimRevision {
+  sourceManifest Json?
   id               String                     @id @default(cuid())
   userId           String
   nicheId          String
@@ -259,6 +263,8 @@ model ExplorationUncertainty {
 }
 
 model ExplorationUncertaintyRevision {
+  kind String @default("QUESTION")
+  sourceManifest Json?
   id               String                           @id @default(cuid())
   userId           String
   nicheId          String
@@ -279,6 +285,7 @@ model ExplorationUncertaintyRevision {
 }
 
 model ExplorationSnapshotEdition {
+  synthesis Json?
   id             String                           @id @default(cuid())
   userId         String
   nicheId        String
@@ -2621,4 +2628,50 @@ model OfferEngagement {
   @@unique([id, offerId, userId])
   @@index([userId, offerId, createdAt])
   @@map("offer_engagement")
+}
+
+
+// Utility intelligence is user-scoped; proposals never mutate a domain until accepted.
+model NexoSettings {
+  userId String @id
+  version Int @default(1)
+  config Json
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("nexo_settings")
+}
+
+model NexoSettingsRevision {
+  userId String
+  version Int
+  config Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, version])
+  @@map("nexo_settings_revision")
+}
+
+model NexoRun {
+  id String @id @default(cuid())
+  userId String
+  operationKey String
+  taskId String
+  taskVersion Int @default(1)
+  scopeId String
+  promptVersion String
+  configSnapshot Json
+  inputFingerprint String
+  input Json
+  status String @default("PENDING")
+  output Json?
+  usage Json?
+  error String?
+  resultId String?
+  acceptedPayloadHash String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, operationKey])
+  @@index([userId, taskId, scopeId, createdAt, id])
+  @@map("nexo_run")
 }

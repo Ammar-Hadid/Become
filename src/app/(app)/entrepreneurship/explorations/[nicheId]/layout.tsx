@@ -6,7 +6,6 @@ import {
   getExplorationShell,
 } from "@/features/entrepreneurship/explorations/queries/exploration.query";
 import { ExplorationProvider } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
-import { ExplorationNavigation } from "@/features/entrepreneurship/explorations/components/exploration-navigation.component";
 import {
   ExplorationDirectionForm,
   ExplorationTimer,
@@ -14,7 +13,6 @@ import {
 import { MarketForm } from "@/features/entrepreneurship/market/components/market-form.component";
 import { MarketMenu } from "@/features/entrepreneurship/market/components/market-menu.component";
 import { ExplorationHeader } from "@/features/entrepreneurship/explorations/components/exploration-header.component";
-import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 
 async function ExplorationDirectionAction({
   userId,
@@ -63,12 +61,6 @@ export default async function Layout({
         scope={niche.scope}
         direction={niche.direction}
         archived={Boolean(niche.archivedAt)}
-        audienceSummary={
-          <ExplorationDirectionSummary
-            marketFocus={niche.marketFocus}
-            marketConclusion={niche.marketConclusion}
-          />
-        }
         actions={
           <>
             {!niche.archivedAt && (
@@ -104,8 +96,7 @@ export default async function Layout({
         </p>
       )}
       <div className="exploration-workspace">
-        <ExplorationNavigation nicheId={niche.id} />
-        <main className="exploration-workspace-main">{children}</main>
+        <div className="exploration-workspace-main">{children}</div>
       </div>
     </ExplorationProvider>
   );

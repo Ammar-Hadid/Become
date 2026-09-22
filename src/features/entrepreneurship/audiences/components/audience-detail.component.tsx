@@ -1,4 +1,5 @@
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import {
   AudienceForm,
   AudienceMenu,
@@ -13,20 +14,23 @@ export function AudienceDetail({
   data,
   kind,
   nicheId,
+  returnTo,
 }: {
   data: NonNullable<Awaited<ReturnType<typeof getAudienceDetail>>>;
   kind: "person" | "segment";
   nicheId?: string;
+  returnTo?: string;
 }) {
   const { record } = data;
   return (
     <>
-      <Link
+      <BusinessBackLink
         className="business-back"
-        href={`/entrepreneurship/audience${kind === "person" ? "?kind=person" : ""}`}
+        returnTo={returnTo}
+        fallbackHref={`/entrepreneurship/audience${kind === "person" ? "?kind=person" : ""}`}
       >
         ← {kind === "segment" ? "Segments" : "People"}
-      </Link>
+      </BusinessBackLink>
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">

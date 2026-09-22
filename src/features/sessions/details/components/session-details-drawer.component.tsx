@@ -15,6 +15,7 @@ type SessionDetailsDrawerProps = {
   session: SessionListItem;
   open: boolean;
   presenceState: MotionPresenceState;
+  exiting: boolean;
   onPresenceAnimationEnd: (event: AnimationEvent<HTMLElement>) => void;
   onClose: () => void;
   children?: React.ReactNode;
@@ -24,6 +25,7 @@ export function SessionDetailsDrawer({
   session,
   open,
   presenceState,
+  exiting,
   onPresenceAnimationEnd,
   onClose,
   children,
@@ -53,6 +55,7 @@ export function SessionDetailsDrawer({
       className="session-details-backdrop"
       data-state={presenceState}
       aria-hidden={!open}
+      inert={exiting}
       onAnimationEnd={onPresenceAnimationEnd}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -64,6 +67,7 @@ export function SessionDetailsDrawer({
         className="session-details-drawer"
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-labelledby={titleId}
         data-testid="session-details"
       >

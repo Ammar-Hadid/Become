@@ -38,11 +38,13 @@ const EVIDENCE_TYPE_ICONS: Record<
 
 export function EngineeringEvidenceRecord({
   item,
+  arrivedFromNavigation = false,
 }: {
   item: EngineeringEvidenceListItem;
+  arrivedFromNavigation?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [arrived, setArrived] = useState(false);
+  const [arrived, setArrived] = useState(arrivedFromNavigation);
   const occurredAt = DateTime.fromISO(item.occurredAt).setZone(APP_TIMEZONE);
   const Icon = EVIDENCE_TYPE_ICONS[item.type];
   const detailsId = `evidence-details-${item.id}`;
@@ -50,10 +52,16 @@ export function EngineeringEvidenceRecord({
   const sessionLabel = item.session?.description || item.session?.activityName;
 
   useEffect(() => {
-    if (!consumeEngineeringEvidenceArrival(item.title)) return;
+    const arrivedFromTimer = consumeEngineeringEvidenceArrival(item.id);
+    if (!arrivedFromNavigation && !arrivedFromTimer) return;
+    if (arrivedFromNavigation) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("created");
+      window.history.replaceState(window.history.state, "", url);
+    }
     const frame = window.requestAnimationFrame(() => setArrived(true));
     return () => window.cancelAnimationFrame(frame);
-  }, [item.title]);
+  }, [arrivedFromNavigation, item.id]);
 
   return (
     <li data-motion-arrival={arrived ? "new" : undefined}>

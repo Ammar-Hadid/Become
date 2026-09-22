@@ -4,7 +4,12 @@ export const EXPLORATION_KNOWLEDGE_LANES = [
   "CROSS_MARKET",
 ] as const;
 
-export const EXPLORATION_CLAIM_KINDS = ["OBSERVED", "INTERPRETATION"] as const;
+export const EXPLORATION_CLAIM_KINDS = [
+  "OBSERVED",
+  "INTERPRETATION",
+  "DECISION",
+  "CONTRADICTION",
+] as const;
 
 export const EXPLORATION_CITATION_STANCES = [
   "SUPPORTS",

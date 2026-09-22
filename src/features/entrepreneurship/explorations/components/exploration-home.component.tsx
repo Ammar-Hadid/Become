@@ -4,7 +4,7 @@ import { PastExplorations } from "@/features/entrepreneurship/explorations/compo
 import { getExplorations } from "@/features/entrepreneurship/explorations/queries/exploration.query";
 import {
   currentExplorations,
-  explorationHref,
+  explorationWorkspaceHref,
 } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { StartExplorationForm } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
@@ -32,7 +32,7 @@ export async function ExplorationHome({ userId }: { userId: string }) {
           {current ? (
             <>
               <h2>
-                <Link href={explorationHref(current.id)}>
+                <Link href={explorationWorkspaceHref(current.id, "overview")}>
                   {current.name}
                   <ArrowUpRight aria-hidden="true" />
                 </Link>
@@ -48,7 +48,7 @@ export async function ExplorationHome({ userId }: { userId: string }) {
                 />
               </p>
               <Link
-                href={explorationHref(current.id)}
+                href={explorationWorkspaceHref(current.id, "overview")}
                 className="exploration-continue"
               >
                 Continue exploring <ArrowUpRight aria-hidden="true" />
@@ -132,7 +132,7 @@ export async function ExplorationHome({ userId }: { userId: string }) {
             {alsoActive.map((n) => (
               <Link
                 key={n.id}
-                href={explorationHref(n.id)}
+                href={explorationWorkspaceHref(n.id, "overview")}
                 className="exploration-active-card"
               >
                 <div className="exploration-active-title">
@@ -165,7 +165,7 @@ export async function ExplorationHome({ userId }: { userId: string }) {
             exploration.createdAt;
           return {
             id: exploration.id,
-            href: explorationHref(exploration.id),
+            href: explorationWorkspaceHref(exploration.id, "overview"),
             name: exploration.name,
             scope: exploration.scope ?? "",
             evidenceEntries: exploration.summary.evidenceEntries,

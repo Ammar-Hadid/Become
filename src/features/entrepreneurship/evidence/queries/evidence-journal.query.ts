@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { audienceInclude } from "@/features/entrepreneurship/audiences/utils/audience.util";
+import { collectionSearch } from "@/features/entrepreneurship/shared/utils/collection-cursor.util";
 export type EvidenceScope = {
   nicheId?: string;
   personId?: string;
@@ -9,6 +10,8 @@ export type EvidenceScope = {
   marketType?: string;
   sourceKind?: string;
   cursor?: string;
+  q?: string;
+  expandedInteractionId?: string;
 };
 export function evidenceScopeSql(
   scope: EvidenceScope,
@@ -49,29 +52,37 @@ async function readEvidenceJournal(
     } catch {
       /* An invalid cursor starts a fresh owned page. */
     }
+  const search = collectionSearch(scope.q);
   const rows = await db.$queryRaw<
     { id: string; type: "INTERACTION" | "OBSERVATION"; date: Date }[]
   >(Prisma.sql`
  WITH entries AS (
   SELECT i.id,'INTERACTION'::text AS type,r."occurredAt" AS date FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version
-  WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r.kind='CONVERSATION' AND ((TRUE ${evidenceScopeSql(scope, "r", true)}) OR EXISTS(
+  WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r.kind='CONVERSATION' ${search ? Prisma.sql`AND (concat_ws(' ',r.summary,r.notes,r."personSnapshot",r."companySnapshot") ILIKE ${search} OR EXISTS(SELECT 1 FROM observation so JOIN observation_revision sr ON sr."observationId"=so.id AND sr.version=so.version AND sr."userId"=so."userId" WHERE so."userId"=${userId} AND so."voidedAt" IS NULL AND sr."interactionId"=i.id ${evidenceScopeSql(scope, "sr")} AND concat_ws(' ',sr.statement,sr."sourceDescription",sr."personSnapshot",sr."companySnapshot") ILIKE ${search}))` : Prisma.empty} AND ((TRUE ${evidenceScopeSql(scope, "r", true)}) OR EXISTS(
    SELECT 1 FROM observation so JOIN observation_revision sr ON sr."observationId"=so.id AND sr.version=so.version AND sr."userId"=so."userId" WHERE so."userId"=${userId} AND so."voidedAt" IS NULL AND sr."interactionId"=i.id ${evidenceScopeSql(scope, "sr")}
   )) ${scope.sourceKind && scope.sourceKind !== "INTERACTION" ? Prisma.sql`AND FALSE` : Prisma.empty}
   UNION ALL
   SELECT o.id,'OBSERVATION'::text,r."observedAt" FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r."userId"=o."userId" AND r.version=o.version
-  WHERE o."userId"=${userId} AND o."voidedAt" IS NULL ${evidenceScopeSql(scope)}
+  WHERE o."userId"=${userId} AND o."voidedAt" IS NULL ${evidenceScopeSql(scope)} ${search ? Prisma.sql`AND concat_ws(' ',r.statement,r."sourceDescription",r."personSnapshot",r."companySnapshot") ILIKE ${search}` : Prisma.empty}
   ${scope.sourceKind === "INTERACTION" ? Prisma.sql`AND FALSE` : scope.sourceKind === "OBSERVATION" ? Prisma.empty : scope.sourceKind ? Prisma.sql`AND r."sourceKind"=${scope.sourceKind}` : Prisma.sql`AND r."interactionId" IS NULL`}
  ) SELECT * FROM entries ${cursor ? Prisma.sql`WHERE (date,type,id)<(${cursor.date},${cursor.type},${cursor.id})` : Prisma.empty} ORDER BY date DESC,type DESC,id DESC LIMIT 26`);
   const page = rows.slice(0, 25),
     interactionIds = page
       .filter((r) => r.type === "INTERACTION")
       .map((r) => r.id);
-  const children = interactionIds.length
-    ? await db.$queryRaw<
-        { id: string; interactionId: string; total: number }[]
-      >(Prisma.sql`
-  SELECT id,"interactionId",total FROM (SELECT o.id,r."interactionId",COUNT(*) OVER(PARTITION BY r."interactionId")::int AS total,ROW_NUMBER() OVER(PARTITION BY r."interactionId" ORDER BY (TRUE ${evidenceScopeSql(scope)}) DESC,r."observedAt" DESC,o.id DESC) AS rank FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version AND r."userId"=o."userId" WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."interactionId" IN (${Prisma.join(interactionIds)})) ranked WHERE rank<=30`)
+  const childCounts = interactionIds.length
+    ? await db.$queryRaw<{ interactionId: string; total: number }[]>(
+        Prisma.sql`SELECT r."interactionId",COUNT(*)::int AS total FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version AND r."userId"=o."userId" WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."interactionId" IN (${Prisma.join(interactionIds)}) GROUP BY r."interactionId"`,
+      )
     : [];
+  const children =
+    scope.expandedInteractionId &&
+    interactionIds.includes(scope.expandedInteractionId)
+      ? await db.$queryRaw<
+          { id: string; interactionId: string; total: number }[]
+        >(Prisma.sql`
+  SELECT id,"interactionId",total FROM (SELECT o.id,r."interactionId",COUNT(*) OVER(PARTITION BY r."interactionId")::int AS total,ROW_NUMBER() OVER(PARTITION BY r."interactionId" ORDER BY (TRUE ${evidenceScopeSql(scope)}) DESC,r."observedAt" DESC,o.id DESC) AS rank FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version AND r."userId"=o."userId" WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."interactionId" IN (${Prisma.join(interactionIds)})) ranked WHERE rank<=CASE WHEN "interactionId"=${scope.expandedInteractionId ?? ""} THEN 25 ELSE 0 END`)
+      : [];
   const [interactions, observations] = await Promise.all([
     db.interaction.findMany({
       where: { userId, id: { in: interactionIds } },
@@ -143,7 +154,7 @@ async function readEvidenceJournal(
       observations: nested,
       omittedObservations: Math.max(
         0,
-        (children.find((c) => c.interactionId === row.id)?.total ?? 0) -
+        (childCounts.find((c) => c.interactionId === row.id)?.total ?? 0) -
           nested.length,
       ),
       revisionId: record.id,

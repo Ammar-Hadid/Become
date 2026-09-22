@@ -3,7 +3,6 @@
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
 
 const preludeLines = [
   "What came before has taken its shape.",
@@ -11,7 +10,8 @@ const preludeLines = [
   "Choose what enters them.",
 ] as const;
 
-const PRELUDE_BEAT_MS = MOTION_DURATION_MS.signature * 8;
+// Reading cadence is semantic ceremony time, independent of visual motion tokens.
+const PRELUDE_READING_BEAT_MS = 5_200;
 
 export function SeasonOpeningPrelude({
   seasonLabel,
@@ -29,7 +29,7 @@ export function SeasonOpeningPrelude({
       if (reducedMotion.matches) return;
       if (lineIndex === preludeLines.length - 1) onContinue();
       else setLineIndex((current) => current + 1);
-    }, PRELUDE_BEAT_MS);
+    }, PRELUDE_READING_BEAT_MS);
     return () => window.clearTimeout(timer);
   }, [lineIndex, onContinue]);
 

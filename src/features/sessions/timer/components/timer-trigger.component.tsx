@@ -29,7 +29,7 @@ export function TimerTrigger({ compact = false }: { compact?: boolean }) {
           window.dispatchEvent(new Event("become:manage-timer"));
         }}
         className={cn(
-          "duration-fast ease-move focus-visible:outline-primary flex items-center rounded-full border text-left transition-[color,border-color,background-color,transform] focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-px active:scale-[0.99] motion-reduce:transform-none",
+          "become-button duration-control ease-move focus-visible:outline-primary flex items-center rounded-full border text-left transition-[color,border-color,background-color,transform] focus-visible:outline-2 focus-visible:outline-offset-2",
           paused
             ? "border-border bg-surface-elevated hover:border-primary/40"
             : "border-primary/30 bg-primary-subtle hover:border-primary/60",

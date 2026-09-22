@@ -29,6 +29,7 @@ import {
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 
 export function ProblemForm({
   niches,
@@ -173,9 +174,11 @@ export function ReceiptEvidenceForm({
 export function LinkEvidenceForm({
   problemId,
   observations,
+  nicheId,
 }: {
   problemId: string;
   observations: { id: string; revisionId: string; name: string }[];
+  nicheId?: string;
 }) {
   const exploration = useExploration();
   if (exploration?.archived) return null;
@@ -192,17 +195,16 @@ export function LinkEvidenceForm({
         submitLabel="Link source"
       >
         <CaptureKey />
-        <BusinessSelect label="Observation" name="observation" required>
-          <option value="">Choose a recorded observation</option>
-          {observations.map((observation) => (
-            <option
-              key={observation.id}
-              value={`${observation.id}:${observation.revisionId}`}
-            >
-              {observation.name}
-            </option>
-          ))}
-        </BusinessSelect>
+        <BusinessRecordPicker
+          kind="observation"
+          label="Observation"
+          name="observation"
+          nicheId={nicheId}
+          options={observations}
+          placeholder="Choose a recorded observation"
+          includeRevision
+          required
+        />
         <EvidenceInterpretationFields />
       </RecordForm>
     </RecordDialog>
@@ -327,18 +329,16 @@ export function ObservationFields({
           />
         )}
         {source === "INTERACTION" && (
-          <BusinessSelect
+          <BusinessRecordPicker
+            kind="interaction"
             label="Source interaction"
             name="interaction"
+            nicheId={exploration?.id}
+            options={interactions}
+            placeholder="Choose the interaction"
+            includeRevision
             required
-          >
-            <option value="">Choose the interaction</option>
-            {interactions.map((item) => (
-              <option key={item.id} value={`${item.id}:${item.revisionId}`}>
-                {item.name}
-              </option>
-            ))}
-          </BusinessSelect>
+          />
         )}
         {source === "INTERACTION" && (
           <details className="business-disclosure">

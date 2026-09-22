@@ -252,7 +252,9 @@ describe.skipIf(!enabled)("Entrepreneurship investigation workspace", () => {
       ],
     });
 
-    const workspace = await getConversationWorkspace(userId, conversation.id);
+    const latestOnly = await getConversationWorkspace(userId, conversation.id);
+    expect(latestOnly!.conversationMessages[1].revisions).toHaveLength(1);
+    const workspace = await getConversationWorkspace(userId, conversation.id, undefined, { history: true });
     expect(workspace).toMatchObject({
       status: "COMPLETED",
       historicalSummaryOnly: false,

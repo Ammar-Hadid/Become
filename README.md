@@ -40,7 +40,17 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-COTS discovery uses category-specific external sources; credentialed adapters require setup. AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
+COTS discovery uses category-specific external sources; credentialed adapters require setup. Nexo supports explicit, reviewed Entrepreneurship synthesis; COTS AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
+
+## Entrepreneurship and Nexo
+
+Explorations have seven direct workspaces: Overview, So Far We Know, Audience, Outreach, Conversations, Evidence, and Offers. Searchable collections preserve context while inspecting records. Interview guides support free writing alongside optional structured questions.
+
+Nexo generates a proposed synthesis only when requested. Review and edit it before acceptance; accepted editions preserve their source context. Later material changes recommend a refresh without automatically generating or rewriting anything. Non-AI discovery work remains available without model configuration.
+
+To enable generation, set `OPENAI_API_KEY` on the server, restart the development server, then create and assign a synthesis model profile under **Settings → Nexo**. Provider/model options, output/time limits, and the daily run limit are editable there. Never use a `NEXT_PUBLIC` credential. Apply committed migrations with `pnpm db:deploy` before starting the updated application.
+
+See [experience and research](docs/design/ENTREPRENEURSHIP_EXPERIENCE.md), [Nexo architecture](docs/decisions/NEXO_SYNTHESIS.md), and the canonical [motion system](docs/design/MOTION_SYSTEM.md).
 
 ## Content, Ideas and Decisions
 

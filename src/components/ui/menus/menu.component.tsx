@@ -23,6 +23,7 @@ export const Menu = forwardRef<
       role="menu"
       aria-label={label}
       aria-hidden={!open}
+      inert={!open}
     >
       {children}
     </div>

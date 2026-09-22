@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Landmark } from "lucide-react";
 import { ViewTransition } from "react";
+import { SettingsNavigation } from "@/features/settings/components/settings-navigation.component";
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,19 +9,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="settings-shell-layout">
-        <nav aria-label="Settings sections" className="settings-navigation">
-          <p>Areas</p>
-          <Link
-            href="/settings/finance"
-            aria-current="location"
-            className="settings-navigation-link"
-          >
-            <Landmark aria-hidden="true" />
-            <span>
-              <strong>Finance</strong>
-            </span>
-          </Link>
-        </nav>
+        <SettingsNavigation />
         <ViewTransition
           name="settings-content"
           share="motion-data-recompose"

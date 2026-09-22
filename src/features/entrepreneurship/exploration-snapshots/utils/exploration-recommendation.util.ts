@@ -11,7 +11,7 @@ export function recommendExplorationNextMove(
       code: "COMPLETE_FOLLOW_UP",
       stage: "REACH",
       title: "Complete the due follow-up",
-      reason: "A follow-up is due before more new work is added.",
+      reason: "You have a scheduled follow-up that is due.",
       targetId: facts.overdueFollowUpId,
     };
   if (facts.activeConversationId)
@@ -29,7 +29,7 @@ export function recommendExplorationNextMove(
       stage: "SCOPE",
       title: "Define what you are exploring",
       reason:
-        "The exploration needs a clear question or boundary before its records can be interpreted.",
+        "A short question or boundary will help keep related work together.",
       targetId: null,
     };
   if (!facts.targets)
@@ -71,18 +71,18 @@ export function recommendExplorationNextMove(
     return {
       code: "ARTICULATE_PROBLEM",
       stage: "DECIDE",
-      title: "Name the repeated problem",
+      title: "Explore a problem hypothesis",
       reason:
-        "Several observations exist without a problem statement that can be assessed.",
+        "Observations are available to review. Decide whether they suggest a problem worth investigating.",
       targetId: null,
     };
   if (facts.supportedProblemWithoutTestId)
     return {
       code: "START_TEST",
       stage: "TEST",
-      title: "Test the supported problem",
+      title: "Consider an offer test",
       reason:
-        "A problem has supporting evidence but no connected offer or test.",
+        "A problem has evidence marked as supporting it and no connected offer. Review that evidence before choosing a test.",
       targetId: facts.supportedProblemWithoutTestId,
     };
   if (facts.activeTestWithoutOutcomeId)
@@ -90,7 +90,8 @@ export function recommendExplorationNextMove(
       code: "RECORD_TEST_OUTCOME",
       stage: "TEST",
       title: "Record what happened",
-      reason: "An active test has no observable outcome yet.",
+      reason:
+        "An offer has been proposed and no response or outcome is recorded yet.",
       targetId: facts.activeTestWithoutOutcomeId,
     };
   if (facts.snapshotStale)

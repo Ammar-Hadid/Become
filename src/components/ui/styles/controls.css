@@ -7,7 +7,11 @@
   border: 1px solid var(--color-border);
   border-radius: 50%;
   color: var(--color-text-secondary);
-  transition: var(--duration-fast) var(--ease-standard);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .icon-button:hover {
@@ -17,10 +21,16 @@
 }
 
 .icon-button:active {
-  transform: translateY(1px) scale(0.98);
+  transform: translateY(1px) scale(var(--scale-pressed));
+}
+
+.become-button:active {
+  transition-duration: var(--duration-response);
+  transform: translateY(1px) scale(var(--scale-pressed));
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .become-button:active,
   .icon-button:active {
     transform: none;
   }
@@ -45,9 +55,7 @@
   background: var(--color-surface-input);
   color: var(--color-text-primary);
   outline: none;
-  transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+  transition: border-color var(--duration-control) var(--ease-move);
 }
 
 .text-input {
@@ -123,9 +131,7 @@ textarea.text-input--textarea-lg {
   padding: 0 var(--spacing-md);
   color: var(--color-text-primary);
   text-align: left;
-  transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+  transition: border-color var(--duration-control) var(--ease-move);
 }
 
 .select-trigger:hover {

@@ -32,25 +32,13 @@
   padding: 14px var(--spacing-xs);
   text-align: left;
   transition:
-    background var(--duration-fast) var(--ease-standard),
-    padding var(--duration-fast) var(--ease-standard);
+    background var(--duration-control) var(--ease-move),
+    padding var(--duration-control) var(--ease-move);
 }
 
 .session-row[data-motion-arrival="resolved"] {
-  animation: session-record-resolve var(--duration-signature) var(--ease-enter);
-}
-
-.session-row[data-motion-arrival="resolved"]::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 1px;
-  background: var(--color-primary);
-  content: "";
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: session-record-line var(--duration-emphasis) var(--ease-enter) both;
+  animation: session-record-resolve var(--duration-emphasis)
+    var(--ease-emphasis);
 }
 
 .session-row-link {
@@ -115,12 +103,12 @@
 }
 
 .session-details-backdrop[data-state="open"] {
-  animation: fade-in var(--duration-fast) var(--ease-enter);
+  animation: fade-in var(--duration-content) var(--ease-enter);
 }
 
 .session-details-backdrop[data-state="closed"] {
   pointer-events: none;
-  animation: fade-out var(--duration-standard) var(--ease-exit) both;
+  animation: fade-out var(--duration-content) var(--ease-exit) both;
 }
 
 .session-details-drawer {
@@ -134,11 +122,11 @@
 }
 
 .session-details-backdrop[data-state="open"] .session-details-drawer {
-  animation: drawer-in var(--duration-spatial) var(--ease-enter);
+  animation: drawer-in var(--duration-surface) var(--ease-enter);
 }
 
 .session-details-backdrop[data-state="closed"] .session-details-drawer {
-  animation: drawer-out var(--duration-standard) var(--ease-exit) both;
+  animation: drawer-out var(--duration-content) var(--ease-exit) both;
 }
 
 .session-details-header {
@@ -282,12 +270,12 @@
 }
 
 .dialog-backdrop[data-state="open"] {
-  animation: fade-in var(--duration-fast) var(--ease-enter);
+  animation: fade-in var(--duration-content) var(--ease-enter);
 }
 
 .dialog-backdrop[data-state="closed"] {
   pointer-events: none;
-  animation: fade-out var(--duration-fast) var(--ease-exit) both;
+  animation: fade-out var(--duration-control) var(--ease-exit) both;
 }
 
 .timer-dialog {
@@ -302,11 +290,11 @@
 }
 
 .dialog-backdrop[data-state="open"] .timer-dialog {
-  animation: dialog-in var(--duration-standard) var(--ease-enter);
+  animation: dialog-in var(--duration-surface) var(--ease-enter);
 }
 
 .dialog-backdrop[data-state="closed"] .timer-dialog {
-  animation: dialog-out var(--duration-feedback) var(--ease-exit) both;
+  animation: dialog-out var(--duration-control) var(--ease-exit) both;
 }
 
 .domain-picker {
@@ -328,7 +316,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: var(--duration-fast) var(--ease-standard);
+  transition: var(--duration-control) var(--ease-move);
 }
 
 .domain-choice:hover {
@@ -397,32 +385,32 @@
 @keyframes dialog-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.985);
+    transform: translateY(var(--distance-dialog)) scale(var(--scale-pressed));
   }
 }
 
 @keyframes dialog-out {
   to {
-    transform: translateY(4px) scale(0.99);
+    transform: translateY(var(--distance-control)) scale(var(--scale-pressed));
     opacity: 0;
   }
 }
 
 @keyframes drawer-in {
   from {
-    transform: translateX(24px);
+    transform: translateX(var(--distance-surface));
   }
 }
 
 @keyframes drawer-out {
   to {
-    transform: translateX(18px);
+    transform: translateX(var(--distance-surface));
   }
 }
 
 @keyframes session-resolution-ring {
   to {
-    transform: rotate(120deg) scale(0.2);
+    transform: rotate(120deg);
     opacity: 0;
   }
 }
@@ -430,7 +418,7 @@
 @keyframes session-resolution-settle {
   40% {
     box-shadow: 0 0 0 6px rgba(232, 168, 62, 0.08);
-    transform: scale(0.94);
+    transform: scale(var(--scale-pressed));
   }
 }
 
@@ -438,17 +426,6 @@
   0%,
   35% {
     background: rgba(232, 168, 62, 0.045);
-  }
-}
-
-@keyframes session-record-line {
-  55%,
-  100% {
-    transform: scaleX(1);
-  }
-
-  100% {
-    opacity: 0;
   }
 }
 
@@ -489,7 +466,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   box-shadow: 0 8px 30px #0006;
-  animation: dialog-in var(--duration-standard) var(--ease-enter);
+  animation: dialog-in var(--duration-content) var(--ease-enter);
 }
 .business-completion-note p {
   color: var(--color-text-secondary);

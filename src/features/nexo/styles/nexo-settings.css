@@ -1,0 +1,322 @@
+.nexo-settings-heading {
+  max-width: var(--container-copy);
+  padding-bottom: var(--spacing-2xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nexo-settings-heading h2 {
+  margin-block: var(--spacing-sm);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+  letter-spacing: -0.035em;
+}
+
+.nexo-settings-heading > p:last-child {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.nexo-credential-status {
+  margin-block: var(--spacing-2xl) var(--spacing-4xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.nexo-credential-status summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  list-style: none;
+}
+
+.nexo-credential-status summary::-webkit-details-marker {
+  display: none;
+}
+
+.nexo-credential-status summary > span {
+  display: grid;
+  width: var(--spacing-input-height-sm);
+  height: var(--spacing-input-height-sm);
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: var(--color-warning);
+}
+
+.nexo-credential-status[data-available] summary > span {
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  color: var(--color-success);
+}
+
+.nexo-credential-status svg {
+  width: 1rem;
+}
+
+.nexo-credential-status strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.nexo-credential-status p {
+  padding: 0 var(--spacing-lg) var(--spacing-lg)
+    calc(var(--spacing-lg) + var(--spacing-input-height-sm) + var(--spacing-lg));
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-settings-form {
+  display: grid;
+  gap: var(--spacing-4xl);
+}
+
+.nexo-settings-form > button[type="submit"] {
+  justify-self: start;
+}
+
+.nexo-settings-section {
+  display: grid;
+  gap: var(--spacing-xl);
+  padding-bottom: var(--spacing-4xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nexo-settings-section > header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-2xl);
+}
+
+.nexo-settings-section > header > div {
+  max-width: var(--container-copy);
+}
+
+.nexo-settings-section h3 {
+  margin-block: var(--spacing-xs);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+}
+
+.nexo-settings-section > header p:last-child {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-profile-list {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.nexo-profile-editor {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.nexo-profile-editor > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nexo-profile-editor > header span,
+.nexo-profile-editor > header strong {
+  display: block;
+}
+
+.nexo-profile-editor > header span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-profile-editor > header strong {
+  margin-top: var(--spacing-2xs);
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.nexo-profile-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-profile-remove:hover,
+.nexo-profile-remove:focus-visible {
+  color: var(--color-danger);
+}
+
+.nexo-profile-remove svg {
+  width: 0.875rem;
+}
+
+.nexo-profile-fields,
+.nexo-profile-advanced > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.nexo-profile-editor label,
+.nexo-settings-field {
+  display: grid;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-profile-editor input,
+.nexo-profile-editor select,
+.nexo-settings-field input,
+.nexo-settings-field select {
+  width: 100%;
+  min-height: var(--spacing-input-height-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-input);
+  padding-inline: var(--spacing-md);
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    box-shadow var(--duration-control) var(--ease-move);
+}
+
+.nexo-profile-editor input:focus-visible,
+.nexo-profile-editor select:focus-visible,
+.nexo-settings-field input:focus-visible,
+.nexo-settings-field select:focus-visible {
+  border-color: var(--color-primary);
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--color-primary-muted);
+}
+
+.nexo-profile-editor label small,
+.nexo-settings-field small {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-profile-advanced {
+  border-top: 1px solid var(--color-border);
+}
+
+.nexo-profile-advanced summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3rem;
+  padding-inline: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  cursor: pointer;
+  list-style: none;
+}
+
+.nexo-profile-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.nexo-profile-advanced summary svg {
+  width: 1rem;
+  transition: transform var(--duration-content) var(--ease-move);
+}
+
+.nexo-profile-advanced[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.nexo-profile-advanced > div {
+  padding-top: 0;
+}
+
+.nexo-profile-empty {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spacing-lg);
+  align-items: center;
+  padding: var(--spacing-xl);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-panel);
+}
+
+.nexo-profile-empty > svg {
+  width: 1.25rem;
+  color: var(--color-primary);
+}
+
+.nexo-profile-empty strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.nexo-profile-empty p {
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.nexo-settings-field {
+  width: min(100%, 26rem);
+}
+
+@media (max-width: 700px) {
+  .nexo-settings-heading {
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .nexo-credential-status {
+    margin-block: var(--spacing-xl) var(--spacing-2xl);
+  }
+
+  .nexo-settings-form {
+    gap: var(--spacing-3xl);
+  }
+
+  .nexo-settings-section {
+    gap: var(--spacing-lg);
+    padding-bottom: var(--spacing-3xl);
+  }
+
+  .nexo-settings-section > header,
+  .nexo-profile-empty {
+    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nexo-settings-section > header {
+    flex-direction: column;
+  }
+
+  .nexo-profile-fields,
+  .nexo-profile-advanced > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nexo-profile-empty > svg {
+    display: none;
+  }
+}

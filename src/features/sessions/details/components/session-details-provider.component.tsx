@@ -10,7 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
 import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import { SessionDetailsDrawer } from "@/features/sessions/details/components/session-details-drawer.component";
 import { EngineeringSessionDetails } from "@/features/engineering/sessions/components/engineering-session-details.component";
@@ -187,7 +186,7 @@ function SessionDetailsStage({
   open: boolean;
   onClose: () => void;
 }) {
-  const presence = usePresence(open, MOTION_DURATION_MS.standard);
+  const presence = usePresence(open, "content");
   if (!presence.isPresent || !session) return null;
 
   return (
@@ -195,6 +194,7 @@ function SessionDetailsStage({
       session={session}
       open={open}
       presenceState={presence.presenceState}
+      exiting={presence.isExiting}
       onPresenceAnimationEnd={presence.onPresenceAnimationEnd}
       onClose={onClose}
     >

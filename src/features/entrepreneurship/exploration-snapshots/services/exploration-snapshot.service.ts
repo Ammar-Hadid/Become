@@ -1,3 +1,9 @@
+import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import {
+  readSelectedSynthesisSources,
+  readSynthesisContext,
+} from "@/features/entrepreneurship/synthesis/queries/synthesis-context.query";
+import { nexoJson } from "@/features/nexo/utils/nexo-json.util";
 import type { Prisma } from "@/generated/prisma/client";
 import { captureOnce } from "@/features/entrepreneurship/shared/services/capture.service";
 import { BusinessError } from "@/features/entrepreneurship/shared/types/business.types";
@@ -12,6 +18,19 @@ import { readExplorationSnapshotFacts } from "@/features/entrepreneurship/explor
 import type { z } from "zod";
 
 type ClaimInput = z.output<typeof explorationClaimSchema>;
+
+function prismaForCorrection(userId: string, claimId: string) {
+  return prisma.explorationClaim.findFirst({
+    where: { id: claimId, userId, archivedAt: null },
+    include: {
+      revisions: {
+        orderBy: { version: "desc" },
+        take: 1,
+        include: { citations: true },
+      },
+    },
+  });
+}
 
 async function requireActiveExploration(
   tx: Prisma.TransactionClient,
@@ -30,6 +49,7 @@ async function validatedCitations(
   userId: string,
   nicheId: string,
   citations: ClaimInput["citations"],
+  refreshSources = false,
 ) {
   const unique = new Set(citations.map((item) => item.observationId));
   if (unique.size !== citations.length)
@@ -45,9 +65,8 @@ async function validatedCitations(
     },
     include: {
       revisions: {
-        where: {
-          id: { in: citations.map((item) => item.observationRevisionId) },
-        },
+        orderBy: { version: "desc" },
+        take: 1,
       },
     },
   });
@@ -55,12 +74,11 @@ async function validatedCitations(
     const observation = observations.find(
       (candidate) => candidate.id === citation.observationId,
     );
-    const revision = observation?.revisions.find(
-      (candidate) => candidate.id === citation.observationRevisionId,
-    );
+    const revision = observation?.revisions[0];
     if (
       !observation ||
       !revision ||
+      (!refreshSources && revision.id !== citation.observationRevisionId) ||
       observation.version !== revision.version ||
       revision.nicheId !== nicheId
     )
@@ -74,6 +92,39 @@ async function validatedCitations(
       note: citation.note,
     };
   });
+}
+
+async function validatedSourceManifest(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  nicheId: string,
+  manifest: ClaimInput["sourceManifest"],
+  refreshSources = false,
+) {
+  if (!manifest?.sources.length) return undefined;
+  const sources = await readSelectedSynthesisSources(
+    tx,
+    userId,
+    nicheId,
+    manifest.sources.map((source) => source.key),
+  );
+  if (
+    sources.length !== manifest.sources.length ||
+    (!refreshSources &&
+      sources.some(
+        (source) =>
+          !manifest.sources.some(
+            (reference) =>
+              reference.key === source.key &&
+              reference.revisionId === source.revisionId &&
+              reference.fingerprint === source.fingerprint,
+          ),
+      ))
+  )
+    throw new BusinessError(
+      "A cited source changed. Review the source and refresh the finding before saving.",
+    );
+  return nexoJson({ schemaVersion: 1, origin: "USER", sources });
 }
 
 export async function createExplorationClaim(
@@ -90,6 +141,12 @@ export async function createExplorationClaim(
       data.nicheId,
       data.citations,
     );
+    const sourceManifest = await validatedSourceManifest(
+      tx,
+      userId,
+      data.nicheId,
+      data.sourceManifest,
+    );
     const claim = await tx.explorationClaim.create({
       data: { userId, nicheId: data.nicheId },
     });
@@ -103,6 +160,7 @@ export async function createExplorationClaim(
         kind: data.kind,
         statement: data.statement,
         citations: { create: citations },
+        ...(sourceManifest ? { sourceManifest } : {}),
       },
     });
     return claim.id;
@@ -115,7 +173,32 @@ export async function correctExplorationClaim(
   key: string,
   input: unknown,
 ) {
-  const data = explorationClaimCorrectionSchema.parse(input);
+  const existing = await prismaForCorrection(userId, claimId);
+  const raw =
+    input && typeof input === "object"
+      ? (input as Record<string, unknown>)
+      : {};
+  const priorCitations = existing?.revisions[0]?.citations ?? [];
+  const submittedCitations = Array.isArray(raw.citations) ? raw.citations : [];
+  const replacesSources =
+    submittedCitations.length > 0 &&
+    (submittedCitations.length !== priorCitations.length ||
+      submittedCitations.some(
+        (citation) =>
+          !priorCitations.some(
+            (prior) => prior.observationId === citation?.observationId,
+          ),
+      ));
+  // Editing wording or reconciling the same observations preserves the broader
+  // source trail. Choosing replacement observations deliberately replaces it.
+  const inherited =
+    !raw.sourceManifest && !replacesSources
+      ? existing?.revisions[0]?.sourceManifest
+      : undefined;
+  const data = explorationClaimCorrectionSchema.parse({
+    ...raw,
+    ...(inherited ? { sourceManifest: inherited } : {}),
+  });
   return captureOnce(userId, key, input, async (tx) => {
     const claim = await tx.explorationClaim.findFirst({
       where: { id: claimId, userId, archivedAt: null },
@@ -132,6 +215,14 @@ export async function correctExplorationClaim(
       userId,
       data.nicheId,
       data.citations,
+      data.refreshSources,
+    );
+    const sourceManifest = await validatedSourceManifest(
+      tx,
+      userId,
+      data.nicheId,
+      data.sourceManifest,
+      data.refreshSources,
     );
     await tx.explorationClaimRevision.create({
       data: {
@@ -144,6 +235,7 @@ export async function correctExplorationClaim(
         statement: data.statement,
         correctionReason: data.correctionReason,
         citations: { create: citations },
+        ...(sourceManifest ? { sourceManifest } : {}),
       },
     });
     await tx.explorationClaim.update({
@@ -189,6 +281,13 @@ export async function createExplorationUncertainty(
         userId,
         nicheId: data.nicheId,
         uncertaintyId: uncertainty.id,
+        kind: data.kind,
+        sourceManifest: await validatedSourceManifest(
+          tx,
+          userId,
+          data.nicheId,
+          data.sourceManifest,
+        ),
         version: 1,
         lane: data.lane,
         statement: data.statement,
@@ -204,7 +303,20 @@ export async function correctExplorationUncertainty(
   key: string,
   input: unknown,
 ) {
-  const data = explorationUncertaintyCorrectionSchema.parse(input);
+  const existing = await prisma.explorationUncertainty.findFirst({
+    where: { id: uncertaintyId, userId, archivedAt: null },
+    include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
+  });
+  const raw =
+    input && typeof input === "object"
+      ? (input as Record<string, unknown>)
+      : {};
+  const data = explorationUncertaintyCorrectionSchema.parse({
+    ...raw,
+    kind: raw.kind ?? existing?.revisions[0]?.kind ?? "QUESTION",
+    sourceManifest:
+      raw.sourceManifest ?? existing?.revisions[0]?.sourceManifest ?? undefined,
+  });
   return captureOnce(userId, key, input, async (tx) => {
     const uncertainty = await tx.explorationUncertainty.findFirst({
       where: { id: uncertaintyId, userId, archivedAt: null },
@@ -223,6 +335,14 @@ export async function correctExplorationUncertainty(
         userId,
         nicheId: data.nicheId,
         uncertaintyId,
+        kind: data.kind,
+        sourceManifest: await validatedSourceManifest(
+          tx,
+          userId,
+          data.nicheId,
+          data.sourceManifest,
+          data.refreshSources,
+        ),
         version: uncertainty.version + 1,
         lane: data.lane,
         statement: data.statement,
@@ -272,33 +392,36 @@ export async function publishExplorationSnapshot(
     await requireActiveExploration(tx, userId, data.nicheId);
     const claimIds = [...new Set(data.claimIds)];
     const uncertaintyIds = [...new Set(data.uncertaintyIds)];
-    const [claims, uncertainties, facts, previous] = await Promise.all([
-      tx.explorationClaim.findMany({
-        where: {
-          id: { in: claimIds },
-          userId,
-          nicheId: data.nicheId,
-          archivedAt: null,
-        },
-        include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
-      }),
-      tx.explorationUncertainty.findMany({
-        where: {
-          id: { in: uncertaintyIds },
-          userId,
-          nicheId: data.nicheId,
-          archivedAt: null,
-          resolvedAt: null,
-        },
-        include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
-      }),
-      readExplorationSnapshotFacts(tx, userId, data.nicheId),
-      tx.explorationSnapshotEdition.findFirst({
-        where: { userId, nicheId: data.nicheId },
-        orderBy: [{ number: "desc" }, { id: "desc" }],
-        select: { number: true },
-      }),
-    ]);
+    const [claims, uncertainties, facts, previous, context] = await Promise.all(
+      [
+        tx.explorationClaim.findMany({
+          where: {
+            id: { in: claimIds },
+            userId,
+            nicheId: data.nicheId,
+            archivedAt: null,
+          },
+          include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
+        }),
+        tx.explorationUncertainty.findMany({
+          where: {
+            id: { in: uncertaintyIds },
+            userId,
+            nicheId: data.nicheId,
+            archivedAt: null,
+            resolvedAt: null,
+          },
+          include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
+        }),
+        readExplorationSnapshotFacts(tx, userId, data.nicheId),
+        tx.explorationSnapshotEdition.findFirst({
+          where: { userId, nicheId: data.nicheId },
+          orderBy: [{ number: "desc" }, { id: "desc" }],
+          select: { number: true },
+        }),
+        readSynthesisContext(tx, userId, data.nicheId),
+      ],
+    );
     if (claims.length !== claimIds.length)
       throw new BusinessError("Choose active claims from this exploration.");
     if (uncertainties.length !== uncertaintyIds.length)
@@ -329,6 +452,7 @@ export async function publishExplorationSnapshot(
         coverage: facts.coverage,
         recommendation: facts.recommendation,
         sourceCursor: {
+          baseUnderstandingFingerprint: context.baseUnderstandingFingerprint,
           latestMaterialAt: facts.latestMaterialAt?.toISOString() ?? null,
           claimRevisionIds: orderedClaims.map((claim) => claim.revisions[0].id),
           uncertaintyRevisionIds: orderedUncertainties.map(

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import {
   BusinessField,
   BusinessSelect,
@@ -52,7 +53,10 @@ export function InterviewGuideCreateForm({
         onSaved={(result) => {
           if (result.id)
             router.push(
-              explorationHref(nicheId, `/learn/guides/${result.id}/edit`),
+              explorationHref(
+                nicheId,
+                `/conversations/guides/${result.id}/edit`,
+              ),
             );
         }}
       >
@@ -63,14 +67,14 @@ export function InterviewGuideCreateForm({
           <option value="B2C">Consumers</option>
           <option value="B2B">Businesses</option>
         </BusinessSelect>
-        <BusinessSelect label="Segment · optional" name="segmentId">
-          <option value="">Any relevant segment</option>
-          {segments.map((segment) => (
-            <option key={segment.id} value={segment.id}>
-              {segment.name}
-            </option>
-          ))}
-        </BusinessSelect>
+        <BusinessRecordPicker
+          kind="segment"
+          label="Segment · optional"
+          name="segmentId"
+          nicheId={nicheId}
+          options={segments}
+          placeholder="Any relevant segment"
+        />
         <BusinessField
           label="Expected duration in minutes"
           name="expectedDurationMinutes"
@@ -99,7 +103,7 @@ export function EnsureStarterGuides({ nicheId }: { nicheId: string }) {
         );
         if (result.id)
           router.push(
-            explorationHref(nicheId, `/learn/guides/${result.id}/edit`),
+            explorationHref(nicheId, `/conversations/guides/${result.id}/edit`),
           );
         else router.refresh();
       }}

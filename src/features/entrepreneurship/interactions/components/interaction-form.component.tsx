@@ -32,6 +32,7 @@ import {
   businessToday,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 
 export type InteractionFormValue = AudienceFieldValue & {
   id: string;
@@ -228,27 +229,34 @@ export function CaptureFields({
             multiline
             value={value?.notes}
           />
-          <BusinessSelect
+          <BusinessRecordPicker
+            kind="interaction"
             label="Reply to · optional"
             name="respondsToInteractionId"
-            value={value?.respondsToInteractionId ?? respondsTo ?? ""}
-          >
-            <option value="">No explicit reply link</option>
-            {(value?.respondsToInteractionId ?? respondsTo) &&
+            nicheId={
+              value?.nicheId ??
+              sourceNicheId ??
+              lockExploration ??
+              exploration?.id
+            }
+            options={
+              (value?.respondsToInteractionId ?? respondsTo) &&
               !replies.some(
                 (reply) =>
                   reply.id === (value?.respondsToInteractionId ?? respondsTo),
-              ) && (
-                <option value={value?.respondsToInteractionId ?? respondsTo}>
-                  Previously linked interaction
-                </option>
-              )}
-            {replies.map((reply) => (
-              <option key={reply.id} value={reply.id}>
-                {reply.name}
-              </option>
-            ))}
-          </BusinessSelect>
+              )
+                ? [
+                    {
+                      id: value?.respondsToInteractionId ?? respondsTo ?? "",
+                      name: "Previously linked interaction",
+                    },
+                    ...replies,
+                  ]
+                : replies
+            }
+            placeholder="No explicit reply link"
+            value={value?.respondsToInteractionId ?? respondsTo ?? ""}
+          />
         </div>
       </details>
       {!value && (

@@ -30,7 +30,7 @@
   justify-items: end;
   background: rgb(0 0 0 / 65%);
   padding: var(--spacing-xl);
-  animation: review-evidence-backdrop var(--duration-fast) var(--ease-enter)
+  animation: review-evidence-backdrop var(--duration-content) var(--ease-enter)
     both;
 }
 
@@ -43,18 +43,18 @@
   border-radius: var(--radius-dialog);
   background: var(--color-background);
   overflow: hidden;
-  animation: review-evidence-enter var(--duration-spatial) var(--ease-enter)
+  animation: review-evidence-enter var(--duration-surface) var(--ease-enter)
     both;
 }
 
 .layer[data-state="closed"] {
   pointer-events: none;
-  animation: review-evidence-backdrop var(--duration-fast) var(--ease-exit)
+  animation: review-evidence-backdrop var(--duration-content) var(--ease-exit)
     reverse both;
 }
 .layer[data-state="closed"] .panel {
-  animation: review-evidence-enter var(--duration-fast) var(--ease-exit) reverse
-    both;
+  animation: review-evidence-enter var(--duration-content) var(--ease-exit)
+    reverse both;
 }
 .heading {
   display: flex;

@@ -138,11 +138,8 @@
     transparent 70%
   );
   filter: blur(0.75rem);
-  opacity: 0;
-  transform: translate3d(14vw, -18vh, 0) scale(0.72);
-  animation: season-ritual-grid-glow calc(var(--duration-signature) * 22)
-    var(--ease-move) infinite;
-  will-change: opacity, transform;
+  opacity: 0.24;
+  transform: translate3d(-16vw, 12vh, 0);
 }
 
 .season-opening-exit {
@@ -164,8 +161,8 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .season-opening-exit a:hover,
@@ -233,8 +230,8 @@
   text-wrap: balance;
   transform: translateY(calc(-50% + var(--spacing-md)));
   transition:
-    opacity var(--duration-signature) var(--ease-enter),
-    transform var(--duration-signature) var(--ease-move);
+    opacity var(--duration-content) var(--ease-enter),
+    transform var(--duration-content) var(--ease-move);
 }
 
 .season-opening-prelude-lines p[data-state="current"] {
@@ -271,8 +268,8 @@
   height: 1px;
   background: var(--ritual-line-quiet);
   transition:
-    background var(--duration-standard) var(--ease-enter),
-    width var(--duration-standard) var(--ease-move);
+    background var(--duration-content) var(--ease-enter),
+    width var(--duration-content) var(--ease-move);
 }
 
 .season-opening-prelude-guide i[data-current] {
@@ -396,8 +393,8 @@
   transform: scaleX(0);
   transform-origin: left;
   transition:
-    background var(--duration-standard) var(--ease-enter),
-    transform var(--duration-spatial) var(--ease-move);
+    background var(--duration-content) var(--ease-enter),
+    transform var(--duration-surface) var(--ease-move);
 }
 
 .season-opening-ritual .season-opening-progress button:focus-visible {
@@ -451,7 +448,7 @@
 }
 
 .season-opening-ritual .season-opening-stage {
-  animation: season-ritual-stage-reveal var(--duration-spatial)
+  animation: season-ritual-stage-reveal var(--duration-surface)
     var(--ease-enter) both;
 }
 
@@ -510,9 +507,9 @@
   padding: 0 var(--spacing-md);
   color: var(--color-text-muted);
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    border-color var(--duration-control) var(--ease-enter),
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .season-goal-creator-context input:checked + span {
@@ -646,8 +643,8 @@
   cursor: pointer;
   border-left: 1px solid rgba(232, 168, 62, 0.16);
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    background var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .season-supporting-goal-context-toggle {
@@ -701,13 +698,13 @@
 .season-supporting-goal-note {
   display: grid;
   grid-template-rows: 1fr;
-  animation: season-supporting-goal-note-in var(--duration-standard)
+  animation: season-supporting-goal-note-in var(--duration-content)
     var(--ease-enter) both;
 }
 
 .season-supporting-goal-note[data-state="closed"] {
   pointer-events: none;
-  animation: season-supporting-goal-note-out var(--duration-fast)
+  animation: season-supporting-goal-note-out var(--duration-control)
     var(--ease-exit) both;
 }
 
@@ -791,7 +788,7 @@
 
 .season-opening-reveal-poster {
   position: relative;
-  animation: season-ritual-poster-resolve var(--duration-signature)
+  animation: season-ritual-poster-resolve var(--duration-emphasis)
     var(--ease-enter) both;
 }
 
@@ -1031,33 +1028,6 @@
   from {
     opacity: 0;
     transform: scale(0.985) translateY(var(--spacing-lg));
-  }
-}
-
-@keyframes season-ritual-grid-glow {
-  0%,
-  100% {
-    opacity: 0;
-    transform: translate3d(14vw, -18vh, 0) scale(0.72);
-  }
-
-  12% {
-    opacity: 0.2;
-  }
-
-  45% {
-    opacity: 0.72;
-    transform: translate3d(-16vw, 12vh, 0) scale(1);
-  }
-
-  76% {
-    opacity: 0.38;
-    transform: translate3d(-48vw, 34vh, 0) scale(0.84);
-  }
-
-  90% {
-    opacity: 0;
-    transform: translate3d(-62vw, 42vh, 0) scale(0.68);
   }
 }
 

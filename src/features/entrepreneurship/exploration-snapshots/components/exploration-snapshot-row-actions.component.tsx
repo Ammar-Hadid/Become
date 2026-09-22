@@ -24,9 +24,11 @@ import {
 import {
   readSnapshotCitations,
   SnapshotCitationFields,
+  SnapshotSourceManifest,
   type CitationValue,
   type ObservationChoice,
 } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-snapshot-forms.component";
+import type { SynthesisSource } from "@/features/entrepreneurship/synthesis/schemas/synthesis.schema";
 
 type ClaimActionValue = {
   id: string;
@@ -36,6 +38,7 @@ type ClaimActionValue = {
   kind: string;
   statement: string;
   citations: CitationValue[];
+  sourceManifest: SynthesisSource[];
 };
 
 type UncertaintyActionValue = {
@@ -43,7 +46,9 @@ type UncertaintyActionValue = {
   nicheId: string;
   version: number;
   lane: string;
+  kind: string;
   statement: string;
+  sourceManifest: SynthesisSource[];
 };
 
 function MenuDialog({
@@ -90,21 +95,34 @@ function ClaimCorrection({
   const [citationIds, setCitationIds] = useState(() =>
     claim.citations.length > 0
       ? claim.citations.map((_, index) => `existing-${index}`)
-      : ["new-0"],
+      : claim.sourceManifest.length > 0
+        ? []
+        : ["new-0"],
   );
-  const citations = claim.citations.map((citation) => {
-    const current = observations.find(
-      (observation) => observation.id === citation.observationId,
-    );
-    return current
-      ? { ...citation, observationRevisionId: current.revisionId }
-      : citation;
-  });
+  const citations = claim.citations;
+  const pickerObservations = [
+    ...observations,
+    ...citations.flatMap((citation) =>
+      observations.some(
+        (observation) =>
+          observation.id === citation.observationId &&
+          observation.revisionId === citation.observationRevisionId,
+      )
+        ? []
+        : [
+            {
+              id: citation.observationId,
+              revisionId: citation.observationRevisionId,
+              name: citation.sourceName ?? "Previously linked observation",
+            },
+          ],
+    ),
+  ];
   return (
     <MenuDialog
       label="Correct finding"
       title="Correct this finding"
-      description="The current wording stays in history. State why it changed and keep the corrected version grounded in observations."
+      description="The current wording stays in history. Existing source references remain attached unless you add replacement observations."
       icon={<Pencil aria-hidden="true" />}
     >
       <RecordForm
@@ -119,6 +137,7 @@ function ClaimCorrection({
               kind: String(data.get("kind")),
               statement: String(data.get("statement")),
               correctionReason: String(data.get("correctionReason")),
+              refreshSources: Boolean(data.get("refreshSources")),
               citations: readSnapshotCitations(data, citationIds, "correction"),
             },
           )
@@ -136,6 +155,8 @@ function ClaimCorrection({
         <BusinessSelect label="Finding type" name="kind" value={claim.kind}>
           <option value="OBSERVED">Observed fact</option>
           <option value="INTERPRETATION">Interpretation</option>
+          <option value="DECISION">Decision</option>
+          <option value="CONTRADICTION">Contradiction</option>
         </BusinessSelect>
         <BusinessField
           label="Finding"
@@ -145,11 +166,14 @@ function ClaimCorrection({
           value={claim.statement}
         />
         <SnapshotCitationFields
-          observations={observations}
+          observations={pickerObservations}
           citationIds={citationIds}
           setCitationIds={setCitationIds}
           prefix="correction"
           initial={citations}
+          nicheId={claim.nicheId}
+          existingSources={claim.sourceManifest}
+          allowEmpty={claim.sourceManifest.length > 0}
         />
         <BusinessField
           label="Why is this correction needed?"
@@ -235,8 +259,10 @@ function UncertaintyCorrection({
               nicheId: uncertainty.nicheId,
               expectedVersion: uncertainty.version,
               lane: String(data.get("lane")),
+              kind: String(data.get("kind")),
               statement: String(data.get("statement")),
               correctionReason: String(data.get("correctionReason")),
+              refreshSources: Boolean(data.get("refreshSources")),
             },
           )
         }
@@ -250,12 +276,24 @@ function UncertaintyCorrection({
           <option value="B2B">Businesses</option>
           <option value="CROSS_MARKET">Cross-market</option>
         </BusinessSelect>
+        <BusinessSelect
+          label="Open item type"
+          name="kind"
+          value={uncertainty.kind}
+        >
+          <option value="QUESTION">Question</option>
+          <option value="HYPOTHESIS">Hypothesis</option>
+        </BusinessSelect>
         <BusinessField
           label="What remains uncertain?"
           name="statement"
           multiline
           required
           value={uncertainty.statement}
+        />
+        <SnapshotSourceManifest
+          sources={uncertainty.sourceManifest}
+          refreshable={uncertainty.sourceManifest.length > 0}
         />
         <BusinessField
           label="Why is this correction needed?"

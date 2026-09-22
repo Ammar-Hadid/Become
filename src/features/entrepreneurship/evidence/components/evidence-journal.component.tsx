@@ -6,6 +6,11 @@ import {
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import type { EvidenceScope } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import {
+  explorationWorkspaceHref,
+  withExplorationReturn,
+} from "@/features/entrepreneurship/explorations/utils/exploration.util";
 
 export type EvidenceJournalData = Awaited<
   ReturnType<typeof getEvidenceJournal>
@@ -15,11 +20,28 @@ export function EvidenceJournal({
   data,
   paginationHref,
   mode = "legacy",
+  nicheId,
+  query = {},
 }: {
   data: EvidenceJournalData;
   paginationHref?: string;
   mode?: "legacy" | "sources" | "observations";
+  nicheId?: string;
+  query?: EvidenceScope;
 }) {
+  const collectionQuery = new URLSearchParams();
+  if (query.q) collectionQuery.set("q", query.q);
+  if (query.sourceKind) collectionQuery.set("sourceKind", query.sourceKind);
+  if (query.marketType) collectionQuery.set("marketType", query.marketType);
+  if (query.segmentId) collectionQuery.set("segmentId", query.segmentId);
+  if (query.personId) collectionQuery.set("personId", query.personId);
+  if (query.companyId) collectionQuery.set("companyId", query.companyId);
+  if (query.cursor) collectionQuery.set("cursor", query.cursor);
+  if (query.expandedInteractionId)
+    collectionQuery.set("selected", query.expandedInteractionId);
+  const collectionHref = nicheId
+    ? `${explorationWorkspaceHref(nicheId, "evidence")}${collectionQuery.size ? `?${collectionQuery}` : ""}`
+    : "/entrepreneurship/evidence";
   return (
     <>
       {data.entries.length ? (
@@ -31,7 +53,42 @@ export function EvidenceJournal({
                 : entry.sourceKind === "PUBLIC_SOURCE"
                   ? Globe
                   : Eye;
-            const href = `/entrepreneurship/${entry.type === "INTERACTION" ? "interactions" : "observations"}/${entry.id}`;
+            const legacyHref = `/entrepreneurship/${entry.type === "INTERACTION" ? "interactions" : "observations"}/${entry.id}`;
+            const rawFullHref = nicheId
+              ? entry.type === "INTERACTION"
+                ? explorationWorkspaceHref(
+                    nicheId,
+                    "conversations",
+                    `/${entry.id}`,
+                  )
+                : explorationWorkspaceHref(
+                    nicheId,
+                    "evidence",
+                    `/observations/${entry.id}`,
+                  )
+              : legacyHref;
+            const fullHref = nicheId
+              ? withExplorationReturn(rawFullHref, collectionHref)
+              : rawFullHref;
+            const inspectQuery = new URLSearchParams();
+            if (query.q) inspectQuery.set("q", query.q);
+            if (query.sourceKind)
+              inspectQuery.set("sourceKind", query.sourceKind);
+            if (query.marketType)
+              inspectQuery.set("marketType", query.marketType);
+            if (query.segmentId) inspectQuery.set("segmentId", query.segmentId);
+            if (query.personId) inspectQuery.set("personId", query.personId);
+            if (query.companyId) inspectQuery.set("companyId", query.companyId);
+            if (query.cursor) inspectQuery.set("cursor", query.cursor);
+            if (entry.type === "INTERACTION")
+              inspectQuery.set("selected", entry.id);
+            const expanded =
+              entry.type === "INTERACTION" &&
+              query.expandedInteractionId === entry.id;
+            const inspectHref =
+              nicheId && entry.type === "INTERACTION"
+                ? `${explorationWorkspaceHref(nicheId, "evidence")}?${inspectQuery}`
+                : fullHref;
             return (
               <article
                 key={`${entry.type}-${entry.id}`}
@@ -53,7 +110,13 @@ export function EvidenceJournal({
                       <span>· {humanize(entry.wordingMode)}</span>
                     )}
                   </div>
-                  <Link className="business-journal-title" href={href}>
+                  <Link
+                    className="business-journal-title"
+                    href={inspectHref}
+                    aria-expanded={
+                      entry.type === "INTERACTION" ? expanded : undefined
+                    }
+                  >
                     {entry.title}
                     <ArrowUpRight aria-hidden="true" />
                   </Link>
@@ -105,7 +168,18 @@ export function EvidenceJournal({
                             )}
                             <Link
                               className="business-text-link mt-sm"
-                              href={`/entrepreneurship/observations/${observation.observationId}`}
+                              href={
+                                nicheId
+                                  ? withExplorationReturn(
+                                      explorationWorkspaceHref(
+                                        nicheId,
+                                        "evidence",
+                                        `/observations/${observation.observationId}`,
+                                      ),
+                                      collectionHref,
+                                    )
+                                  : `/entrepreneurship/observations/${observation.observationId}`
+                              }
                             >
                               Read observation{" "}
                               <ArrowUpRight
@@ -121,12 +195,17 @@ export function EvidenceJournal({
                   {entry.omittedObservations > 0 && (
                     <p className="mt-lg text-body-sm text-text-secondary">
                       {entry.omittedObservations} more observations ·{" "}
-                      <Link className="business-text-link" href={href}>
+                      <Link className="business-text-link" href={fullHref}>
                         Open conversation →
                       </Link>
                     </p>
                   )}
                 </div>
+                {expanded && entry.type === "INTERACTION" && (
+                  <Link className="business-journal-full-link" href={fullHref}>
+                    Open full conversation <ArrowUpRight aria-hidden="true" />
+                  </Link>
+                )}
               </article>
             );
           })}

@@ -13,9 +13,10 @@ import {
   saveMarketAction,
   changeDirectionAction,
 } from "@/features/entrepreneurship/market/actions/market.action";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { Button } from "@/components/ui/buttons/button.component";
 import { marketTypeLabel } from "@/features/entrepreneurship/audiences/utils/audience-label.util";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 export function StartExplorationForm() {
   const router = useRouter();
   return (
@@ -30,7 +31,8 @@ export function StartExplorationForm() {
         submitLabel="Start exploring"
         closeOnSuccess
         onSaved={(result) => {
-          if (result.id) router.push(explorationHref(result.id));
+          if (result.id)
+            router.push(explorationWorkspaceHref(result.id, "overview"));
         }}
       >
         <BusinessFormSection
@@ -156,24 +158,25 @@ export function ExplorationDirectionForm({
             value={conclusionScope}
             hint="Which people, setting, and offer does this judgment concern?"
           />
-          {sourceOptions.length > 0 && (
-            <details className="business-disclosure">
-              <summary>Sources behind this conclusion</summary>
-              <div className="business-evidence-choices">
-                {sourceOptions.map((source) => (
-                  <label key={source.id}>
-                    <input
-                      type="checkbox"
-                      name="sourceKeys"
-                      value={source.id}
-                      defaultChecked={initialSourceKeys.includes(source.id)}
-                    />
-                    <span>{source.name}</span>
-                  </label>
-                ))}
-              </div>
-            </details>
-          )}
+          <details className="business-disclosure">
+            <summary>Sources behind this conclusion</summary>
+            <div>
+              <BusinessRecordPicker
+                kind="source"
+                label="Referenced records"
+                name="sourceKeys"
+                nicheId={id}
+                options={sourceOptions}
+                values={initialSourceKeys}
+                multiple
+                placeholder="No sources selected"
+              />
+              <p className="business-hint">
+                Search conversations, observations, and offer events. The
+                versions you choose are captured with this decision.
+              </p>
+            </div>
+          </details>
         </BusinessFormSection>
         <BusinessFormSection
           eyebrow="Decision"

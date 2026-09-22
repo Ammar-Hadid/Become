@@ -28,7 +28,8 @@ import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
-import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 
 const reachKinds = [
   "OUTREACH_SENT",
@@ -40,10 +41,12 @@ export async function ReachActivityDetail({
   userId,
   nicheId,
   activityId,
+  returnTo,
 }: {
   userId: string;
   nicheId: string;
   activityId: string;
+  returnTo?: string;
 }) {
   const [record, options, replies, workspace] = await Promise.all([
     getReachActivityDetail(userId, nicheId, activityId),
@@ -55,9 +58,7 @@ export async function ReachActivityDetail({
   const revision = record.revisions[0];
   const archived = Boolean(workspace.niche.archivedAt);
   const readOnly = archived || Boolean(record.voidedAt);
-  const bridge = workspace.activity.find(
-    (activity) => activity.id === activityId,
-  )?.conversation;
+  const bridge = record.conversation;
   const participants = Array.isArray(revision.participants)
     ? revision.participants.flatMap((participant) => {
         if (
@@ -89,9 +90,13 @@ export async function ReachActivityDetail({
 
   return (
     <div className="exploration-stage reach-activity-detail">
-      <Link href={explorationHref(nicheId, "/reach")} className="business-back">
+      <BusinessBackLink
+        returnTo={returnTo}
+        fallbackHref={explorationWorkspaceHref(nicheId, "outreach")}
+        className="business-back"
+      >
         <ArrowLeft aria-hidden="true" /> Reach activity
-      </Link>
+      </BusinessBackLink>
       <header className="exploration-stage-heading">
         <div>
           <p className="eyebrow">
@@ -131,9 +136,10 @@ export async function ReachActivityDetail({
             {bridge ? (
               <Link
                 className="finance-dialog-trigger"
-                href={explorationHref(
+                href={explorationWorkspaceHref(
                   nicheId,
-                  `/learn/conversations/${bridge.conversationId}`,
+                  "conversations",
+                  `/${bridge.conversationId}`,
                 )}
               >
                 <MessageSquareText aria-hidden="true" /> Open conversation
@@ -141,7 +147,7 @@ export async function ReachActivityDetail({
             ) : revision.kind === "REPLY_RECEIVED" ? (
               <Link
                 className="finance-dialog-trigger"
-                href={`${explorationHref(nicheId, "/learn/conversations")}?linkedInteractionId=${encodeURIComponent(activityId)}`}
+                href={`${explorationWorkspaceHref(nicheId, "conversations")}?linkedInteractionId=${encodeURIComponent(activityId)}`}
               >
                 <MessageSquareText aria-hidden="true" /> Start conversation
               </Link>
@@ -193,9 +199,9 @@ export async function ReachActivityDetail({
                   respondsTo={activityId}
                   sourceNicheId={revision.nicheId}
                   initialKind="REPLY_RECEIVED"
-                  createdHrefPrefix={explorationHref(
+                  createdHrefPrefix={explorationWorkspaceHref(
                     nicheId,
-                    "/reach/activity",
+                    "outreach",
                   )}
                   triggerLabel="Record reply"
                 />
@@ -211,9 +217,10 @@ export async function ReachActivityDetail({
                       <small>{reply.companySnapshot ?? participantName}</small>
                     </div>
                     <Link
-                      href={explorationHref(
+                      href={explorationWorkspaceHref(
                         nicheId,
-                        `/reach/activity/${reply.id}`,
+                        "outreach",
+                        `/${reply.id}`,
                       )}
                     >
                       {businessDate(reply.occurredAt)}{" "}

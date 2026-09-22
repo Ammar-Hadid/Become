@@ -61,7 +61,7 @@ describe.skipIf(!enabled)("Unified audience integrity", () => {
     const url = new URL(process.env.DATABASE_URL!);
     if (
       !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
-      !/^\/become_(audience|phase7_)/.test(url.pathname)
+      !/^\/become_(audience|phase7_|entrepreneurship_)/.test(url.pathname)
     )
       throw Error("Use a dedicated audience test database.");
     email = `audience-${randomUUID()}@example.test`;
@@ -335,7 +335,14 @@ describe.skipIf(!enabled)("Unified audience integrity", () => {
       sampleUnit: "responses",
       segmentIds: [s.id],
     });
-    const journal = await getEvidenceJournal(userId, { nicheId: n.id });
+    const collapsed = await getEvidenceJournal(userId, { nicheId: n.id });
+    expect(
+      collapsed.entries.every((entry) => entry.observations.length === 0),
+    ).toBe(true);
+    const journal = await getEvidenceJournal(userId, {
+      nicheId: n.id,
+      expandedInteractionId: gamer.id,
+    });
     expect(journal.entries).toHaveLength(5);
     expect(
       journal.entries.find((e) => e.id === gamer.id)?.observations,
@@ -513,7 +520,10 @@ describe.skipIf(!enabled)("Unified audience integrity", () => {
         })
       ).audienceContext!.marketType,
     ).toBe("BOTH");
-    const journal = await getEvidenceJournal(userId, { nicheId: n.id });
+    const journal = await getEvidenceJournal(userId, {
+      nicheId: n.id,
+      expandedInteractionId: source.id,
+    });
     expect(journal.entries).toHaveLength(1);
     expect(journal.entries[0].observations).toHaveLength(1);
   });

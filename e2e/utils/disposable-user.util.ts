@@ -30,6 +30,9 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
   });
   await prisma.$transaction(
     async (tx) => {
+      await tx.nexoRun.deleteMany({ where });
+      await tx.nexoSettingsRevision.deleteMany({ where });
+      await tx.nexoSettings.deleteMany({ where });
       await tx.ideaOutput.deleteMany({ where });
       await tx.decisionReflection.deleteMany({ where });
       await tx.decision.updateMany({ where, data: { supersedesId: null } });
@@ -74,6 +77,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.recurringExpenseOccurrence.deleteMany({ where });
       await tx.recurringExpense.deleteMany({ where });
       await tx.session.deleteMany({ where });
+      await tx.interviewGuide.deleteMany({ where });
       await tx.content.deleteMany({ where });
       await tx.companyWorkSource.deleteMany({ where });
       await tx.companyNiche.deleteMany({ where });

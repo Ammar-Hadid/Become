@@ -74,7 +74,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-navigation a:hover,
@@ -123,7 +123,7 @@
 .finance-recurring-check button {
   cursor: pointer;
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-recurring-check button:hover {
@@ -329,7 +329,7 @@
   font-size: var(--text-h5);
   line-height: var(--text-h5--line-height);
   color: var(--color-text-muted);
-  transition: transform var(--duration-fast) var(--ease-move);
+  transition: transform var(--duration-control) var(--ease-move);
 }
 
 .finance-details[open] > summary::after {
@@ -471,7 +471,7 @@
   line-height: var(--text-body--line-height);
   font-weight: 520;
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-hero-footer a:hover,
@@ -641,7 +641,7 @@
   max-width: 100%;
   border-radius: inherit;
   background: var(--finance-positive);
-  transition: width var(--duration-standard) var(--ease-standard);
+  transition: width var(--duration-content) var(--ease-move);
 }
 
 .finance-overview-reserve-track > i {
@@ -828,7 +828,7 @@
 }
 
 .finance-cash-movement-section .finance-section-content {
-  transition: opacity var(--duration-fast) var(--ease-standard);
+  transition: opacity var(--duration-control) var(--ease-move);
 }
 
 .finance-cash-movement-section:has(.finance-period-control[data-pending="true"])
@@ -1388,7 +1388,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-back-link:hover {
@@ -1408,7 +1408,7 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-settings-link:hover {
@@ -1488,8 +1488,8 @@
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-md) var(--spacing-sm);
   transition:
-    padding var(--duration-fast) var(--ease-standard),
-    background var(--duration-fast) var(--ease-standard);
+    padding var(--duration-control) var(--ease-move),
+    background var(--duration-control) var(--ease-move);
 }
 
 .finance-ledger-row:hover {
@@ -1615,8 +1615,8 @@
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-lg) var(--spacing-sm);
   transition:
-    background var(--duration-fast) var(--ease-standard),
-    padding var(--duration-fast) var(--ease-standard);
+    background var(--duration-control) var(--ease-move),
+    padding var(--duration-control) var(--ease-move);
 }
 
 .finance-account-row:hover {
@@ -1948,7 +1948,7 @@
   max-width: 100%;
   border-radius: inherit;
   background: var(--finance-positive);
-  transition: width var(--duration-spatial) var(--ease-move);
+  transition: width var(--duration-surface) var(--ease-move);
 }
 
 .finance-reserve-track > i {
@@ -2124,8 +2124,8 @@
   background: var(--color-surface);
   padding: var(--spacing-2xl);
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-control) var(--ease-move),
+    transform var(--duration-control) var(--ease-move);
 }
 
 .finance-goal:hover {
@@ -2213,7 +2213,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--color-primary);
-  transition: width var(--duration-spatial) var(--ease-move);
+  transition: width var(--duration-surface) var(--ease-move);
 }
 
 .finance-goal-progress b.is-funded {
@@ -2284,7 +2284,7 @@
 .finance-goal-ring circle.is-progress {
   stroke: var(--color-primary);
   stroke-linecap: round;
-  transition: stroke-dashoffset var(--duration-spatial) var(--ease-move);
+  transition: stroke-dashoffset var(--duration-surface) var(--ease-move);
 }
 
 .finance-goal-ring > span {
@@ -2774,9 +2774,9 @@
   border-radius: var(--radius-control);
   color: var(--color-text-muted);
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard),
-    background var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move),
+    background var(--duration-control) var(--ease-move);
 }
 
 .finance-recurring-action-trigger:hover,
@@ -3176,7 +3176,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .finance-settings-back:hover {
@@ -3299,8 +3299,8 @@
   font-weight: 540;
   color: var(--color-primary);
   transition:
-    color var(--duration-fast) var(--ease-standard),
-    gap var(--duration-fast) var(--ease-standard);
+    color var(--duration-control) var(--ease-move),
+    gap var(--duration-control) var(--ease-move);
 }
 
 .finance-settings-navigation-action:hover {
@@ -3647,8 +3647,8 @@
   background: rgba(255, 255, 255, 0.012);
   padding: var(--spacing-lg);
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-control) var(--ease-move),
+    background var(--duration-control) var(--ease-move);
 }
 
 .finance-payment-candidates article.is-selected {

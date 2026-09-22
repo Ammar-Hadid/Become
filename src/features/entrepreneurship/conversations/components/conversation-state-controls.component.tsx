@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Bookmark, PauseCircle, Play, SquareCheckBig } from "lucide-react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
@@ -12,6 +13,7 @@ import {
   resumeConversationAction,
 } from "@/features/entrepreneurship/conversations/actions/conversation.action";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { getConversationDebriefMessagesAction } from "@/features/entrepreneurship/conversations/actions/conversation-debrief.action";
 
 export type DebriefObservationMessage = {
   id: string;
@@ -25,13 +27,21 @@ export function ConversationStateControls({
   conversationId,
   status,
   observationMessages,
+  observationMessagesNext,
+  observationMessagesTotal,
 }: {
   conversationId: string;
   status: string;
   observationMessages: DebriefObservationMessage[];
+  observationMessagesNext?: string | null;
+  observationMessagesTotal?: number;
 }) {
   const router = useRouter();
   const exploration = useExploration();
+  const [messages, setMessages] = useState(observationMessages);
+  const [next, setNext] = useState(observationMessagesNext ?? null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingMore, startLoadingMore] = useTransition();
   if (exploration?.archived) return null;
   if (status === "COMPLETED") return null;
   if (status === "CANCELLED") {
@@ -88,15 +98,20 @@ export function ConversationStateControls({
           onSaved={() => router.refresh()}
         >
           <CaptureKey />
-          {observationMessages.length > 0 && (
+          {messages.length > 0 && (
             <fieldset className="conversation-debrief-observations">
-              <legend>Keep participant messages as observations</legend>
+              <legend>
+                Keep participant messages as observations
+                {observationMessagesTotal
+                  ? ` · ${observationMessagesTotal}`
+                  : ""}
+              </legend>
               <p>
                 Nothing is extracted automatically. Select only the exact
                 messages you want to carry into the evidence record.
               </p>
               <div>
-                {observationMessages.map((message) => (
+                {messages.map((message) => (
                   <label className="business-choice-row" key={message.id}>
                     <input
                       type="checkbox"
@@ -119,6 +134,31 @@ export function ConversationStateControls({
                   </label>
                 ))}
               </div>
+              {next && (
+                <button
+                  className="business-text-link"
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => {
+                    setLoadError(null);
+                    startLoadingMore(async () => {
+                      const result = await getConversationDebriefMessagesAction(
+                        conversationId,
+                        next,
+                      );
+                      if (result.error) {
+                        setLoadError(result.error);
+                        return;
+                      }
+                      setMessages((current) => [...current, ...result.items]);
+                      setNext(result.next);
+                    });
+                  }}
+                >
+                  {loadingMore ? "Loading messages…" : "Load more messages"}
+                </button>
+              )}
+              {loadError && <p role="alert">{loadError}</p>}
             </fieldset>
           )}
           <BusinessField label="Outcome" name="outcome" multiline required />

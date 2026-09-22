@@ -5,8 +5,10 @@
 @import "../conversations/styles/conversation-workspace.css";
 @import "../conversations/styles/conduct-workspace.css";
 @import "../interview-guides/styles/interview-guide-workspace.css";
+@import "../shared/styles/business-record-picker.css";
 @import "../explorations/styles/exploration-responsive.css";
 @import "../explorations/styles/exploration-route-states.css";
+@import "../explorations/styles/exploration-workspaces.css";
 
 .business-shell {
   --business-prose-width: 44rem;
@@ -53,7 +55,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .business-navigation a[aria-current],
@@ -148,7 +150,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-panel);
   min-width: 0;
-  transition: border-color var(--duration-fast) var(--ease-enter);
+  transition: border-color var(--duration-control) var(--ease-move);
 }
 
 .business-niche:hover {
@@ -234,7 +236,7 @@
   min-width: 0;
   min-height: 5.25rem;
   padding: var(--spacing-xl) var(--spacing-sm);
-  transition: background var(--duration-fast) var(--ease-enter);
+  transition: background-color var(--duration-control) var(--ease-move);
 }
 
 .business-company-row:hover {
@@ -493,7 +495,7 @@
 }
 
 .business-disclosure[open] > div {
-  animation: business-reveal var(--duration-standard) var(--ease-enter);
+  animation: business-reveal var(--duration-content) var(--ease-enter);
   display: grid;
   gap: var(--spacing-lg);
   padding-top: var(--spacing-md);

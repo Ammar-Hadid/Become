@@ -10,6 +10,7 @@ import {
 } from "@/features/entrepreneurship/interview-guides/schemas/interview-guide.schema";
 import {
   interviewGuideQuestionIndex,
+  interviewGuideHasContent,
   starterInterviewGuideDocument,
   validateInterviewGuideDocument,
 } from "@/features/entrepreneurship/interview-guides/utils/interview-guide-document.util";
@@ -189,9 +190,13 @@ export async function publishInterviewGuide(
     );
     const document = validateInterviewGuideDocument(guide.draftDocument);
     const questions = interviewGuideQuestionIndex(document);
-    if (!questions.length)
+    if (questions.some((question) => !question.prompt.trim()))
       throw new BusinessError(
-        "Add at least one interview question before publishing.",
+        "Finish or remove blank questions before publishing. Your draft is saved.",
+      );
+    if (!interviewGuideHasContent(document))
+      throw new BusinessError(
+        "Add some guidance or a question before publishing.",
       );
     const latest = await tx.interviewGuideRevision.findFirst({
       where: { guideId, userId },

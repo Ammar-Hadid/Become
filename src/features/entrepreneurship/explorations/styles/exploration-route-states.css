@@ -49,7 +49,7 @@
     var(--color-text-muted) 12%,
     var(--color-surface)
   );
-  animation: exploration-loading-pulse var(--duration-pending-cycle) ease-in-out
+  animation: exploration-loading-pulse var(--duration-active-cycle) ease-in-out
     infinite;
 }
 
@@ -172,6 +172,6 @@
 .exploration-header-action-loading {
   align-self: center;
   color: var(--color-text-muted);
-  font-size: var(--text-label);
-  line-height: var(--text-label--line-height);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
 }

@@ -61,6 +61,7 @@ function SeasonSupportingGoalSelection({
           className="season-supporting-goal-note"
           data-state={presenceState}
           aria-hidden={presenceState === "closed" || undefined}
+          inert={presenceState === "closed"}
           onAnimationEnd={onPresenceAnimationEnd}
         >
           <div className="season-supporting-goal-note-inner">

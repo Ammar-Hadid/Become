@@ -1,3 +1,5 @@
+import { synthesisSourceManifestSchema } from "@/features/entrepreneurship/synthesis/schemas/synthesis.schema";
+import { readSelectedSynthesisSources } from "@/features/entrepreneurship/synthesis/queries/synthesis-context.query";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { recommendExplorationNextMove } from "@/features/entrepreneurship/exploration-snapshots/utils/exploration-recommendation.util";
@@ -193,13 +195,14 @@ export async function readExplorationSnapshotFacts(
         LEFT JOIN interaction i ON i.id = f."interactionId" AND i."userId" = f."userId"
         LEFT JOIN interaction_revision r ON r."interactionId" = i.id AND r.version = i.version
         WHERE f."userId" = ${userId}
-          AND f."completedAt" IS NULL AND f."cancelledAt" IS NULL
+          AND f."completedAt" IS NULL AND f."cancelledAt" IS NULL AND i."voidedAt" IS NULL
           AND f."dueOn" IS NOT NULL AND f."dueOn" <= CURRENT_DATE
           AND (
             r."nicheId" = ${nicheId}
             OR EXISTS (
-              SELECT 1 FROM offer_niche n WHERE n."offerId" = f."offerId" AND n."nicheId" = ${nicheId}
+              SELECT 1 FROM offer_niche n WHERE n."offerId" = f."offerId" AND n."nicheId" = ${nicheId} AND n."userId"=${userId}
             )
+            OR EXISTS (SELECT 1 FROM company_niche n WHERE n."companyId"=f."companyId" AND n."nicheId"=${nicheId} AND n."userId"=${userId})
           )
         ORDER BY f."dueOn", f.id
         LIMIT 1
@@ -210,7 +213,7 @@ export async function readExplorationSnapshotFacts(
         JOIN interaction_revision r
           ON r."interactionId" = i.id AND r.version = i.version
         WHERE i."userId" = ${userId} AND i."voidedAt" IS NULL
-          AND i.status IN ('DRAFT', 'IN_PROGRESS')
+          AND (i.status IN ('DRAFT', 'IN_PROGRESS') OR (i.status='CANCELLED' AND EXISTS(SELECT 1 FROM interview_session s WHERE s."interactionId"=i.id AND s."userId"=${userId})))
           AND r.kind = 'CONVERSATION' AND r."nicheId" = ${nicheId}
         ORDER BY i."createdAt" DESC, i.id DESC
         LIMIT 1
@@ -256,6 +259,7 @@ export async function readExplorationSnapshotFacts(
         archivedAt: null,
         niches: { some: { nicheId } },
         events: {
+          some: { kind: "PROPOSED", retractedAt: null },
           none: {
             retractedAt: null,
             kind: { in: [...observableOutcomeKinds] },
@@ -296,7 +300,7 @@ export async function readExplorationSnapshotFacts(
     conversations: interaction.conversations,
     replyWithoutConversationId: replyWithoutConversation[0]?.id ?? null,
     observations: observationCount,
-    repeatedObservationsWithoutProblem: observationCount >= 2 && problems === 0,
+    repeatedObservationsWithoutProblem: observationCount > 0 && problems === 0,
     supportedProblemWithoutTestId: supportedProblem?.id ?? null,
     activeTestWithoutOutcomeId: testWithoutOutcome?.id ?? null,
     snapshotStale: Boolean(
@@ -397,22 +401,59 @@ export async function getExplorationSnapshot(userId: string, nicheId: string) {
           },
         }),
       ]);
+      const sourceReferences = [...claims, ...uncertainties].flatMap((item) => {
+        const manifest = synthesisSourceManifestSchema.safeParse(
+          item.revisions[0]?.sourceManifest,
+        );
+        return manifest.success ? manifest.data.sources : [];
+      });
+      const currentSources = new Map(
+        (
+          await readSelectedSynthesisSources(tx, userId, nicheId, [
+            ...new Set(sourceReferences.map((source) => source.key)),
+          ])
+        ).map((source) => [source.key, source.fingerprint]),
+      );
+      const statesFor = (value: unknown) => {
+        const manifest = synthesisSourceManifestSchema.safeParse(value);
+        return Object.fromEntries(
+          manifest.success
+            ? manifest.data.sources.map((source) => [
+                source.key,
+                !currentSources.has(source.key)
+                  ? "unavailable"
+                  : currentSources.get(source.key) === source.fingerprint
+                    ? "current"
+                    : "changed",
+              ])
+            : [],
+        );
+      };
       return {
         ...facts,
         claims: claims.map((claim) => ({
           ...claim,
-          needsReview: claim.revisions[0]?.citations.some(
-            (citation) =>
-              Boolean(citation.observation.voidedAt) ||
-              citation.observation.version !==
-                citation.observationRevision.version ||
-              Boolean(citation.observationRevision.sourceMessage?.voidedAt) ||
-              (citation.observationRevision.sourceMessage != null &&
-                citation.observationRevision.sourceMessage.version !==
-                  citation.observationRevision.sourceMessageRevision?.version),
-          ),
+          sourceStates: statesFor(claim.revisions[0]?.sourceManifest),
+          needsReview:
+            Object.values(statesFor(claim.revisions[0]?.sourceManifest)).some(
+              (state) => state !== "current",
+            ) ||
+            claim.revisions[0]?.citations.some(
+              (citation) =>
+                Boolean(citation.observation.voidedAt) ||
+                citation.observation.version !==
+                  citation.observationRevision.version ||
+                Boolean(citation.observationRevision.sourceMessage?.voidedAt) ||
+                (citation.observationRevision.sourceMessage != null &&
+                  citation.observationRevision.sourceMessage.version !==
+                    citation.observationRevision.sourceMessageRevision
+                      ?.version),
+            ),
         })),
-        uncertainties,
+        uncertainties: uncertainties.map((item) => ({
+          ...item,
+          sourceStates: statesFor(item.revisions[0]?.sourceManifest),
+        })),
         latestEdition,
       };
     },

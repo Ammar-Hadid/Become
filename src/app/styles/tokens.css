@@ -92,16 +92,20 @@
   --radius-dialog: 1.25rem;
 
   /* ===== Motion ===== */
-  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
-  --ease-move: cubic-bezier(0.2, 0, 0, 1);
-  --ease-standard: var(--ease-move);
-  --duration-feedback: 90ms;
-  --duration-fast: 140ms;
-  --duration-standard: 180ms;
-  --duration-spatial: 240ms;
-  --duration-emphasis: 360ms;
-  --duration-signature: 650ms;
-  --delay-pending-visual: 300ms;
-  --duration-pending-cycle: 1600ms;
+  --ease-enter: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-move: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+  --ease-emphasis: cubic-bezier(0.4, 0.14, 0.3, 1);
+  --duration-response: 90ms;
+  --duration-control: 150ms;
+  --duration-content: 220ms;
+  --duration-surface: 300ms;
+  --duration-emphasis: 420ms;
+  --duration-active-cycle: 1400ms;
+  --delay-sequence: 32ms;
+  --distance-control: 6px;
+  --distance-content: 8px;
+  --distance-surface: 24px;
+  --distance-dialog: 12px;
+  --scale-pressed: 0.985;
 }

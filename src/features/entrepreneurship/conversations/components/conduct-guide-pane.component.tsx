@@ -2,22 +2,23 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  BookOpenText,
-  Check,
-  ChevronRight,
-  SkipForward,
-  X,
-} from "lucide-react";
+import { BookOpenText, ChevronRight, SkipForward, X } from "lucide-react";
+import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
+import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import {
   askConversationGuideQuestionAction,
   updateConversationConductStateAction,
 } from "@/features/entrepreneurship/conversations/actions/conversation.action";
-import type { InterviewGuideQuestionIndexItem } from "@/features/entrepreneurship/interview-guides/types/interview-guide.types";
+import { InterviewGuideDocumentView } from "@/features/entrepreneurship/interview-guides/components/interview-guide-document.component";
+import type {
+  InterviewGuideDocument,
+  InterviewGuideQuestionIndexItem,
+} from "@/features/entrepreneurship/interview-guides/types/interview-guide.types";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 
 export function ConductGuidePane({
   conversationId,
+  document: guideDocument,
   guideTitle,
   guideVersion,
   questions,
@@ -26,6 +27,7 @@ export function ConductGuidePane({
   guideCompleted,
 }: {
   conversationId: string;
+  document: InterviewGuideDocument;
   guideTitle: string;
   guideVersion: number;
   questions: InterviewGuideQuestionIndexItem[];
@@ -57,48 +59,23 @@ export function ConductGuidePane({
   const closeRef = useRef<HTMLButtonElement>(null);
   const paneRef = useRef<HTMLElement>(null);
   const question = questions[index];
+  const presence = usePresence(open, "content");
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 800px)");
+    const media = window.matchMedia("(max-width: 1024px)");
     const sync = () => setMobile(media.matches);
     sync();
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const trigger = triggerRef.current;
-    closeRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !mobile || !paneRef.current) return;
-      const focusable = Array.from(
-        paneRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      trigger?.focus();
-    };
-  }, [mobile, open]);
+  useModalLayer({
+    open: mobile && open,
+    containerRef: paneRef,
+    initialFocusRef: closeRef,
+    returnFocusRef: triggerRef,
+    onClose: () => setOpen(false),
+  });
 
   const advance = (skip: boolean) => {
     if (!question || pending) return;
@@ -117,19 +94,17 @@ export function ConductGuidePane({
                 operationKey: crypto.randomUUID(),
               };
         setPendingAsk(attempt);
-        const messageResult = await askConversationGuideQuestionAction(
+        const result = await askConversationGuideQuestionAction(
           conversationId,
           attempt.operationKey,
           question.questionId,
         );
-        if (messageResult.error) {
-          setMessage(messageResult.error);
+        if (result.error) {
+          setMessage(result.error);
           return;
         }
-        setPendingAsk(null);
-      }
-      if (skip) {
-        const stateResult = await updateConversationConductStateAction(
+      } else {
+        const result = await updateConversationConductStateAction(
           conversationId,
           crypto.randomUUID(),
           {
@@ -137,24 +112,32 @@ export function ConductGuidePane({
             skippedQuestionIds: nextSkipped,
           },
         );
-        if (stateResult.error) {
-          setMessage(stateResult.error);
+        if (result.error) {
+          setMessage(result.error);
           return;
         }
-        setPendingAsk(null);
       }
+      setPendingAsk(null);
       setSkipped(nextSkipped);
       setIndex((value) => Math.min(value + 1, questions.length));
       setMessage(null);
-      setOpen(false);
+      if (mobile) setOpen(false);
       router.refresh();
       requestAnimationFrame(() =>
-        document
+        window.document
           .querySelector<HTMLElement>(".conversation-composer textarea")
           ?.focus(),
       );
     });
   };
+
+  const progress = questions.length
+    ? Math.min(index + (question ? 1 : 0), questions.length)
+    : 0;
+  const asked = questions
+    .slice(0, index)
+    .map((item) => item.questionId)
+    .filter((questionId) => !skipped.includes(questionId));
 
   return (
     <>
@@ -165,111 +148,112 @@ export function ConductGuidePane({
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        <BookOpenText aria-hidden="true" /> Guide{" "}
-        {Math.min(index + 1, questions.length)} of {questions.length}
+        <BookOpenText aria-hidden="true" />
+        {questions.length > 0
+          ? `Guide · ${progress} of ${questions.length}`
+          : "Guide notes"}
       </button>
-      <button
-        type="button"
-        className="conduct-guide-scrim"
-        data-open={open || undefined}
-        aria-label="Close interview guide"
-        tabIndex={open ? 0 : -1}
-        onClick={() => setOpen(false)}
-      />
-      <aside
-        ref={paneRef}
-        className="conduct-guide-pane"
-        data-open={open || undefined}
-        aria-label="Interview guide"
-        role={mobile ? "dialog" : undefined}
-        aria-modal={mobile ? true : undefined}
-        inert={mobile && !open ? true : undefined}
-      >
-        <header>
-          <div>
-            <p className="eyebrow">Pinned guide · revision {guideVersion}</p>
-            <h2>{guideTitle}</h2>
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            aria-label="Close interview guide"
-            onClick={() => setOpen(false)}
-          >
-            <X aria-hidden="true" />
-          </button>
-        </header>
-        <div
-          className="conduct-guide-progress"
-          aria-label={`Question ${Math.min(index + 1, questions.length)} of ${questions.length}`}
+      {mobile && presence.isPresent && (
+        <button
+          type="button"
+          className="conduct-guide-scrim"
+          data-presence={presence.presenceState}
+          aria-label="Close interview guide"
+          tabIndex={open ? 0 : -1}
+          onClick={() => setOpen(false)}
+          onAnimationEnd={presence.onPresenceAnimationEnd}
+        />
+      )}
+      {(!mobile || presence.isPresent) && (
+        <aside
+          ref={paneRef}
+          className="conduct-guide-pane"
+          data-presence={mobile ? presence.presenceState : "open"}
+          aria-label="Interview guide"
+          role={mobile ? "dialog" : undefined}
+          aria-modal={mobile ? true : undefined}
+          aria-labelledby="conduct-guide-title"
+          tabIndex={mobile ? -1 : undefined}
+          inert={mobile && presence.isExiting ? true : undefined}
+          onAnimationEnd={presence.onPresenceAnimationEnd}
         >
-          <span
-            style={{
-              width: `${questions.length ? (Math.min(index + 1, questions.length) / questions.length) * 100 : 0}%`,
-            }}
-          />
-        </div>
-        {question ? (
-          <article className="conduct-guide-question">
-            <span>Question {index + 1}</span>
-            <h3>{question.prompt}</h3>
-            {question.intent && (
-              <p>
-                <strong>Listen for</strong>
-                {question.intent}
-              </p>
-            )}
-            {question.probes.length > 0 && (
-              <div>
-                <strong>Optional probes</strong>
-                <ul>
-                  {question.probes.map((probe) => (
-                    <li key={probe}>{probe}</li>
-                  ))}
-                </ul>
+          <header>
+            <div>
+              <p className="eyebrow">Pinned edition {guideVersion}</p>
+              <h2 id="conduct-guide-title">{guideTitle}</h2>
+            </div>
+            <button
+              ref={closeRef}
+              type="button"
+              aria-label="Close interview guide"
+              onClick={() => setOpen(false)}
+            >
+              <X aria-hidden="true" />
+            </button>
+          </header>
+          {questions.length > 0 && (
+            <div
+              className="conduct-guide-progress"
+              aria-label={`${progress} of ${questions.length} questions reached`}
+            >
+              <span
+                style={{
+                  width: `${(progress / questions.length) * 100}%`,
+                }}
+              />
+            </div>
+          )}
+          <div className="conduct-guide-document">
+            <InterviewGuideDocumentView
+              document={guideDocument}
+              activeQuestionId={question?.questionId ?? null}
+              askedQuestionIds={asked}
+              skippedQuestionIds={skipped}
+              renderQuestionActions={() =>
+                !exploration?.archived ? (
+                  <div className="conduct-guide-question-actions">
+                    <button
+                      type="button"
+                      className="finance-dialog-trigger"
+                      disabled={pending}
+                      onClick={() => advance(false)}
+                    >
+                      Ask <ChevronRight aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="finance-dialog-trigger finance-dialog-trigger--secondary"
+                      disabled={pending}
+                      onClick={() => advance(true)}
+                    >
+                      <SkipForward aria-hidden="true" /> Skip
+                    </button>
+                  </div>
+                ) : null
+              }
+            />
+            {questions.length > 0 && !question && (
+              <div className="conduct-guide-complete" role="status">
+                <h3>Every guide question is covered.</h3>
+                <p>Keep following the conversation wherever it is useful.</p>
               </div>
             )}
-            {!exploration?.archived && (
-              <div className="business-actions">
-                <button
-                  type="button"
-                  className="finance-dialog-trigger"
-                  disabled={pending}
-                  onClick={() => advance(false)}
-                >
-                  Ask <ChevronRight aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="finance-dialog-trigger finance-dialog-trigger--secondary"
-                  disabled={pending}
-                  onClick={() => advance(true)}
-                >
-                  <SkipForward aria-hidden="true" /> Skip
-                </button>
-              </div>
-            )}
-          </article>
-        ) : (
-          <div className="conduct-guide-complete">
-            <Check aria-hidden="true" />
-            <h3>You reached the end of the guide.</h3>
-            <p>
-              Continue freely, or finish the conversation when the exchange is
-              complete.
-            </p>
           </div>
-        )}
-        {message && (
-          <p className="conduct-guide-error" role="alert">
-            {message}
-          </p>
-        )}
-        <footer>
-          <span>{skipped.length} skipped</span>
-          <p>The guide assists; it never blocks a useful tangent.</p>
-        </footer>
-      </aside>
+          {message && (
+            <p className="conduct-guide-error" role="alert">
+              {message}
+            </p>
+          )}
+          <footer>
+            <span>
+              {questions.length > 0
+                ? `${skipped.length} skipped`
+                : "No scripted questions"}
+            </span>
+            <p>Guidance stays optional throughout the conversation.</p>
+          </footer>
+        </aside>
+      )}
     </>
   );
 }

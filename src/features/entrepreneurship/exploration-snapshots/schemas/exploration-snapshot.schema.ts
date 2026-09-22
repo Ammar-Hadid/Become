@@ -1,3 +1,4 @@
+import { synthesisSourceManifestSchema } from "@/features/entrepreneurship/synthesis/schemas/synthesis.schema";
 import { z } from "zod";
 import {
   EXPLORATION_CITATION_STANCES,
@@ -19,19 +20,25 @@ export const explorationClaimSchema = z
     kind: z.enum(EXPLORATION_CLAIM_KINDS),
     statement: z.string().trim().min(1).max(6000),
     citations: z.array(citationSchema).max(100).default([]),
+    sourceManifest: synthesisSourceManifestSchema.optional(),
   })
   .refine(
-    (value) => value.citations.length > 0,
-    "A finding needs at least one source observation.",
+    (value) =>
+      value.citations.length > 0 ||
+      Boolean(value.sourceManifest?.sources.length),
+    "A finding needs at least one reviewed source.",
   );
 
 export const explorationClaimCorrectionSchema =
   explorationClaimSchema.safeExtend({
     expectedVersion: z.number().int().positive(),
+    refreshSources: z.boolean().default(false),
     correctionReason: z.string().trim().min(1).max(2000),
   });
 
 export const explorationUncertaintySchema = z.object({
+  kind: z.enum(["QUESTION", "HYPOTHESIS"]).default("QUESTION"),
+  sourceManifest: synthesisSourceManifestSchema.optional(),
   nicheId: z.string().trim().min(1).max(100),
   lane: z.enum(EXPLORATION_KNOWLEDGE_LANES),
   statement: z.string().trim().min(1).max(6000),
@@ -40,6 +47,7 @@ export const explorationUncertaintySchema = z.object({
 export const explorationUncertaintyCorrectionSchema =
   explorationUncertaintySchema.extend({
     expectedVersion: z.number().int().positive(),
+    refreshSources: z.boolean().default(false),
     correctionReason: z.string().trim().min(1).max(2000),
   });
 

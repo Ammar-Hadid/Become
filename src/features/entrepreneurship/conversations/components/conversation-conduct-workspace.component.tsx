@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Bookmark, MessageSquareDashed, NotebookPen } from "lucide-react";
+import {
+  Bookmark,
+  MessageSquareDashed,
+  NotebookPen,
+  Route,
+} from "lucide-react";
 import { getConversationWorkspace } from "@/features/entrepreneurship/conversations/queries/conversation.query";
 import { explorationHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import {
@@ -12,6 +17,7 @@ import { ConversationComposer } from "@/features/entrepreneurship/conversations/
 import { ConversationMessageMenu } from "@/features/entrepreneurship/conversations/components/conversation-message-menu.component";
 import { ConversationStateControls } from "@/features/entrepreneurship/conversations/components/conversation-state-controls.component";
 import type { InterviewGuideQuestionIndexItem } from "@/features/entrepreneurship/interview-guides/types/interview-guide.types";
+import { validateInterviewGuideDocument } from "@/features/entrepreneurship/interview-guides/utils/interview-guide-document.util";
 
 function questionIndex(value: unknown): InterviewGuideQuestionIndexItem[] {
   if (!Array.isArray(value)) return [];
@@ -50,9 +56,11 @@ export async function ConversationConductWorkspace({
   const revision = conversation.revisions[0];
   const session = conversation.interviewSession;
   const guide = session?.guideRevision;
-  if (!session || !guide) notFound();
-  const questions = questionIndex(guide.questionIndex);
-  const skipped = Array.isArray(session.skippedQuestionIds)
+  const guideDocument = guide
+    ? validateInterviewGuideDocument(guide.document)
+    : null;
+  const questions = guide ? questionIndex(guide.questionIndex) : [];
+  const skipped = Array.isArray(session?.skippedQuestionIds)
     ? session.skippedQuestionIds.map(String)
     : [];
   const participantName =
@@ -86,29 +94,36 @@ export async function ConversationConductWorkspace({
       (left, right) => Number(right.bookmarked) - Number(left.bookmarked),
     );
   return (
-    <div className="conduct-workspace">
-      <ConductGuidePane
-        conversationId={conversation.id}
-        guideTitle={guide.titleSnapshot}
-        guideVersion={guide.version}
-        questions={questions}
-        currentQuestionId={session.currentQuestionId}
-        skippedQuestionIds={skipped}
-        guideCompleted={Boolean(session.guideCompletedAt)}
-      />
+    <div
+      className="conduct-workspace"
+      data-guide={guide ? "pinned" : "freeform"}
+    >
+      {guide && guideDocument && session && (
+        <ConductGuidePane
+          conversationId={conversation.id}
+          document={guideDocument}
+          guideTitle={guide.titleSnapshot}
+          guideVersion={guide.version}
+          questions={questions}
+          currentQuestionId={session.currentQuestionId}
+          skippedQuestionIds={skipped}
+          guideCompleted={Boolean(session.guideCompletedAt)}
+        />
+      )}
       <section className="conduct-conversation" aria-labelledby="conduct-title">
         <header>
           <div>
             <Link
               href={explorationHref(
                 nicheId,
-                `/learn/conversations/${conversation.id}`,
+                `/conversations/${conversation.id}`,
               )}
             >
               ← Conversation workspace
             </Link>
             <p className="eyebrow">
-              Guided interview · {humanize(conversation.status)}
+              {guide ? "Guided interview" : "Conversation"} ·{" "}
+              {humanize(conversation.status)}
             </p>
             <h1 id="conduct-title">{participantName}</h1>
           </div>
@@ -118,6 +133,18 @@ export async function ConversationConductWorkspace({
             observationMessages={debriefMessages}
           />
         </header>
+        {!guide && (
+          <div className="conduct-freeform-note" role="note">
+            <Route aria-hidden="true" />
+            <div>
+              <strong>Free-form conversation</strong>
+              <p>
+                No guide is pinned. Capture the exchange normally and follow the
+                participant’s language.
+              </p>
+            </div>
+          </div>
+        )}
         {messages.length > 0 ? (
           <ol
             className="conversation-message-list"
