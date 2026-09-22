@@ -7,17 +7,19 @@ import { useId, useRef, type AnimationEvent } from "react";
 import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
 import type { MotionPresenceState } from "@/components/ui/motion/hooks/use-presence.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
-import type { SessionListItem } from "@/features/sessions/types/session.types";
+import { SessionTimeEditor } from "@/features/sessions/details/components/session-time-editor.component";
+import type { SessionDetailItem } from "@/features/sessions/types/session.types";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { formatDuration } from "@/lib/dates/utils/period.util";
 
 type SessionDetailsDrawerProps = {
-  session: SessionListItem;
+  session: SessionDetailItem;
   open: boolean;
   presenceState: MotionPresenceState;
   exiting: boolean;
   onPresenceAnimationEnd: (event: AnimationEvent<HTMLElement>) => void;
   onClose: () => void;
+  onSessionUpdated: (session: SessionDetailItem) => void;
   children?: React.ReactNode;
 };
 
@@ -28,6 +30,7 @@ export function SessionDetailsDrawer({
   exiting,
   onPresenceAnimationEnd,
   onClose,
+  onSessionUpdated,
   children,
 }: SessionDetailsDrawerProps) {
   const titleId = useId();
@@ -183,6 +186,8 @@ export function SessionDetailsDrawer({
             </div>
           )}
         </dl>
+
+        <SessionTimeEditor session={session} onSaved={onSessionUpdated} />
 
         {hasEvidence && (
           <div className="session-details-evidence">

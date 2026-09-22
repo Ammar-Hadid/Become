@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BusinessSessionDetails } from "@/features/entrepreneurship/sessions/components/business-session-details.component";
 import {
   createContext,
@@ -36,6 +36,7 @@ export function SessionDetailsProvider({
 }) {
   const [selectedSession, setSelectedSession] =
     useState<SessionDetailItem | null>(null);
+  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const sessionCache = useRef(new Map<string, SessionDetailItem>());
   const requestSequence = useRef(0);
@@ -147,6 +148,16 @@ export function SessionDetailsProvider({
     window.history.replaceState(window.history.state, "", url);
   }, []);
 
+  const sessionUpdated = useCallback(
+    (session: SessionDetailItem) => {
+      requestSequence.current += 1;
+      sessionCache.current.set(session.id, session);
+      setSelectedSession(session);
+      router.refresh();
+    },
+    [router],
+  );
+
   return (
     <SessionDetailsContext.Provider value={{ openSession }}>
       <Suspense fallback={null}>
@@ -157,6 +168,7 @@ export function SessionDetailsProvider({
         session={selectedSession}
         open={drawerOpen}
         onClose={closeSession}
+        onSessionUpdated={sessionUpdated}
       />
     </SessionDetailsContext.Provider>
   );
@@ -181,10 +193,12 @@ function SessionDetailsStage({
   session,
   open,
   onClose,
+  onSessionUpdated,
 }: {
   session: SessionDetailItem | null;
   open: boolean;
   onClose: () => void;
+  onSessionUpdated: (session: SessionDetailItem) => void;
 }) {
   const presence = usePresence(open, "content");
   if (!presence.isPresent || !session) return null;
@@ -197,6 +211,7 @@ function SessionDetailsStage({
       exiting={presence.isExiting}
       onPresenceAnimationEnd={presence.onPresenceAnimationEnd}
       onClose={onClose}
+      onSessionUpdated={onSessionUpdated}
     >
       {session.domain.slug === "entrepreneurship" && (
         <BusinessSessionDetails session={session} />

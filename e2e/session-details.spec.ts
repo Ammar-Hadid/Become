@@ -1,5 +1,9 @@
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
+import { DateTime } from "luxon";
+import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { APP_TIMEZONE } from "@/lib/config/environment.config";
+import { formatDuration } from "@/lib/dates/utils/period.util";
 
 async function createAccount(page: Page) {
   const email = `details-${Date.now()}-${Math.random().toString(16).slice(2)}@example.com`;
@@ -181,4 +185,58 @@ test("completed sessions share one responsive details experience across contexts
   );
   await page.getByRole("button", { name: "Close session details" }).click();
   await expect(page).toHaveURL(/\/engineering$/);
+});
+
+test("corrects a forgotten stop time from session details", async ({
+  page,
+}) => {
+  await createAccount(page);
+  await recordSession(page, { activity: "Coding", focus: "Forgotten stop" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .getByTestId("session-row-trigger")
+    .filter({ hasText: "Forgotten stop" })
+    .click();
+  const id = new URL(page.url()).searchParams.get("session");
+  expect(id).toBeTruthy();
+
+  const now = Date.now();
+  await prisma.session.update({
+    where: { id: id! },
+    data: { startedAt: new Date(now - 2 * 3600000) },
+  });
+  await page.reload();
+  await expect(page.getByTestId("session-details")).toBeVisible();
+  await page.getByRole("button", { name: "Edit recorded time" }).click();
+  const inputBounds = await page
+    .getByTestId("session-corrected-end")
+    .boundingBox();
+  expect(inputBounds).not.toBeNull();
+  expect(inputBounds!.x + inputBounds!.width).toBeLessThanOrEqual(390);
+  const actualStop = DateTime.fromMillis(now - 3600000, {
+    zone: APP_TIMEZONE,
+  }).toFormat("yyyy-MM-dd'T'HH:mm");
+  await page.getByTestId("session-corrected-end").fill(actualStop);
+  await page.getByRole("button", { name: "Save time" }).click();
+
+  const response = await page.request.get(`/api/sessions/${id}`);
+  expect(response.ok()).toBe(true);
+  const corrected = (await response.json()) as {
+    endedAt: string;
+    durationSeconds: number;
+  };
+  expect(
+    DateTime.fromISO(corrected.endedAt)
+      .setZone(APP_TIMEZONE)
+      .toFormat("yyyy-MM-dd'T'HH:mm"),
+  ).toBe(actualStop);
+  await expect(page.getByTestId("session-detail-duration")).toHaveText(
+    formatDuration(corrected.durationSeconds, true),
+  );
+  await page.getByRole("button", { name: "Close session details" }).click();
+  await expect(
+    page.getByTestId("session-row-trigger").filter({
+      hasText: "Forgotten stop",
+    }),
+  ).toContainText(formatDuration(corrected.durationSeconds, true));
 });
