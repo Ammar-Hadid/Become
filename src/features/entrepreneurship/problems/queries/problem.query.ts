@@ -26,6 +26,14 @@ export const evidenceInclude = {
   observationRevision: {
     include: {
       audienceContext: audienceInclude,
+      sourceMessage: {
+        include: {
+          revisions: {
+            select: { version: true, createdAt: true },
+          },
+        },
+      },
+      sourceMessageRevision: { select: { version: true } },
       interactionRevision: {
         include: {
           interaction: {
@@ -72,12 +80,23 @@ export function evidenceCondition(
   }
   const observation = evidence.observation;
   const source = evidence.observationRevision?.interactionRevision;
-  if (observation?.voidedAt || source?.interaction.voidedAt)
+  const sourceMessage = evidence.observationRevision?.sourceMessage;
+  if (
+    observation?.voidedAt ||
+    source?.interaction.voidedAt ||
+    sourceMessage?.voidedAt
+  )
     return "SOURCE_WITHDRAWN";
   if (
     observation?.revisions.some((r) => r.materialChange && r.createdAt > at) ||
     source?.interaction.revisions.some(
       (r) => r.materialChange && r.createdAt > at,
+    ) ||
+    sourceMessage?.revisions.some(
+      (revision) =>
+        revision.version >
+          (evidence.observationRevision?.sourceMessageRevision?.version ?? 0) &&
+        revision.createdAt > at,
     )
   )
     return "REVIEW";
@@ -161,9 +180,13 @@ export async function getProblems(
   };
 }
 
-export async function getObservationChoices(userId: string) {
+export async function getObservationChoices(userId: string, nicheId?: string) {
   const observations = await prisma.observation.findMany({
-    where: { userId, voidedAt: null },
+    where: {
+      userId,
+      voidedAt: null,
+      ...(nicheId ? { revisions: { some: { nicheId } } } : {}),
+    },
     orderBy: { createdAt: "desc" },
     take: 100,
     include: { revisions: { orderBy: { version: "desc" }, take: 1 } },

@@ -32,6 +32,7 @@ export function MarketForm({
   niches?: BusinessOption[];
 }) {
   const exploration = useExploration();
+  if (exploration?.archived) return null;
   const entityLabel = kind === "company" ? "business" : "exploration";
   return (
     <RecordDialog

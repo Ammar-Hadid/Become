@@ -22,8 +22,12 @@ export async function saveCapturedObservations(
     nicheSnapshot?: string | null;
     interactionId?: string | null;
     interactionRevisionId?: string | null;
+    sourceMessageId?: string | null;
+    sourceMessageRevisionId?: string | null;
+    sourceKind?: "INTERACTION" | "MESSAGE" | "DIRECT_OBSERVATION";
   },
 ) {
+  const saved: { observationId: string; observationRevisionId: string }[] = [];
   for (const [index, item] of observations.entries()) {
     if (
       item.problemId &&
@@ -82,11 +86,13 @@ export async function saveCapturedObservations(
         ...audience,
         nicheId: context.nicheId,
         nicheSnapshot: context.nicheSnapshot,
-        sourceKind: context.interactionId
-          ? "INTERACTION"
-          : "DIRECT_OBSERVATION",
+        sourceKind:
+          context.sourceKind ??
+          (context.interactionId ? "INTERACTION" : "DIRECT_OBSERVATION"),
         interactionId: context.interactionId,
         interactionRevisionId: context.interactionRevisionId,
+        sourceMessageId: context.sourceMessageId,
+        sourceMessageRevisionId: context.sourceMessageRevisionId,
         sourceDescription: item.audienceReason
           ? `${item.sourceDescription}\nAudience attribution: ${item.audienceReason}`
           : item.sourceDescription,
@@ -103,5 +109,10 @@ export async function saveCapturedObservations(
           explanation: item.explanation!,
         },
       });
+    saved.push({
+      observationId: observation.id,
+      observationRevisionId: observationRevision.id,
+    });
   }
+  return saved;
 }

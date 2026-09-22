@@ -19,12 +19,20 @@ export function AudienceNavigation({
   nicheId?: string;
 }) {
   return (
-    <nav aria-label="Audience records" className="mb-2xl gap-sm flex flex-wrap">
+    <nav aria-label="Audience records" className="exploration-subnavigation">
       {(
         [
-          ["segment", "Segments", "/audience"],
-          ["person", "People", "/audience?kind=person"],
-          ["business", "Businesses", nicheId ? "/companies" : "/market"],
+          ["segment", "Segments", nicheId ? "/scope" : "/audience"],
+          [
+            "person",
+            "People",
+            nicheId ? "/scope?kind=person" : "/audience?kind=person",
+          ],
+          [
+            "business",
+            "Businesses",
+            nicheId ? "/scope?kind=business" : "/market",
+          ],
         ] as const
       ).map(([value, label, path]) => (
         <Link
@@ -35,7 +43,6 @@ export function AudienceNavigation({
               : `/entrepreneurship${path}`
           }
           aria-current={value === kind ? "page" : undefined}
-          className={`px-lg py-sm text-body rounded-full border ${value === kind ? "border-primary/30 bg-primary/5 text-primary" : "border-border text-text-secondary hover:bg-surface-elevated"}`}
         >
           {label}
         </Link>
@@ -59,7 +66,7 @@ export function AudiencePage({
   archived?: boolean;
 }) {
   const base = nicheId
-    ? explorationHref(nicheId, "/audience")
+    ? explorationHref(nicheId, "/scope")
     : "/entrepreneurship/audience";
   const params = new URLSearchParams({
     kind,
@@ -70,7 +77,6 @@ export function AudiencePage({
     <>
       <header className="business-section-heading business-page-heading">
         <div>
-          <p className="eyebrow">Who you want to understand</p>
           <h2>Who are you learning from?</h2>
           <p>
             Describe useful groups. Keep people and businesses when their
@@ -140,7 +146,7 @@ export function AudiencePage({
                   nicheId
                     ? explorationHref(
                         nicheId,
-                        `/${kind === "segment" ? "segments" : "people"}/${record.id}`,
+                        `/scope/${kind === "segment" ? "segments" : "people"}/${record.id}`,
                       )
                     : `/entrepreneurship/${kind === "segment" ? "segments" : "people"}/${record.id}`
                 }

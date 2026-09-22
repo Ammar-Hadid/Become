@@ -1,0 +1,15 @@
+{
+  "review_id": "23d912d8-4857-4d32-b5b3-84f4e858754d",
+  "runtime": "codex",
+  "workflow_version": "0.3.0",
+  "project_id": "c0f86cbe-4ce3-4b6c-95d7-5bd205ed8d38",
+  "project_name": "Become",
+  "started_at": "2026-09-20T22:43:24Z",
+  "status": "direction-gate",
+  "settings": {
+    "evidence_mode": "benchmarks",
+    "approval_mode": "guided",
+    "graph_assistance": "on"
+  },
+  "objective": "Make Entrepreneurship a guided investigation where each exploration clearly shows what is known so far, the underlying records, and the next useful action while preserving distinctions among outreach, conversations, observations, and evidence."
+}

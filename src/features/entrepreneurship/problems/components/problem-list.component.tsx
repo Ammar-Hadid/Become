@@ -28,14 +28,17 @@ export async function ProblemList({
     <>
       <header className="business-section-heading business-page-heading">
         <div>
-          <p className="eyebrow">Beliefs meet evidence</p>
           <h2>Hold the question open.</h2>
           <p>
             Keep the claim, the market’s words and your judgment distinct.
             Contradictions belong here too.
           </p>
         </div>
-        <ProblemForm niches={options.niches} segments={options.segments} />
+        <ProblemForm
+          niches={options.niches}
+          segments={options.segments}
+          nicheId={nicheId}
+        />
       </header>
       <section
         className={`business-zone business-zone--ledger${archived ? "business-zone--archived" : ""}`}

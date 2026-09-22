@@ -14,9 +14,11 @@ export type EvidenceJournalData = Awaited<
 export function EvidenceJournal({
   data,
   paginationHref,
+  mode = "legacy",
 }: {
   data: EvidenceJournalData;
   paginationHref?: string;
+  mode?: "legacy" | "sources" | "observations";
 }) {
   return (
     <>
@@ -83,6 +85,12 @@ export function EvidenceJournal({
                                 ? `“${observation.statement}”`
                                 : observation.statement}
                             </p>
+                            {observation.sourceKind === "MESSAGE" && (
+                              <p className="business-meta mt-sm">
+                                Conversation excerpt · explicitly kept as an
+                                observation
+                              </p>
+                            )}
                             <p className="mt-sm text-body-sm text-text-secondary">
                               <AudienceSummary {...observation} />
                             </p>
@@ -126,10 +134,19 @@ export function EvidenceJournal({
       ) : (
         <div className="business-empty">
           <MessagesSquare aria-hidden="true" />
-          <h3>No evidence in this view yet.</h3>
+          <h3>
+            {mode === "observations"
+              ? "No observations in this view yet."
+              : mode === "sources"
+                ? "No sources in this view yet."
+                : "No evidence in this view yet."}
+          </h3>
           <p>
-            Keep what someone shared, something you observed, or a public
-            source. You can leave identities unnamed and the audience undecided.
+            {mode === "observations"
+              ? "Keep an exact conversation message, a direct observation, or a useful statement from a public source."
+              : mode === "sources"
+                ? "Start a conversation or keep a direct or public source. Source records stay separate from the observations you draw from them."
+                : "Keep what someone shared, something you observed, or a public source. You can leave identities unnamed and the audience undecided."}
           </p>
         </div>
       )}

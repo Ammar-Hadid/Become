@@ -16,18 +16,24 @@ export async function ObservationDetail({
   userId,
   id,
   revisionId,
+  nicheId,
 }: {
   userId: string;
   id: string;
   revisionId?: string;
+  nicheId?: string;
 }) {
   const observation = await getObservationDetail(userId, id);
-  if (!observation) notFound();
+  if (
+    !observation ||
+    (nicheId && observation.revisions[0]?.nicheId !== nicheId)
+  )
+    notFound();
   const source = revisionId
     ? observation.revisions.find((r) => r.id === revisionId)
     : observation.revisions[0];
   if (!source) notFound();
-  const audienceOptions = await getAudienceOptions(userId);
+  const audienceOptions = await getAudienceOptions(userId, nicheId);
   const usedEvidence = observation.revisions.flatMap((r) => r.evidence);
   return (
     <>
@@ -83,7 +89,10 @@ export async function ObservationDetail({
       )}
       <section className="business-original-claim business-focus-statement">
         <p className="eyebrow">
-          Recorded source words · revision {source.version}
+          {source.sourceKind === "MESSAGE"
+            ? "Observation kept from a message"
+            : "Recorded source words"}{" "}
+          · revision {source.version}
         </p>
         <p>{source.statement}</p>
       </section>
@@ -116,7 +125,7 @@ export async function ObservationDetail({
                 source.interactionRevision.audienceContextId && (
                 <p className="business-hint mt-sm">
                   This observation has an attributed audience boundary. The
-                  original interaction's context remains above.
+                  original interaction&apos;s context remains above.
                 </p>
               )}
               <p className="business-prose">
@@ -127,6 +136,33 @@ export async function ObservationDetail({
                 className="business-text-link"
               >
                 Open current interaction ↗
+              </Link>
+            </div>
+          )}
+          {source.sourceMessageRevision && source.sourceMessage && (
+            <div className="business-source-context">
+              <p className="business-hint">Exact conversation excerpt used</p>
+              <blockquote className="business-prose">
+                “{source.sourceMessageRevision.body}”
+              </blockquote>
+              <p className="business-meta mt-sm">
+                {source.sourceMessageRevision.speakerNameSnapshot} ·{" "}
+                {humanize(source.sourceMessageRevision.channel)} ·{" "}
+                {businessDate(source.sourceMessageRevision.occurredAt)}
+              </p>
+              {(source.sourceMessage.voidedAt ||
+                source.sourceMessage.revisions[0]?.id !==
+                  source.sourceMessageRevision.id) && (
+                <p className="business-review-flag">
+                  Source changed since this observation. The exact wording above
+                  remains pinned for historical truth.
+                </p>
+              )}
+              <Link
+                href={`/entrepreneurship/interactions/${source.sourceMessageRevision.interactionId}`}
+                className="business-text-link"
+              >
+                Open current conversation ↗
               </Link>
             </div>
           )}

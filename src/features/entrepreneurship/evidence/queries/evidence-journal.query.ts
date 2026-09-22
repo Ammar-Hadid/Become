@@ -54,12 +54,13 @@ async function readEvidenceJournal(
   >(Prisma.sql`
  WITH entries AS (
   SELECT i.id,'INTERACTION'::text AS type,r."occurredAt" AS date FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version
-  WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND ((TRUE ${evidenceScopeSql(scope, "r", true)}) OR EXISTS(
+  WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r.kind='CONVERSATION' AND ((TRUE ${evidenceScopeSql(scope, "r", true)}) OR EXISTS(
    SELECT 1 FROM observation so JOIN observation_revision sr ON sr."observationId"=so.id AND sr.version=so.version AND sr."userId"=so."userId" WHERE so."userId"=${userId} AND so."voidedAt" IS NULL AND sr."interactionId"=i.id ${evidenceScopeSql(scope, "sr")}
   )) ${scope.sourceKind && scope.sourceKind !== "INTERACTION" ? Prisma.sql`AND FALSE` : Prisma.empty}
   UNION ALL
   SELECT o.id,'OBSERVATION'::text,r."observedAt" FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r."userId"=o."userId" AND r.version=o.version
-  WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."interactionId" IS NULL ${evidenceScopeSql(scope)} ${scope.sourceKind ? Prisma.sql`AND r."sourceKind"=${scope.sourceKind}` : Prisma.empty}
+  WHERE o."userId"=${userId} AND o."voidedAt" IS NULL ${evidenceScopeSql(scope)}
+  ${scope.sourceKind === "INTERACTION" ? Prisma.sql`AND FALSE` : scope.sourceKind === "OBSERVATION" ? Prisma.empty : scope.sourceKind ? Prisma.sql`AND r."sourceKind"=${scope.sourceKind}` : Prisma.sql`AND r."interactionId" IS NULL`}
  ) SELECT * FROM entries ${cursor ? Prisma.sql`WHERE (date,type,id)<(${cursor.date},${cursor.type},${cursor.id})` : Prisma.empty} ORDER BY date DESC,type DESC,id DESC LIMIT 26`);
   const page = rows.slice(0, 25),
     interactionIds = page

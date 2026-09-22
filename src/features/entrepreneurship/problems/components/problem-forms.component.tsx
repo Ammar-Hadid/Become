@@ -33,12 +33,15 @@ import type { BusinessOption } from "@/features/entrepreneurship/shared/types/bu
 export function ProblemForm({
   niches,
   segments = [],
+  nicheId,
 }: {
   niches: BusinessOption[];
   segments?: AudienceOption[];
+  nicheId?: string;
 }) {
   const exploration = useExploration();
   const router = useRouter();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="A belief to examine"
@@ -77,18 +80,33 @@ export function ProblemForm({
             <option value="USER_HYPOTHESIS">My hypothesis</option>
             <option value="OBSERVATION_LED">Prompted by an observation</option>
           </BusinessSelect>
-          <BusinessSelect
-            label="Exploration · optional"
-            name="nicheId"
-            value={exploration?.archived ? "" : (exploration?.id ?? "")}
-          >
-            <option value="">No exploration</option>
-            {niches.map((niche) => (
-              <option value={niche.id} key={niche.id}>
-                {niche.name}
-              </option>
-            ))}
-          </BusinessSelect>
+          {nicheId ? (
+            <>
+              <input type="hidden" name="nicheId" value={nicheId} />
+              <div className="business-form-note">
+                <strong>
+                  Part of {exploration?.name ?? "this exploration"}
+                </strong>
+                <p>
+                  This problem stays inside the current exploration so its
+                  evidence trail and next test remain in context.
+                </p>
+              </div>
+            </>
+          ) : (
+            <BusinessSelect
+              label="Exploration · optional"
+              name="nicheId"
+              value={exploration?.archived ? "" : (exploration?.id ?? "")}
+            >
+              <option value="">No exploration</option>
+              {niches.map((niche) => (
+                <option value={niche.id} key={niche.id}>
+                  {niche.name}
+                </option>
+              ))}
+            </BusinessSelect>
+          )}
         </BusinessFormSection>
       </RecordForm>
     </RecordDialog>
@@ -119,6 +137,8 @@ export function ReceiptEvidenceForm({
   problemId: string;
   receipts: BusinessOption[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="An actual financial fact"
@@ -157,6 +177,8 @@ export function LinkEvidenceForm({
   problemId: string;
   observations: { id: string; revisionId: string; name: string }[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Trace the belief"
@@ -346,7 +368,8 @@ export function ObservationFields({
                 </>
               ) : (
                 <p className="business-hint">
-                  Keeps the recorded interaction's audience and source identity.
+                  Keeps the recorded interaction&apos;s audience and source
+                  identity.
                 </p>
               )}
             </div>
@@ -379,6 +402,8 @@ export function ProblemAudienceForm({
   value: AudienceFieldValue;
   segments: AudienceOption[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="A clearer boundary"
@@ -411,6 +436,8 @@ export function ProblemAudienceForm({
 export function ObservationForm(
   props: Parameters<typeof ObservationFields>[0],
 ) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Market voice"
@@ -444,6 +471,8 @@ export function AssessmentForm({
     href?: string;
   }[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Your judgment, with a boundary"
@@ -539,6 +568,8 @@ export function ReconfirmEvidenceForm({
   problemId: string;
   evidence: { id: string; name: string; current: string }[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Changed source meaning"

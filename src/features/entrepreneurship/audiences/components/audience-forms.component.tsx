@@ -39,6 +39,7 @@ export function AudienceForm({
   };
 }) {
   const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow={
@@ -148,6 +149,8 @@ export function AttachAudienceForm({
   kind: "person" | "segment";
   nicheId: string;
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Context you already know"
@@ -192,6 +195,8 @@ export function AudienceMenu({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <div aria-busy={pending}>
       <SubMenu

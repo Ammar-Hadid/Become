@@ -14,6 +14,7 @@ import {
   type AudienceFieldValue,
   type AudienceOption,
 } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 export function ObservationCorrection({
   id,
   version,
@@ -32,6 +33,8 @@ export function ObservationCorrection({
   segments?: AudienceOption[];
 }) {
   const [audienceOverride, setAudienceOverride] = useState(false);
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="A source correction"

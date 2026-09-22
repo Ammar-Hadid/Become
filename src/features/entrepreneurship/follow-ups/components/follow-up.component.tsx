@@ -16,6 +16,7 @@ import {
   resolveFollowUpAction,
 } from "@/features/entrepreneurship/follow-ups/actions/follow-up.action";
 import { businessDate } from "@/features/entrepreneurship/shared/utils/business.util";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 type Target = { companyId?: string; interactionId?: string; offerId?: string };
 export function FollowUpForm({
   target,
@@ -24,6 +25,8 @@ export function FollowUpForm({
   target: Target;
   record?: { id: string; title: string; dueOn: Date | null };
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       triggerRole={record ? "menuitem" : undefined}
@@ -71,6 +74,7 @@ export function FollowUpForm({
 }
 export function FollowUpRecord({
   record,
+  readOnly = false,
 }: {
   record: {
     id: string;
@@ -82,7 +86,9 @@ export function FollowUpRecord({
     interactionId: string | null;
     offerId: string | null;
   };
+  readOnly?: boolean;
 }) {
+  const exploration = useExploration();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const target: Target = record.companyId
@@ -119,36 +125,38 @@ export function FollowUpRecord({
           </p>
         )}
       </div>
-      <div className="business-actions">
-        {!resolved && (
-          <button
-            className="business-icon-button"
-            aria-label={`Complete ${record.title}`}
-            disabled={pending}
-            onClick={() => resolve("COMPLETE")}
-          >
-            <Check aria-hidden="true" />
-          </button>
-        )}
-        <SubMenu
-          label="Follow-up actions"
-          placement="bottom-end"
-          closeOnSelect={false}
-          trigger={(props) => (
-            <button {...props} className="business-icon-button">
-              <MoreHorizontal aria-hidden="true" />
+      {!exploration?.archived && !readOnly && (
+        <div className="business-actions">
+          {!resolved && (
+            <button
+              className="business-icon-button"
+              aria-label={`Complete ${record.title}`}
+              disabled={pending}
+              onClick={() => resolve("COMPLETE")}
+            >
+              <Check aria-hidden="true" />
             </button>
           )}
-        >
-          <FollowUpForm target={target} record={record} />
-          <MenuItem
-            disabled={pending}
-            onSelect={() => resolve(resolved ? "REOPEN" : "CANCEL")}
+          <SubMenu
+            label="Follow-up actions"
+            placement="bottom-end"
+            closeOnSelect={false}
+            trigger={(props) => (
+              <button {...props} className="business-icon-button">
+                <MoreHorizontal aria-hidden="true" />
+              </button>
+            )}
           >
-            {resolved ? "Reopen" : "Cancel follow-up"}
-          </MenuItem>
-        </SubMenu>
-      </div>
+            <FollowUpForm target={target} record={record} />
+            <MenuItem
+              disabled={pending}
+              onSelect={() => resolve(resolved ? "REOPEN" : "CANCEL")}
+            >
+              {resolved ? "Reopen" : "Cancel follow-up"}
+            </MenuItem>
+          </SubMenu>
+        </div>
+      )}
     </article>
   );
 }

@@ -35,6 +35,7 @@ import { ContentScriptSaveState } from "@/features/content/editor/components/con
 import { ContentScriptToolbar } from "@/features/content/editor/components/content-script-toolbar.component";
 import { useContentScriptAutosave } from "@/features/content/editor/hooks/content-script-autosave.hook";
 import { useContentScriptNavigationGuard } from "@/features/content/editor/hooks/content-script-navigation-guard.hook";
+import { DocumentEditorStage } from "@/components/ui/document-editor/components/document-editor-stage.component";
 
 type EditorDialog = "image" | "link" | "shortcuts" | null;
 
@@ -670,8 +671,12 @@ export function ContentScriptEditor({
         </div>
       )}
 
-      <main className="content-script-document-stage">
-        <div ref={manuscriptRef} className="content-script-manuscript">
+      <DocumentEditorStage
+        label="Script document"
+        className="content-script-document-stage"
+        canvasClassName="content-script-manuscript"
+      >
+        <div ref={manuscriptRef} className="contents">
           <div className="content-script-guide" aria-hidden="true">
             <span style={{ transform: `translateY(${guideTop}px)` }} />
           </div>
@@ -690,7 +695,7 @@ export function ContentScriptEditor({
             />
           )}
         </div>
-      </main>
+      </DocumentEditorStage>
 
       {editor && dialog === "link" && (
         <ContentScriptLinkDialog

@@ -62,6 +62,9 @@ export function CaptureFields({
   prefill,
   conversationOnly = false,
   initialKind,
+  allowedKinds,
+  captureObservations = true,
+  lockExploration,
 }: {
   companies: BusinessOption[];
   people?: BusinessOption[];
@@ -76,6 +79,9 @@ export function CaptureFields({
   sourceNicheId?: string | null;
   conversationOnly?: boolean;
   initialKind?: string;
+  allowedKinds?: readonly string[];
+  captureObservations?: boolean;
+  lockExploration?: string;
   prefill?: {
     summary: string;
     date: string;
@@ -90,8 +96,10 @@ export function CaptureFields({
       <input type="hidden" name="captureKey" value={key} />
       {!value && !prefill && exploration && (
         <p className="business-hint">
-          Recording in {exploration.name}. Change context below if this happened
-          elsewhere.
+          Recording in {exploration.name}.
+          {lockExploration
+            ? " This activity stays with the current exploration."
+            : " Change context below if this happened elsewhere."}
         </p>
       )}
       {prefill?.sourceSessionId && (
@@ -121,11 +129,13 @@ export function CaptureFields({
                 (respondsTo ? "REPLY_RECEIVED" : "CONVERSATION")
               }
             >
-              {interactionKinds.map((kind) => (
-                <option key={kind} value={kind}>
-                  {humanize(kind)}
-                </option>
-              ))}
+              {interactionKinds
+                .filter((kind) => !allowedKinds || allowedKinds.includes(kind))
+                .map((kind) => (
+                  <option key={kind} value={kind}>
+                    {humanize(kind)}
+                  </option>
+                ))}
             </BusinessSelect>
           )}
           <BusinessField
@@ -170,28 +180,47 @@ export function CaptureFields({
               </option>
             ))}
           </BusinessSelect>
-          <BusinessSelect
-            label="Exploration · optional"
-            name="nicheId"
-            value={
-              value
-                ? (value.nicheId ?? "")
-                : respondsTo
-                  ? (sourceNicheId ?? "")
-                  : prefill
-                    ? (prefill.nicheId ?? "")
-                    : exploration?.archived
-                      ? ""
-                      : (exploration?.id ?? "")
-            }
-          >
-            <option value="">No exploration</option>
-            {niches.map((niche) => (
-              <option key={niche.id} value={niche.id}>
-                {niche.name}
-              </option>
-            ))}
-          </BusinessSelect>
+          {lockExploration ? (
+            <>
+              <input
+                type="hidden"
+                name="nicheId"
+                value={value?.nicheId ?? sourceNicheId ?? lockExploration}
+              />
+              <div className="business-form-note">
+                <strong>
+                  Part of {exploration?.name ?? "this exploration"}
+                </strong>
+                <p>
+                  This Reach activity stays with the current exploration and
+                  keeps its original context when corrected.
+                </p>
+              </div>
+            </>
+          ) : (
+            <BusinessSelect
+              label="Exploration · optional"
+              name="nicheId"
+              value={
+                value
+                  ? (value.nicheId ?? "")
+                  : respondsTo
+                    ? (sourceNicheId ?? "")
+                    : prefill
+                      ? (prefill.nicheId ?? "")
+                      : exploration?.archived
+                        ? ""
+                        : (exploration?.id ?? "")
+              }
+            >
+              <option value="">No exploration</option>
+              {niches.map((niche) => (
+                <option key={niche.id} value={niche.id}>
+                  {niche.name}
+                </option>
+              ))}
+            </BusinessSelect>
+          )}
           <InteractionParticipants initial={value?.participants} />
           <BusinessField
             label="Notes"
@@ -224,7 +253,9 @@ export function CaptureFields({
       </details>
       {!value && (
         <>
-          <ObservationEntries problems={problems} segments={segments} />
+          {captureObservations && (
+            <ObservationEntries problems={problems} segments={segments} />
+          )}
           <details className="business-disclosure">
             <summary>Choose a next action</summary>
             <div>
@@ -268,9 +299,14 @@ export function CaptureFields({
   );
 }
 export function InteractionForm(
-  props: Parameters<typeof CaptureFields>[0] & { triggerLabel?: string },
+  props: Parameters<typeof CaptureFields>[0] & {
+    triggerLabel?: string;
+    createdHrefPrefix?: string;
+  },
 ) {
   const router = useRouter();
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Field notes"
@@ -296,7 +332,11 @@ export function InteractionForm(
         submitLabel={props.value ? "Save correction" : "Save interaction"}
         onSaved={(result) => {
           if (!props.value && result.id)
-            router.push(`/entrepreneurship/interactions/${result.id}`);
+            router.push(
+              props.createdHrefPrefix
+                ? `${props.createdHrefPrefix}/${result.id}`
+                : `/entrepreneurship/interactions/${result.id}`,
+            );
         }}
       >
         <CaptureFields {...props} />

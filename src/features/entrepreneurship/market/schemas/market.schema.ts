@@ -5,7 +5,7 @@ export const optionalText = (max = 6000) =>
     .string()
     .trim()
     .max(max)
-    .optional()
+    .nullish()
     .transform((v) => v || null);
 export const nameSchema = z
   .string()

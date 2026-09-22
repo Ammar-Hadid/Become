@@ -29,6 +29,7 @@ import {
   evidenceCondition,
 } from "@/features/entrepreneurship/problems/queries/problem.query";
 import { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import { getReachWorkspace } from "@/features/entrepreneurship/reach/queries/reach-workspace.query";
 import { getAudienceDetail } from "@/features/entrepreneurship/audiences/queries/audience.query";
 import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import { getExploration } from "@/features/entrepreneurship/explorations/queries/exploration.query";
@@ -701,8 +702,7 @@ describe.skipIf(!enabled)("Unified audience integrity", () => {
       channel: "DM",
       confirmedSent: true,
     });
-    const outreach = (await getEvidenceJournal(userId, { nicheId: n.id }))
-      .entries[0];
+    const outreach = (await getReachWorkspace(userId, n.id))!.activity[0];
     await conversation({
       personId: p.id,
       nicheId: n.id,

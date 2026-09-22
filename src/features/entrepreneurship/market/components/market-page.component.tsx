@@ -42,11 +42,14 @@ export async function MarketPage({
     nicheArchived: String(nicheArchived),
     ...(cursor ? { cursor } : {}),
   });
+  const base = nicheId
+    ? `/entrepreneurship/explorations/${encodeURIComponent(nicheId)}/scope?kind=business`
+    : "/entrepreneurship/market";
   const filterHref = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (key !== "nicheArchived" && key !== "cursor") next.delete("cursor");
     next.set(key, value);
-    return `/entrepreneurship/market?${next}`;
+    return `${base}${base.includes("?") ? "&" : "?"}${next}`;
   };
   return (
     <MarketFilters initial={params.toString()}>

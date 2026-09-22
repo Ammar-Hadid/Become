@@ -28,7 +28,6 @@ export async function OfferList({
     <>
       <header className="business-section-heading business-page-heading">
         <div>
-          <p className="eyebrow">From understanding to an offer</p>
           <h2>Something worth saying yes to.</h2>
           <p>
             What you offered, what happened, and what was actually received.

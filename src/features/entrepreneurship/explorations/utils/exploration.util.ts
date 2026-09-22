@@ -10,16 +10,24 @@ export function contextualBusinessHref(href: string, nicheId?: string) {
   if (/^\/market(?:[/?#]|$)/.test(relative))
     return explorationHref(
       nicheId,
-      relative.replace(/^\/market(?:\/companies)?/, "/companies"),
+      relative.replace(/^\/market(?:\/companies)?/, "/scope/businesses"),
     );
-  if (
-    /^\/(interactions|problems|offers|observations|audience|evidence|people|segments)(?:[/?#]|$)/.test(
-      relative,
-    ) ||
-    !relative ||
-    relative.startsWith("?")
-  )
-    return explorationHref(nicheId, relative);
+  const stageMappings = [
+    [/^\/audience/, "/scope"],
+    [/^\/segments/, "/scope/segments"],
+    [/^\/people/, "/scope/people"],
+    [/^\/companies/, "/scope/businesses"],
+    [/^\/evidence/, "/learn/sources"],
+    [/^\/observations/, "/learn/observations"],
+    [/^\/interactions/, "/learn/conversations"],
+    [/^\/problems/, "/decide/problems"],
+    [/^\/offers/, "/test/offers"],
+  ] as const;
+  for (const [pattern, replacement] of stageMappings)
+    if (pattern.test(relative))
+      return explorationHref(nicheId, relative.replace(pattern, replacement));
+  if (!relative || relative.startsWith("?"))
+    return explorationHref(nicheId, `/snapshot${relative}`);
   return href;
 }
 

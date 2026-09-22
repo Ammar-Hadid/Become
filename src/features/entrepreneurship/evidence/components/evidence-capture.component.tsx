@@ -7,7 +7,10 @@ import {
   useRecordDialogClose,
 } from "@/components/ui/forms/record-dialog.component";
 import { Button } from "@/components/ui/buttons/button.component";
-import { BusinessLink } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import {
+  BusinessLink,
+  useExploration,
+} from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { confirmRecordFormDiscard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { CaptureFields } from "@/features/entrepreneurship/interactions/components/interaction-form.component";
@@ -17,8 +20,17 @@ import { recordObservationAction } from "@/features/entrepreneurship/problems/ac
 
 type CaptureLane = "conversation" | "observation" | "public";
 
-function EvidenceCaptureFields(props: Parameters<typeof CaptureFields>[0]) {
-  const [lane, setLane] = useState<CaptureLane>("conversation");
+const captureLaneOptions = [
+  ["conversation", "A conversation", "What someone shared", MessagesSquare],
+  ["observation", "An observation", "What you saw directly", Eye],
+  ["public", "A public source", "What you read or found", Globe],
+] as const;
+
+function EvidenceCaptureFields({
+  captureLanes,
+  ...props
+}: Parameters<typeof CaptureFields>[0] & { captureLanes: CaptureLane[] }) {
+  const [lane, setLane] = useState<CaptureLane>(captureLanes[0]);
   const [saved, setSaved] = useState<{ id?: string; lane: CaptureLane } | null>(
     null,
   );
@@ -80,42 +92,35 @@ function EvidenceCaptureFields(props: Parameters<typeof CaptureFields>[0]) {
     <div className="gap-2xl grid">
       <fieldset className="gap-sm grid sm:grid-cols-3">
         <legend className="sr-only">What do you want to keep?</legend>
-        {(
-          [
-            [
-              "conversation",
-              "A conversation",
-              "What someone shared",
-              MessagesSquare,
-            ],
-            ["observation", "An observation", "What you saw directly", Eye],
-            ["public", "A public source", "What you read or found", Globe],
-          ] as const
-        ).map(([id, label, hint, Icon]) => (
-          <label
-            key={id}
-            className={`gap-sm rounded-control p-md sm:p-lg text-body relative flex cursor-pointer items-center border sm:flex-col sm:items-start ${lane === id ? "border-primary/40 bg-primary/5 text-text-primary" : "border-border text-text-secondary hover:bg-surface-elevated"}`}
-          >
-            <span className="gap-sm flex items-center">
-              <input
-                type="radio"
-                name="evidence-lane"
-                aria-label={`${label} ${hint}`}
-                checked={lane === id}
-                onChange={() => {
-                  if (confirmRecordFormDiscard(formRegion.current ?? undefined))
-                    setLane(id);
-                }}
-                className="accent-primary"
-              />
-              <Icon className="size-4" aria-hidden="true" />
-            </span>
-            <strong className="font-medium">{label}</strong>
-            <span className="text-body-sm text-text-muted hidden sm:block">
-              {hint}
-            </span>
-          </label>
-        ))}
+        {captureLaneOptions
+          .filter(([id]) => captureLanes.includes(id))
+          .map(([id, label, hint, Icon]) => (
+            <label
+              key={id}
+              className={`gap-sm rounded-control p-md sm:p-lg text-body relative flex cursor-pointer items-center border sm:flex-col sm:items-start ${lane === id ? "border-primary/40 bg-primary/5 text-text-primary" : "border-border text-text-secondary hover:bg-surface-elevated"}`}
+            >
+              <span className="gap-sm flex items-center">
+                <input
+                  type="radio"
+                  name="evidence-lane"
+                  aria-label={`${label} ${hint}`}
+                  checked={lane === id}
+                  onChange={() => {
+                    if (
+                      confirmRecordFormDiscard(formRegion.current ?? undefined)
+                    )
+                      setLane(id);
+                  }}
+                  className="accent-primary"
+                />
+                <Icon className="size-4" aria-hidden="true" />
+              </span>
+              <strong className="font-medium">{label}</strong>
+              <span className="text-body-sm text-text-muted hidden sm:block">
+                {hint}
+              </span>
+            </label>
+          ))}
       </fieldset>
       <div ref={formRegion}>
         <RecordForm
@@ -153,8 +158,18 @@ function EvidenceCaptureFields(props: Parameters<typeof CaptureFields>[0]) {
 }
 
 export function EvidenceCapture(
-  props: Parameters<typeof CaptureFields>[0] & { triggerLabel?: string },
+  props: Parameters<typeof CaptureFields>[0] & {
+    triggerLabel?: string;
+    captureLanes?: CaptureLane[];
+  },
 ) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
+  const captureLanes = props.captureLanes ?? [
+    "conversation",
+    "observation",
+    "public",
+  ];
   return (
     <RecordDialog
       eyebrow="From the field"
@@ -162,7 +177,7 @@ export function EvidenceCapture(
       triggerLabel={props.triggerLabel ?? "Keep evidence"}
       description="Start with what happened or what you found. Identity and audience details can stay open while you learn."
     >
-      <EvidenceCaptureFields {...props} />
+      <EvidenceCaptureFields {...props} captureLanes={captureLanes} />
     </RecordDialog>
   );
 }

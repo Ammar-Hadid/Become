@@ -11,6 +11,12 @@ export function getObservationDetail(userId: string, id: string) {
           interactionRevision: {
             include: { audienceContext: audienceInclude },
           },
+          sourceMessage: {
+            include: {
+              revisions: { orderBy: { version: "desc" } },
+            },
+          },
+          sourceMessageRevision: true,
           evidence: { include: { problem: true } },
         },
       },

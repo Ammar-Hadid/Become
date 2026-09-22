@@ -11,6 +11,22 @@ import {
   offerExplorationWhere,
 } from "@/features/entrepreneurship/explorations/queries/exploration-scope.query";
 
+export function getExplorationShell(userId: string, id: string) {
+  return prisma.niche.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      name: true,
+      scope: true,
+      direction: true,
+      archivedAt: true,
+      updatedAt: true,
+      marketFocus: true,
+      marketConclusion: true,
+    },
+  });
+}
+
 export async function getExploration(userId: string, id: string) {
   const exploration = await prisma.niche.findFirst({
     where: { id, userId },
@@ -62,6 +78,11 @@ export async function getExploration(userId: string, id: string) {
         });
     }
   return { ...exploration, sourceOptions, initialSourceKeys };
+}
+
+/** Heavy direction-authoring data, intentionally kept off the shell's critical path. */
+export function getExplorationDirectionEditor(userId: string, id: string) {
+  return getExploration(userId, id);
 }
 export async function getExplorationSummary(userId: string, nicheId: string) {
   const [companies, problems, offers, events, time] = await Promise.all([

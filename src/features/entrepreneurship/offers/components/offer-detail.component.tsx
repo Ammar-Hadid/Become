@@ -46,7 +46,11 @@ export async function OfferDetail({
       select: { id: true, name: true },
     }),
   ]);
-  if (!offer) notFound();
+  if (
+    !offer ||
+    (nicheId && !offer.niches.some((link) => link.nicheId === nicheId))
+  )
+    notFound();
   const presentation = offerPresentation(offer.revisions, offer.events);
   const audienceTest = offer.mode === "AUDIENCE_TEST";
   const { latest, status } = presentation;

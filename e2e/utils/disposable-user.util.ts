@@ -48,6 +48,14 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.problemAssessmentEvidence.deleteMany({ where });
       await tx.problemAssessment.deleteMany({ where });
       await tx.problemEvidence.deleteMany({ where });
+      await tx.explorationSnapshotClaim.deleteMany({ where });
+      await tx.explorationSnapshotUncertainty.deleteMany({ where });
+      await tx.explorationSnapshotEdition.deleteMany({ where });
+      await tx.explorationClaimCitation.deleteMany({ where });
+      await tx.explorationClaimRevision.deleteMany({ where });
+      await tx.explorationClaim.deleteMany({ where });
+      await tx.explorationUncertaintyRevision.deleteMany({ where });
+      await tx.explorationUncertainty.deleteMany({ where });
       await tx.businessReceiptAllocation.deleteMany({ where });
       await tx.offerEvent.deleteMany({ where });
       await tx.offerRevisionProblem.deleteMany({ where });
