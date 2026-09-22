@@ -3,8 +3,8 @@ import { getCompletedSessionById } from "@/features/sessions/queries/session.que
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 import { getServerEnv } from "@/lib/config/server-environment.config";
 import { isTrustedRequestOrigin } from "@/lib/http/utils/request-origin.util";
-import { correctSessionEnd } from "@/features/sessions/lifecycle/services/correct-session-end.service";
-import { correctSessionEndSchema } from "@/features/sessions/schemas/session.schema";
+import { correctSessionDuration } from "@/features/sessions/lifecycle/services/correct-session-duration.service";
+import { correctSessionDurationSchema } from "@/features/sessions/schemas/session.schema";
 
 export async function GET(
   _request: Request,
@@ -38,17 +38,17 @@ export async function PATCH(
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const parsed = correctSessionEndSchema.safeParse(
+  const parsed = correctSessionDurationSchema.safeParse(
     await request.json().catch(() => ({})),
   );
   if (!parsed.success)
-    return NextResponse.json({ error: "Invalid end time." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid duration." }, { status: 400 });
 
   const { id } = await context.params;
-  const result = await correctSessionEnd(
+  const result = await correctSessionDuration(
     user.id,
     id,
-    new Date(parsed.data.endedAt),
+    parsed.data.durationSeconds,
     new Date(parsed.data.expectedEndedAt),
   );
   if (result.status === "not-found")
@@ -61,9 +61,12 @@ export async function PATCH(
       { error: "This session changed. Reopen it and try again." },
       { status: 409 },
     );
-  if (result.status === "invalid-end")
+  if (result.status === "invalid-duration")
     return NextResponse.json(
-      { error: "Choose a time between the session start and now." },
+      {
+        error:
+          "Choose a duration that fits between the session start and now, excluding breaks.",
+      },
       { status: 400 },
     );
   return NextResponse.json(result.session);

@@ -56,7 +56,7 @@ export const transitionSessionSchema = z.object({
   expectedRevision: z.number().int().nonnegative(),
 });
 
-export const correctSessionEndSchema = z.object({
-  endedAt: z.iso.datetime({ offset: true }),
+export const correctSessionDurationSchema = z.object({
+  durationSeconds: z.number().int().nonnegative(),
   expectedEndedAt: z.iso.datetime({ offset: true }),
 });

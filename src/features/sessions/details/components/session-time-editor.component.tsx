@@ -1,10 +1,9 @@
 "use client";
 
-import { DateTime } from "luxon";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
+import { DurationPicker } from "@/features/sessions/details/components/duration-picker.component";
 import type { SessionDetailItem } from "@/features/sessions/types/session.types";
-import { APP_TIMEZONE } from "@/lib/config/environment.config";
 
 export function SessionTimeEditor({
   session,
@@ -14,25 +13,15 @@ export function SessionTimeEditor({
   onSaved: (session: SessionDetailItem) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState("");
+  const [durationSeconds, setDurationSeconds] = useState(
+    session.durationSeconds,
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!session.endedAt) return null;
 
-  const formatInput = (iso: string) =>
-    DateTime.fromISO(iso)
-      .setZone(APP_TIMEZONE)
-      .toFormat("yyyy-MM-dd'T'HH:mm:ss");
-
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const selected = DateTime.fromISO(value, {
-      zone: APP_TIMEZONE,
-    });
-    if (!selected.isValid) {
-      setError("Choose a valid date and time.");
-      return;
-    }
     setSaving(true);
     setError(null);
     try {
@@ -42,7 +31,7 @@ export function SessionTimeEditor({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            endedAt: selected.toUTC().toISO(),
+            durationSeconds,
             expectedEndedAt: session.endedAt,
           }),
         },
@@ -56,7 +45,7 @@ export function SessionTimeEditor({
           if (refreshed.ok) {
             const latest = (await refreshed.json()) as SessionDetailItem;
             onSaved(latest);
-            setValue(formatInput(latest.endedAt!));
+            setDurationSeconds(latest.durationSeconds);
           }
         }
         setError(result.error || "Could not update the session.");
@@ -78,7 +67,7 @@ export function SessionTimeEditor({
           type="button"
           className="text-primary hover:text-primary-hover text-body-sm font-medium"
           onClick={() => {
-            setValue(formatInput(session.endedAt!));
+            setDurationSeconds(session.durationSeconds);
             setError(null);
             setEditing(true);
           }}
@@ -87,20 +76,14 @@ export function SessionTimeEditor({
         </button>
       ) : (
         <form onSubmit={save} className="gap-md grid">
-          <label className="block">
-            <span className="field-label">When did you stop working?</span>
-            <input
-              type="datetime-local"
-              step="1"
-              className="text-input"
-              value={value}
-              min={formatInput(session.startedAt)}
-              max={formatInput(new Date().toISOString())}
-              onChange={(event) => setValue(event.target.value)}
-              required
-              data-testid="session-corrected-end"
+          <fieldset className="gap-sm m-0 grid min-w-0 border-0 p-0">
+            <legend className="field-label">How long did you work?</legend>
+            <DurationPicker
+              value={durationSeconds}
+              onChange={setDurationSeconds}
+              disabled={saving}
             />
-          </label>
+          </fieldset>
           <p className="text-text-muted text-body-sm">
             Focused time and reports will update. Recorded breaks stay excluded.
           </p>

@@ -1,8 +1,6 @@
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
-import { DateTime } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
-import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { formatDuration } from "@/lib/dates/utils/period.util";
 
 async function createAccount(page: Page) {
@@ -192,7 +190,6 @@ test("corrects a forgotten stop time from session details", async ({
 }) => {
   await createAccount(page);
   await recordSession(page, { activity: "Coding", focus: "Forgotten stop" });
-  await page.setViewportSize({ width: 390, height: 844 });
   await page
     .getByTestId("session-row-trigger")
     .filter({ hasText: "Forgotten stop" })
@@ -208,16 +205,50 @@ test("corrects a forgotten stop time from session details", async ({
   await page.reload();
   await expect(page.getByTestId("session-details")).toBeVisible();
   await page.getByRole("button", { name: "Edit recorded time" }).click();
-  const inputBounds = await page
-    .getByTestId("session-corrected-end")
+  await expect(page.getByTestId("session-duration-picker")).toBeVisible();
+  const hours = page.getByRole("spinbutton", { name: "Hours" });
+  const minutes = page.getByRole("spinbutton", { name: "Minutes" });
+  const seconds = page.getByRole("spinbutton", { name: "Seconds" });
+  await hours.focus();
+  await hours.press("Home");
+  await hours.press("ArrowDown");
+  await minutes.press("Home");
+  await seconds.press("Home");
+  await page.getByRole("button", { name: "Set minutes to 1" }).click();
+  await expect(minutes).toHaveAttribute("aria-valuenow", "1");
+  await minutes.hover();
+  const drawerScrollBeforeWheel = await page
+    .getByTestId("session-details")
+    .evaluate((drawer) => drawer.scrollTop);
+  await page.mouse.wheel(0, -120);
+  await expect(minutes).toHaveAttribute("aria-valuenow", "0");
+  expect(
+    await page
+      .getByTestId("session-details")
+      .evaluate((drawer) => drawer.scrollTop),
+  ).toBe(drawerScrollBeforeWheel);
+  const minuteBounds = await minutes.boundingBox();
+  expect(minuteBounds).not.toBeNull();
+  const minuteCenterX = minuteBounds!.x + minuteBounds!.width / 2;
+  const minuteCenterY = minuteBounds!.y + minuteBounds!.height / 2;
+  await page.mouse.move(minuteCenterX, minuteCenterY);
+  await page.mouse.down();
+  await page.mouse.move(minuteCenterX, minuteCenterY - 48, { steps: 4 });
+  await page.mouse.up();
+  await expect(minutes).toHaveAttribute("aria-valuenow", "1");
+  await minutes.press("Home");
+  await expect(hours).toHaveAttribute("aria-valuenow", "1");
+  await expect(minutes).toHaveAttribute("aria-valuenow", "0");
+  await expect(seconds).toHaveAttribute("aria-valuenow", "0");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const pickerBounds = await page
+    .getByTestId("session-duration-picker")
     .boundingBox();
-  expect(inputBounds).not.toBeNull();
-  expect(inputBounds!.x + inputBounds!.width).toBeLessThanOrEqual(390);
-  const actualStop = DateTime.fromMillis(now - 3600000, {
-    zone: APP_TIMEZONE,
-  }).toFormat("yyyy-MM-dd'T'HH:mm");
-  await page.getByTestId("session-corrected-end").fill(actualStop);
+  expect(pickerBounds).not.toBeNull();
+  expect(pickerBounds!.x + pickerBounds!.width).toBeLessThanOrEqual(390);
   await page.getByRole("button", { name: "Save time" }).click();
+
+  await expect(page.getByTestId("session-detail-duration")).toHaveText("1h 0m");
 
   const response = await page.request.get(`/api/sessions/${id}`);
   expect(response.ok()).toBe(true);
@@ -225,11 +256,8 @@ test("corrects a forgotten stop time from session details", async ({
     endedAt: string;
     durationSeconds: number;
   };
-  expect(
-    DateTime.fromISO(corrected.endedAt)
-      .setZone(APP_TIMEZONE)
-      .toFormat("yyyy-MM-dd'T'HH:mm"),
-  ).toBe(actualStop);
+  expect(corrected.endedAt).toBe(new Date(now - 3600000).toISOString());
+  expect(corrected.durationSeconds).toBe(3600);
   await expect(page.getByTestId("session-detail-duration")).toHaveText(
     formatDuration(corrected.durationSeconds, true),
   );

@@ -1,16 +1,44 @@
-export function validateSessionEndCorrection(
-  startedAt: Date,
-  currentEnd: Date,
+import {
+  calculateSessionMilliseconds,
+  type TimedSession,
+} from "./session-duration.util";
+
+/** Find the earliest end instant yielding the requested focused seconds. */
+export function resolveSessionEndForDuration(
+  session: TimedSession & { endedAt: Date },
   expectedEnd: Date,
-  correctedEnd: Date,
+  durationSeconds: number,
   now = new Date(),
-): "conflict" | "invalid-end" | null {
-  if (currentEnd.getTime() !== expectedEnd.getTime()) return "conflict";
+): Date | "conflict" | "invalid-duration" {
+  if (session.endedAt.getTime() !== expectedEnd.getTime()) return "conflict";
+  const startMs = session.startedAt.getTime();
+  const nowMs = now.getTime();
   if (
-    !Number.isFinite(correctedEnd.getTime()) ||
-    correctedEnd < startedAt ||
-    correctedEnd > now
+    !Number.isSafeInteger(durationSeconds) ||
+    durationSeconds < 0 ||
+    startMs > nowMs
   )
-    return "invalid-end";
-  return null;
+    return "invalid-duration";
+
+  const focusedAt = (endMs: number) =>
+    calculateSessionMilliseconds(
+      { ...session, endedAt: new Date(endMs) },
+      nowMs,
+    );
+  if (durationSeconds > Math.floor(focusedAt(nowMs) / 1000))
+    return "invalid-duration";
+  if (
+    durationSeconds === Math.floor(focusedAt(session.endedAt.getTime()) / 1000)
+  )
+    return session.endedAt;
+
+  const targetMs = durationSeconds * 1000;
+  let low = startMs;
+  let high = nowMs;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (focusedAt(middle) >= targetMs) high = middle;
+    else low = middle + 1;
+  }
+  return new Date(low);
 }

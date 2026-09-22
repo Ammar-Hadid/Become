@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
 import { startSession } from "./start-session.service";
 import { completeSession } from "./complete-session.service";
-import { correctSessionEnd } from "./correct-session-end.service";
+import { correctSessionDuration } from "./correct-session-duration.service";
 import { transitionSession } from "./transition-session.service";
 import { getTimerSnapshot } from "@/features/sessions/timer/queries/timer-snapshot.query";
 import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
@@ -61,7 +61,7 @@ describe.skipIf(process.env.RUN_SESSION_INTEGRATION !== "1")(
     const complete = (id: string, outcome = "Saved") =>
       completeSession(userId, id, { outcome, notes: null });
 
-    it("corrects a completed end time across pauses and reporting while rejecting stale or foreign edits", async () => {
+    it("corrects completed focused duration across pauses and reporting while rejecting stale or foreign edits", async () => {
       const original = await start();
       const now = Date.now();
       const startedAt = new Date(now - 3 * 3600000);
@@ -86,44 +86,45 @@ describe.skipIf(process.env.RUN_SESSION_INTEGRATION !== "1")(
 
       expect(
         (
-          await correctSessionEnd(
+          await correctSessionDuration(
             otherId,
             original.sessionId,
-            correctedEnd,
+            5400,
             originalEnd,
           )
         ).status,
       ).toBe("not-found");
-      const corrected = await correctSessionEnd(
+      const corrected = await correctSessionDuration(
         userId,
         original.sessionId,
-        correctedEnd,
+        5400,
         originalEnd,
       );
       expect(corrected.status).toBe("ok");
       if (corrected.status !== "ok") return;
+      expect(corrected.session.endedAt).toBe(correctedEnd.toISOString());
       expect(corrected.session.durationSeconds).toBe(5400);
       expect(corrected.session.totalPausedMilliseconds).toBe(1800000);
       expect(
         (
-          await correctSessionEnd(
+          await correctSessionDuration(
             userId,
             original.sessionId,
-            startedAt,
+            1800,
             originalEnd,
           )
         ).status,
       ).toBe("conflict");
       expect(
         (
-          await correctSessionEnd(
+          await correctSessionDuration(
             userId,
             original.sessionId,
-            new Date(now + 60000),
+            10000,
             correctedEnd,
           )
         ).status,
-      ).toBe("invalid-end");
+      ).toBe("invalid-duration");
       const measurement = await readSessionMeasurement(prisma, {
         userId,
         start: new Date(now - 4 * 3600000),
@@ -131,10 +132,10 @@ describe.skipIf(process.env.RUN_SESSION_INTEGRATION !== "1")(
       });
       expect(measurement.seconds).toBe("5400");
 
-      const earlier = await correctSessionEnd(
+      const earlier = await correctSessionDuration(
         userId,
         original.sessionId,
-        new Date(startedAt.getTime() + 30 * 60000),
+        1800,
         correctedEnd,
       );
       expect(earlier.status).toBe("ok");

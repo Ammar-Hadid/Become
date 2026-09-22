@@ -386,10 +386,11 @@ resuming. Cancelling leaves it paused; saving excludes the entire break.
 
 Logging must remain fast.
 
-Completed sessions allow correcting the actual stop time when a timer was left
-running. Keep the original start and break records; recalculate focused time in
-session history and reporting from the corrected end. Reject times before the
-start or in the future.
+Completed sessions allow correcting focused work duration when a timer was left
+running. Show an hours, minutes, and seconds picker. Keep the original start
+and break records; resolve a corrected end from the requested focused duration
+so session history and reporting stay aligned. Reject durations longer than the
+available focused time since the session started.
 
 Do not make timer usage a giant form.
 
