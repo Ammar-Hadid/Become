@@ -234,18 +234,86 @@ test("corrects a forgotten stop time from session details", async ({
   await page.mouse.move(minuteCenterX, minuteCenterY);
   await page.mouse.down();
   await page.mouse.move(minuteCenterX, minuteCenterY - 48, { steps: 4 });
+  await page.waitForTimeout(120);
   await page.mouse.up();
   await expect(minutes).toHaveAttribute("aria-valuenow", "1");
+  await minutes.press("Home");
+  await hours.press("End");
+  await expect(hours).toHaveAttribute("aria-valuenow", "24");
+  await expect(minutes).toHaveAttribute("aria-valuemax", "0");
+  await expect(seconds).toHaveAttribute("aria-valuemax", "0");
+  await hours.press("ArrowDown");
+  await minutes.press("ArrowDown");
+  await expect(hours).toHaveAttribute("aria-valuenow", "24");
+  await expect(minutes).toHaveAttribute("aria-valuenow", "0");
+  await expect(
+    page.getByRole("button", { name: "Set hours to 25" }),
+  ).toHaveCount(0);
+  await hours.dblclick();
+  const hoursInput = page.getByTestId("session-duration-hours-input");
+  await hoursInput.fill("1");
+  await hoursInput.press("Enter");
+  await expect(hours).toHaveAttribute("aria-valuenow", "1");
+  await seconds.dblclick();
+  const secondsInput = page.getByTestId("session-duration-seconds-input");
+  await secondsInput.fill("15");
+  await secondsInput.press("Enter");
+  await expect(seconds).toHaveAttribute("aria-valuenow", "15");
+  await seconds.press("Home");
+  const fastBounds = await minutes.boundingBox();
+  expect(fastBounds).not.toBeNull();
+  const fastX = fastBounds!.x + fastBounds!.width / 2;
+  const fastY = fastBounds!.y + fastBounds!.height / 2;
+  await page.mouse.move(fastX, fastY);
+  await page.mouse.down();
+  await page.mouse.move(fastX, fastY - 120);
+  await page.mouse.up();
+  await expect
+    .poll(async () => Number(await minutes.getAttribute("aria-valuenow")))
+    .toBeGreaterThan(2);
+  await minutes.press("Home");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await minutes.press("ArrowDown");
+  await expect(minutes).toHaveAttribute("aria-valuenow", "1");
+  expect(
+    await minutes.evaluate(
+      (element) => getComputedStyle(element.parentElement!).transitionDuration,
+    ),
+  ).toBe("0s");
   await minutes.press("Home");
   await expect(hours).toHaveAttribute("aria-valuenow", "1");
   await expect(minutes).toHaveAttribute("aria-valuenow", "0");
   await expect(seconds).toHaveAttribute("aria-valuenow", "0");
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(500);
+  const selectedBounds = await Promise.all(
+    [hours, minutes, seconds].map((column) => column.boundingBox()),
+  );
+  expect(selectedBounds.every(Boolean)).toBe(true);
+  const selectedCenters = selectedBounds.map(
+    (bounds) => bounds!.y + bounds!.height / 2,
+  );
+  expect(
+    Math.max(...selectedCenters) - Math.min(...selectedCenters),
+  ).toBeLessThan(2);
+  for (const column of [hours, minutes, seconds]) {
+    expect(
+      await column.evaluate(
+        (element) => element.parentElement?.parentElement?.scrollTop,
+      ),
+    ).toBe(0);
+  }
   const pickerBounds = await page
     .getByTestId("session-duration-picker")
     .boundingBox();
   expect(pickerBounds).not.toBeNull();
   expect(pickerBounds!.x + pickerBounds!.width).toBeLessThanOrEqual(390);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const narrowBounds = await page
+    .getByTestId("session-duration-picker")
+    .boundingBox();
+  expect(narrowBounds).not.toBeNull();
+  expect(narrowBounds!.x + narrowBounds!.width).toBeLessThanOrEqual(320);
   await page.getByRole("button", { name: "Save time" }).click();
 
   await expect(page.getByTestId("session-detail-duration")).toHaveText("1h 0m");
@@ -258,6 +326,14 @@ test("corrects a forgotten stop time from session details", async ({
   };
   expect(corrected.endedAt).toBe(new Date(now - 3600000).toISOString());
   expect(corrected.durationSeconds).toBe(3600);
+  const overLimit = await page.request.patch(`/api/sessions/${id}`, {
+    headers: { origin: new URL(page.url()).origin },
+    data: {
+      durationSeconds: 24 * 3600 + 1,
+      expectedEndedAt: corrected.endedAt,
+    },
+  });
+  expect(overLimit.status()).toBe(400);
   await expect(page.getByTestId("session-detail-duration")).toHaveText(
     formatDuration(corrected.durationSeconds, true),
   );

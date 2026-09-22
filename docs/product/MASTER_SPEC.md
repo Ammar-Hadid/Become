@@ -390,7 +390,8 @@ Completed sessions allow correcting focused work duration when a timer was left
 running. Show an hours, minutes, and seconds picker. Keep the original start
 and break records; resolve a corrected end from the requested focused duration
 so session history and reporting stay aligned. Reject durations longer than the
-available focused time since the session started.
+available focused time since the session started or 24 hours. The picker supports
+direct entry for each hours, minutes, and seconds value within that range.
 
 Do not make timer usage a giant form.
 

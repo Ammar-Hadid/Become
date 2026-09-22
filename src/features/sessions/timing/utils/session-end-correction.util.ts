@@ -2,6 +2,7 @@ import {
   calculateSessionMilliseconds,
   type TimedSession,
 } from "./session-duration.util";
+import { MAX_CORRECTED_SESSION_SECONDS } from "@/features/sessions/timing/constants/session-duration.constants";
 
 /** Find the earliest end instant yielding the requested focused seconds. */
 export function resolveSessionEndForDuration(
@@ -16,6 +17,7 @@ export function resolveSessionEndForDuration(
   if (
     !Number.isSafeInteger(durationSeconds) ||
     durationSeconds < 0 ||
+    durationSeconds > MAX_CORRECTED_SESSION_SECONDS ||
     startMs > nowMs
   )
     return "invalid-duration";

@@ -4,6 +4,7 @@ import {
   ENGINEERING_CONTEXT_VALUES,
   ENGINEERING_EVIDENCE_TYPE_VALUES,
 } from "@/features/engineering/constants/engineering.constants";
+import { MAX_CORRECTED_SESSION_SECONDS } from "@/features/sessions/timing/constants/session-duration.constants";
 
 const optionalText = z
   .string()
@@ -57,6 +58,6 @@ export const transitionSessionSchema = z.object({
 });
 
 export const correctSessionDurationSchema = z.object({
-  durationSeconds: z.number().int().nonnegative(),
+  durationSeconds: z.number().int().min(0).max(MAX_CORRECTED_SESSION_SECONDS),
   expectedEndedAt: z.iso.datetime({ offset: true }),
 });

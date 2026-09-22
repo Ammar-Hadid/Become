@@ -125,6 +125,16 @@ describe.skipIf(process.env.RUN_SESSION_INTEGRATION !== "1")(
           )
         ).status,
       ).toBe("invalid-duration");
+      expect(
+        (
+          await correctSessionDuration(
+            userId,
+            original.sessionId,
+            24 * 3600 + 1,
+            correctedEnd,
+          )
+        ).status,
+      ).toBe("invalid-duration");
       const measurement = await readSessionMeasurement(prisma, {
         userId,
         start: new Date(now - 4 * 3600000),

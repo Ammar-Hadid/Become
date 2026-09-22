@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveSessionEndForDuration } from "./session-end-correction.util";
+import { MAX_CORRECTED_SESSION_SECONDS } from "@/features/sessions/timing/constants/session-duration.constants";
 
 const at = (minutes: number) => new Date(Date.UTC(2026, 8, 1, 10, minutes));
 
@@ -63,5 +64,28 @@ describe("completed session duration correction", () => {
     expect(resolveSessionEndForDuration(session, at(30), 41 * 60, at(50))).toBe(
       "invalid-duration",
     );
+  });
+
+  it("accepts exactly 24 hours and rejects a longer corrected session", () => {
+    const start = new Date(Date.UTC(2026, 8, 1, 0, 0));
+    const end = new Date(start.getTime() + 30 * 3600000);
+    const session = { startedAt: start, endedAt: end, pauses: [] };
+
+    expect(
+      resolveSessionEndForDuration(
+        session,
+        end,
+        MAX_CORRECTED_SESSION_SECONDS,
+        end,
+      ),
+    ).toEqual(new Date(start.getTime() + 24 * 3600000));
+    expect(
+      resolveSessionEndForDuration(
+        session,
+        end,
+        MAX_CORRECTED_SESSION_SECONDS + 1,
+        end,
+      ),
+    ).toBe("invalid-duration");
   });
 });

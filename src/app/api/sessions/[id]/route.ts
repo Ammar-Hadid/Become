@@ -42,7 +42,10 @@ export async function PATCH(
     await request.json().catch(() => ({})),
   );
   if (!parsed.success)
-    return NextResponse.json({ error: "Invalid duration." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Choose a duration between 0 and 24 hours." },
+      { status: 400 },
+    );
 
   const { id } = await context.params;
   const result = await correctSessionDuration(
@@ -65,7 +68,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         error:
-          "Choose a duration that fits between the session start and now, excluding breaks.",
+          "Choose up to 24 hours of focused time that fits between the session start and now, excluding breaks.",
       },
       { status: 400 },
     );
