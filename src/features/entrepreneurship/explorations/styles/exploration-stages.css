@@ -231,6 +231,39 @@
   gap: var(--spacing-2xl);
 }
 
+.reach-next-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--spacing-lg);
+  row-gap: var(--spacing-md);
+}
+
+.reach-next-action > .eyebrow {
+  grid-column: 1 / -1;
+}
+
+.reach-next-action > .finance-dialog-trigger {
+  grid-column: 2;
+  grid-row: 2;
+  white-space: nowrap;
+}
+
+.reach-next-action-empty {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.reach-next-action > .business-follow-up {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding-block: var(--spacing-sm);
+}
+
 .exploration-field-notes-static {
   position: sticky;
   top: var(--spacing-2xl);

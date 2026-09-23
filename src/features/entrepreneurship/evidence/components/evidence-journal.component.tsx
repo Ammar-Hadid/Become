@@ -37,8 +37,6 @@ export function EvidenceJournal({
   if (query.personId) collectionQuery.set("personId", query.personId);
   if (query.companyId) collectionQuery.set("companyId", query.companyId);
   if (query.cursor) collectionQuery.set("cursor", query.cursor);
-  if (query.expandedInteractionId)
-    collectionQuery.set("selected", query.expandedInteractionId);
   const collectionHref = nicheId
     ? `${explorationWorkspaceHref(nicheId, "evidence")}${collectionQuery.size ? `?${collectionQuery}` : ""}`
     : "/entrepreneurship/evidence";
@@ -53,42 +51,23 @@ export function EvidenceJournal({
                 : entry.sourceKind === "PUBLIC_SOURCE"
                   ? Globe
                   : Eye;
+            const observationCount =
+              entry.observations.length + entry.omittedObservations;
             const legacyHref = `/entrepreneurship/${entry.type === "INTERACTION" ? "interactions" : "observations"}/${entry.id}`;
-            const rawFullHref = nicheId
-              ? entry.type === "INTERACTION"
-                ? explorationWorkspaceHref(
-                    nicheId,
-                    "conversations",
-                    `/${entry.id}`,
-                  )
-                : explorationWorkspaceHref(
-                    nicheId,
-                    "evidence",
-                    `/observations/${entry.id}`,
-                  )
-              : legacyHref;
-            const fullHref = nicheId
-              ? withExplorationReturn(rawFullHref, collectionHref)
-              : rawFullHref;
-            const inspectQuery = new URLSearchParams();
-            if (query.q) inspectQuery.set("q", query.q);
-            if (query.sourceKind)
-              inspectQuery.set("sourceKind", query.sourceKind);
-            if (query.marketType)
-              inspectQuery.set("marketType", query.marketType);
-            if (query.segmentId) inspectQuery.set("segmentId", query.segmentId);
-            if (query.personId) inspectQuery.set("personId", query.personId);
-            if (query.companyId) inspectQuery.set("companyId", query.companyId);
-            if (query.cursor) inspectQuery.set("cursor", query.cursor);
-            if (entry.type === "INTERACTION")
-              inspectQuery.set("selected", entry.id);
-            const expanded =
-              entry.type === "INTERACTION" &&
-              query.expandedInteractionId === entry.id;
-            const inspectHref =
-              nicheId && entry.type === "INTERACTION"
-                ? `${explorationWorkspaceHref(nicheId, "evidence")}?${inspectQuery}`
-                : fullHref;
+            const rawDetailHref = nicheId
+              ? explorationWorkspaceHref(
+                  nicheId,
+                  "evidence",
+                  entry.type === "INTERACTION"
+                    ? `/sources/${entry.id}`
+                    : `/observations/${entry.id}`,
+                )
+              : entry.type === "INTERACTION"
+                ? `/entrepreneurship/evidence/sources/${entry.id}`
+                : legacyHref;
+            const detailHref = nicheId
+              ? withExplorationReturn(rawDetailHref, collectionHref)
+              : rawDetailHref;
             return (
               <article
                 key={`${entry.type}-${entry.id}`}
@@ -110,13 +89,7 @@ export function EvidenceJournal({
                       <span>· {humanize(entry.wordingMode)}</span>
                     )}
                   </div>
-                  <Link
-                    className="business-journal-title"
-                    href={inspectHref}
-                    aria-expanded={
-                      entry.type === "INTERACTION" ? expanded : undefined
-                    }
-                  >
+                  <Link className="business-journal-title" href={detailHref}>
                     {entry.title}
                     <ArrowUpRight aria-hidden="true" />
                   </Link>
@@ -128,84 +101,16 @@ export function EvidenceJournal({
                       {entry.audienceContext.description}
                     </p>
                   )}
-                  {entry.observations.length > 0 && (
-                    <details className="business-disclosure mt-lg">
-                      <summary>
-                        {entry.observations.length}{" "}
-                        {entry.observations.length === 1
-                          ? "observation"
-                          : "observations"}{" "}
-                        kept from this interaction
-                      </summary>
-                      <div>
-                        {entry.observations.map((observation) => (
-                          <article
-                            key={observation.observationId}
-                            className="border-border pb-lg border-b last:border-0"
-                          >
-                            <p className="business-prose">
-                              {observation.wordingMode === "QUOTE"
-                                ? `“${observation.statement}”`
-                                : observation.statement}
-                            </p>
-                            {observation.sourceKind === "MESSAGE" && (
-                              <p className="business-meta mt-sm">
-                                Conversation excerpt · explicitly kept as an
-                                observation
-                              </p>
-                            )}
-                            <p className="mt-sm text-body-sm text-text-secondary">
-                              <AudienceSummary {...observation} />
-                            </p>
-                            {observation.audienceContextId !==
-                              entry.audienceContext?.id && (
-                              <p className="mt-sm text-body-sm text-text-muted">
-                                Audience attributed from this source
-                                {observation.audienceContext?.description
-                                  ? ` · ${observation.audienceContext.description}`
-                                  : ""}
-                              </p>
-                            )}
-                            <Link
-                              className="business-text-link mt-sm"
-                              href={
-                                nicheId
-                                  ? withExplorationReturn(
-                                      explorationWorkspaceHref(
-                                        nicheId,
-                                        "evidence",
-                                        `/observations/${observation.observationId}`,
-                                      ),
-                                      collectionHref,
-                                    )
-                                  : `/entrepreneurship/observations/${observation.observationId}`
-                              }
-                            >
-                              Read observation{" "}
-                              <ArrowUpRight
-                                className="size-4"
-                                aria-hidden="true"
-                              />
-                            </Link>
-                          </article>
-                        ))}
-                      </div>
-                    </details>
-                  )}
-                  {entry.omittedObservations > 0 && (
+                  {entry.type === "INTERACTION" && (
                     <p className="mt-lg text-body-sm text-text-secondary">
-                      {entry.omittedObservations} more observations ·{" "}
-                      <Link className="business-text-link" href={fullHref}>
-                        Open conversation →
-                      </Link>
+                      {observationCount > 0 ? observationCount : "No"}{" "}
+                      {observationCount === 1 ? "observation" : "observations"}{" "}
+                      {observationCount > 0
+                        ? "kept from this source"
+                        : "kept yet"}
                     </p>
                   )}
                 </div>
-                {expanded && entry.type === "INTERACTION" && (
-                  <Link className="business-journal-full-link" href={fullHref}>
-                    Open full conversation <ArrowUpRight aria-hidden="true" />
-                  </Link>
-                )}
               </article>
             );
           })}

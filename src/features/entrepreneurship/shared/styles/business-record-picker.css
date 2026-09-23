@@ -60,6 +60,11 @@
   overflow-y: auto;
 }
 
+.business-record-picker-menu .menu-item {
+  flex-direction: row;
+  align-items: center;
+}
+
 .business-record-picker-search {
   position: sticky;
   top: 0;
@@ -90,6 +95,10 @@
 }
 
 .business-record-picker-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--spacing-sm);
   min-width: 0;
   flex: 1;
 }
@@ -103,13 +112,21 @@
 }
 
 .business-record-picker-option small {
+  grid-column: 1;
   margin-top: var(--spacing-2xs);
   color: var(--color-text-muted);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
 
-.business-record-picker-menu .menu-item > svg {
+.business-record-picker-option > strong {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.business-record-picker-option > svg {
+  grid-column: 2;
+  grid-row: 1;
   width: 0.875rem;
   flex: 0 0 auto;
   color: var(--color-primary);

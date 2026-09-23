@@ -9,6 +9,8 @@ import { ConversationConductWorkspace } from "@/features/entrepreneurship/conver
 import { ConversationWorkspace } from "@/features/entrepreneurship/conversations/components/conversation-workspace.component";
 import { EvidencePage } from "@/features/entrepreneurship/evidence/components/evidence-page.component";
 import { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import { EvidenceSourceDetail } from "@/features/entrepreneurship/evidence/components/evidence-source-detail.component";
+import { getEvidenceSourceDetail } from "@/features/entrepreneurship/evidence/queries/evidence-source.query";
 import { ExplorationSnapshotHistory } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-snapshot-history.component";
 import { ExplorationSnapshot } from "@/features/entrepreneurship/exploration-snapshots/components/exploration-snapshot.component";
 import { ExplorationOverview } from "@/features/entrepreneurship/explorations/components/exploration-overview.component";
@@ -206,6 +208,17 @@ export async function ExplorationPage({
   }
 
   if (section === "evidence") {
+    if (subsection === "sources" && id && !mode) {
+      const data = await getEvidenceSourceDetail(userId, id, nicheId);
+      if (!data) notFound();
+      return (
+        <EvidenceSourceDetail
+          data={data}
+          nicheId={nicheId}
+          returnTo={value("returnTo")}
+        />
+      );
+    }
     if (subsection === "observations" && id)
       return (
         <ObservationDetail
@@ -225,8 +238,6 @@ export async function ExplorationPage({
       personId: value("personId"),
       companyId: value("companyId"),
       q: value("q"),
-      expandedInteractionId:
-        value("expandedInteractionId") ?? value("selected"),
     };
     const [data, options] = await Promise.all([
       getEvidenceJournal(userId, filters),

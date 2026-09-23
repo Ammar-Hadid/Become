@@ -115,7 +115,7 @@ export function AudiencePage({
         <section
           className={`business-zone business-zone--ledger workspace-collection${archived ? "business-zone--archived" : ""}`}
         >
-          <div className="business-row-heading flex-wrap">
+          <div className="business-row-heading audience-records-heading flex-wrap">
             <div>
               <p className="eyebrow">
                 {kind === "segment"
@@ -149,7 +149,7 @@ export function AudiencePage({
                 aria-hidden="true"
               />
               <input
-                className="text-input pl-4xl"
+                className="text-input audience-search-input pl-4xl"
                 type="search"
                 name="q"
                 defaultValue={search}

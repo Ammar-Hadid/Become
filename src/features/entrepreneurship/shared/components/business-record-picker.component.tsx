@@ -303,8 +303,8 @@ export function BusinessRecordPicker({
                 {(option.description || option.marketType) && (
                   <small>{option.description ?? option.marketType}</small>
                 )}
+                {optionSelected && <Check aria-hidden="true" />}
               </span>
-              {optionSelected && <Check aria-hidden="true" />}
             </PickerMenuItem>
           );
         })}

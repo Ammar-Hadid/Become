@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
 import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
@@ -14,7 +13,6 @@ import {
   changeDirectionAction,
 } from "@/features/entrepreneurship/market/actions/market.action";
 import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
-import { Button } from "@/components/ui/buttons/button.component";
 import { marketTypeLabel } from "@/features/entrepreneurship/audiences/utils/audience-label.util";
 import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 export function StartExplorationForm() {
@@ -233,27 +231,5 @@ export function ExplorationDirectionSummary({
         </>
       )}
     </span>
-  );
-}
-export function ExplorationTimer({ nicheId }: { nicheId: string }) {
-  const { activeSession } = useActiveTimer();
-  return (
-    <Button
-      variant="secondary"
-      onClick={(event) => {
-        event.currentTarget.focus();
-        window.dispatchEvent(
-          new CustomEvent("become:start-timer", {
-            detail: { businessNicheId: nicheId },
-          }),
-        );
-      }}
-    >
-      {activeSession
-        ? activeSession.status === "PAUSED"
-          ? "View paused session"
-          : "View running session"
-        : "Start session"}
-    </Button>
   );
 }
