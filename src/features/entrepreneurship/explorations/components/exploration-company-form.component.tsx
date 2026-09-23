@@ -2,8 +2,7 @@
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
-import { searchCompaniesAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import { addCompanyToExplorationAction } from "@/features/entrepreneurship/market/actions/market.action";
 export function ExplorationCompanyForm() {
   const exploration = useExploration();
@@ -21,15 +20,12 @@ export function ExplorationCompanyForm() {
         submitLabel="Attach to exploration"
         closeOnSuccess
       >
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind="company"
           label="Business"
-          entityName="business"
-          idFieldName="companyId"
-          queryFieldName="companyName"
+          name="companyId"
           options={[]}
-          searchAction={searchCompaniesAction}
           placeholder="Find an existing business…"
-          optional={false}
           required
         />
         <p className="business-hint">

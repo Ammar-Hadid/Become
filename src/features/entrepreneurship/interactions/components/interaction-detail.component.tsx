@@ -69,6 +69,7 @@ export async function InteractionDetail({
           </h2>
           <p>
             {businessDate(revision.occurredAt)} · {humanize(revision.channel)}
+            {revision.platform ? ` · ${humanize(revision.platform)}` : ""}
           </p>
         </div>
         <div className="business-actions">

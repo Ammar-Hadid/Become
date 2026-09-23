@@ -3,19 +3,19 @@ import { useExploration } from "@/features/entrepreneurship/explorations/compone
 import { useState } from "react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import { BusinessFormSection } from "@/features/entrepreneurship/shared/components/business-field.component";
+import { batchOutreachAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
 import {
-  batchOutreachAction,
-  searchCompaniesAction,
-} from "@/features/entrepreneurship/interactions/actions/interaction.action";
-import { channels } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
+  channels,
+  directMessagePlatforms,
+} from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
+import { directMessagePlatformLabels } from "@/features/entrepreneurship/interactions/components/channel-platform-fields.component";
 import {
   businessToday,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
-import { searchPeopleAction } from "@/features/entrepreneurship/audiences/actions/audience.action";
 import {
   AudienceFields,
   type AudienceOption,
@@ -23,6 +23,7 @@ import {
 type Values = {
   summary: string;
   channel: string;
+  platform: string;
   occurredAt: string;
   notes: string;
 };
@@ -49,6 +50,7 @@ function BatchFields({
   const [shared, setShared] = useState<Values>({
     summary: "",
     channel: "EMAIL",
+    platform: "OTHER",
     occurredAt: businessToday(),
     notes: "",
   });
@@ -72,6 +74,18 @@ function BatchFields({
           {channels.map((c) => (
             <option key={c} value={c}>
               {humanize(c)}
+            </option>
+          ))}
+        </select>
+      ) : name === "platform" ? (
+        <select
+          className="text-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {directMessagePlatforms.map((platform) => (
+            <option key={platform} value={platform}>
+              {directMessagePlatformLabels[platform]}
             </option>
           ))}
         </select>
@@ -119,28 +133,26 @@ function BatchFields({
         title="Who you actually contacted"
         description="Select only people and businesses that received this outreach."
       >
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind="company"
           label="Business recipients"
-          optional={false}
-          entityName="business"
-          idFieldName="companyIds"
-          queryFieldName="recipientSearch"
+          name="companyIds"
+          nicheId={exploration?.id}
           options={companies}
-          searchAction={searchCompaniesAction}
-          selectedOptions={selected}
-          onSelectionChange={setSelected}
+          values={selected.map((company) => company.id)}
+          multiple
+          onSelectionChange={(items) => setSelected(items)}
           placeholder="Search active businesses…"
         />
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind="person"
           label="People contacted directly"
-          entityName="person"
-          idFieldName="personIds"
-          queryFieldName="personRecipientSearch"
+          name="personIds"
+          nicheId={exploration?.id}
           options={people}
-          searchAction={searchPeopleAction}
-          selectedOptions={selectedPeople}
-          onSelectionChange={setSelectedPeople}
-          allowDuplicateNames
+          values={selectedPeople.map((person) => person.id)}
+          multiple
+          onSelectionChange={(items) => setSelectedPeople(items)}
           placeholder="Search active people…"
         />
         <p className="business-hint">
@@ -172,6 +184,14 @@ function BatchFields({
               <input type="hidden" name={name} value={shared[name]} />
             </div>
           ),
+        )}
+        <input type="hidden" name="platform" value={shared.platform} />
+        {shared.channel === "DM" && (
+          <>
+            {field("platform", "Platform", shared.platform, (platform) =>
+              setShared((current) => ({ ...current, platform })),
+            )}
+          </>
         )}
       </BusinessFormSection>
       {recipients.map((company) => {
@@ -229,6 +249,43 @@ function BatchFields({
                       )}
                     </div>
                   ),
+                )}
+                {effective.channel === "DM" && (
+                  <div className="space-y-sm">
+                    <label className="business-hint">
+                      <input
+                        type="checkbox"
+                        checked={Object.hasOwn(own, "platform")}
+                        onChange={(e) =>
+                          setOverrides((current) => {
+                            const values = { ...current[company.id] };
+                            if (e.target.checked)
+                              values.platform = shared.platform;
+                            else delete values.platform;
+                            return { ...current, [company.id]: values };
+                          })
+                        }
+                      />{" "}
+                      Override platform for {company.name}
+                    </label>
+                    {Object.hasOwn(own, "platform") ? (
+                      field(
+                        "platform",
+                        `${company.name} · Platform`,
+                        own.platform ?? "OTHER",
+                        (platform) =>
+                          setOverrides((current) => ({
+                            ...current,
+                            [company.id]: {
+                              ...current[company.id],
+                              platform,
+                            },
+                          })),
+                      )
+                    ) : (
+                      <p className="business-hint">Use shared value</p>
+                    )}
+                  </div>
                 )}
               </div>
             </details>

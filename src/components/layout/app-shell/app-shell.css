@@ -42,10 +42,27 @@
   inset: 0 auto 0 0;
   z-index: 30;
   width: var(--spacing-shell-sidebar);
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   border-right: 1px solid var(--color-border);
   background: var(--color-surface-sidebar);
   padding: 28px 20px 22px;
+}
+
+.app-shell-brand,
+.app-shell-account,
+.app-shell-timer,
+.mobile-drawer-header {
+  flex: 0 0 auto;
+}
+
+.app-shell-primary-navigation {
+  min-height: 0;
+  flex: 1 1 auto;
+  margin-top: var(--spacing-4xl);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .nav-label {
@@ -73,7 +90,9 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: var(--duration-fast) var(--ease-standard);
+  transition:
+    background-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move);
 }
 
 .nav-link svg {
@@ -90,6 +109,59 @@
 .nav-link.active {
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);
+}
+
+.nav-link--workspace-parent.active {
+  background: transparent;
+}
+
+.nav-domain-workspaces {
+  display: grid;
+  gap: var(--spacing-2xs);
+  margin: var(--spacing-xs) 0 var(--spacing-md) 1.75rem;
+  padding-left: var(--spacing-md);
+  border-left: 1px solid var(--color-border);
+}
+
+.nav-sub-link {
+  position: relative;
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  border-radius: var(--radius-control);
+  padding: var(--spacing-xs) var(--spacing-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  transition:
+    background-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move);
+}
+
+.nav-sub-link:hover,
+.nav-sub-link:focus-visible,
+.nav-sub-link.active {
+  background: color-mix(
+    in srgb,
+    var(--color-surface-elevated) 72%,
+    transparent
+  );
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.nav-sub-link--group-start {
+  margin-top: var(--spacing-sm);
+}
+
+.nav-sub-link-indicator {
+  position: absolute;
+  top: var(--spacing-sm);
+  bottom: var(--spacing-sm);
+  left: calc(var(--spacing-md) * -1 - 1px);
+  width: 2px;
+  border-radius: 99px;
+  background: var(--color-primary);
 }
 
 .nav-link-indicator {
@@ -120,7 +192,9 @@
   padding: 6px;
   color: inherit;
   text-align: left;
-  transition: var(--duration-fast) var(--ease-standard);
+  transition:
+    background-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move);
 }
 
 .profile-trigger:hover,
@@ -168,31 +242,33 @@
   display: flex;
   width: min(84vw, 320px);
   height: 100%;
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   background: var(--color-surface-sidebar);
   padding: 22px;
   box-shadow: 30px 0 80px black;
 }
 
 .mobile-navigation-layer[data-state="open"] {
-  animation: mobile-navigation-backdrop-in var(--duration-fast)
+  animation: mobile-navigation-backdrop-in var(--duration-content)
     var(--ease-enter);
 }
 
 .mobile-navigation-layer[data-state="open"] .mobile-drawer {
-  animation: mobile-navigation-drawer-in var(--duration-spatial)
+  animation: mobile-navigation-drawer-in var(--duration-surface)
     var(--ease-enter);
 }
 
 .mobile-navigation-layer[data-state="closed"] {
   pointer-events: none;
-  animation: mobile-navigation-backdrop-out var(--duration-fast)
+  animation: mobile-navigation-backdrop-out var(--duration-content)
     var(--ease-exit) both;
 }
 
 .mobile-navigation-layer[data-state="closed"] .mobile-drawer {
-  animation: mobile-navigation-drawer-out var(--duration-fast) var(--ease-exit)
-    both;
+  animation: mobile-navigation-drawer-out var(--duration-content)
+    var(--ease-exit) both;
 }
 
 .mobile-bottom-nav {
@@ -260,13 +336,13 @@
 
 @keyframes mobile-navigation-drawer-in {
   from {
-    transform: translateX(-24px);
+    transform: translateX(calc(-1 * var(--distance-surface)));
   }
 }
 
 @keyframes mobile-navigation-drawer-out {
   to {
-    transform: translateX(-16px);
+    transform: translateX(calc(-1 * var(--distance-surface)));
   }
 }
 

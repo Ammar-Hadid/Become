@@ -38,19 +38,19 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html,
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 
+  ::view-transition,
   ::view-transition-old(*),
   ::view-transition-new(*),
   ::view-transition-group(*) {
-    animation-delay: 0s !important;
-    animation-duration: 0s !important;
+    animation: none !important;
   }
 }

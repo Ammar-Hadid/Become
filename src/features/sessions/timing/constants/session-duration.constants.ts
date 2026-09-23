@@ -1,0 +1,1 @@
+export const MAX_CORRECTED_SESSION_SECONDS = 24 * 60 * 60;

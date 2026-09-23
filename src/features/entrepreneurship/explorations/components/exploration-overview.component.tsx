@@ -1,24 +1,67 @@
-import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpenText,
+  FileCheck2,
+  MessageSquareText,
+  Send,
+  Shapes,
+  Tags,
+} from "lucide-react";
 import {
   getExploration,
-  getExplorationSummary,
   getExplorationSignals,
+  getExplorationSummary,
 } from "@/features/entrepreneurship/explorations/queries/exploration.query";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { EvidenceCapture } from "@/features/entrepreneurship/evidence/components/evidence-capture.component";
 import { EvidenceJournal } from "@/features/entrepreneurship/evidence/components/evidence-journal.component";
-import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
-import { marketTypeLabel } from "@/features/entrepreneurship/audiences/utils/audience-label.util";
 import { FollowUpRecord } from "@/features/entrepreneurship/follow-ups/components/follow-up.component";
-import { formatDuration } from "@/lib/dates/utils/period.util";
-import { SessionRow } from "@/features/sessions/components/session-row.component";
-import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
-import { AudienceMetrics } from "@/features/entrepreneurship/analytics/components/audience-metrics.component";
-import { formatMoney } from "@/lib/money/utils/money.util";
-import {
-  businessDate,
-  humanize,
-} from "@/features/entrepreneurship/shared/utils/business.util";
+import { getExplorationSnapshot } from "@/features/entrepreneurship/exploration-snapshots/queries/exploration-snapshot.query";
+
+function recommendationHref(
+  nicheId: string,
+  recommendation: NonNullable<
+    Awaited<ReturnType<typeof getExplorationSnapshot>>
+  >["recommendation"],
+) {
+  if (recommendation.code === "RESUME_INTERVIEW" && recommendation.targetId)
+    return explorationWorkspaceHref(
+      nicheId,
+      "conversations",
+      `/${recommendation.targetId}/conduct`,
+    );
+  if (recommendation.code === "RECORD_TEST_OUTCOME" && recommendation.targetId)
+    return explorationWorkspaceHref(
+      nicheId,
+      "offers",
+      `/${recommendation.targetId}`,
+    );
+  if (recommendation.code === "START_TEST" && recommendation.targetId)
+    return explorationWorkspaceHref(
+      nicheId,
+      "so-far-we-know",
+      `/problems/${recommendation.targetId}`,
+    );
+  if (recommendation.code === "START_CONVERSATION" && recommendation.targetId)
+    return `${explorationWorkspaceHref(nicheId, "conversations")}?linkedInteractionId=${encodeURIComponent(recommendation.targetId)}`;
+  if (recommendation.code === "REVIEW_SNAPSHOT")
+    return explorationWorkspaceHref(nicheId, "so-far-we-know", "/review");
+  return explorationWorkspaceHref(
+    nicheId,
+    recommendation.stage === "SCOPE"
+      ? "audience"
+      : recommendation.stage === "REACH"
+        ? "outreach"
+        : recommendation.stage === "LEARN"
+          ? "conversations"
+          : recommendation.stage === "TEST"
+            ? "offers"
+            : "so-far-we-know",
+  );
+}
+
 export async function ExplorationOverview({
   userId,
   nicheId,
@@ -26,240 +69,171 @@ export async function ExplorationOverview({
   userId: string;
   nicheId: string;
 }) {
-  const [niche, summary, signals, options] = await Promise.all([
+  const [niche, summary, signals, options, snapshot] = await Promise.all([
     getExploration(userId, nicheId),
     getExplorationSummary(userId, nicheId),
     getExplorationSignals(userId, nicheId),
     getInteractionOptions(userId, nicheId),
+    getExplorationSnapshot(userId, nicheId),
   ]);
+  const workspaces = [
+    {
+      key: "audience",
+      label: "Audience",
+      note: "Shape who this is for",
+      value: summary.segments + summary.people + summary.companies,
+      icon: Shapes,
+    },
+    {
+      key: "outreach",
+      label: "Outreach",
+      note: "Move targets into contact",
+      value: summary.interactions,
+      icon: Send,
+    },
+    {
+      key: "conversations",
+      label: "Conversations",
+      note: "Keep the exchange intact",
+      value: summary.conversations,
+      icon: MessageSquareText,
+    },
+    {
+      key: "evidence",
+      label: "Evidence",
+      note: "Trace what changed your view",
+      value: summary.evidence,
+      icon: FileCheck2,
+    },
+    {
+      key: "offers",
+      label: "Offers",
+      note: "Test a promise and terms",
+      value: summary.offers,
+      icon: Tags,
+    },
+  ] as const;
+
   return (
-    <>
-      <header className="business-section-heading business-page-heading">
+    <div className="direct-workspace overview-workspace">
+      <header className="workspace-heading overview-heading">
         <div>
-          <p className="eyebrow">The exploration so far</p>
-          <h2>What are you learning?</h2>
-          <p>All recorded activity in this exploration.</p>
+          <h2>Overview</h2>
         </div>
-        {!niche?.archivedAt && <EvidenceCapture {...options} />}
+        {!niche?.archivedAt && (
+          <EvidenceCapture {...options} triggerVariant="quiet" />
+        )}
       </header>
-      <div className="business-overview-grid">
-        <section className="business-zone business-zone--primary">
-          <div className="business-row-heading">
-            <h3>Recent evidence</h3>
-            <Link
-              href="/entrepreneurship/evidence"
-              className="business-text-link"
-            >
-              Open journal ↗
-            </Link>
+
+      {snapshot && (
+        <section
+          className="overview-next-move"
+          aria-labelledby="overview-next-move"
+        >
+          <div>
+            <p className="eyebrow">One useful next move</p>
+            <h3 id="overview-next-move">{snapshot.recommendation.title}</h3>
+            <details>
+              <summary>Why this now?</summary>
+              <p>{snapshot.recommendation.reason}</p>
+            </details>
           </div>
+          <Link
+            className="workspace-primary-link"
+            href={recommendationHref(nicheId, snapshot.recommendation)}
+          >
+            {snapshot.recommendation.title} <ArrowRight aria-hidden="true" />
+          </Link>
+        </section>
+      )}
+
+      <section
+        className="overview-command"
+        aria-labelledby="overview-understanding"
+      >
+        <div className="overview-command-copy">
+          <span className="overview-command-icon" aria-hidden="true">
+            <BookOpenText />
+          </span>
+          <div>
+            <p className="eyebrow">Central understanding</p>
+            <h3 id="overview-understanding">So Far We Know</h3>
+            <p>Findings, open questions, and decisions.</p>
+          </div>
+        </div>
+        <dl>
+          <div>
+            <dt>Problems</dt>
+            <dd>{summary.problems}</dd>
+          </div>
+          <div>
+            <dt>Segments</dt>
+            <dd>{summary.segments}</dd>
+          </div>
+          <div>
+            <dt>Conversations</dt>
+            <dd>{summary.conversations}</dd>
+          </div>
+        </dl>
+        <Link href={explorationWorkspaceHref(nicheId, "so-far-we-know")}>
+          Open understanding <ArrowRight aria-hidden="true" />
+        </Link>
+      </section>
+
+      <nav className="overview-workspaces" aria-label="Workspace shortcuts">
+        {workspaces.map(({ key, label, note, value, icon: Icon }) => (
+          <Link key={key} href={explorationWorkspaceHref(nicheId, key)}>
+            <Icon aria-hidden="true" />
+            <span>
+              <strong>{label}</strong>
+              <small>{note}</small>
+            </span>
+            <span className="overview-workspace-count">{value}</span>
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        ))}
+      </nav>
+
+      <div className="overview-lower-grid">
+        <section className="overview-recent">
+          <header>
+            <div>
+              <p className="eyebrow">Recent material</p>
+              <h3>Latest evidence</h3>
+            </div>
+            <Link
+              className="business-text-link"
+              href={explorationWorkspaceHref(nicheId, "evidence")}
+            >
+              View all <ArrowRight aria-hidden="true" />
+            </Link>
+          </header>
           <EvidenceJournal
             data={{ entries: signals.recentEvidence, next: null }}
+            nicheId={nicheId}
           />
         </section>
-        <aside className="business-next-actions">
-          <p className="eyebrow">The next chosen step</p>
+        <aside className="overview-next-actions">
+          <header>
+            <p className="eyebrow">Committed next moves</p>
+            <h3>
+              {signals.nextActions.length
+                ? `${signals.nextActions.length} follow-ups`
+                : "The path is open"}
+            </h3>
+          </header>
           {signals.nextActions.length ? (
-            signals.nextActions.map((f) => (
-              <FollowUpRecord key={f.id} record={f} />
+            signals.nextActions.map((record) => (
+              <FollowUpRecord key={record.id} record={record} />
             ))
           ) : (
-            <>
-              <h3>Room to choose.</h3>
-              <p>
-                Talk to someone, follow a question, or look at how this works in
-                practice. Keep the details that help you understand it.
-              </p>
-            </>
+            <p>
+              No follow-up is waiting. Use the workspace with the largest
+              unanswered question.
+            </p>
           )}
         </aside>
       </div>
-      <section className="business-zone">
-        <div className="business-row-heading">
-          <div>
-            <p className="eyebrow">Taking shape</p>
-            <h3>Audiences, problems & offers</h3>
-          </div>
-        </div>
-        {signals.audienceSegments.length > 0 && (
-          <div className="gap-sm mb-xl flex flex-wrap">
-            {signals.audienceSegments.map((segment) => (
-              <Link
-                key={segment.id}
-                className="rounded-control border-border px-lg py-md text-body hover:bg-surface-elevated border"
-                href={`/entrepreneurship/segments/${segment.id}`}
-              >
-                <span className="font-medium">{segment.name}</span>
-                <span className="ml-sm text-body-sm text-text-secondary">
-                  {marketTypeLabel(segment.marketType)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-        <div className="business-evidence-counts">
-          <Link href="/entrepreneurship/audience">
-            {summary.segments} attached segments
-          </Link>
-          <Link href="/entrepreneurship/problems">
-            {summary.problems} scoped problems
-          </Link>
-          <Link href="/entrepreneurship/offers">{summary.offers} offers</Link>
-        </div>
-        {(signals.investigateProblems.length > 0 ||
-          signals.testedOffers.length > 0) && (
-          <div className="gap-lg mt-xl grid sm:grid-cols-2">
-            {signals.investigateProblems.length > 0 && (
-              <div>
-                <h4 className="text-body mb-md font-medium">
-                  Problems you are investigating
-                </h4>
-                {signals.investigateProblems.map((problem) => (
-                  <article
-                    key={problem.id}
-                    className="border-border py-md border-t"
-                  >
-                    <Link
-                      className="text-body hover:text-primary font-medium"
-                      href={`/entrepreneurship/problems/${problem.id}`}
-                    >
-                      {problem.title} →
-                    </Link>
-                    <p className="text-body-sm text-text-secondary mt-sm">
-                      {humanize(problem.status)} ·{" "}
-                      <AudienceSummary
-                        audienceContext={problem.audienceContext}
-                      />
-                    </p>
-                  </article>
-                ))}
-              </div>
-            )}
-            {signals.testedOffers.length > 0 && (
-              <div>
-                <h4 className="text-body mb-md font-medium">
-                  Offers you are trying
-                </h4>
-                {signals.testedOffers.map((offer) => (
-                  <article
-                    key={offer.id}
-                    className="border-border py-md border-t"
-                  >
-                    <Link
-                      className="text-body hover:text-primary font-medium"
-                      href={`/entrepreneurship/offers/${offer.id}`}
-                    >
-                      {offer.title} →
-                    </Link>
-                    <p className="text-body-sm text-text-secondary mt-sm">
-                      {offer.mode === "AUDIENCE_TEST"
-                        ? "Audience test"
-                        : "Individual proposal"}{" "}
-                      ·{" "}
-                      <AudienceSummary
-                        audienceContext={offer.audienceContext}
-                      />
-                    </p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {!summary.problems && !summary.offers && (
-          <p className="business-hint mt-lg">
-            When a need starts repeating, keep it as a scoped problem. Try an
-            offer when you have a useful promise to test.
-          </p>
-        )}
-      </section>
-      <section className="business-zone business-summary-zone">
-        <div className="business-row-heading">
-          <div>
-            <p className="eyebrow">Exploration pulse</p>
-            <h3>The work you have kept</h3>
-          </div>
-          <p className="business-hint">
-            Recorded activity; each source keeps its context.
-          </p>
-        </div>
-        <AudienceMetrics facts={summary} />
-      </section>
-      {summary.receipts.length > 0 && (
-        <section className="business-zone">
-          <div className="business-row-heading">
-            <h3>Actual receipts</h3>
-          </div>
-          {summary.receipts.map((receipt) => (
-            <p key={receipt.currency} className="text-body-lg font-medium">
-              {formatMoney(receipt.amount, receipt.currency)}
-              <span className="ml-sm text-body text-text-secondary">
-                · {receipt.receiptCount} Finance receipts represented
-              </span>
-            </p>
-          ))}
-          <p className="business-hint mt-lg">
-            Confirmed attributed income by cash-received date and currency.
-            Accepted offers and linked work sources do not create payments.
-          </p>
-        </section>
-      )}
-      <section className="business-zone">
-        <div className="business-row-heading">
-          <div>
-            <h3>Time behind the exploration</h3>
-            <p className="business-hint">
-              Sessions recorded with this exploration context.
-            </p>
-          </div>
-          <strong className="business-time-total">
-            {formatDuration(summary.seconds, true)}
-          </strong>
-        </div>
-        {signals.sessions.length ? (
-          signals.sessions.map((s) => <SessionRow key={s.id} session={s} />)
-        ) : (
-          <p className="business-inline-empty">
-            No session time recorded here yet.
-          </p>
-        )}
-      </section>
-      <section className="business-zone">
-        <div className="business-row-heading">
-          <div>
-            <p className="eyebrow">Decision trail</p>
-            <h3>Direction & decisions</h3>
-          </div>
-        </div>
-        <div className="business-record-list">
-          {niche?.decisions.map((d) => (
-            <article className="business-record-row" key={d.id}>
-              <p className="business-meta">
-                {businessDate(d.createdAt)} · {humanize(d.direction)}
-              </p>
-              <p className="business-prose">{d.rationale}</p>
-              {(d.marketFocus || d.marketConclusion) && (
-                <p className="business-hint mt-lg">
-                  <ExplorationDirectionSummary
-                    marketFocus={d.marketFocus}
-                    marketConclusion={d.marketConclusion}
-                  />
-                </p>
-              )}
-              {d.conclusionScope && (
-                <p className="business-hint mt-sm">
-                  Conclusion scope: {d.conclusionScope}
-                </p>
-              )}
-              {d.scopeSnapshot && (
-                <p className="business-hint">
-                  Scope at the time: {d.scopeSnapshot}
-                </p>
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
-    </>
+    </div>
   );
 }

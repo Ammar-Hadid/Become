@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
 import { startSession } from "./start-session.service";
 import { completeSession } from "./complete-session.service";
+import { correctSessionDuration } from "./correct-session-duration.service";
 import { transitionSession } from "./transition-session.service";
 import { getTimerSnapshot } from "@/features/sessions/timer/queries/timer-snapshot.query";
 import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
@@ -59,6 +60,100 @@ describe.skipIf(process.env.RUN_SESSION_INTEGRATION !== "1")(
     };
     const complete = (id: string, outcome = "Saved") =>
       completeSession(userId, id, { outcome, notes: null });
+
+    it("corrects completed focused duration across pauses and reporting while rejecting stale or foreign edits", async () => {
+      const original = await start();
+      const now = Date.now();
+      const startedAt = new Date(now - 3 * 3600000);
+      const originalEnd = new Date(now - 5 * 60000);
+      const correctedEnd = new Date(now - 3600000);
+      await prisma.session.update({
+        where: { id: original.sessionId },
+        data: { startedAt },
+      });
+      await complete(original.sessionId);
+      await prisma.session.update({
+        where: { id: original.sessionId },
+        data: { endedAt: originalEnd },
+      });
+      await prisma.sessionPause.create({
+        data: {
+          sessionId: original.sessionId,
+          startedAt: new Date(now - 2 * 3600000),
+          endedAt: new Date(now - 90 * 60000),
+        },
+      });
+
+      expect(
+        (
+          await correctSessionDuration(
+            otherId,
+            original.sessionId,
+            5400,
+            originalEnd,
+          )
+        ).status,
+      ).toBe("not-found");
+      const corrected = await correctSessionDuration(
+        userId,
+        original.sessionId,
+        5400,
+        originalEnd,
+      );
+      expect(corrected.status).toBe("ok");
+      if (corrected.status !== "ok") return;
+      expect(corrected.session.endedAt).toBe(correctedEnd.toISOString());
+      expect(corrected.session.durationSeconds).toBe(5400);
+      expect(corrected.session.totalPausedMilliseconds).toBe(1800000);
+      expect(
+        (
+          await correctSessionDuration(
+            userId,
+            original.sessionId,
+            1800,
+            originalEnd,
+          )
+        ).status,
+      ).toBe("conflict");
+      expect(
+        (
+          await correctSessionDuration(
+            userId,
+            original.sessionId,
+            10000,
+            correctedEnd,
+          )
+        ).status,
+      ).toBe("invalid-duration");
+      expect(
+        (
+          await correctSessionDuration(
+            userId,
+            original.sessionId,
+            24 * 3600 + 1,
+            correctedEnd,
+          )
+        ).status,
+      ).toBe("invalid-duration");
+      const measurement = await readSessionMeasurement(prisma, {
+        userId,
+        start: new Date(now - 4 * 3600000),
+        end: new Date(now),
+      });
+      expect(measurement.seconds).toBe("5400");
+
+      const earlier = await correctSessionDuration(
+        userId,
+        original.sessionId,
+        1800,
+        correctedEnd,
+      );
+      expect(earlier.status).toBe("ok");
+      if (earlier.status === "ok") {
+        expect(earlier.session.durationSeconds).toBe(1800);
+        expect(earlier.session.totalPausedMilliseconds).toBe(0);
+      }
+    });
 
     it("retains one session through repeated pauses, rejects new starts, and completes paused without charging the break", async () => {
       const original = await start();

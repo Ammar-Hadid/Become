@@ -1,0 +1,4 @@
+evidence_mode: benchmarks
+benchmark_provider: mobbin
+approval_mode: guided
+graph_assistance: on

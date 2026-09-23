@@ -1,3 +1,16 @@
+@import "../explorations/styles/exploration-journey.css";
+@import "../explorations/styles/exploration-stages.css";
+@import "../exploration-snapshots/styles/exploration-snapshot-history.css";
+@import "../exploration-snapshots/styles/exploration-snapshot-editor.css";
+@import "../conversations/styles/conversation-workspace.css";
+@import "../conversations/styles/conduct-workspace.css";
+@import "../interview-guides/styles/interview-guide-workspace.css";
+@import "../shared/styles/business-record-picker.css";
+@import "../interactions/styles/channel-platform-fields.css";
+@import "../explorations/styles/exploration-responsive.css";
+@import "../explorations/styles/exploration-route-states.css";
+@import "../explorations/styles/exploration-workspaces.css";
+
 .business-shell {
   --business-prose-width: 44rem;
 }
@@ -43,7 +56,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .business-navigation a[aria-current],
@@ -138,7 +151,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-panel);
   min-width: 0;
-  transition: border-color var(--duration-fast) var(--ease-enter);
+  transition: border-color var(--duration-control) var(--ease-move);
 }
 
 .business-niche:hover {
@@ -224,7 +237,7 @@
   min-width: 0;
   min-height: 5.25rem;
   padding: var(--spacing-xl) var(--spacing-sm);
-  transition: background var(--duration-fast) var(--ease-enter);
+  transition: background-color var(--duration-control) var(--ease-move);
 }
 
 .business-company-row:hover {
@@ -295,6 +308,10 @@
 }
 
 .business-text-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--spacing-sm);
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
@@ -304,6 +321,13 @@
 
 .business-text-link:hover {
   color: var(--color-text-primary);
+}
+
+.business-text-link:focus-visible,
+.business-back:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .business-empty {
@@ -366,8 +390,8 @@
 .business-icon-button {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 50%;
   cursor: pointer;
@@ -376,6 +400,11 @@
 
 .business-icon-button svg {
   width: 18px;
+}
+
+.business-icon-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .business-shell .submenu [role^="menuitem"] {
@@ -398,6 +427,11 @@
   flex-wrap: wrap;
   gap: var(--spacing-md);
   align-items: center;
+}
+
+.business-shell .finance-dialog-trigger,
+.business-shell .finance-link-action {
+  min-height: 2.75rem;
 }
 
 .business-detail-grid {
@@ -439,6 +473,9 @@
 
 .business-back {
   display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--spacing-sm);
   color: var(--color-text-muted);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
@@ -459,7 +496,7 @@
 }
 
 .business-disclosure[open] > div {
-  animation: business-reveal var(--duration-standard) var(--ease-enter);
+  animation: business-reveal var(--duration-content) var(--ease-enter);
   display: grid;
   gap: var(--spacing-lg);
   padding-top: var(--spacing-md);
@@ -1981,20 +2018,6 @@
   margin-top: var(--spacing-md);
 }
 
-.exploration-masthead {
-  padding: var(--spacing-3xl);
-  border: 1px solid
-    color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
-  border-radius: var(--radius-panel);
-  background:
-    radial-gradient(
-      circle at 100% 0%,
-      color-mix(in srgb, var(--color-primary) 8%, transparent),
-      transparent 42%
-    ),
-    var(--color-surface);
-}
-
 .business-niches {
   margin-bottom: var(--spacing-4xl);
   padding: var(--spacing-3xl);
@@ -2560,7 +2583,6 @@
 
   .business-zone,
   .business-niches,
-  .exploration-masthead,
   .business-form-surface,
   .business-detail-main > .business-detail-section,
   .business-detail-main > .business-offer-quote {

@@ -10,10 +10,12 @@ export function EngineeringEvidenceList({
   evidence,
   compact = false,
   journal = false,
+  arrivalId,
 }: {
   evidence: EngineeringEvidenceListItem[];
   compact?: boolean;
   journal?: boolean;
+  arrivalId?: string;
 }) {
   if (!evidence.length) {
     return journal ? <EvidenceEmptyState /> : <CompactEmptyState />;
@@ -45,7 +47,11 @@ export function EngineeringEvidenceList({
           </div>
           <ol className="engineering-evidence-timeline">
             {records.map((item) => (
-              <EngineeringEvidenceRecord key={item.id} item={item} />
+              <EngineeringEvidenceRecord
+                key={item.id}
+                item={item}
+                arrivedFromNavigation={item.id === arrivalId}
+              />
             ))}
           </ol>
         </section>

@@ -247,7 +247,7 @@
     );
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--duration-standard) var(--ease-enter);
+  transition: opacity var(--duration-content) var(--ease-enter);
 }
 
 .season-poster-image-editor:hover .season-poster-image-guide,
@@ -388,8 +388,8 @@
   grid-template-columns: minmax(0, 1.15fr) minmax(12rem, 0.85fr);
   box-shadow: none;
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    transform var(--duration-spatial) var(--ease-move);
+    border-color var(--duration-control) var(--ease-enter),
+    transform var(--duration-surface) var(--ease-move);
 }
 
 .season-poster-anchor:hover .season-poster--archive {

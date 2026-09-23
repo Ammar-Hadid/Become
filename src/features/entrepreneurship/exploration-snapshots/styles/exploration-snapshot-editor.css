@@ -1,0 +1,175 @@
+.exploration-snapshot-claim-label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.exploration-snapshot-review-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-warning);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.exploration-snapshot-review-flag svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.exploration-snapshot-claim-label .submenu {
+  margin-left: auto;
+}
+
+.snapshot-citation-editor {
+  display: grid;
+  gap: var(--spacing-lg);
+  border-block: 1px solid var(--color-border);
+  padding-block: var(--spacing-lg);
+}
+
+.snapshot-citation-editor > legend {
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-weight: 600;
+}
+
+.snapshot-citation-editor > p {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.snapshot-citation-list {
+  display: grid;
+}
+
+.snapshot-citation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 0.55fr);
+  gap: var(--spacing-lg);
+  padding-block: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.snapshot-citation-row .business-form-field:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.snapshot-citation-add,
+.snapshot-citation-remove {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.snapshot-citation-add svg,
+.snapshot-citation-remove svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.snapshot-citation-remove {
+  grid-column: 1 / -1;
+  color: var(--color-danger);
+}
+
+.exploration-uncertainty-list {
+  display: grid;
+  margin-block: var(--spacing-sm);
+}
+
+.exploration-uncertainty-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-md);
+  align-items: start;
+  padding-block: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.exploration-uncertainty-list li:first-child {
+  border-top: 0;
+}
+
+.exploration-uncertainty-list li span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+@media (max-width: 600px) {
+  .snapshot-citation-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .snapshot-citation-row .business-form-field:has(textarea),
+  .snapshot-citation-remove {
+    grid-column: 1;
+  }
+}
+.snapshot-source-manifest {
+  display: grid;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.snapshot-source-manifest > strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.snapshot-source-manifest ul {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.snapshot-source-manifest li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-xs) var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.snapshot-source-manifest a {
+  color: var(--color-primary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary-muted);
+  text-underline-offset: 0.2em;
+}
+
+.snapshot-source-manifest li > span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  text-transform: capitalize;
+}
+
+.snapshot-source-manifest li > p {
+  grid-column: 1 / -1;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}

@@ -8,6 +8,7 @@ import {
   FollowUpRecord,
 } from "@/features/entrepreneurship/follow-ups/components/follow-up.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { getOfferDetail } from "@/features/entrepreneurship/offers/queries/offer.query";
@@ -33,20 +34,26 @@ export async function OfferDetail({
   userId,
   id,
   nicheId,
+  returnTo,
 }: {
   userId: string;
   id: string;
   nicheId?: string;
+  returnTo?: string;
 }) {
   const [offer, options, workSources] = await Promise.all([
-    getOfferDetail(userId, id),
+    getOfferDetail(userId, id, nicheId),
     getInteractionOptions(userId, nicheId),
     prisma.workSource.findMany({
       where: { userId: userId, archivedAt: null },
       select: { id: true, name: true },
     }),
   ]);
-  if (!offer) notFound();
+  if (
+    !offer ||
+    (nicheId && !offer.niches.some((link) => link.nicheId === nicheId))
+  )
+    notFound();
   const presentation = offerPresentation(offer.revisions, offer.events);
   const audienceTest = offer.mode === "AUDIENCE_TEST";
   const { latest, status } = presentation;
@@ -75,9 +82,13 @@ export async function OfferDetail({
   });
   return (
     <>
-      <Link className="business-back" href="/entrepreneurship/offers">
+      <BusinessBackLink
+        className="business-back"
+        returnTo={returnTo}
+        fallbackHref="/entrepreneurship/offers"
+      >
         ← Offers
-      </Link>
+      </BusinessBackLink>
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">

@@ -234,7 +234,7 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   font-variant-numeric: tabular-nums;
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-enter);
 }
 .collectionHeading button:hover {
   color: var(--color-text-primary);
@@ -247,7 +247,7 @@
   min-width: 0;
 }
 .focusMoment[data-recompose] {
-  animation: moment-recompose var(--duration-standard) var(--ease-enter)
+  animation: moment-recompose var(--duration-content) var(--ease-enter)
     backwards;
 }
 .focusMoment[data-artwork] {

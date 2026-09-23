@@ -3,16 +3,16 @@ const EVIDENCE_ARRIVAL_STORAGE_KEY =
 const EVIDENCE_ARRIVAL_WINDOW_MS = 5_000;
 
 type EvidenceArrival = {
-  title: string;
+  id: string;
   confirmedAt: number;
 };
 
-export function rememberEngineeringEvidenceArrival(title: string) {
+export function rememberEngineeringEvidenceArrival(id: string) {
   try {
     window.sessionStorage.setItem(
       EVIDENCE_ARRIVAL_STORAGE_KEY,
       JSON.stringify({
-        title,
+        id,
         confirmedAt: Date.now(),
       } satisfies EvidenceArrival),
     );
@@ -21,7 +21,7 @@ export function rememberEngineeringEvidenceArrival(title: string) {
   }
 }
 
-export function consumeEngineeringEvidenceArrival(title: string) {
+export function consumeEngineeringEvidenceArrival(id: string) {
   try {
     const stored = window.sessionStorage.getItem(EVIDENCE_ARRIVAL_STORAGE_KEY);
     if (!stored) return false;
@@ -34,7 +34,7 @@ export function consumeEngineeringEvidenceArrival(title: string) {
       window.sessionStorage.removeItem(EVIDENCE_ARRIVAL_STORAGE_KEY);
       return false;
     }
-    if (arrival.title !== title) return false;
+    if (arrival.id !== id) return false;
 
     window.sessionStorage.removeItem(EVIDENCE_ARRIVAL_STORAGE_KEY);
     return true;

@@ -1,0 +1,23 @@
+.channel-platform-enter[data-presence="open"] {
+  animation: channel-platform-enter var(--duration-content) var(--ease-enter)
+    both;
+}
+
+.channel-platform-enter[data-presence="closed"] {
+  animation: channel-platform-exit var(--duration-content) var(--ease-exit) both;
+  pointer-events: none;
+}
+
+@keyframes channel-platform-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes channel-platform-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

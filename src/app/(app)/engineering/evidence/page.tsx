@@ -7,10 +7,23 @@ import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
 
 export const metadata: Metadata = { title: "Engineering evidence" };
 
-export default async function EngineeringEvidencePage() {
+export default async function EngineeringEvidencePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string | string[] }>;
+}) {
   const user = await getCurrentUser();
   if (!user) return null;
-  const evidence = await getEngineeringEvidenceList(user.id);
+  const [evidence, parameters] = await Promise.all([
+    getEngineeringEvidenceList(user.id),
+    searchParams,
+  ]);
+  const requestedArrivalId = Array.isArray(parameters.created)
+    ? parameters.created[0]
+    : parameters.created;
+  const arrivalId = evidence.some((item) => item.id === requestedArrivalId)
+    ? requestedArrivalId
+    : undefined;
   return (
     <div className="page-shell engineering-evidence-page">
       <header className="page-header engineering-evidence-page-header">
@@ -49,7 +62,11 @@ export default async function EngineeringEvidencePage() {
               : "No records yet"}
           </p>
         </header>
-        <EngineeringEvidenceList evidence={evidence} journal />
+        <EngineeringEvidenceList
+          evidence={evidence}
+          journal
+          arrivalId={arrivalId}
+        />
       </section>
     </div>
   );

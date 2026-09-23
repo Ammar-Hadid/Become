@@ -137,6 +137,7 @@ export function ReviewEvidence({
             className={styles.layer}
             data-state={presence.presenceState}
             aria-hidden={!open}
+            inert={presence.isExiting}
             onAnimationEnd={presence.onPresenceAnimationEnd}
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) close();
@@ -146,6 +147,7 @@ export function ReviewEvidence({
               ref={containerRef}
               role="dialog"
               aria-modal={open ? true : undefined}
+              tabIndex={-1}
               aria-labelledby={titleId}
               data-modal-layer={open ? "open" : "closed"}
               className={styles.panel}

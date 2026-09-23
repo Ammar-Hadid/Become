@@ -2,7 +2,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useRef,
   useState,
   useTransition,
@@ -50,16 +49,10 @@ export function RecordForm({
   const [state, setState] = useState<RecordFormState>({ error: null });
   const [pending, startTransition] = useTransition();
   const [nestedPending, setNestedPending] = useState(false);
+  const [successRevision, setSuccessRevision] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
-  const closeAfterTransitionRef = useRef(false);
   const markSaved = useRecordFormGuard(formRef);
   const closeDialog = useRecordDialogClose();
-
-  useEffect(() => {
-    if (pending || nestedPending || !closeAfterTransitionRef.current) return;
-    closeAfterTransitionRef.current = false;
-    closeDialog?.();
-  }, [closeDialog, nestedPending, pending]);
 
   return (
     <form
@@ -71,6 +64,7 @@ export function RecordForm({
         event.preventDefault();
         if (nestedPending) return;
         const data = new FormData(event.currentTarget);
+        setState({ error: null });
         startTransition(async () => {
           try {
             const result = await action(data);
@@ -82,8 +76,14 @@ export function RecordForm({
             if (!result.error) {
               if (resetOnSuccess) formRef.current?.reset();
               markSaved();
-              onSaved?.(result);
-              if (closeOnSuccess) closeAfterTransitionRef.current = true;
+              setSuccessRevision((current) => current + 1);
+              // Close before a callback starts navigation. A later urgent
+              // close can interrupt that route transition, while deferring the
+              // callback to an effect can lose it to server revalidation. The
+              // next task also keeps router navigation outside this mutation
+              // transition, and intentionally survives component replacement.
+              if (closeOnSuccess) closeDialog?.();
+              if (onSaved) window.setTimeout(() => onSaved(result), 0);
             }
           } catch {
             setState({
@@ -108,6 +108,7 @@ export function RecordForm({
         )}
         {showSuccess && !closeOnSuccess && state.success && !state.error && (
           <p
+            key={successRevision}
             role="status"
             className="finance-form-status text-success text-body"
           >

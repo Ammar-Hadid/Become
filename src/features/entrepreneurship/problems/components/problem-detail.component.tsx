@@ -37,7 +37,7 @@ export async function ProblemDetail({
 }) {
   const [problem, observations, options, interactions] = await Promise.all([
     getProblemDetail(userId, id),
-    getObservationChoices(userId),
+    getObservationChoices(userId, nicheId),
     getInteractionOptions(userId, nicheId),
     prisma.interaction.findMany({
       where: { userId: userId, voidedAt: null },
@@ -46,7 +46,7 @@ export async function ProblemDetail({
       include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
     }),
   ]);
-  if (!problem) notFound();
+  if (!problem || (nicheId && problem.nicheId !== nicheId)) notFound();
   const receipts = await prisma.businessReceiptAllocation.findMany({
     where: {
       userId: userId,
@@ -173,7 +173,11 @@ export async function ProblemDetail({
             </p>
           </div>
           <div className="business-actions">
-            <LinkEvidenceForm problemId={id} observations={observations} />
+            <LinkEvidenceForm
+              problemId={id}
+              observations={observations}
+              nicheId={nicheId}
+            />
             {receipts.length > 0 && (
               <ReceiptEvidenceForm
                 problemId={id}

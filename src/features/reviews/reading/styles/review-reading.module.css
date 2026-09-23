@@ -768,7 +768,7 @@
 }
 .seasonChapters > details > summary svg {
   flex-shrink: 0;
-  transition: transform var(--duration-fast) var(--ease-enter);
+  transition: transform var(--duration-control) var(--ease-enter);
 }
 .seasonChapters > details[open] > summary svg {
   transform: rotate(180deg);

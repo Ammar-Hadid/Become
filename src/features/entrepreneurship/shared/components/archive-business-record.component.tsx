@@ -4,6 +4,7 @@ import { MoreHorizontal } from "lucide-react";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { archiveBusinessRecordAction } from "@/features/entrepreneurship/shared/actions/archive-business-record.action";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 export function ArchiveBusinessRecord({
   kind,
   id,
@@ -16,6 +17,8 @@ export function ArchiveBusinessRecord({
   const [pending, start] = useTransition();
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <div aria-busy={pending}>
       <SubMenu

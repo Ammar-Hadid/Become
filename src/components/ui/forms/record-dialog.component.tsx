@@ -11,7 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import { Plus, X } from "lucide-react";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
+import { resolveMotionFallbackMs } from "@/components/ui/motion/utils/motion-time.util";
+import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
 import { cn } from "@/lib/styles/utils/class-name.util";
 import { confirmRecordFormDiscard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 
@@ -50,13 +51,22 @@ export function RecordDialog({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeTimerRef = useRef<number | null>(null);
   const closingRef = useRef(false);
+  const closeNotifiedRef = useRef(false);
   const backdropPointerRef = useRef(false);
-  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<"closed" | "open" | "exiting">("closed");
   const titleId = useId();
 
-  const finishClose = () => {
+  const finishExit = () => {
     const dialog = dialogRef.current;
-    if (dialog?.open) dialog.close();
+    if (!dialog || dialog.dataset.state !== "closed") return;
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    closingRef.current = false;
+    dialog.inert = false;
+    delete dialog.dataset.state;
+    setPhase("closed");
   };
 
   const close = () => {
@@ -66,10 +76,16 @@ export function RecordDialog({
     }
 
     closingRef.current = true;
+    dialog.inert = true;
     dialog.dataset.state = "closed";
+    setPhase("exiting");
+    dialog.close();
+    triggerRef.current?.focus({ preventScroll: true });
+    closeNotifiedRef.current = true;
+    onOpenChange?.(false);
     closeTimerRef.current = window.setTimeout(
-      finishClose,
-      MOTION_DURATION_MS.fast + MOTION_DURATION_MS.feedback,
+      finishExit,
+      resolveMotionFallbackMs("control"),
     );
   };
 
@@ -81,6 +97,13 @@ export function RecordDialog({
     },
     [],
   );
+
+  useModalLayer({
+    open: phase === "open",
+    containerRef: dialogRef,
+    returnFocusRef: triggerRef,
+    onClose: close,
+  });
 
   return (
     <>
@@ -98,12 +121,18 @@ export function RecordDialog({
               )
         }
         onClick={() => {
-          setOpen(true);
+          setPhase("open");
           const dialog = dialogRef.current;
           if (!dialog) return;
+          if (closeTimerRef.current !== null) {
+            window.clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
+          }
           closingRef.current = false;
+          closeNotifiedRef.current = false;
+          dialog.inert = false;
           dialog.dataset.state = "open";
-          dialog.showModal();
+          if (!dialog.open) dialog.showModal();
           onOpenChange?.(true);
         }}
       >
@@ -115,22 +144,25 @@ export function RecordDialog({
         className="finance-dialog"
         aria-labelledby={titleId}
         onAnimationEnd={(event) => {
-          if (
-            event.target === event.currentTarget &&
-            event.animationName === "finance-dialog-out"
-          ) {
-            finishClose();
+          if (event.target === event.currentTarget) {
+            finishExit();
           }
         }}
         onClose={() => {
+          const dialog = dialogRef.current;
+          if (dialog?.open || closingRef.current || closeNotifiedRef.current)
+            return;
           if (closeTimerRef.current !== null) {
             window.clearTimeout(closeTimerRef.current);
             closeTimerRef.current = null;
           }
-          closingRef.current = false;
-          delete dialogRef.current?.dataset.state;
-          setOpen(false);
-          triggerRef.current?.focus();
+          if (dialog) {
+            dialog.inert = false;
+            delete dialog.dataset.state;
+          }
+          setPhase("closed");
+          triggerRef.current?.focus({ preventScroll: true });
+          closeNotifiedRef.current = true;
           onOpenChange?.(false);
         }}
         onCancel={(event) => {
@@ -165,7 +197,7 @@ export function RecordDialog({
           backdropPointerRef.current = false;
         }}
       >
-        {open && (
+        {phase !== "closed" && (
           <div className="finance-dialog-panel">
             <header className="finance-dialog-heading">
               <div>
@@ -188,6 +220,13 @@ export function RecordDialog({
           </div>
         )}
       </dialog>
+      {phase === "exiting" && (
+        <div
+          className="finance-dialog-exit-backdrop"
+          aria-hidden="true"
+          onAnimationEnd={finishExit}
+        />
+      )}
     </>
   );
 }

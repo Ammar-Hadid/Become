@@ -2,16 +2,9 @@
 
 import { useId, useState } from "react";
 import { Building2, CircleHelp, UserRound, UsersRound } from "lucide-react";
-import {
-  ReusableEntityCombobox,
-  type ReusableEntityOption,
-} from "@/components/ui/forms/reusable-entity-combobox.component";
 import { BusinessField } from "@/features/entrepreneurship/shared/components/business-field.component";
-import { searchCompaniesAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
-import {
-  searchPeopleAction,
-  searchSegmentsAction,
-} from "@/features/entrepreneurship/audiences/actions/audience.action";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
+import type { BusinessRecordOption } from "@/features/entrepreneurship/shared/schemas/business-record-search.schema";
 import type { BusinessOption } from "@/features/entrepreneurship/shared/types/business.types";
 import { marketTypeLabel } from "@/features/entrepreneurship/audiences/utils/audience-label.util";
 import type {
@@ -21,6 +14,7 @@ import type {
 export type { AudienceOption } from "@/features/entrepreneurship/audiences/types/audience.types";
 import type { AudienceOption } from "@/features/entrepreneurship/audiences/types/audience.types";
 import { DeferredSegments } from "@/features/entrepreneurship/audiences/components/deferred-segments.component";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 
 export type AudienceContextValue = AudienceContextView;
 
@@ -53,6 +47,7 @@ export function AudienceFields({
   allowAggregate?: boolean;
   onBusinessContextChange?: (hasBusiness: boolean) => void;
 }) {
+  const exploration = useExploration();
   const context = value?.audienceContext;
   const [scopeEdited, setScopeEdited] = useState(false);
   const unrecordedOriginally =
@@ -64,7 +59,7 @@ export function AudienceFields({
     context?.marketType ?? value?.marketType ?? "UNKNOWN",
   );
   const [selectedSegments, setSelectedSegments] = useState<
-    ReusableEntityOption[]
+    BusinessRecordOption[]
   >(
     context?.segments.map((segment) => ({
       id: segment.segmentId,
@@ -159,21 +154,21 @@ export function AudienceFields({
               business; their identity does not decide who buys.
             </p>
           </div>
-          <ReusableEntityCombobox
+          <BusinessRecordPicker
+            kind="segment"
             label="Audience segments"
-            entityName="segment"
-            idFieldName="segmentIds"
-            queryFieldName="segmentQuery"
+            name="segmentIds"
+            nicheId={exploration?.id}
             options={segments.map((segment) => ({
               ...segment,
               description: segment.description ?? undefined,
             }))}
-            selectedOptions={selectedSegments}
-            onSelectionChange={(items) => {
+            values={selectedSegments.map((segment) => segment.id)}
+            multiple
+            onSelectionChange={(items: BusinessRecordOption[]) => {
               setSelectedSegments(items);
               setScopeEdited(true);
             }}
-            searchAction={searchSegmentsAction}
             placeholder="Find a segment…"
           />
           <DeferredSegments onChange={() => setScopeEdited(true)} />
@@ -244,19 +239,18 @@ export function AudienceFields({
             </fieldset>
             {identity === "PERSON" && (
               <>
-                <ReusableEntityCombobox
+                <BusinessRecordPicker
+                  kind="person"
                   label="Person"
-                  entityName="person"
-                  idFieldName="personId"
-                  queryFieldName="personName"
+                  name="personId"
+                  queryName="personName"
+                  nicheId={exploration?.id}
                   options={people}
-                  initialId={value?.personId}
-                  initialName={value?.personName ?? value?.personSnapshot}
-                  searchAction={searchPeopleAction}
-                  deferCreation
-                  allowDuplicateNames
+                  value={value?.personId ?? ""}
+                  customValue={value?.personName ?? value?.personSnapshot ?? ""}
+                  allowCustom
+                  entityName="person"
                   required={recipient}
-                  optional={!recipient}
                   placeholder="Find or add a person…"
                 />
                 <label className="business-choice-row gap-sm text-body text-text-secondary flex items-center">
@@ -274,18 +268,18 @@ export function AudienceFields({
             )}
             {(identity === "BUSINESS" ||
               (identity === "PERSON" && representsBusiness)) && (
-              <ReusableEntityCombobox
+              <BusinessRecordPicker
+                kind="company"
                 label="Business"
-                entityName="business"
-                idFieldName="companyId"
-                queryFieldName="companyName"
+                name="companyId"
+                queryName="companyName"
+                nicheId={exploration?.id}
                 options={companies}
-                initialId={value?.companyId}
-                initialName={value?.companyName ?? value?.companySnapshot}
-                searchAction={searchCompaniesAction}
-                deferCreation
+                value={value?.companyId ?? ""}
+                customValue={value?.companyName ?? value?.companySnapshot ?? ""}
+                allowCustom
+                entityName="business"
                 required={recipient}
-                optional={!recipient}
                 placeholder="Find or add a business…"
               />
             )}

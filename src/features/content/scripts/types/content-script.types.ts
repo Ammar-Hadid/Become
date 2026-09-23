@@ -1,6 +1,7 @@
-import type { JSONContent } from "@tiptap/core";
+import type { DocumentContent } from "@/components/ui/document-editor/types/document-editor.types";
 
-export type ScriptDocument = { schemaVersion: 1; content: JSONContent };
+/** Content compatibility alias for the shared document-editor value. */
+export type ScriptDocument = DocumentContent;
 export type ScriptSummary = {
   hasContent: boolean;
   wordCount: number;

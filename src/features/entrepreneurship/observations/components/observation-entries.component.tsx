@@ -230,7 +230,7 @@ export function ObservationEntries({
                   />
                 ) : (
                   <p className="business-hint">
-                    Keeps the interaction or outcome's audience and source
+                    Keeps the interaction or outcome&apos;s audience and source
                     identity.
                   </p>
                 )}

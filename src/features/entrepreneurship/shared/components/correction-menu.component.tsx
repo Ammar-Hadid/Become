@@ -6,6 +6,7 @@ import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { BusinessField } from "@/features/entrepreneurship/shared/components/business-field.component";
 import { CaptureKey } from "@/features/entrepreneurship/shared/components/capture-key.component";
 import type { RecordFormState } from "@/components/ui/forms/record-form.types";
+import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 export function CorrectionMenu({
   label,
   title,
@@ -17,6 +18,8 @@ export function CorrectionMenu({
   description: string;
   action: (form: FormData) => Promise<RecordFormState>;
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <SubMenu
       className="w-fit shrink-0"

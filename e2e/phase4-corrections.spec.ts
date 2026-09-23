@@ -272,11 +272,14 @@ test("company and accepted offer connect existing work and explicitly attribute 
     "EUR 150.00 remaining",
   );
   await expect(
-    page.getByRole("combobox", { name: "Shared offer revision · optional" }),
+    page.getByRole("combobox", { name: "Recipient's offer terms" }),
   ).toHaveValue(accepted.id);
   await page.getByRole("button", { name: "Confirm attribution" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.locator("#receipts")).toContainText("EUR 150.00");
+  const attributedReceipt = page
+    .getByRole("article")
+    .filter({ hasText: "EUR 150.00 · Received" });
+  await expect(attributedReceipt).toContainText("Monthly support · revision 1");
   expect(await prisma.financialTransaction.count({ where: { userId } })).toBe(
     1,
   );
@@ -403,9 +406,17 @@ test("multiple complete observations retain stable errors, participant roles and
   await page.goto(`/entrepreneurship/problems/${problem.id}`);
   await expect(
     page.getByText(
-      /3 source links · 1 companies represented · 1 supporting companies · 1 contradicting companies/,
+      "3 current source links. Each source keeps its audience, attribution, and interpretation.",
+      { exact: true },
     ),
   ).toBeVisible();
+  await expect(
+    page.getByText("1 supporting source links", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("1 contradicting source links", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("1 businesses", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Record assessment" }).click();
   await page
     .getByRole("textbox", { name: "Scope of this judgment" })
@@ -535,14 +546,24 @@ test("plain live company search, independent archives, period and recipient over
   await page
     .getByRole("button", { name: "Record batch outreach", exact: true })
     .click();
-  const recipients = page.getByRole("combobox", {
-    name: "Business recipients",
+  const recipients = page.getByRole("button", {
+    name: /^Business recipients /,
+  });
+  await recipients.click();
+  const recipientSearch = page.getByRole("searchbox", {
+    name: "Search business recipients",
     exact: true,
   });
   for (const name of ["Company 000", "Company 111"]) {
-    await recipients.fill(name);
-    await page.getByRole("option", { name, exact: true }).click();
+    await recipientSearch.fill(name);
+    await page
+      .getByRole("menuitemcheckbox", { name: new RegExp(`^${name}`) })
+      .click();
   }
+  await page.keyboard.press("Escape");
+  await expect(recipients).toHaveAccessibleName(
+    "Business recipients 2 records selected",
+  );
   await page
     .getByRole("textbox", { name: "Shared summary", exact: true })
     .fill("Sent shared introduction");

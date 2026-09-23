@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useId, type ChangeEventHandler, type ReactNode } from "react";
 
 export function BusinessFormSection({
   eyebrow,
@@ -89,12 +89,16 @@ export function BusinessSelect({
   value,
   children,
   required = false,
+  onChange,
+  disabled = false,
 }: {
   label: string;
   name: string;
   value?: string;
   children: ReactNode;
   required?: boolean;
+  onChange?: ChangeEventHandler<HTMLSelectElement>;
+  disabled?: boolean;
 }) {
   const id = useId();
   return (
@@ -105,8 +109,11 @@ export function BusinessSelect({
       <select
         id={id}
         name={name}
-        defaultValue={value}
+        defaultValue={onChange ? undefined : value}
+        value={onChange ? value : undefined}
+        onChange={onChange}
         required={required}
+        disabled={disabled}
         className="text-input"
       >
         {children}

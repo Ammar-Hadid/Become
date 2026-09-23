@@ -4,21 +4,27 @@ import {
   EvidenceJournal,
   type EvidenceJournalData,
 } from "@/features/entrepreneurship/evidence/components/evidence-journal.component";
-import { InteractionForm } from "@/features/entrepreneurship/interactions/components/interaction-form.component";
-import { BatchOutreachForm } from "@/features/entrepreneurship/interactions/components/batch-outreach-form.component";
 import type { getInteractionOptions } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import type { EvidenceScope } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
+import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
+import type { ReactNode } from "react";
+import { Search } from "lucide-react";
 
 export function EvidencePage({
   data,
   options,
   nicheId,
   query = {},
+  mode = "legacy",
+  navigation,
 }: {
   data: EvidenceJournalData;
   options: Awaited<ReturnType<typeof getInteractionOptions>>;
   nicheId?: string;
   query?: EvidenceScope;
+  mode?: "legacy" | "sources" | "observations";
+  navigation?: ReactNode;
 }) {
   const next = new URLSearchParams();
   for (const key of [
@@ -29,6 +35,7 @@ export function EvidencePage({
     "companyId",
   ] as const)
     if (query[key]) next.set(key, query[key]!);
+  if (query.q) next.set("q", query.q);
   if (data.next) next.set("cursor", data.next);
   const personName = query.personId
     ? (options.people.find((person) => person.id === query.personId)?.name ??
@@ -43,30 +50,92 @@ export function EvidencePage({
         ?.companySnapshot ??
       "Selected business")
     : null;
+  const copy =
+    mode === "sources"
+      ? {
+          title: "Keep the source before deciding what it means.",
+          description:
+            "Conversations, direct observations and public material stay traceable here. Turn the useful parts into explicit observations.",
+          ledger: "Source ledger",
+        }
+      : mode === "observations"
+        ? {
+            title: "Keep only what you deliberately noticed.",
+            description:
+              "Every observation stands apart from its source, with wording and provenance preserved for later decisions.",
+            ledger: "Observation ledger",
+          }
+        : {
+            title: "Keep the detail that matters.",
+            description:
+              "A journal of actual sources. Conversations and their observations stay together.",
+            ledger: "Evidence journal",
+          };
+  const directWorkspace = Boolean(nicheId && mode === "legacy");
   return (
-    <>
-      <header className="business-section-heading business-page-heading">
+    <div
+      className={
+        directWorkspace ? "direct-workspace evidence-workspace" : undefined
+      }
+    >
+      <header
+        className={
+          directWorkspace
+            ? "workspace-heading"
+            : "business-section-heading business-page-heading"
+        }
+      >
         <div>
-          <p className="eyebrow">What you heard, saw, and found</p>
-          <h2>Keep the detail that matters.</h2>
+          {directWorkspace && <p className="eyebrow">Evidence</p>}
+          <h2>{copy.title}</h2>
           <p>
-            A journal of actual sources. Conversations and their observations
-            stay together.
+            {directWorkspace
+              ? "Trace sources and the observations kept from them."
+              : copy.description}
           </p>
         </div>
-        <EvidenceCapture {...options} />
+        <div className="business-actions">
+          {mode !== "legacy" && nicheId && (
+            <Link
+              className="finance-dialog-trigger finance-dialog-trigger--secondary"
+              href={explorationWorkspaceHref(nicheId, "conversations")}
+            >
+              Start a conversation
+            </Link>
+          )}
+          <EvidenceCapture
+            {...options}
+            triggerLabel={
+              mode === "observations" ? "Keep observation" : undefined
+            }
+            captureLanes={
+              mode === "legacy" ? undefined : ["observation", "public"]
+            }
+          />
+        </div>
       </header>
-      <section className="business-zone business-zone--ledger">
+      {navigation}
+      <section
+        className={
+          directWorkspace
+            ? "workspace-ledger"
+            : "business-zone business-zone--ledger"
+        }
+      >
         <div className="business-row-heading">
           <div>
-            <p className="eyebrow">Evidence journal</p>
+            <p className="eyebrow">{copy.ledger}</p>
             <h3>
               {nicheId ? "In this exploration" : "Across every exploration"}
             </h3>
           </div>
           <Link
             className="business-text-link"
-            href="/entrepreneurship/evidence"
+            href={
+              nicheId
+                ? explorationWorkspaceHref(nicheId, "evidence")
+                : "/entrepreneurship/evidence"
+            }
           >
             Clear filters
           </Link>
@@ -78,16 +147,41 @@ export function EvidencePage({
             context remains specific to each recorded event.
           </p>
         )}
-        <form className="mb-2xl gap-lg grid items-end sm:grid-cols-2 lg:grid-cols-4">
+        <form
+          className={
+            directWorkspace
+              ? "workspace-toolbar evidence-toolbar"
+              : "mb-2xl gap-lg grid items-end sm:grid-cols-2 lg:grid-cols-4"
+          }
+        >
+          {directWorkspace && (
+            <label className="workspace-search">
+              <Search aria-hidden="true" />
+              <span className="sr-only">Search evidence</span>
+              <input
+                name="q"
+                type="search"
+                defaultValue={query.q}
+                placeholder="Search sources and observations"
+              />
+            </label>
+          )}
           <label className="field-label">
             Source
             <select
               name="sourceKind"
-              className="text-input mt-sm"
+              className={directWorkspace ? undefined : "text-input mt-sm"}
               defaultValue={query.sourceKind ?? ""}
             >
-              <option value="">All sources</option>
-              <option value="INTERACTION">Conversations & interactions</option>
+              <option value="">
+                {mode === "observations" ? "All observations" : "All sources"}
+              </option>
+              {mode !== "observations" && (
+                <option value="INTERACTION">Conversations</option>
+              )}
+              {mode === "observations" && (
+                <option value="MESSAGE">Conversation excerpts</option>
+              )}
               <option value="DIRECT_OBSERVATION">Direct observations</option>
               <option value="PUBLIC_SOURCE">Public sources</option>
             </select>
@@ -96,7 +190,7 @@ export function EvidencePage({
             Buying context
             <select
               name="marketType"
-              className="text-input mt-sm"
+              className={directWorkspace ? undefined : "text-input mt-sm"}
               defaultValue={query.marketType ?? ""}
             >
               <option value="">All contexts</option>
@@ -106,21 +200,15 @@ export function EvidencePage({
               <option value="BOTH">Consumers & businesses</option>
             </select>
           </label>
-          <label className="field-label">
-            Segment
-            <select
-              name="segmentId"
-              className="text-input mt-sm"
-              defaultValue={query.segmentId ?? ""}
-            >
-              <option value="">All segments</option>
-              {options.segments?.map((segment) => (
-                <option key={segment.id} value={segment.id}>
-                  {segment.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <BusinessRecordPicker
+            kind="segment"
+            label="Segment"
+            name="segmentId"
+            nicheId={nicheId}
+            options={options.segments}
+            value={query.segmentId}
+            placeholder="All segments"
+          />
           {query.personId && (
             <input type="hidden" name="personId" value={query.personId} />
           )}
@@ -128,35 +216,24 @@ export function EvidencePage({
             <input type="hidden" name="companyId" value={query.companyId} />
           )}
           <button
-            className="finance-dialog-trigger finance-dialog-trigger--secondary"
+            className={
+              directWorkspace
+                ? "workspace-filter-button"
+                : "finance-dialog-trigger finance-dialog-trigger--secondary"
+            }
             type="submit"
           >
             Apply filters
           </button>
         </form>
-        <EvidenceJournal data={data} paginationHref={`?${next}`} />
+        <EvidenceJournal
+          data={data}
+          paginationHref={`?${next}`}
+          mode={mode}
+          nicheId={nicheId}
+          query={query}
+        />
       </section>
-      <details className="business-disclosure business-zone">
-        <summary>Outreach & contact activity</summary>
-        <div>
-          <p className="business-hint">
-            Record what you actually sent or received. A research session does
-            not imply contact happened.
-          </p>
-          <div className="business-actions">
-            <InteractionForm
-              {...options}
-              initialKind="OUTREACH_SENT"
-              triggerLabel="Record outreach or reply"
-            />
-            <BatchOutreachForm
-              companies={options.companies}
-              people={options.people}
-              segments={options.segments}
-            />
-          </div>
-        </div>
-      </details>
-    </>
+    </div>
   );
 }

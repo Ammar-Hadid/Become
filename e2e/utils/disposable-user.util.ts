@@ -30,6 +30,9 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
   });
   await prisma.$transaction(
     async (tx) => {
+      await tx.nexoRun.deleteMany({ where });
+      await tx.nexoSettingsRevision.deleteMany({ where });
+      await tx.nexoSettings.deleteMany({ where });
       await tx.ideaOutput.deleteMany({ where });
       await tx.decisionReflection.deleteMany({ where });
       await tx.decision.updateMany({ where, data: { supersedesId: null } });
@@ -48,6 +51,14 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.problemAssessmentEvidence.deleteMany({ where });
       await tx.problemAssessment.deleteMany({ where });
       await tx.problemEvidence.deleteMany({ where });
+      await tx.explorationSnapshotClaim.deleteMany({ where });
+      await tx.explorationSnapshotUncertainty.deleteMany({ where });
+      await tx.explorationSnapshotEdition.deleteMany({ where });
+      await tx.explorationClaimCitation.deleteMany({ where });
+      await tx.explorationClaimRevision.deleteMany({ where });
+      await tx.explorationClaim.deleteMany({ where });
+      await tx.explorationUncertaintyRevision.deleteMany({ where });
+      await tx.explorationUncertainty.deleteMany({ where });
       await tx.businessReceiptAllocation.deleteMany({ where });
       await tx.offerEvent.deleteMany({ where });
       await tx.offerRevisionProblem.deleteMany({ where });
@@ -66,6 +77,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.recurringExpenseOccurrence.deleteMany({ where });
       await tx.recurringExpense.deleteMany({ where });
       await tx.session.deleteMany({ where });
+      await tx.interviewGuide.deleteMany({ where });
       await tx.content.deleteMany({ where });
       await tx.companyWorkSource.deleteMany({ where });
       await tx.companyNiche.deleteMany({ where });

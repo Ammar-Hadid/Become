@@ -1,7 +1,7 @@
+import { searchBusinessRecords } from "@/features/entrepreneurship/shared/queries/business-record-search.query";
 import { getAudienceOptions } from "@/features/entrepreneurship/audiences/queries/audience.query";
 import {
   audienceInclude,
-  audienceName,
 } from "@/features/entrepreneurship/audiences/utils/audience.util";
 import {
   companyExplorationWhere,
@@ -27,24 +27,14 @@ export async function getInteractionOptions(userId: string, nicheId?: string) {
       select: { id: true, title: true },
       orderBy: { title: "asc" },
     }),
-    prisma.interaction.findMany({
-      where: { userId, voidedAt: null },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      include: { revisions: { orderBy: { version: "desc" }, take: 1 } },
-    }),
+    searchBusinessRecords(userId, { kind: "interaction", nicheId }),
   ]);
   return {
     ...(await getAudienceOptions(userId, nicheId)),
     companies,
     niches,
     problems: problems.map((p) => ({ id: p.id, name: p.title })),
-    replies: recent
-      .filter((item) => !nicheId || item.revisions[0]?.nicheId === nicheId)
-      .map((item) => ({
-        id: item.id,
-        name: `${audienceName(item.revisions[0])} · ${item.revisions[0].summary.slice(0, 80)}`,
-      })),
+    replies: recent.items,
   };
 }
 

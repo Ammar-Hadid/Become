@@ -1,4 +1,5 @@
 import {
+  chooseBusinessRecord,
   chooseBusinessSource,
   chooseSpecificBusinessOffer,
   openExplorationBusinesses,
@@ -36,14 +37,15 @@ async function startExploration(page: Page, name: string) {
     .getByRole("button", { name: "Start exploring", exact: true })
     .click();
   await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/\/explorations\/[^/]+$/);
-  return new URL(page.url()).pathname;
+  await expect(page).toHaveURL(/\/explorations\/[^/]+\/overview$/);
+  return new URL(page.url()).pathname.replace(/\/overview$/, "");
 }
 
 test("explorations keep a fresh workspace, relational history and contextual capture across the lifecycle", async ({
   page,
 }, info) => {
   test.setTimeout(120_000);
+  page.setDefaultTimeout(20_000);
   await page.goto("/sign-in");
   await page
     .getByRole("button", { name: "Create account", exact: true })
@@ -85,7 +87,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
+    .getByRole("navigation", { name: "Exploration workspaces" })
     .getByRole("link", { name: "Evidence", exact: true })
     .click();
   await page
@@ -95,7 +97,9 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .getByRole("textbox", { name: "Summary", exact: true })
     .fill("Appointments take an hour to confirm");
   await chooseBusinessSource(page, "Canal Dental");
-  await expect(page.locator('select[name="nicheId"]')).toHaveValue(nicheId);
+  await expect(
+    page.getByRole("dialog").locator('[name="nicheId"]'),
+  ).toHaveValue(nicheId);
   await page
     .getByRole("button", { name: "Add observation", exact: true })
     .click();
@@ -108,12 +112,16 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page
     .getByRole("link", { name: "Open saved conversation →", exact: true })
     .click();
-  await expect(page).toHaveURL(new RegExp(`${dentists}/interactions/`));
+  await expect(page).toHaveURL(new RegExp(`${dentists}/conversations/[^/]+$`));
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
-    .getByRole("link", { name: "Problems", exact: true })
+    .getByRole("navigation", { name: "Exploration workspaces" })
+    .getByRole("link", { name: "So Far We Know", exact: true })
     .click();
+  await expect(
+    page.getByRole("heading", { name: "So Far We Know", exact: true }),
+  ).toBeVisible();
+  await page.goto(`${dentists}/so-far-we-know/problems`);
   await page
     .getByRole("button", { name: "Frame a problem", exact: true })
     .click();
@@ -123,12 +131,16 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page
     .getByRole("textbox", { name: "What do you believe is happening?" })
     .fill("Manual reminders take time away from reception");
-  await expect(page.locator('select[name="nicheId"]')).toHaveValue(nicheId);
+  await expect(
+    page.getByRole("dialog").locator('[name="nicheId"]'),
+  ).toHaveValue(nicheId);
   await page.getByRole("button", { name: "Keep this problem" }).click();
-  await expect(page).toHaveURL(new RegExp(`${dentists}/problems/`));
+  await expect(page).toHaveURL(
+    new RegExp(`${dentists}/so-far-we-know/problems/[^/]+$`),
+  );
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
+    .getByRole("navigation", { name: "Exploration workspaces" })
     .getByRole("link", { name: "Offers", exact: true })
     .click();
   await page
@@ -144,7 +156,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page
     .getByRole("button", { name: "Save draft revision", exact: true })
     .click();
-  await expect(page).toHaveURL(new RegExp(`${dentists}/offers/`));
+  await expect(page).toHaveURL(new RegExp(`${dentists}/offers/[^/]+$`));
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
     prisma.offerNiche.count({ where: { userId: user.id, nicheId } }),
@@ -156,7 +168,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     page.getByRole("button", { name: "Entrepreneurship", exact: true }),
   ).toHaveClass(/selected/);
   await page
-    .getByText("Business & exploration · optional", { exact: true })
+    .getByText("Exploration & business · optional", { exact: true })
     .click();
   await expect(
     page.getByRole("combobox", { name: "Exploration", exact: true }),
@@ -169,7 +181,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     where: { userId: user.id, endedAt: null },
   });
   expect(session.businessNicheId).toBe(nicheId);
-  await page.goto(dentists);
+  await page.goto(`${dentists}/overview`);
   await expectExplorationCounts(page, 1);
   await page.screenshot({
     path: `${screenshots}/${info.project.name}-dentists.png`,
@@ -188,7 +200,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByRole("button", { name: "Resume exploration", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Explorations", exact: true }).click();
+  await page.getByRole("link", { name: "Back to explorations" }).click();
   await expect(
     page
       .getByRole("region", { name: "Past explorations" })
@@ -204,7 +216,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page.locator('[data-testid="active-timer-trigger"]:visible').click();
   await page.getByRole("dialog").getByTestId("end-session").click();
   await page
-    .getByText("Business & exploration · optional", { exact: true })
+    .getByText("Exploration & business · optional", { exact: true })
     .click();
   await expect(
     page.getByRole("combobox", { name: "Exploration", exact: true }),
@@ -221,10 +233,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page
     .getByRole("button", { name: "Attach existing business", exact: true })
     .click();
-  await page
-    .getByRole("combobox", { name: "Business", exact: true })
-    .fill("Canal Dental");
-  await page.getByRole("option", { name: "Canal Dental", exact: true }).click();
+  await chooseBusinessRecord(page, "Business", "Canal Dental");
   await page
     .getByRole("button", { name: "Attach to exploration", exact: true })
     .click();
@@ -233,18 +242,21 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     page.getByRole("heading", { name: "Businesses 1", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
+    .getByRole("navigation", { name: "Exploration workspaces" })
     .getByRole("link", { name: "Evidence", exact: true })
     .click();
   await expect(page.getByText("No evidence in this view yet.")).toBeVisible();
   await page
-    .getByRole("navigation", { name: "Exploration navigation" })
+    .getByRole("navigation", { name: "Exploration workspaces" })
     .getByRole("link", { name: "Offers", exact: true })
     .click();
   await expect(
     page.getByText("Confirmation pilot", { exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("link", { name: "Global history", exact: true }).click();
+  await page.getByRole("link", { name: "Back to explorations" }).click();
+  await page
+    .getByRole("link", { name: "Global history ↗", exact: true })
+    .click();
   await page
     .getByRole("navigation", { name: "Entrepreneurship navigation" })
     .getByRole("link", { name: "Offers", exact: true })
@@ -252,10 +264,8 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByRole("heading", { name: "Confirmation pilot", exact: true }),
   ).toBeVisible();
-  await page.goto(dentists);
-  await expect(
-    page.getByRole("link", { name: /^1 Evidence entries/ }),
-  ).toBeVisible();
+  await page.goto(`${dentists}/overview`);
+  await expectExplorationCounts(page, 1);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page
     .getByRole("button", { name: "Resume exploration", exact: true })
@@ -270,6 +280,56 @@ test("explorations keep a fresh workspace, relational history and contextual cap
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+
+  // Expanding the seven workspaces must never displace account or timer
+  // controls on shorter screens. Only the navigation region should scroll.
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await expect(
+    page.locator('[data-testid="start-timer-trigger"]:visible'),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(
+    page.locator('[data-testid="user-identity"]:visible'),
+  ).toBeInViewport({ ratio: 1 });
+  await page
+    .getByRole("navigation", { name: "Exploration workspaces" })
+    .getByRole("link", { name: "Offers", exact: true })
+    .click();
+  await expect(page).toHaveURL(`${dentists}/offers`);
+  await expect(
+    page.getByRole("heading", { name: "Confirmation pilot", exact: true }),
+  ).toBeVisible();
+  const explorationTitle = page.getByRole("heading", {
+    name: "Dentists",
+    level: 1,
+  });
+  expect(
+    await explorationTitle.evaluate(
+      (element) =>
+        element.getBoundingClientRect().height /
+        Number.parseFloat(getComputedStyle(element).lineHeight),
+    ),
+  ).toBeLessThan(1.5);
+  await page.screenshot({
+    path: info.outputPath("short-desktop-navigation.png"),
+    animations: "disabled",
+  });
+
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  const account = page.locator('[data-testid="user-identity"]:visible');
+  await expect(account).toBeInViewport({ ratio: 1 });
+  await account.click();
+  await expect(page.getByRole("menu", { name: "Account" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(account).toBeFocused();
+  await page
+    .getByRole("navigation", { name: "Exploration workspaces" })
+    .getByRole("link", { name: "Overview", exact: true })
+    .click();
+  await expect(page).toHaveURL(`${dentists}/overview`);
+  await expect(
+    page.locator('[data-testid="start-timer-trigger"]:visible'),
+  ).toBeInViewport({ ratio: 1 });
 });
 
 test("direction review offers contextual choices and preserves explicit continue decisions", async ({
@@ -300,7 +360,7 @@ test("direction review offers contextual choices and preserves explicit continue
       labels: [
         "Continue exploring",
         "Pause for now",
-        "Pursue this market",
+        "Pursue this exploration",
         "Stop exploring",
       ],
     },
@@ -310,24 +370,39 @@ test("direction review offers contextual choices and preserves explicit continue
       labels: [
         "Continue exploring",
         "Pause for now",
-        "Pursue this market",
+        "Pursue this exploration",
         "Stop exploring",
       ],
     },
     {
       current: "PAUSED",
       next: "PURSUING",
-      labels: ["Resume exploring", "Pursue this market", "Stop exploring"],
+      labels: [
+        "Resume exploring",
+        "Pause for now",
+        "Pursue this exploration",
+        "Stop exploring",
+      ],
     },
     {
       current: "PURSUING",
       next: "STOPPED",
-      labels: ["Return to exploration", "Pause for now", "Stop exploring"],
+      labels: [
+        "Return to exploration",
+        "Pause for now",
+        "Pursue this exploration",
+        "Stop exploring",
+      ],
     },
     {
       current: "STOPPED",
       next: "EXPLORING",
-      labels: ["Resume exploring", "Pursue this market"],
+      labels: [
+        "Resume exploring",
+        "Pause for now",
+        "Pursue this exploration",
+        "Stop exploring",
+      ],
     },
   ];
   for (const [index, step] of cases.entries()) {
@@ -344,7 +419,7 @@ test("direction review offers contextual choices and preserves explicit continue
     await expect(dialog).toBeVisible();
     const select = dialog.getByRole("combobox", { name: "Work state" });
     await expect(select.locator("option")).toHaveText(step.labels);
-    await expect(select).toHaveValue("EXPLORING");
+    await expect(select).toHaveValue(step.current);
     await select.selectOption(step.next);
     const rationale = `Decision ${index}: ${step.current} to ${step.next}`;
     await dialog
@@ -352,7 +427,9 @@ test("direction review offers contextual choices and preserves explicit continue
       .fill(rationale);
     await dialog.getByRole("button", { name: "Save direction" }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText(rationale, { exact: true })).toBeVisible();
+    await expect(page.locator(".exploration-masthead-status")).toContainText(
+      step.next.toLowerCase().replace(/^./, (letter) => letter.toUpperCase()),
+    );
     const niche = await prisma.niche.findUniqueOrThrow({
       where: { id: nicheId },
     });

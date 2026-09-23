@@ -292,6 +292,8 @@ export function OfferForm(
   props: Parameters<typeof QuoteFields>[0] & { offerId?: string },
 ) {
   const router = useRouter();
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Make the value concrete"
@@ -331,6 +333,7 @@ export function OfferEventForm({
   segments?: AudienceOption[];
 }) {
   const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="An actual outcome"
@@ -463,6 +466,8 @@ export function OfferContinuationForm({
   engagementId?: string;
 }) {
   const [choice, setChoice] = useState("NOT_NOW");
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="After acceptance"
@@ -517,6 +522,8 @@ export function OfferResponseForm({
   companies?: BusinessOption[];
   segments?: AudienceOption[];
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="One recipient’s response"

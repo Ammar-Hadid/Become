@@ -9,7 +9,6 @@ import type {
   FinanceWorkOptions,
 } from "@/features/finance/sessions/types/finance-session.types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
 import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
 import { usePresence } from "@/components/ui/motion/hooks/use-presence.hook";
 import {
@@ -66,7 +65,6 @@ export function TimerController({
 }: TimerControllerProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const resolutionTimerRef = useRef<number | null>(null);
   const [resolvedSession, setResolvedSession] =
     useState<SessionDetailItem | null>(null);
   const [business, setBusiness] = useState({
@@ -184,10 +182,6 @@ export function TimerController({
           setSelectedActivityId(domain.activityTypes[0]?.id ?? "");
         }
       }
-      if (resolutionTimerRef.current !== null) {
-        window.clearTimeout(resolutionTimerRef.current);
-        resolutionTimerRef.current = null;
-      }
       setOutcome("");
       setNotes("");
       setIncludeEvidence(false);
@@ -228,10 +222,6 @@ export function TimerController({
         });
       }
       setCompletionTarget(activeSession);
-      if (resolutionTimerRef.current !== null) {
-        window.clearTimeout(resolutionTimerRef.current);
-        resolutionTimerRef.current = null;
-      }
       setResolvedSession(null);
       setError(null);
       setResolutionState("idle");
@@ -248,14 +238,6 @@ export function TimerController({
       window.removeEventListener("become:manage-timer", manage);
     };
   }, [activeSession, completionTarget?.id, domains]);
-
-  useEffect(() => {
-    return () => {
-      if (resolutionTimerRef.current !== null) {
-        window.clearTimeout(resolutionTimerRef.current);
-      }
-    };
-  }, []);
 
   async function startTimer() {
     if (
@@ -350,25 +332,21 @@ export function TimerController({
           // The confirmation itself does not depend on motion storage.
         }
       }
-      if (body.evidenceId && includeEvidence && evidenceTitle.trim()) {
-        rememberEngineeringEvidenceArrival(evidenceTitle.trim());
+      if (body.evidenceId && includeEvidence) {
+        rememberEngineeringEvidenceArrival(body.evidenceId);
       }
 
       setResolutionState("confirmed");
-      // Refresh secondary data immediately; timer truth no longer waits for it.
-      resolutionTimerRef.current = window.setTimeout(() => {
-        setOutcome("");
-        setNotes("");
-        setIncludeEvidence(false);
-        setEvidenceTitle("");
-        setEvidenceDetails("");
-        setDialogOpen(false);
-        window.requestAnimationFrame(focusVisibleTimerTrigger);
-        if (body.session?.domain.slug === "entrepreneurship")
-          setCaptureSessionId(body.session.id);
-        setResolutionState("idle");
-        resolutionTimerRef.current = null;
-      }, MOTION_DURATION_MS.emphasis);
+      setOutcome("");
+      setNotes("");
+      setIncludeEvidence(false);
+      setEvidenceTitle("");
+      setEvidenceDetails("");
+      setDialogOpen(false);
+      window.requestAnimationFrame(focusVisibleTimerTrigger);
+      if (body.session?.domain.slug === "entrepreneurship")
+        setCaptureSessionId(body.session.id);
+      setResolutionState("idle");
     } catch {
       setError(
         "Could not confirm the save. Please try again; a saved session will not be completed twice.",
@@ -408,6 +386,7 @@ export function TimerController({
           className="dialog-backdrop"
           data-state={dialogPresence.presenceState}
           aria-hidden={!dialogOpen}
+          inert={dialogPresence.isExiting}
           onAnimationEnd={dialogPresence.onPresenceAnimationEnd}
           role="presentation"
           onMouseDown={() => setDialogOpen(false)}
@@ -416,6 +395,7 @@ export function TimerController({
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
+            tabIndex={-1}
             aria-labelledby="timer-dialog-title"
             className="timer-dialog"
             data-resolution={resolutionState}

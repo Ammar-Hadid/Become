@@ -143,7 +143,7 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .dashboard-domain-link:hover,
@@ -160,7 +160,7 @@
 .dashboard-domain-link svg {
   width: 14px;
   height: 14px;
-  transition: transform var(--duration-fast) var(--ease-standard);
+  transition: transform var(--duration-control) var(--ease-move);
 }
 
 .dashboard-domain-link:hover svg,
@@ -193,7 +193,7 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .dashboard-priority-list a:hover,
@@ -223,7 +223,7 @@
   gap: var(--spacing-lg);
   padding: var(--spacing-3xl) 0 var(--spacing-3xl) var(--spacing-3xl);
   text-align: left;
-  transition: background-color var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-control) var(--ease-move);
 }
 
 .dashboard-focus-action:hover {
@@ -259,7 +259,7 @@
   border-radius: 50%;
   background: var(--color-surface-elevated);
   color: var(--color-text-secondary);
-  animation: dashboard-pause-settle var(--duration-standard) var(--ease-enter);
+  animation: dashboard-pause-settle var(--duration-content) var(--ease-enter);
 }
 
 .dashboard-session-time {
@@ -286,7 +286,7 @@
 @keyframes dashboard-pause-settle {
   from {
     opacity: 0.5;
-    transform: scale(0.96);
+    transform: scale(var(--scale-pressed));
   }
   to {
     opacity: 1;
@@ -309,8 +309,8 @@
   border-radius: var(--radius-control);
   color: var(--color-primary);
   transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-control) var(--ease-move),
+    background-color var(--duration-control) var(--ease-move);
 }
 
 .dashboard-focus-action:hover .dashboard-focus-marker {
@@ -380,7 +380,7 @@
 .dashboard-focus-end svg {
   width: 14px;
   height: 14px;
-  transition: transform var(--duration-fast) var(--ease-standard);
+  transition: transform var(--duration-control) var(--ease-move);
 }
 
 .dashboard-focus-action:hover .dashboard-focus-end svg {
@@ -405,7 +405,7 @@
   border: 1px solid var(--color-primary);
   border-right-color: transparent;
   border-radius: 50%;
-  animation: orbit-spin 4s linear infinite;
+  transform: rotate(24deg);
 }
 
 .active-orbit span {
@@ -433,7 +433,7 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   color: var(--color-text-muted);
-  transition: var(--duration-fast) var(--ease-standard);
+  transition: var(--duration-control) var(--ease-move);
 }
 
 .timeframe-switcher button:hover,
@@ -448,7 +448,7 @@
 
 .dashboard-analytics {
   display: grid;
-  transition: opacity var(--duration-standard) var(--ease-standard);
+  transition: opacity var(--duration-content) var(--ease-move);
 }
 
 .dashboard-analytics.is-pending {
@@ -508,7 +508,7 @@
   min-width: 0;
   height: 100%;
   border-radius: inherit;
-  transition: width var(--duration-spatial) var(--ease-move);
+  transition: width var(--duration-surface) var(--ease-move);
 }
 
 .signal-cell {
@@ -570,17 +570,11 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   color: var(--color-text-secondary);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-move);
 }
 
 .text-link:hover {
   color: var(--color-primary);
-}
-
-@keyframes orbit-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @media (min-width: 1024px) {

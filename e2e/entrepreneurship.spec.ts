@@ -1,4 +1,5 @@
 import {
+  chooseBusinessRecord,
   chooseBusinessSource,
   chooseSpecificBusinessOffer,
 } from "./utils/entrepreneurship-ui.util";
@@ -89,11 +90,20 @@ test("market voice becomes traceable evidence, a scoped judgment and a recurring
     .getByRole("button", { name: "Link an observation", exact: true })
     .click();
   await page
-    .getByRole("combobox", { name: "Observation", exact: true })
-    .selectOption({
-      label:
-        "Harbor QA · We lose two hours every Friday reconciling delivery spreadsheets.",
-    });
+    .getByRole("button", {
+      name: "Observation Choose a recorded observation",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("searchbox", { name: "Search observation", exact: true })
+    .fill("Harbor QA");
+  await page
+    .getByRole("menuitemradio", {
+      name: "Harbor QA · We lose two hours every Friday reconciling delivery spreadsheets.",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("combobox", { name: "What does it add?" })
     .selectOption("SUPPORTS");
@@ -332,13 +342,9 @@ test("small batch outreach records recipients once and remains usable during a s
     .getByRole("button", { name: "Record batch outreach", exact: true })
     .click();
   for (const name of ["North QA", "South QA"]) {
-    await page
-      .getByRole("combobox", {
-        name: "Business recipients",
-        exact: true,
-      })
-      .fill(name);
-    await page.getByRole("option", { name, exact: true }).click();
+    await chooseBusinessRecord(page, "Business recipients", name, {
+      multiple: true,
+    });
   }
   await page
     .getByRole("textbox", { name: "Shared summary" })

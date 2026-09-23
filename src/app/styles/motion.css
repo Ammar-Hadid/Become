@@ -4,7 +4,7 @@
 
 ::view-transition-group(.motion-guide) {
   z-index: 1;
-  animation-duration: var(--duration-standard);
+  animation-duration: var(--duration-content);
   animation-timing-function: var(--ease-move);
 }
 
@@ -14,20 +14,20 @@
 }
 
 ::view-transition-old(.motion-data-recompose) {
-  animation: motion-data-out var(--duration-feedback) var(--ease-exit) both;
+  animation: motion-content-out var(--duration-response) var(--ease-exit) both;
 }
 
 ::view-transition-group(.motion-carry) {
-  animation-duration: var(--duration-spatial);
+  animation-duration: var(--duration-surface);
   animation-timing-function: var(--ease-move);
 }
 
 ::view-transition-old(.motion-carry) {
-  animation: motion-carry-out var(--duration-feedback) var(--ease-exit) both;
+  animation: motion-carry-out var(--duration-response) var(--ease-exit) both;
 }
 
 ::view-transition-new(.motion-carry) {
-  animation: motion-carry-in var(--duration-standard) var(--ease-enter) both;
+  animation: motion-carry-in var(--duration-content) var(--ease-enter) both;
 }
 
 .motion-selection-control {
@@ -50,16 +50,37 @@
 }
 
 ::view-transition-new(.motion-data-recompose) {
-  animation: motion-data-in var(--duration-standard) var(--ease-enter) both;
+  animation: motion-content-in var(--duration-content) var(--ease-enter) both;
 }
 
-@keyframes motion-data-out {
+::view-transition-old(.motion-workspace-content) {
+  animation: motion-content-out var(--duration-response) var(--ease-exit) both;
+}
+
+::view-transition-new(.motion-workspace-content) {
+  animation: motion-content-in var(--duration-content) var(--ease-enter) both;
+}
+
+::view-transition-group(.motion-shell) {
+  z-index: 100;
+  animation: none;
+}
+
+::view-transition-old(.motion-shell) {
+  display: none;
+}
+
+::view-transition-new(.motion-shell) {
+  animation: none;
+}
+
+@keyframes motion-content-out {
   to {
     opacity: 0;
   }
 }
 
-@keyframes motion-data-in {
+@keyframes motion-content-in {
   from {
     opacity: 0;
   }

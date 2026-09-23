@@ -1,0 +1,158 @@
+.exploration-history-list {
+  border-top: 1px solid var(--color-border);
+}
+
+.exploration-history-list > li {
+  display: grid;
+  grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr);
+  gap: var(--spacing-2xl);
+  padding-block: var(--spacing-3xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.exploration-history-list > li > header {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-lg);
+}
+
+.exploration-history-list > li > header span,
+.exploration-history-list > li > header time,
+.exploration-history-findings span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.exploration-history-list h3 {
+  margin-top: var(--spacing-sm);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+}
+
+.exploration-history-findings {
+  display: grid;
+}
+
+.exploration-history-edition {
+  min-width: 0;
+}
+
+.exploration-history-summary {
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.exploration-history-summary h3 {
+  margin-block: var(--spacing-xs) var(--spacing-md);
+}
+
+.exploration-history-summary > p:last-child {
+  max-width: 64rem;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+  white-space: pre-wrap;
+}
+
+.exploration-history-findings article {
+  display: grid;
+  gap: var(--spacing-sm);
+  padding-block: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.exploration-history-findings p,
+.exploration-history-unknowns p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.exploration-history-findings small {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.exploration-history-findings details {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.exploration-history-findings summary,
+.exploration-history-sources summary,
+.exploration-history-limitations summary {
+  min-height: 2.75rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.exploration-history-sources,
+.exploration-history-limitations {
+  margin-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.exploration-history-sources > div,
+.exploration-history-manual-sources {
+  display: grid;
+  border-top: 1px solid var(--color-border);
+}
+
+.exploration-history-sources a,
+.exploration-history-manual-sources > * {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.exploration-history-sources strong,
+.exploration-history-sources small,
+.exploration-history-manual-sources strong,
+.exploration-history-manual-sources small {
+  display: block;
+}
+
+.exploration-history-sources small,
+.exploration-history-manual-sources small {
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.exploration-history-sources p,
+.exploration-history-manual-sources p,
+.exploration-history-limitations p {
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.exploration-history-sources svg,
+.exploration-history-manual-sources svg {
+  width: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.exploration-history-unknowns {
+  grid-column: 2;
+  padding: var(--spacing-lg);
+  border-left: 2px solid var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 5%, transparent);
+}
+
+.exploration-history-unknowns strong {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-primary);
+}

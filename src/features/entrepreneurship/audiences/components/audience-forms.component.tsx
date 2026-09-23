@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
-import { ReusableEntityCombobox } from "@/components/ui/forms/reusable-entity-combobox.component";
+import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
 import {
@@ -17,8 +17,6 @@ import {
   addAudienceToExplorationAction,
   archiveAudienceAction,
   saveAudienceAction,
-  searchPeopleAction,
-  searchSegmentsAction,
 } from "@/features/entrepreneurship/audiences/actions/audience.action";
 
 export function AudienceForm({
@@ -39,6 +37,7 @@ export function AudienceForm({
   };
 }) {
   const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow={
@@ -148,6 +147,8 @@ export function AttachAudienceForm({
   kind: "person" | "segment";
   nicheId: string;
 }) {
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <RecordDialog
       eyebrow="Context you already know"
@@ -161,18 +162,12 @@ export function AttachAudienceForm({
         submitLabel={`Attach ${kind}`}
         closeOnSuccess
       >
-        <ReusableEntityCombobox
+        <BusinessRecordPicker
+          kind={kind}
           label={kind === "person" ? "Person" : "Segment"}
-          entityName={kind}
-          idFieldName={kind === "person" ? "personId" : "segmentId"}
-          queryFieldName="query"
+          name={kind === "person" ? "personId" : "segmentId"}
           options={[]}
-          searchAction={
-            kind === "person" ? searchPeopleAction : searchSegmentsAction
-          }
           required
-          optional={false}
-          allowDuplicateNames={kind === "person"}
           placeholder={`Find an existing ${kind}…`}
         />
       </RecordForm>
@@ -192,6 +187,8 @@ export function AudienceMenu({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const exploration = useExploration();
+  if (exploration?.archived) return null;
   return (
     <div aria-busy={pending}>
       <SubMenu

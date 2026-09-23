@@ -23,7 +23,7 @@ import {
   type BarProps,
 } from "recharts";
 import { Button } from "@/components/ui/buttons/button.component";
-import { MOTION_DURATION_MS } from "@/components/ui/motion/constants/motion.constants";
+import { resolveMotionDurationMs } from "@/components/ui/motion/utils/motion-time.util";
 import type {
   ReviewMoment,
   ReviewView,
@@ -141,6 +141,7 @@ function SeasonRecordedTime({
   const [motion, setMotion] = useState({
     requested: false,
     revision: 0,
+    durationMs: 0,
     easing: "linear" as NonNullable<BarProps["animationEasing"]>,
   });
   const chartData = useMemo(
@@ -165,7 +166,9 @@ function SeasonRecordedTime({
     const stopMotion = () => {
       if (media.matches)
         setMotion((current) =>
-          current.requested ? { ...current, requested: false } : current,
+          current.requested
+            ? { ...current, requested: false, durationMs: 0 }
+            : current,
         );
     };
     media.addEventListener("change", stopMotion);
@@ -188,6 +191,7 @@ function SeasonRecordedTime({
     setMotion((current) => ({
       requested: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       revision: current.revision + 1,
+      durationMs: resolveMotionDurationMs("content"),
       easing: /^cubic-bezier\([\d.,-]+\)$/.test(easing)
         ? (easing as NonNullable<BarProps["animationEasing"]>)
         : "linear",
@@ -208,9 +212,7 @@ function SeasonRecordedTime({
       data-testid="finale-days-time-landscape"
       data-chart-domain={selectedDomain?.domainId ?? "all"}
       data-chart-animation-requested={motion.requested || undefined}
-      data-chart-animation-duration={
-        motion.requested ? MOTION_DURATION_MS.spatial : 0
-      }
+      data-chart-animation-duration={motion.requested ? motion.durationMs : 0}
     >
       <figcaption id={captionId} className={styles.chartCaption}>
         <span>
@@ -310,7 +312,7 @@ function SeasonRecordedTime({
               radius={[2, 2, 0, 0]}
               isAnimationActive={motion.requested ? "auto" : false}
               animationBegin={0}
-              animationDuration={MOTION_DURATION_MS.spatial}
+              animationDuration={motion.durationMs}
               animationEasing={motion.easing}
               animationMatchBy={matchMonthlyTime}
               onAnimationEnd={finishMotion}

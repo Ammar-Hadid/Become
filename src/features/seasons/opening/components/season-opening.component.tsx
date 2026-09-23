@@ -702,9 +702,10 @@ function SeasonOpeningSession({
       "Your opening is paused. Any unconfirmed entries are kept in this tab for your manual return.",
     );
     markSaved();
+    const saveRequest = persist(draft);
     router.replace("/?opening=paused", { scroll: false });
     try {
-      const saved = await persist(draft);
+      const saved = await saveRequest;
       const response = await fetch("/api/direction/cots", {
         method: "POST",
         headers: {

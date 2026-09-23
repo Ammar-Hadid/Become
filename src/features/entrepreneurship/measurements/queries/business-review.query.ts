@@ -8,7 +8,7 @@ export const businessReviewProvider: ReviewSourceProvider = {
       label: "Evidence entries recorded",
       unit: "count",
       qualification:
-        "Each current interaction appears once with its observations; standalone observations count separately. Reported group sizes are not contacts or independent corroboration.",
+        "Each current conversation appears once with its observations; standalone observations count separately. Outreach, replies and no-contact attempts remain operational Reach records. Reported group sizes are not contacts or independent corroboration.",
       moment: false,
     },
     {
@@ -38,7 +38,12 @@ export const businessReviewProvider: ReviewSourceProvider = {
         "Sharing, closure and reopening of audience tests are separate from recipient responses.",
       moment: false,
     },
-    ...["OUTREACH_SENT", "REPLY_RECEIVED", "CONVERSATION"].map((kind) => ({
+    ...[
+      "OUTREACH_SENT",
+      "REPLY_RECEIVED",
+      "ATTEMPT_NO_CONTACT",
+      "CONVERSATION",
+    ].map((kind) => ({
       key: `entrepreneurship.${kind}`,
       domain: "entrepreneurship" as const,
       label:
@@ -46,7 +51,9 @@ export const businessReviewProvider: ReviewSourceProvider = {
           ? "Conversations recorded"
           : kind === "REPLY_RECEIVED"
             ? "Replies received"
-            : "Outreach recorded",
+            : kind === "ATTEMPT_NO_CONTACT"
+              ? "No-contact attempts recorded"
+              : "Outreach recorded",
       unit: "count" as const,
       qualification: `Current, non-withdrawn ${kind} interaction records dated in the period. Time alone creates no contact fact.`,
       moment: kind === "CONVERSATION",
@@ -89,7 +96,7 @@ export const businessReviewProvider: ReviewSourceProvider = {
     },
   ],
   sql: (s) => Prisma.sql`
-    SELECT 'entrepreneurship.evidence' AS "metricKey",'INTERACTION'::text AS kind,i.id,r.version::text AS revision,r.summary AS label,LEFT(COALESCE(r.notes,''),800) AS excerpt,r."occurredAt",'/entrepreneurship/interactions/'||i.id AS href,'1'::text AS value,NULL::text AS currency,COALESCE(r."personSnapshot",r."companySnapshot",r."audienceLabel") AS dimension,NULL::text AS "imageHref",'FACT'::text AS meaning,LENGTH(COALESCE(r.notes,''))>800 AS truncated FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version WHERE i."userId"=${s.userId} AND i."voidedAt" IS NULL AND r."occurredAt">=${s.start} AND r."occurredAt"<${s.end}
+    SELECT 'entrepreneurship.evidence' AS "metricKey",'INTERACTION'::text AS kind,i.id,r.version::text AS revision,r.summary AS label,LEFT(COALESCE(r.notes,''),800) AS excerpt,r."occurredAt",'/entrepreneurship/interactions/'||i.id AS href,'1'::text AS value,NULL::text AS currency,COALESCE(r."personSnapshot",r."companySnapshot",r."audienceLabel") AS dimension,NULL::text AS "imageHref",'FACT'::text AS meaning,LENGTH(COALESCE(r.notes,''))>800 AS truncated FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version WHERE i."userId"=${s.userId} AND i."voidedAt" IS NULL AND r.kind='CONVERSATION' AND r."occurredAt">=${s.start} AND r."occurredAt"<${s.end}
     UNION ALL
     SELECT 'entrepreneurship.evidence','OBSERVATION',o.id,r.version::text,r.statement,LEFT(COALESCE(r."sourceDescription",''),800),r."observedAt",'/entrepreneurship/observations/'||o.id,'1',NULL,COALESCE(r."personSnapshot",r."companySnapshot",r."audienceLabel"),NULL,'FACT',LENGTH(COALESCE(r."sourceDescription",''))>800 FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r."userId"=o."userId" AND r.version=o.version WHERE o."userId"=${s.userId} AND o."voidedAt" IS NULL AND r."interactionId" IS NULL AND r."observedAt">=${s.start} AND r."observedAt"<${s.end}
     UNION ALL
@@ -97,7 +104,7 @@ export const businessReviewProvider: ReviewSourceProvider = {
     UNION ALL
     (SELECT DISTINCT ON (e."engagementId") 'entrepreneurship.responses','OFFER_EVENT',e.id,e.id,e.kind||' · '||v.title,LEFT(e."sourceDescription",800),e."occurredAt",'/entrepreneurship/offers/'||e."offerId",'1',NULL,e."engagementId",NULL,'FACT',LENGTH(e."sourceDescription")>800 FROM offer_event e JOIN offer_revision v ON v.id=e."offerRevisionId" AND v."userId"=e."userId" WHERE e."userId"=${s.userId} AND e."retractedAt" IS NULL AND e."engagementId" IS NOT NULL AND e.kind IN ('INTERESTED','ACCEPTED','REJECTED') AND e."occurredAt">=${s.start} AND e."occurredAt"<${s.end} ORDER BY e."engagementId",e."occurredAt" DESC,e.id DESC)
     UNION ALL
-    SELECT 'entrepreneurship.'||r.kind AS "metricKey",'INTERACTION'::text AS kind,i.id,r.version::text AS revision,r.summary AS label,LEFT(COALESCE(r.notes,''),800) AS excerpt,r."occurredAt",'/entrepreneurship/interactions/'||i.id AS href,'1'::text AS value,NULL::text AS currency,COALESCE(r."personSnapshot",r."companySnapshot",r."audienceLabel") AS dimension,NULL::text AS "imageHref",'FACT'::text AS meaning,LENGTH(COALESCE(r.notes,''))>800 AS truncated FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version WHERE i."userId"=${s.userId} AND i."voidedAt" IS NULL AND r.kind IN ('OUTREACH_SENT','REPLY_RECEIVED','CONVERSATION') AND r."occurredAt">=${s.start} AND r."occurredAt"<${s.end}
+    SELECT 'entrepreneurship.'||r.kind AS "metricKey",'INTERACTION'::text AS kind,i.id,r.version::text AS revision,r.summary AS label,LEFT(COALESCE(r.notes,''),800) AS excerpt,r."occurredAt",'/entrepreneurship/interactions/'||i.id AS href,'1'::text AS value,NULL::text AS currency,COALESCE(r."personSnapshot",r."companySnapshot",r."audienceLabel") AS dimension,NULL::text AS "imageHref",'FACT'::text AS meaning,LENGTH(COALESCE(r.notes,''))>800 AS truncated FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version WHERE i."userId"=${s.userId} AND i."voidedAt" IS NULL AND r.kind IN ('OUTREACH_SENT','REPLY_RECEIVED','ATTEMPT_NO_CONTACT','CONVERSATION') AND r."occurredAt">=${s.start} AND r."occurredAt"<${s.end}
     UNION ALL
     (SELECT DISTINCT ON (r."companyId") 'entrepreneurship.companies','COMPANY_CONVERSATION',r."companyId",r.id,COALESCE(r."companySnapshot",r.summary),LEFT(r.summary,800),r."occurredAt",'/entrepreneurship/interactions/'||i.id,'1',NULL,r."companyId",NULL,'FACT',LENGTH(r.summary)>800 FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r."userId"=i."userId" AND r.version=i.version WHERE i."userId"=${s.userId} AND i."voidedAt" IS NULL AND r.kind='CONVERSATION' AND r."companyId" IS NOT NULL AND r."occurredAt">=${s.start} AND r."occurredAt"<${s.end} ORDER BY r."companyId",r."occurredAt" DESC,r.id DESC)
     UNION ALL

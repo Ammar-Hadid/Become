@@ -10,7 +10,6 @@ import {
   createEngineeringEvidenceAction,
   updateEngineeringEvidenceAction,
 } from "@/features/engineering/evidence/actions/engineering-evidence.action";
-import { rememberEngineeringEvidenceArrival } from "@/features/engineering/evidence/utils/engineering-evidence-motion.util";
 import type { EngineeringFormState } from "@/features/engineering/projects/actions/engineering-project.action";
 import type {
   EngineeringEvidenceListItem,
@@ -56,13 +55,6 @@ export function EngineeringEvidenceForm({
       className="engineering-form"
       aria-busy={pending}
       data-pending={pending || undefined}
-      onSubmit={(event) => {
-        if (evidence) return;
-        const title = new FormData(event.currentTarget).get("title");
-        if (typeof title === "string" && title.trim()) {
-          rememberEngineeringEvidenceArrival(title.trim());
-        }
-      }}
     >
       <div className="engineering-form-grid">
         <label className="block">

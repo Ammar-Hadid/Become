@@ -73,7 +73,7 @@
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-enter);
 }
 
 .direction-navigation-links a:hover,
@@ -127,7 +127,7 @@
 
 .direction-navigation-trigger > svg {
   width: 16px;
-  transition: transform var(--duration-fast) var(--ease-standard);
+  transition: transform var(--duration-control) var(--ease-move);
 }
 
 .direction-navigation-trigger[aria-expanded="true"] > svg {
@@ -180,7 +180,7 @@
   color: var(--color-text-muted);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-enter);
 }
 
 .direction-back-link:hover,
@@ -236,8 +236,8 @@
   color: var(--color-on-primary);
   font-weight: 620;
   transition:
-    background var(--duration-fast) var(--ease-enter),
-    transform var(--duration-feedback) var(--ease-move);
+    background var(--duration-control) var(--ease-enter),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .season-primary-action:hover {
@@ -538,7 +538,7 @@
   min-width: 0;
   border-radius: calc(var(--radius-panel) - 4px);
   padding: var(--spacing-xl);
-  transition: background var(--duration-fast) var(--ease-enter);
+  transition: background var(--duration-control) var(--ease-enter);
 }
 
 .direction-goal-row:hover {
@@ -926,7 +926,7 @@
   color: var(--color-text-muted);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
-  transition: color var(--duration-fast) var(--ease-enter);
+  transition: color var(--duration-control) var(--ease-enter);
 }
 
 .season-opening-progress button:disabled {
@@ -944,8 +944,8 @@
   color: inherit;
   font-variant-numeric: tabular-nums;
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    background var(--duration-fast) var(--ease-enter);
+    border-color var(--duration-control) var(--ease-enter),
+    background var(--duration-control) var(--ease-enter);
 }
 
 .season-opening-progress-label {
@@ -964,7 +964,7 @@
 }
 
 .season-opening-stage {
-  animation: direction-stage-in var(--duration-spatial) var(--ease-enter) both;
+  animation: direction-stage-in var(--duration-surface) var(--ease-enter) both;
 }
 
 .season-opening-stage[hidden] {
@@ -1512,7 +1512,7 @@
 .direction-criterion-editor > summary svg {
   width: 15px;
   height: 15px;
-  transition: transform var(--duration-fast) var(--ease-move);
+  transition: transform var(--duration-control) var(--ease-move);
 }
 
 .direction-criterion-editor[open] > summary svg {
@@ -2325,8 +2325,8 @@
   padding: 0 var(--spacing-lg);
   color: var(--color-text-secondary);
   transition:
-    border-color var(--duration-fast) var(--ease-enter),
-    color var(--duration-fast) var(--ease-enter);
+    border-color var(--duration-control) var(--ease-enter),
+    color var(--duration-control) var(--ease-enter);
 }
 
 .direction-lifecycle-actions > button:hover,

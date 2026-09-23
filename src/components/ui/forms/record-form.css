@@ -13,7 +13,11 @@
   line-height: var(--text-body--line-height);
   font-weight: 540;
   white-space: nowrap;
-  transition: var(--duration-fast) var(--ease-standard);
+  transition:
+    background-color var(--duration-control) var(--ease-move),
+    border-color var(--duration-control) var(--ease-move),
+    color var(--duration-control) var(--ease-move),
+    transform var(--duration-response) var(--ease-move);
 }
 
 .finance-dialog-trigger svg,
@@ -70,12 +74,27 @@
 }
 
 .finance-dialog[data-state="open"] {
-  animation: finance-dialog-in var(--duration-standard) var(--ease-enter);
+  animation: finance-dialog-in var(--duration-surface) var(--ease-enter);
 }
 
 .finance-dialog[data-state="closed"] {
+  position: fixed;
+  z-index: 101;
+  inset: 0;
+  display: block;
   pointer-events: none;
-  animation: finance-dialog-out var(--duration-fast) var(--ease-exit) both;
+  animation: finance-dialog-out var(--duration-control) var(--ease-exit) both;
+}
+
+.finance-dialog-exit-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(2, 3, 5, 0.78);
+  backdrop-filter: blur(6px);
+  animation: finance-dialog-backdrop-out var(--duration-control)
+    var(--ease-exit) both;
 }
 
 .finance-dialog::backdrop {
@@ -84,12 +103,13 @@
 }
 
 .finance-dialog[data-state="open"]::backdrop {
-  animation: finance-dialog-backdrop-in var(--duration-fast) var(--ease-enter);
+  animation: finance-dialog-backdrop-in var(--duration-content)
+    var(--ease-enter);
 }
 
 .finance-dialog[data-state="closed"]::backdrop {
-  animation: finance-dialog-backdrop-out var(--duration-fast) var(--ease-exit)
-    both;
+  animation: finance-dialog-backdrop-out var(--duration-control)
+    var(--ease-exit) both;
 }
 
 .finance-dialog-panel {
@@ -154,14 +174,14 @@
 
 @keyframes finance-dialog-in {
   from {
-    transform: translateY(6px) scale(0.99);
+    transform: translateY(var(--distance-dialog)) scale(var(--scale-pressed));
     opacity: 0;
   }
 }
 
 @keyframes finance-dialog-out {
   to {
-    transform: translateY(3px) scale(0.995);
+    transform: translateY(var(--distance-control)) scale(var(--scale-pressed));
     opacity: 0;
   }
 }
@@ -179,11 +199,11 @@
 }
 
 .finance-form-status {
-  animation: finance-confirmed-in var(--duration-standard) var(--ease-enter);
+  animation: finance-confirmed-in var(--duration-emphasis) var(--ease-emphasis);
 }
 
 .finance-motion-form-fields {
-  transition: opacity var(--duration-fast) var(--ease-standard);
+  transition: opacity var(--duration-control) var(--ease-move);
 }
 
 .finance-motion-form[data-pending="true"] .finance-motion-form-fields {
@@ -192,7 +212,7 @@
 
 @keyframes finance-confirmed-in {
   from {
-    transform: translateY(2px);
+    transform: translateY(var(--distance-control));
     opacity: 0;
   }
 }
