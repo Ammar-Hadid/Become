@@ -5,8 +5,10 @@ set -Eeuo pipefail
 umask 077
 export PATH=/opt/become-node/bin:/usr/local/bin:/usr/bin:/bin
 [[ $EUID -eq 0 ]] || { echo 'Run as root.' >&2; exit 1; }
-exec 9>/run/lock/become-maintenance.lock
-flock -n 9 || { echo 'Another Become maintenance operation is running.' >&2; exit 1; }
+if [[ ${BECOME_DEPLOY_LOCK_HELD:-} != 1 ]]; then
+  exec 9>/run/lock/become-maintenance.lock
+  flock -n 9 || { echo 'Another Become maintenance operation is running.' >&2; exit 1; }
+fi
 set -a
 source /etc/become/maintenance.env
 source /etc/become/backup.env

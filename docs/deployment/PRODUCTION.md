@@ -1,5 +1,9 @@
 # Become: first production deployment
 
+For ongoing deployments after the one-time production setup, use
+[automatic deployment](AUTO_DEPLOY.md). This document remains the first-install
+and recovery walkthrough.
+
 Prepared 13 September 2026. This is a walkthrough to execute later; no VPS or Neon changes were made during preparation. Read the [readiness report](READINESS.md) first.
 
 The deployment is one Next.js process behind Caddy on your existing Hetzner CPX22, with a dedicated Neon PostgreSQL database. Media stays on the VPS. This guide assumes Ubuntu 24.04 LTS or Debian 12/13 with systemd and a sudo-capable SSH account. If your server uses another OS or another proxy already owns ports 80/443, resolve that difference before running the installation commands. Do not replace, stop, or repurpose Auctus services, files, databases, users, or proxy configuration.
