@@ -30,6 +30,7 @@ else
 fi
 export PGCONNECT_TIMEOUT=30
 export PGAPPNAME=become-backup
+psql -X -A -t -v ON_ERROR_STOP=1 -c 'SELECT 1' > /dev/null
 base=/srv/backups/become
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 partial="$base/$stamp.partial"
