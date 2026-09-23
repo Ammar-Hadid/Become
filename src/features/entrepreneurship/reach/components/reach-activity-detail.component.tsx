@@ -106,6 +106,7 @@ export async function ReachActivityDetail({
           <h2>{participantName}</h2>
           <p>
             {businessDate(revision.occurredAt)} · {humanize(revision.channel)}
+            {revision.platform ? ` · ${humanize(revision.platform)}` : ""}
           </p>
         </div>
         {!readOnly && (

@@ -245,8 +245,6 @@ export function BusinessRecordPicker({
         </div>
         {!required && !multiple && (
           <PickerMenuItem
-            role="menuitemradio"
-            checked={values.length === 0}
             closeAfterSelect
             onSelect={() => {
               commitValues([]);
@@ -257,7 +255,6 @@ export function BusinessRecordPicker({
             <span className="business-record-picker-option">
               <strong>{placeholder}</strong>
             </span>
-            {values.length === 0 && <Check aria-hidden="true" />}
           </PickerMenuItem>
         )}
         {allowCustom && query.trim() && (

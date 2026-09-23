@@ -2,6 +2,7 @@ import { z } from "zod";
 import { audienceInputSchema } from "@/features/entrepreneurship/audiences/schemas/audience.schema";
 import {
   channels,
+  directMessagePlatforms,
   observationInputSchema,
 } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 import { CONVERSATION_SPEAKER_ROLES } from "@/features/entrepreneurship/conversations/constants/conversation.constants";
@@ -37,6 +38,7 @@ export const startConversationSchema = z.object({
   linkedInteractionId: optionalId,
   guideRevisionId: optionalId,
   channel: z.enum(channels).default("OTHER"),
+  platform: z.enum(directMessagePlatforms).nullish(),
   occurredAt: timestamp.default(() => new Date()),
   summary: optionalText(3_000),
   notes: optionalText(6_000),
@@ -48,6 +50,7 @@ export const conversationMessageSchema = z.object({
   body: z.string().trim().min(1).max(12_000),
   occurredAt: timestamp.default(() => new Date()),
   channel: z.enum(channels).default("OTHER"),
+  platform: z.enum(directMessagePlatforms).nullish(),
   guideQuestionId: optionalId,
 });
 

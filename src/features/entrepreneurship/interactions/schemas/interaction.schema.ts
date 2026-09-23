@@ -20,6 +20,17 @@ export const channels = [
   "IN_PERSON",
   "OTHER",
 ] as const;
+export const directMessagePlatforms = [
+  "WHATSAPP",
+  "REDDIT",
+  "DISCORD",
+  "LINKEDIN",
+  "INSTAGRAM",
+  "FACEBOOK",
+  "TELEGRAM",
+  "X",
+  "OTHER",
+] as const;
 export const daySchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date.")
@@ -79,6 +90,7 @@ export const interactionSchema = z.object({
   sourceSessionId: optionalText(80),
   kind: z.enum(interactionKinds),
   channel: z.enum(channels).default("OTHER"),
+  platform: z.enum(directMessagePlatforms).nullish(),
   occurredAt: occurredDaySchema,
   summary: z.string().trim().min(1, "Add a short summary.").max(3000),
   notes: optionalText(),
@@ -135,6 +147,7 @@ export const batchOutreachSchema = z
             .max(3000)
             .optional(),
           channel: z.enum(channels).optional(),
+          platform: z.enum(directMessagePlatforms).nullish(),
           occurredAt: occurredDaySchema.optional(),
           notes: z
             .string()
@@ -149,6 +162,7 @@ export const batchOutreachSchema = z
     occurredAt: occurredDaySchema,
     summary: z.string().trim().min(1).max(3000),
     channel: z.enum(channels),
+    platform: z.enum(directMessagePlatforms).nullish(),
     confirmedSent: z.literal(true, {
       error: "Confirm these messages were actually sent.",
     }),

@@ -125,6 +125,7 @@ async function interactionValues(
     nicheSnapshot: niche?.name ?? null,
     kind: data.kind,
     channel: data.channel,
+    platform: data.platform ?? null,
     occurredAt: data.occurredAt,
     summary: data.summary,
     notes: data.notes,
@@ -269,6 +270,8 @@ export async function logBatchOutreach(
           nicheSnapshot: niche?.name,
           kind: "OUTREACH_SENT",
           channel: data.overrides[recipient.key]?.channel ?? data.channel,
+          platform:
+            data.overrides[recipient.key]?.platform ?? data.platform ?? null,
           occurredAt:
             data.overrides[recipient.key]?.occurredAt ?? data.occurredAt,
           summary: data.overrides[recipient.key]?.summary ?? data.summary,
@@ -337,6 +340,7 @@ export async function correctInteraction(
       [
         "kind",
         "channel",
+        "platform",
         "companyId",
         "personId",
         "identityKind",

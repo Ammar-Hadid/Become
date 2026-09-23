@@ -199,8 +199,11 @@ export async function ReachWorkspace({
                       >
                         <span className="workspace-record-kicker">
                           {humanize(revision.kind)} ·{" "}
-                          {humanize(revision.channel)} ·{" "}
-                          {businessDate(revision.occurredAt)}
+                          {humanize(revision.channel)}
+                          {revision.platform
+                            ? ` · ${humanize(revision.platform)}`
+                            : ""}{" "}
+                          · {businessDate(revision.occurredAt)}
                         </span>
                         <strong>{revision.summary}</strong>
                       </Link>
@@ -317,7 +320,12 @@ export async function ReachWorkspace({
               <dl className="workspace-inspector-facts">
                 <div>
                   <dt>Channel</dt>
-                  <dd>{humanize(selected.revisions[0].channel)}</dd>
+                  <dd>
+                    {humanize(selected.revisions[0].channel)}
+                    {selected.revisions[0].platform
+                      ? ` · ${humanize(selected.revisions[0].platform)}`
+                      : ""}
+                  </dd>
                 </div>
                 <div>
                   <dt>Date</dt>

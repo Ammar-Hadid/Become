@@ -6,6 +6,7 @@
 @import "../conversations/styles/conduct-workspace.css";
 @import "../interview-guides/styles/interview-guide-workspace.css";
 @import "../shared/styles/business-record-picker.css";
+@import "../interactions/styles/channel-platform-fields.css";
 @import "../explorations/styles/exploration-responsive.css";
 @import "../explorations/styles/exploration-route-states.css";
 @import "../explorations/styles/exploration-workspaces.css";

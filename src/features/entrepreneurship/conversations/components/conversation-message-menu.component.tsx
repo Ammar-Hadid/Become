@@ -34,6 +34,7 @@ type Message = {
   body: string;
   occurredAt: string;
   channel: string;
+  platform: string | null;
   guideQuestionId: string | null;
   hasObservation: boolean;
 };
@@ -142,6 +143,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
                 body: String(data.get("body")),
                 occurredAt: message.occurredAt,
                 channel: message.channel,
+                platform: message.platform,
                 guideQuestionId: message.guideQuestionId,
               },
             )

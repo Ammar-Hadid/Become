@@ -13,6 +13,7 @@ import {
 import { startConversationAction } from "@/features/entrepreneurship/conversations/actions/conversation.action";
 import { explorationWorkspaceHref } from "@/features/entrepreneurship/explorations/utils/exploration.util";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
+import { ChannelPlatformFields } from "@/features/entrepreneurship/interactions/components/channel-platform-fields.component";
 
 export function ConversationStartForm({
   nicheId,
@@ -58,6 +59,7 @@ export function ConversationStartForm({
             linkedInteractionId: linked,
             guideRevisionId: String(data.get("guideRevisionId")) || null,
             channel: String(data.get("channel")),
+            platform: String(data.get("platform") || "") || null,
             occurredAt: new Date().toISOString(),
             summary: String(data.get("summary")) || null,
             notes: null,
@@ -92,14 +94,7 @@ export function ConversationStartForm({
             </BusinessSelect>
           </>
         )}
-        <BusinessSelect label="Channel" name="channel">
-          <option value="CALL">Call</option>
-          <option value="MEETING">Meeting</option>
-          <option value="IN_PERSON">In person</option>
-          <option value="EMAIL">Email</option>
-          <option value="DM">Direct message</option>
-          <option value="OTHER">Other</option>
-        </BusinessSelect>
+        <ChannelPlatformFields initialChannel="CALL" />
         <div className="business-form-field gap-sm grid">
           <BusinessRecordPicker
             kind="interaction"

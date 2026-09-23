@@ -6,7 +6,11 @@ import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { BusinessRecordPicker } from "@/features/entrepreneurship/shared/components/business-record-picker.component";
 import { BusinessFormSection } from "@/features/entrepreneurship/shared/components/business-field.component";
 import { batchOutreachAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
-import { channels } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
+import {
+  channels,
+  directMessagePlatforms,
+} from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
+import { directMessagePlatformLabels } from "@/features/entrepreneurship/interactions/components/channel-platform-fields.component";
 import {
   businessToday,
   humanize,
@@ -19,6 +23,7 @@ import {
 type Values = {
   summary: string;
   channel: string;
+  platform: string;
   occurredAt: string;
   notes: string;
 };
@@ -45,6 +50,7 @@ function BatchFields({
   const [shared, setShared] = useState<Values>({
     summary: "",
     channel: "EMAIL",
+    platform: "OTHER",
     occurredAt: businessToday(),
     notes: "",
   });
@@ -68,6 +74,18 @@ function BatchFields({
           {channels.map((c) => (
             <option key={c} value={c}>
               {humanize(c)}
+            </option>
+          ))}
+        </select>
+      ) : name === "platform" ? (
+        <select
+          className="text-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {directMessagePlatforms.map((platform) => (
+            <option key={platform} value={platform}>
+              {directMessagePlatformLabels[platform]}
             </option>
           ))}
         </select>
@@ -167,6 +185,14 @@ function BatchFields({
             </div>
           ),
         )}
+        <input type="hidden" name="platform" value={shared.platform} />
+        {shared.channel === "DM" && (
+          <>
+            {field("platform", "Platform", shared.platform, (platform) =>
+              setShared((current) => ({ ...current, platform })),
+            )}
+          </>
+        )}
       </BusinessFormSection>
       {recipients.map((company) => {
         const own = overrides[company.id] ?? {};
@@ -223,6 +249,43 @@ function BatchFields({
                       )}
                     </div>
                   ),
+                )}
+                {effective.channel === "DM" && (
+                  <div className="space-y-sm">
+                    <label className="business-hint">
+                      <input
+                        type="checkbox"
+                        checked={Object.hasOwn(own, "platform")}
+                        onChange={(e) =>
+                          setOverrides((current) => {
+                            const values = { ...current[company.id] };
+                            if (e.target.checked)
+                              values.platform = shared.platform;
+                            else delete values.platform;
+                            return { ...current, [company.id]: values };
+                          })
+                        }
+                      />{" "}
+                      Override platform for {company.name}
+                    </label>
+                    {Object.hasOwn(own, "platform") ? (
+                      field(
+                        "platform",
+                        `${company.name} · Platform`,
+                        own.platform ?? "OTHER",
+                        (platform) =>
+                          setOverrides((current) => ({
+                            ...current,
+                            [company.id]: {
+                              ...current[company.id],
+                              platform,
+                            },
+                          })),
+                      )
+                    ) : (
+                      <p className="business-hint">Use shared value</p>
+                    )}
+                  </div>
                 )}
               </div>
             </details>

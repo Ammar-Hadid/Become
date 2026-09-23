@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -463,6 +464,7 @@ model ConversationMessageRevision {
   body                 String
   occurredAt           DateTime
   channel              String
+  platform             String?
   guideQuestionId      String?
   correctionReason     String?
   createdAt            DateTime              @default(now())
@@ -502,6 +504,7 @@ model InteractionRevision {
   respondsToInteractionId String?
   kind                    String
   channel                 String
+  platform                String?
   occurredAt              DateTime
   datePrecision           String                @default("DAY")
   summary                 String

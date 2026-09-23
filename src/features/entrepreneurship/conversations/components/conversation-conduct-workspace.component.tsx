@@ -185,6 +185,7 @@ export async function ConversationConductWorkspace({
                             body: current.body,
                             occurredAt: current.occurredAt.toISOString(),
                             channel: current.channel,
+                            platform: current.platform,
                             guideQuestionId: current.guideQuestionId,
                             hasObservation:
                               message.observationRevisions.length > 0,
@@ -224,6 +225,7 @@ export async function ConversationConductWorkspace({
               conversationId={conversation.id}
               participantName={participantName}
               defaultChannel={revision.channel}
+              defaultPlatform={revision.platform}
             />
           )}
       </section>

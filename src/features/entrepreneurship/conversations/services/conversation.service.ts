@@ -195,6 +195,7 @@ export async function startConversation(
         respondsToInteractionId: data.linkedInteractionId,
         kind: "CONVERSATION",
         channel: data.channel,
+        platform: data.platform ?? null,
         occurredAt: data.occurredAt,
         datePrecision: "MINUTE",
         summary: data.summary ?? "Interview in progress",
@@ -265,6 +266,7 @@ export async function addConversationMessage(
         body: data.body,
         occurredAt: data.occurredAt,
         channel: data.channel,
+        platform: data.platform ?? null,
         guideQuestionId: data.guideQuestionId,
       },
     });
@@ -339,6 +341,7 @@ export async function correctConversationMessage(
         body: data.body,
         occurredAt: data.occurredAt,
         channel: data.channel,
+        platform: data.platform ?? null,
         guideQuestionId: data.guideQuestionId,
         correctionReason: data.correctionReason,
       },
@@ -490,6 +493,7 @@ export async function askConversationGuideQuestion(
         body: question.prompt,
         occurredAt: new Date(),
         channel: revision.channel,
+        platform: revision.platform,
         guideQuestionId: question.questionId,
       },
     });

@@ -345,7 +345,10 @@ function ConversationDetail({
               </BusinessBackLink>
             )}
             <p className="eyebrow">
-              {humanize(revision.channel)} ·{" "}
+              {humanize(revision.channel)}
+              {revision.platform
+                ? ` · ${humanize(revision.platform)}`
+                : ""} ·{" "}
               {conversationStatus(
                 conversation.status,
                 Boolean(conversation.interviewSession),
@@ -437,6 +440,7 @@ function ConversationDetail({
                               body: current.body,
                               occurredAt: current.occurredAt.toISOString(),
                               channel: current.channel,
+                              platform: current.platform,
                               guideQuestionId: current.guideQuestionId,
                               hasObservation:
                                 entry.observationRevisions.length > 0,
@@ -508,6 +512,7 @@ function ConversationDetail({
               conversationId={conversation.id}
               participantName={participantName}
               defaultChannel={revision.channel}
+              defaultPlatform={revision.platform}
             />
           )}
       </section>

@@ -12,12 +12,14 @@ type PendingMessage = {
   speakerName: string;
   body: string;
   channel: string;
+  platform: string | null;
 };
 
 export function ConversationComposer({
   conversationId,
   participantName,
   defaultChannel,
+  defaultPlatform = null,
   guideQuestionId,
   initialBody = "",
   onSent,
@@ -25,6 +27,7 @@ export function ConversationComposer({
   conversationId: string;
   participantName: string;
   defaultChannel: string;
+  defaultPlatform?: string | null;
   guideQuestionId?: string | null;
   initialBody?: string;
   onSent?: () => void;
@@ -59,6 +62,7 @@ export function ConversationComposer({
       speakerName: label,
       body: trimmed,
       channel: defaultChannel,
+      platform: defaultPlatform,
     };
     setPendingMessage(attempt);
     setError(null);
@@ -73,6 +77,7 @@ export function ConversationComposer({
           body: attempt.body,
           occurredAt: new Date().toISOString(),
           channel: attempt.channel,
+          platform: attempt.platform,
           guideQuestionId: guideQuestionId ?? null,
         },
       );
