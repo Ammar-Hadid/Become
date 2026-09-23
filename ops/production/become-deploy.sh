@@ -38,8 +38,8 @@ release=$releases/$commit-$run
 [[ -x /usr/local/sbin/become-backup ]] && grep -q BECOME_DEPLOY_LOCK_HELD /usr/local/sbin/become-backup || {
   echo 'Install the current Become backup script before deploying.' >&2; exit 1;
 }
-[[ -r /etc/become/production.env && -r /etc/become/maintenance.env && -r /etc/become/backup.env ]] || {
-  echo 'Become production, maintenance, and offsite backup configuration is required.' >&2; exit 1;
+[[ -r /etc/become/production.env && -r /etc/become/maintenance.env ]] || {
+  echo 'Become production and maintenance configuration is required.' >&2; exit 1;
 }
 [[ -d /srv/data/become/media && ! -L /srv/data/become ]] || {
   echo 'Persistent Become media directory is missing or unsafe.' >&2; exit 1;
@@ -89,7 +89,7 @@ for sql in "$release"/prisma/migrations/*/migration.sql; do
   fi
 done
 
-echo 'Creating coordinated database and media backup, including offsite copy'
+echo 'Creating coordinated database and media backup'
 BECOME_DEPLOY_LOCK_HELD=1 /usr/local/sbin/become-backup
 echo 'Backup complete; stopping Become for migration and switch'
 systemctl stop become.service || {

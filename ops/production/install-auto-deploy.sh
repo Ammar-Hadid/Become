@@ -54,4 +54,4 @@ install -o root -g root -m 0644 "$source_dir/become-backup.service" /etc/systemd
 install -o root -g root -m 0644 "$source_dir/become-backup.timer" /etc/systemd/system/become-backup.timer
 systemctl daemon-reload
 systemd-analyze verify /etc/systemd/system/become-backup.service /etc/systemd/system/become-backup.timer
-echo 'Become deployment entry point and backup units installed. Configure offsite backup before deploying.'
+echo 'Become deployment entry point and backup units installed. Run and verify a local backup before deploying.'

@@ -352,7 +352,7 @@ local COTS database suite with `RUN_COTS_INTEGRATION=1 pnpm test`.
 
 ## Production deployment
 
-For automatic deployment after a push to `main`, see the [Become automatic deployment setup](docs/deployment/AUTO_DEPLOY.md). It builds separate releases, requires a coordinated offsite backup before migrations, and checks health with application rollback.
+For automatic deployment after a push to `main`, see the [Become automatic deployment setup](docs/deployment/AUTO_DEPLOY.md). It builds separate releases, requires a coordinated database/media backup before migrations, and checks health with application rollback. Offsite Restic copies can be added later.
 
 Use the [production deployment walkthrough](docs/deployment/PRODUCTION.md) for the
 Hetzner + Caddy + Neon setup, and read the [readiness report](docs/deployment/READINESS.md)

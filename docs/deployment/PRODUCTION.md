@@ -348,9 +348,9 @@ Do not expose Prisma Studio in production. Keep Neon, DNS, GitHub, SSH and backu
 
 ## 10. Back up the database and media together
 
-A PostgreSQL dump alone cannot restore uploaded images. A VPS snapshot alone cannot restore Neon. Use matched sets made while **all Become writers are stopped**. The provided backup stops only `become.service`, dumps PostgreSQL, archives media, verifies archive structure/checksums, restarts Become even after failures, and then sends an encrypted copy off the VPS. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
+A PostgreSQL dump alone cannot restore uploaded images. A VPS snapshot alone cannot restore Neon. Use matched sets made while **all Become writers are stopped**. The provided backup stops only `become.service`, dumps PostgreSQL, archives media, verifies archive structure/checksums, and restarts Become even after failures. When both Restic settings are configured in `/etc/become/backup.env`, it also sends an encrypted copy off the VPS; a failed offsite copy fails the backup. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
 
-Local-only backups do not protect against losing the VPS. One concrete offsite option is a **separate Hetzner Storage Box** (an additional purchase, not part of this preparation). You can substitute another supported Restic destination. Keep credentials and encryption password outside the VPS in your password manager. A backup is not validated until a restore has been tested.
+The current local-only setup does not protect against losing the VPS. One future offsite option is a **separate Hetzner Storage Box** (an additional purchase). You can substitute another supported Restic destination. Keep credentials and encryption password outside the VPS in your password manager. A backup is not validated until a restore has been tested. The Restic steps below are optional until an offsite destination is available.
 
 For the Storage Box option:
 
