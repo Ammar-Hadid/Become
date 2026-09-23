@@ -17,6 +17,8 @@ if [[ -f /etc/become/backup.env ]]; then
 fi
 set +a
 : "${DIRECT_DATABASE_URL:?Set the direct owner connection in maintenance.env}"
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$DIRECT_DATABASE_URL"
 if [[ -n ${RESTIC_REPOSITORY:-} || -n ${RESTIC_PASSWORD_FILE:-} ]]; then
   : "${RESTIC_REPOSITORY:?Set the off-VPS repository in backup.env}"
   : "${RESTIC_PASSWORD_FILE:?Set the restic password file in backup.env}"
@@ -26,8 +28,6 @@ if [[ -n ${RESTIC_REPOSITORY:-} || -n ${RESTIC_PASSWORD_FILE:-} ]]; then
 else
   offsite_enabled=0
 fi
-# PGDATABASE supports a URI; keep credentials out of process arguments/logs.
-export PGDATABASE="$DIRECT_DATABASE_URL"
 export PGCONNECT_TIMEOUT=30
 export PGAPPNAME=become-backup
 base=/srv/backups/become

@@ -12,7 +12,7 @@ key=$(cat "$pubkey")
 }
 ssh-keygen -lf "$pubkey" >/dev/null
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-[[ -f $source_dir/become-deploy.sh && -f $source_dir/become-backup.sh ]] || {
+[[ -f $source_dir/become-deploy.sh && -f $source_dir/become-backup.sh && -f $source_dir/become-pg-connection.sh ]] || {
   echo 'Run the installer from a checked-out Become release.' >&2; exit 1;
 }
 [[ -d /srv/apps/become/releases && -L /srv/apps/become/current && -d /srv/data/become/media ]] || {
@@ -22,12 +22,13 @@ source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
   echo 'become.service does not run as become.' >&2; exit 1;
 }
 [[ $(id -un 1000) == ammar ]] || { echo 'Expected SSH user ammar is missing.' >&2; exit 1; }
-for target in /usr/local/sbin/become-deploy /usr/local/sbin/become-backup /usr/local/sbin/become-deploy-ssh /usr/local/sbin/become-rollback; do
+for target in /usr/local/sbin/become-deploy /usr/local/sbin/become-backup /usr/local/sbin/become-deploy-ssh /usr/local/sbin/become-rollback /usr/local/sbin/become-pg-connection; do
   [[ ! -L $target ]] || { echo "Refusing symlinked target: $target" >&2; exit 1; }
 done
 install -d -o root -g become -m 0750 /srv/apps/become/incoming
 install -o root -g root -m 0750 "$source_dir/become-deploy.sh" /usr/local/sbin/become-deploy
 install -o root -g root -m 0750 "$source_dir/become-backup.sh" /usr/local/sbin/become-backup
+install -o root -g root -m 0640 "$source_dir/become-pg-connection.sh" /usr/local/sbin/become-pg-connection
 install -o root -g root -m 0755 "$source_dir/become-deploy-ssh.sh" /usr/local/sbin/become-deploy-ssh
 install -o root -g root -m 0750 "$source_dir/become-rollback.sh" /usr/local/sbin/become-rollback
 

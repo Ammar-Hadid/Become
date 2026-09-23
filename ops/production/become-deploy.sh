@@ -74,7 +74,9 @@ runuser -u become -- env PATH=/opt/become-node/bin:/usr/bin:/bin bash -c '
 
 set -a; source /etc/become/maintenance.env; set +a
 : "${DIRECT_DATABASE_URL:?Missing direct maintenance database URL}"
-export PGDATABASE="$DIRECT_DATABASE_URL" PGCONNECT_TIMEOUT=30 PGAPPNAME=become-deploy
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$DIRECT_DATABASE_URL"
+export PGCONNECT_TIMEOUT=30 PGAPPNAME=become-deploy
 applied=$(psql -X -A -t -v ON_ERROR_STOP=1 -c 'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
 failed_migrations=$(psql -X -A -t -v ON_ERROR_STOP=1 -c 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL')
 [[ $failed_migrations == 0 ]] || { echo 'Prisma has unresolved failed migrations; inspect before deployment.' >&2; exit 1; }

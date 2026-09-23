@@ -403,6 +403,7 @@ BACKUP_INIT
 
 ```bash
 sudo install -o root -g root -m 0750 "$BECOME_RELEASE/ops/production/become-backup.sh" /usr/local/sbin/become-backup
+sudo install -o root -g root -m 0640 "$BECOME_RELEASE/ops/production/become-pg-connection.sh" /usr/local/sbin/become-pg-connection
 sudo install -o root -g root -m 0644 "$BECOME_RELEASE/ops/production/become-backup.service" /etc/systemd/system/become-backup.service
 sudo install -o root -g root -m 0644 "$BECOME_RELEASE/ops/production/become-backup.timer" /etc/systemd/system/become-backup.timer
 sudo systemctl daemon-reload
