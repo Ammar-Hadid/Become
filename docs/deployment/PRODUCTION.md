@@ -1,5 +1,9 @@
 # Become: first production deployment
 
+For ongoing deployments after the one-time production setup, use
+[automatic deployment](AUTO_DEPLOY.md). This document remains the first-install
+and recovery walkthrough.
+
 Prepared 13 September 2026. This is a walkthrough to execute later; no VPS or Neon changes were made during preparation. Read the [readiness report](READINESS.md) first.
 
 The deployment is one Next.js process behind Caddy on your existing Hetzner CPX22, with a dedicated Neon PostgreSQL database. Media stays on the VPS. This guide assumes Ubuntu 24.04 LTS or Debian 12/13 with systemd and a sudo-capable SSH account. If your server uses another OS or another proxy already owns ports 80/443, resolve that difference before running the installation commands. Do not replace, stop, or repurpose Auctus services, files, databases, users, or proxy configuration.
@@ -344,9 +348,9 @@ Do not expose Prisma Studio in production. Keep Neon, DNS, GitHub, SSH and backu
 
 ## 10. Back up the database and media together
 
-A PostgreSQL dump alone cannot restore uploaded images. A VPS snapshot alone cannot restore Neon. Use matched sets made while **all Become writers are stopped**. The provided backup stops only `become.service`, dumps PostgreSQL, archives media, verifies archive structure/checksums, restarts Become even after failures, and then sends an encrypted copy off the VPS. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
+A PostgreSQL dump alone cannot restore uploaded images. A VPS snapshot alone cannot restore Neon. Use matched sets made while **all Become writers are stopped**. The provided backup stops only `become.service`, dumps PostgreSQL, archives media, verifies archive structure/checksums, and restarts Become even after failures. When both Restic settings are configured in `/etc/become/backup.env`, it also sends an encrypted copy off the VPS; a failed offsite copy fails the backup. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
 
-Local-only backups do not protect against losing the VPS. One concrete offsite option is a **separate Hetzner Storage Box** (an additional purchase, not part of this preparation). You can substitute another supported Restic destination. Keep credentials and encryption password outside the VPS in your password manager. A backup is not validated until a restore has been tested.
+The current local-only setup does not protect against losing the VPS. One future offsite option is a **separate Hetzner Storage Box** (an additional purchase). You can substitute another supported Restic destination. Keep credentials and encryption password outside the VPS in your password manager. A backup is not validated until a restore has been tested. The Restic steps below are optional until an offsite destination is available.
 
 For the Storage Box option:
 
@@ -399,6 +403,7 @@ BACKUP_INIT
 
 ```bash
 sudo install -o root -g root -m 0750 "$BECOME_RELEASE/ops/production/become-backup.sh" /usr/local/sbin/become-backup
+sudo install -o root -g root -m 0640 "$BECOME_RELEASE/ops/production/become-pg-connection.sh" /usr/local/sbin/become-pg-connection
 sudo install -o root -g root -m 0644 "$BECOME_RELEASE/ops/production/become-backup.service" /etc/systemd/system/become-backup.service
 sudo install -o root -g root -m 0644 "$BECOME_RELEASE/ops/production/become-backup.timer" /etc/systemd/system/become-backup.timer
 sudo systemctl daemon-reload

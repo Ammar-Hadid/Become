@@ -5,21 +5,32 @@ set -Eeuo pipefail
 umask 077
 export PATH=/opt/become-node/bin:/usr/local/bin:/usr/bin:/bin
 [[ $EUID -eq 0 ]] || { echo 'Run as root.' >&2; exit 1; }
-exec 9>/run/lock/become-maintenance.lock
-flock -n 9 || { echo 'Another Become maintenance operation is running.' >&2; exit 1; }
+if [[ ${BECOME_DEPLOY_LOCK_HELD:-} != 1 ]]; then
+  exec 9>/run/lock/become-maintenance.lock
+  flock -n 9 || { echo 'Another Become maintenance operation is running.' >&2; exit 1; }
+fi
 set -a
 source /etc/become/maintenance.env
-source /etc/become/backup.env
+unset RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+if [[ -f /etc/become/backup.env ]]; then
+  source /etc/become/backup.env
+fi
 set +a
 : "${DIRECT_DATABASE_URL:?Set the direct owner connection in maintenance.env}"
-: "${RESTIC_REPOSITORY:?Set the off-VPS repository in backup.env}"
-: "${RESTIC_PASSWORD_FILE:?Set the restic password file in backup.env}"
-test -r "$RESTIC_PASSWORD_FILE"
-command -v restic > /dev/null
-# PGDATABASE supports a URI; keep credentials out of process arguments/logs.
-export PGDATABASE="$DIRECT_DATABASE_URL"
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$DIRECT_DATABASE_URL"
+if [[ -n ${RESTIC_REPOSITORY:-} || -n ${RESTIC_PASSWORD_FILE:-} ]]; then
+  : "${RESTIC_REPOSITORY:?Set the off-VPS repository in backup.env}"
+  : "${RESTIC_PASSWORD_FILE:?Set the restic password file in backup.env}"
+  test -r "$RESTIC_PASSWORD_FILE"
+  command -v restic > /dev/null
+  offsite_enabled=1
+else
+  offsite_enabled=0
+fi
 export PGCONNECT_TIMEOUT=30
 export PGAPPNAME=become-backup
+psql -X -A -t -v ON_ERROR_STOP=1 -c 'SELECT 1' > /dev/null
 base=/srv/backups/become
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 partial="$base/$stamp.partial"
@@ -57,6 +68,10 @@ if (( restart )); then
   restart=0
 fi
 printf 'Local backup complete: %s\n' "$complete"
-restic backup --tag become "$complete"
-printf 'Encrypted off-VPS copy complete.\n'
+if (( offsite_enabled )); then
+  restic backup --tag become "$complete"
+  printf 'Encrypted off-VPS copy complete.\n'
+else
+  printf 'Offsite backup is not configured; local backup retained on this VPS.\n'
+fi
 # No automatic deletion: establish and verify off-VPS retention first.

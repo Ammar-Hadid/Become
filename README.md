@@ -202,7 +202,8 @@ apply migrations with `pnpm exec prisma migrate deploy`, run
 environment needs the Prisma/tsx tooling and its own securely supplied
 `DATABASE_URL`; production credentials do not belong in local development.
 Run one maintenance job at a time; a concurrency conflict fails the transaction
-and can be retried safely. No deployment pipeline is introduced here.
+and can be retried safely. Production automation is documented under
+`docs/deployment/AUTO_DEPLOY.md`.
 
 Focused PostgreSQL integration tests are opt-in and roll back all fixtures:
 
@@ -350,6 +351,8 @@ restart the local dev server to load the new generated client. Run the disposabl
 local COTS database suite with `RUN_COTS_INTEGRATION=1 pnpm test`.
 
 ## Production deployment
+
+For automatic deployment after a push to `main`, see the [Become automatic deployment setup](docs/deployment/AUTO_DEPLOY.md). It builds separate releases, requires a coordinated database/media backup before migrations, and checks health with application rollback. Offsite Restic copies can be added later.
 
 Use the [production deployment walkthrough](docs/deployment/PRODUCTION.md) for the
 Hetzner + Caddy + Neon setup, and read the [readiness report](docs/deployment/READINESS.md)

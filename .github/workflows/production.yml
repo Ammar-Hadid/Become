@@ -1,0 +1,74 @@
+name: Validate and deploy Become
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://become:become@127.0.0.1:5432/become
+      BETTER_AUTH_SECRET: ci-build-only-00000000000000000000000000000000
+      BETTER_AUTH_URL: https://ci.example.com
+      BECOME_DATA_DIR: /tmp/become-ci-media
+      BECOME_ALLOW_SIGNUP: "false"
+      APP_TIMEZONE: Europe/Amsterdam
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/setup@v3
+        with:
+          version: 11.19.0
+          runtime: node@24
+          cache: true
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Production build
+        run: pnpm build
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: become-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Transfer and deploy exact commit
+        env:
+          DEPLOY_HOST: ${{ vars.BECOME_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.BECOME_DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.BECOME_DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.BECOME_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          : "${DEPLOY_HOST:?Set BECOME_DEPLOY_HOST in production environment}"
+          : "${DEPLOY_USER:?Set BECOME_DEPLOY_USER in production environment}"
+          : "${DEPLOY_SSH_KEY:?Set BECOME_DEPLOY_SSH_KEY in production environment}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set BECOME_DEPLOY_KNOWN_HOSTS in production environment}"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/become-deploy-key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/become-known-hosts"
+          git archive --format=tar HEAD > "$RUNNER_TEMP/become-release.tar"
+          test "$(git get-tar-commit-id < "$RUNNER_TEMP/become-release.tar")" = "$GITHUB_SHA"
+          ssh -i "$RUNNER_TEMP/become-deploy-key" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/become-known-hosts" \
+            -o ServerAliveInterval=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "deploy $GITHUB_SHA $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            < "$RUNNER_TEMP/become-release.tar"
