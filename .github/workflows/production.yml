@@ -11,6 +11,14 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://become:become@127.0.0.1:5432/become
+      BETTER_AUTH_SECRET: ci-build-only-00000000000000000000000000000000
+      BETTER_AUTH_URL: https://ci.example.com
+      BECOME_DATA_DIR: /tmp/become-ci-media
+      BECOME_ALLOW_SIGNUP: "false"
+      APP_TIMEZONE: Europe/Amsterdam
+      NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/setup@v3
@@ -26,14 +34,6 @@ jobs:
       - run: pnpm test
       - name: Production build
         run: pnpm build
-        env:
-          DATABASE_URL: postgresql://become:become@127.0.0.1:5432/become
-          BETTER_AUTH_SECRET: ci-build-only-00000000000000000000000000000000
-          BETTER_AUTH_URL: https://ci.example.com
-          BECOME_DATA_DIR: /tmp/become-ci-media
-          BECOME_ALLOW_SIGNUP: "false"
-          APP_TIMEZONE: Europe/Amsterdam
-          NEXT_TELEMETRY_DISABLED: "1"
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
