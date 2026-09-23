@@ -8,7 +8,6 @@ import {
 import { ExplorationProvider } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import {
   ExplorationDirectionForm,
-  ExplorationTimer,
 } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import { MarketForm } from "@/features/entrepreneurship/market/components/market-form.component";
 import { MarketMenu } from "@/features/entrepreneurship/market/components/market-menu.component";
@@ -64,21 +63,18 @@ export default async function Layout({
         actions={
           <>
             {!niche.archivedAt && (
-              <>
-                <ExplorationTimer nicheId={niche.id} />
-                <Suspense
-                  fallback={
-                    <span className="exploration-header-action-loading">
-                      Loading direction…
-                    </span>
-                  }
-                >
-                  <ExplorationDirectionAction
-                    userId={user.id}
-                    nicheId={niche.id}
-                  />
-                </Suspense>
-              </>
+              <Suspense
+                fallback={
+                  <span className="exploration-header-action-loading">
+                    Loading direction…
+                  </span>
+                }
+              >
+                <ExplorationDirectionAction
+                  userId={user.id}
+                  nicheId={niche.id}
+                />
+              </Suspense>
             )}
             <MarketForm kind="niche" record={niche} />
             <MarketMenu

@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DateTime } from "luxon";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CalendarClock,
-  MessageSquareText,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, MessageSquareText } from "lucide-react";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import {
   getReachActivityDetail,
@@ -271,11 +266,8 @@ export async function ReachActivityDetail({
               {humanize(revision.audienceContext?.marketType ?? "UNKNOWN")}
             </p>
           </section>
-          <section className="exploration-field-note">
+          <section className="exploration-field-note reach-next-action">
             <p className="eyebrow">Next action</p>
-            <h3>
-              <CalendarClock aria-hidden="true" /> Follow-up
-            </h3>
             {!readOnly && (
               <FollowUpForm target={{ interactionId: activityId }} />
             )}
@@ -288,7 +280,9 @@ export async function ReachActivityDetail({
                 />
               ))
             ) : (
-              <p>No follow-up chosen.</p>
+              <p className="reach-next-action-empty">
+                No next action chosen yet.
+              </p>
             )}
           </section>
         </aside>

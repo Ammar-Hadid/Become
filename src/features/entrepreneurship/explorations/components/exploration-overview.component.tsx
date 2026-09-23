@@ -227,10 +227,13 @@ export async function ExplorationOverview({
               <FollowUpRecord key={record.id} record={record} />
             ))
           ) : (
-            <p>
-              No follow-up is waiting. Use the workspace with the largest
-              unanswered question.
-            </p>
+            <div className="overview-next-actions-empty">
+              <p>No follow-up is scheduled.</p>
+              <Link href={explorationWorkspaceHref(nicheId, "outreach")}>
+                Open outreach to choose a next action
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
           )}
         </aside>
       </div>

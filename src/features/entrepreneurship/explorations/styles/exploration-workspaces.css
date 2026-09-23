@@ -664,12 +664,18 @@
 }
 
 .overview-recent > header,
-.overview-next-actions > header,
 .workspace-collection-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+}
+
+.overview-next-actions > header {
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-xs);
   padding-bottom: var(--spacing-lg);
 }
 
@@ -691,6 +697,32 @@
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
+}
+
+.overview-next-actions-empty {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.overview-next-actions-empty p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+.overview-next-actions-empty a {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+
+.overview-next-actions-empty svg {
+  width: 1rem;
 }
 
 /* Outreach */

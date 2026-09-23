@@ -150,7 +150,7 @@ export async function MarketPage({
           <section
             className={`business-zone business-zone--ledger business-market-companies${archived ? "business-zone--archived" : ""}`}
           >
-            <div className="business-row-heading">
+            <div className="business-row-heading business-market-heading">
               <h3>
                 Businesses{" "}
                 <span className="business-count">{data.companyCount}</span>
