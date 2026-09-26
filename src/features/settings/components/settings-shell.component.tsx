@@ -6,18 +6,16 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
     <div className="page-shell settings-shell">
       <header className="settings-shell-heading">
         <h1>Settings</h1>
+        <SettingsNavigation />
       </header>
 
-      <div className="settings-shell-layout">
-        <SettingsNavigation />
-        <ViewTransition
-          name="settings-content"
-          share="motion-data-recompose"
-          default="none"
-        >
-          <div className="settings-content">{children}</div>
-        </ViewTransition>
-      </div>
+      <ViewTransition
+        name="settings-content"
+        share="motion-data-recompose"
+        default="none"
+      >
+        <div className="settings-content">{children}</div>
+      </ViewTransition>
     </div>
   );
 }

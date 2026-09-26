@@ -51,12 +51,12 @@ export function NexoSettings({
 
   return (
     <div className="nexo-settings">
-      <header className="nexo-settings-heading">
+      <header className="nexo-settings-heading settings-page-heading">
         <p className="eyebrow">Nexo</p>
         <h2>Configure requested synthesis.</h2>
         <p>
-          Set the model for So Far We Know. Results remain proposals until you
-          accept them.
+          Choose how requested synthesis runs. Every result remains a proposal
+          until you accept it.
         </p>
       </header>
 
