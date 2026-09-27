@@ -1587,7 +1587,7 @@
   }
 
   .conversation-workspace {
-    grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr);
+    grid-template-columns: minmax(19rem, 21rem) minmax(0, 1fr);
   }
 
   .conversation-context {
