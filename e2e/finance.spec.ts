@@ -84,6 +84,11 @@ test.describe("Phase 3 Finance", () => {
     await transfer.getByLabel("To account").selectOption({ label: "Savings" });
     await save(transfer, "Record transaction");
     await page.goto("/settings");
+    await expect(page).toHaveURL(/\/settings\/personal/);
+    await page
+      .getByRole("navigation", { name: "Settings sections" })
+      .getByRole("link", { name: "Finance", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/settings\/finance/);
     await expect(
       page.getByRole("navigation", { name: "Settings sections" }),
@@ -651,6 +656,11 @@ test.describe("Phase 3 Finance", () => {
     ]);
     await accountMenu.getByRole("menuitem", { name: "Settings" }).click();
 
+    await expect(page).toHaveURL(/\/settings\/personal$/);
+    await page
+      .getByRole("navigation", { name: "Settings sections" })
+      .getByRole("link", { name: "Finance", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/settings\/finance$/);
     const categorySection = page.locator("#categories");
     await expect(

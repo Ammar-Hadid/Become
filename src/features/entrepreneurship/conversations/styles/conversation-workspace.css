@@ -1,6 +1,6 @@
 .conversation-workspace {
   display: grid;
-  grid-template-columns: minmax(14rem, 15rem) minmax(0, 1fr) minmax(
+  grid-template-columns: minmax(19rem, 21rem) minmax(0, 1fr) minmax(
       14rem,
       15rem
     );
@@ -9,7 +9,7 @@
 }
 
 .conversation-workspace[data-empty] {
-  grid-template-columns: minmax(14rem, 15rem) minmax(0, 1fr);
+  grid-template-columns: minmax(19rem, 21rem) minmax(0, 1fr);
 }
 
 .conversation-index {

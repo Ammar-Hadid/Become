@@ -74,6 +74,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
           triggerIcon={<NotebookPen aria-hidden="true" />}
           triggerRole="menuitem"
           unstyledTrigger
+          className="menu-item"
           title="Keep this message as an observation"
           description="The exact message remains the source. You can paraphrase it, but this step never happens automatically."
         >
@@ -127,6 +128,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
         triggerIcon={<Pencil aria-hidden="true" />}
         triggerRole="menuitem"
         unstyledTrigger
+        className="menu-item"
         title="Correct this message"
         description="The earlier wording stays in history. Explain why this correction is necessary."
       >
@@ -174,6 +176,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
         triggerIcon={<EyeOff aria-hidden="true" />}
         triggerRole="menuitem"
         unstyledTrigger
+        className="menu-item"
         title="Void this message"
         description="The record stays in history, but it no longer appears as current evidence."
       >

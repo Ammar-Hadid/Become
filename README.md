@@ -236,6 +236,9 @@ database-independent.
 - Engineering projects can be edited and archived, and evidence can be edited; permanent deletion is intentionally not exposed.
 - Project forms use browser confirmation rather than drafts or autosave when modified data would be discarded.
 - No password reset or email verification delivery is configured for local personal use.
+- Personal settings at `/settings/personal` let you update your name and sign-in
+  email. Changing email requires your current password; the new address is
+  recorded as unverified because email verification delivery is not configured.
 - There is no rate-limit adapter yet; deployment should add an infrastructure-appropriate limiter to auth and mutations.
 - Foundation and Engineering analytics show the current period and its previous equivalent. Finance also supports selecting a historical reference date.
 

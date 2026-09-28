@@ -412,7 +412,6 @@
 }
 
 .business-shell .submenu [role^="menuitem"] {
-  display: block;
   min-width: 160px;
   padding: var(--spacing-md);
   text-align: left;

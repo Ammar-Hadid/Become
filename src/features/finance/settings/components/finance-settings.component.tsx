@@ -41,12 +41,12 @@ export async function FinanceSettings({ userId }: { userId: string }) {
 
   return (
     <div className="finance-settings">
-      <header className="finance-settings-heading">
-        <p className="eyebrow">Finance preferences</p>
-        <h2>Shape the rules around your money.</h2>
+      <header className="finance-settings-heading settings-page-heading">
+        <p className="eyebrow">Finance</p>
+        <h2>Money rules and records</h2>
         <p>
-          Set the decisions that guide your finances without interrupting the
-          everyday flow of transactions and accounts.
+          Set the defaults that guide your money and manage the records used in
+          transactions.
         </p>
       </header>
 
@@ -138,7 +138,10 @@ export async function FinanceSettings({ userId }: { userId: string }) {
         )}
       </section>
 
-      <section className="finance-settings-section" id="categories">
+      <section
+        className="finance-settings-section finance-settings-section--action"
+        id="categories"
+      >
         <div className="finance-settings-intro">
           <span>
             <Tags aria-hidden="true" />
@@ -159,7 +162,10 @@ export async function FinanceSettings({ userId }: { userId: string }) {
         </div>
       </section>
 
-      <section className="finance-settings-section" id="counterparties">
+      <section
+        className="finance-settings-section finance-settings-section--action"
+        id="counterparties"
+      >
         <div className="finance-settings-intro">
           <span>
             <UsersRound aria-hidden="true" />
