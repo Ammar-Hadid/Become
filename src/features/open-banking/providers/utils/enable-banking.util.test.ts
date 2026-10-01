@@ -180,6 +180,84 @@ describe("Enable Banking normalization", () => {
       }),
     ).toThrow();
   });
+  it("keeps absent counterparty metadata unknown without losing the bank date or amount", () => {
+    const raw = {
+      ...transaction,
+      transaction_date: null,
+      value_date: null,
+      creditor: null,
+      debtor: null,
+      creditor_account: null,
+      debtor_account: null,
+      reference_number: null,
+      remittance_information: null,
+    };
+    expect(normalizeEnableTransaction(raw)).toMatchObject({
+      amountMinor: 8742n,
+      activityDate: "2026-03-29",
+      counterpartyName: null,
+      counterpartyIdentity: null,
+      ownCounterpartyIdentity: null,
+      description: "",
+      raw,
+    });
+    expect(() =>
+      normalizeEnableTransaction({ ...raw, booking_date: null }),
+    ).toThrow("no activity date");
+  });
+  it("treats null and omitted optional metadata as the same transaction facts", () => {
+    const absent = {
+      ...transaction,
+      creditor: undefined,
+      debtor: undefined,
+      value_date: undefined,
+      reference_number: undefined,
+      creditor_account: undefined,
+    };
+    const nulls = {
+      ...absent,
+      creditor: null,
+      debtor: null,
+      value_date: null,
+      reference_number: null,
+      creditor_account: null,
+    };
+    expect(normalizeEnableTransaction(nulls).fingerprint).toBe(
+      normalizeEnableTransaction(absent).fingerprint,
+    );
+  });
+  it("does not infer an external account type or identifier from null metadata", () => {
+    expect(
+      normalizeEnableAccount({
+        uid: "account",
+        identification_hash: "stable",
+        identification_hashes: null,
+        account_id: null,
+        cash_account_type: null,
+        currency: "EUR",
+      }),
+    ).toMatchObject({
+      identityKey: "stable",
+      externalType: "UNKNOWN",
+      maskedIdentifier: null,
+    });
+  });
+  it.each([
+    { transaction_amount: null },
+    { transaction_amount: { amount: null, currency: "EUR" } },
+    { transaction_amount: { amount: "10.00", currency: null } },
+    { status: null },
+    { credit_debit_indicator: null },
+    { creditor: { name: 42 } },
+    { value_date: "not-a-date" },
+  ])(
+    "still rejects invalid required facts or malformed supplied metadata: %j",
+    (invalid) => {
+      expect(() =>
+        normalizeEnableTransaction({ ...transaction, ...invalid }),
+      ).toThrow();
+    },
+  );
   it("qualifies expected balances as already including pending movements", () => {
     expect(
       normalizeEnableBalance({
