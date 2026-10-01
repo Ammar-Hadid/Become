@@ -9,6 +9,12 @@ import {
 export const accountSchema = z
   .object({
     name: financeName,
+    bankName: z
+      .string()
+      .trim()
+      .max(120)
+      .optional()
+      .transform((value) => value || null),
     type: z.enum([
       "CHECKING",
       "SAVINGS",

@@ -28,6 +28,13 @@ export async function updateAccountAction(data: FormData) {
   return financeMutation((userId) =>
     updateFinancialAccount(userId, String(data.get("id")), {
       name: financeName.parse(data.get("name")),
+      ...(data.has("bankName")
+        ? {
+            bankName: data.get("bankName")
+              ? financeName.parse(data.get("bankName"))
+              : null,
+          }
+        : {}),
       includeInLiquidSavings: data.has("includeInLiquidSavings"),
     }),
   );

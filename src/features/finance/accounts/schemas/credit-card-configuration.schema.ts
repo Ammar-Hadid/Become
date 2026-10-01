@@ -4,6 +4,7 @@ import { optionalId } from "@/features/finance/schemas/finance.schema";
 
 export const creditCardConfigurationSchema = z
   .object({
+    bankName: z.string().trim().max(120).optional(),
     repaymentMethod: z.enum(["LINKED_ACCOUNT", "MANUAL"]),
     settlementAccountId: optionalId,
     creditLimit: z.string().trim().max(60).default(""),

@@ -49,7 +49,9 @@ export async function getFinancialPosition(
       const account = {
         ...accountFields,
         institutionName:
-          externalAccounts[0]?.connection.institutionName ?? null,
+          externalAccounts[0]?.connection.institutionName ??
+          accountFields.bankName ??
+          null,
       };
       const bankBalances =
         account.dataSource !== "MANUAL"

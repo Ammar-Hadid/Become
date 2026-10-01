@@ -43,6 +43,8 @@ export async function updateCreditCardConfiguration(
     await tx.financialAccount.update({
       where: { id: card.id, userId },
       data: {
+        bankName:
+          data.bankName === undefined ? undefined : data.bankName || null,
         repaymentMethod: data.repaymentMethod,
         settlementAccountId:
           data.repaymentMethod === "LINKED_ACCOUNT"

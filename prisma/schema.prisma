@@ -1027,6 +1027,7 @@ model FinancialAccount {
   id                     String                            @id @default(cuid())
   userId                 String
   name                   String                            @db.VarChar(120)
+  bankName String? @db.VarChar(120)
   type                   FinancialAccountType
   currency               String                            @db.VarChar(3)
   includeInLiquidSavings Boolean                           @default(false)

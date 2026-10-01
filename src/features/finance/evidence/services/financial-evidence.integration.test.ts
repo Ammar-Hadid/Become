@@ -799,6 +799,7 @@ describe.skipIf(!enabled)(
     it("requires automatic card settlement, records purchase expense and repayment transfer", async () => {
       const base = {
         name: "ING More",
+        bankName: "ING",
         type: "CREDIT_CARD",
         currency: "EUR",
         includeInLiquidSavings: false,
@@ -823,6 +824,11 @@ describe.skipIf(!enabled)(
         externalAccountId: undefined,
         accountId: card.id,
       });
+      expect(
+        (await getFinancialPosition(userId)).find(
+          (account) => account.id === card.id,
+        )?.institutionName,
+      ).toBe("ING");
       const repayment = await ingestFinancialEvidence(
         userId,
         input("repayment", 20000n),
@@ -873,6 +879,7 @@ describe.skipIf(!enabled)(
         statementDue: "200",
         statementDueOn: "2026-10-31",
         creditLimit: "1000",
+        bankName: "ING",
       });
       expect(
         await prisma.financialAccount.findUniqueOrThrow({

@@ -35,6 +35,7 @@ export async function createFinancialAccount(userId: string, input: unknown) {
       data: {
         userId,
         name: data.name,
+        bankName: data.bankName,
         type: data.type,
         currency: data.currency,
         includeInLiquidSavings: data.includeInLiquidSavings,
@@ -129,6 +130,7 @@ export async function updateFinancialAccount(
   id: string,
   data: {
     name?: string;
+    bankName?: string | null;
     includeInLiquidSavings?: boolean;
     archivedAt?: Date | null;
   },
