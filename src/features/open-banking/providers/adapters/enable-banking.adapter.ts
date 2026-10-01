@@ -187,7 +187,8 @@ export class EnableBankingProvider implements BankDataProvider {
   ) {
     const query = new URLSearchParams();
     if (input.dateFrom) query.set("date_from", input.dateFrom);
-    if (input.dateTo) query.set("date_to", input.dateTo);
+    // Enable Banking rejects date_to without date_from; longest history needs neither.
+    if (input.dateTo && input.dateFrom) query.set("date_to", input.dateTo);
     if (input.continuationKey)
       query.set("continuation_key", input.continuationKey);
     if (input.longestHistory) query.set("strategy", "longest");

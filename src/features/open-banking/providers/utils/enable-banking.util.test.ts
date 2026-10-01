@@ -107,6 +107,79 @@ describe("Enable Banking normalization", () => {
       maskedIdentifier: "•••• 7890",
     });
   });
+  it("accepts null unused account identifiers without inventing bank details", () => {
+    const account = {
+      uid: "sandbox-account",
+      identification_hash: "stable-sandbox-identity",
+      cash_account_type: "CACC",
+      currency: "EUR",
+    };
+    expect(
+      normalizeEnableAccount({
+        ...account,
+        account_id: { iban: "NL12BANK1234567890", other: null },
+      }),
+    ).toMatchObject({
+      identityKey: "stable-sandbox-identity",
+      maskedIdentifier: "•••• 7890",
+    });
+    expect(
+      normalizeEnableAccount({
+        ...account,
+        account_id: {
+          iban: null,
+          other: { identification: "bank-account-4567", scheme_name: "BBAN" },
+        },
+      }).maskedIdentifier,
+    ).toBe("•••• 4567");
+    expect(
+      normalizeEnableAccount({
+        ...account,
+        account_id: { iban: null, other: null },
+      }).maskedIdentifier,
+    ).toBeNull();
+    expect(() =>
+      normalizeEnableAccount({ ...account, account_id: { other: "invalid" } }),
+    ).toThrow();
+    expect(() =>
+      normalizeEnableAccount({ ...account, currency: null }),
+    ).toThrow();
+  });
+  it("recognizes transactions whose unused counterparty identifier is null", () => {
+    const normalized = normalizeEnableTransaction({
+      ...transaction,
+      creditor_account: { iban: "NL12BANK1234567890", other: null },
+    });
+    expect(normalized.counterpartyIdentity).toBe(
+      normalizeExternalIdentity("NL12BANK1234567890"),
+    );
+    expect(normalized.raw).toMatchObject({
+      creditor_account: { iban: "NL12BANK1234567890", other: null },
+    });
+  });
+  it("accepts an unavailable balance reference date while retaining raw evidence", () => {
+    const value = {
+      name: "Booked",
+      balance_amount: { amount: "123.45", currency: "EUR" },
+      balance_type: "ITBD",
+      reference_date: null,
+    };
+    const now = new Date("2026-10-01T09:00:00Z");
+    expect(normalizeEnableBalance(value, now)).toMatchObject({
+      balanceMinor: 12345n,
+      observedAt: now,
+      raw: value,
+    });
+    expect(() =>
+      normalizeEnableBalance({ ...value, reference_date: "not-a-date" }),
+    ).toThrow();
+    expect(() =>
+      normalizeEnableBalance({
+        ...value,
+        balance_amount: { amount: null, currency: "EUR" },
+      }),
+    ).toThrow();
+  });
   it("qualifies expected balances as already including pending movements", () => {
     expect(
       normalizeEnableBalance({
