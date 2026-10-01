@@ -1,44 +1,19 @@
-import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
-import {
-  ArrowRight,
-  Banknote,
-  Landmark,
-  PiggyBank,
-  Smartphone,
-  WalletCards,
-} from "lucide-react";
-import { FinanceForm } from "@/features/finance/components/finance-form.component";
+import { ArrowRight, Landmark } from "lucide-react";
 import { FinanceDialog } from "@/features/finance/components/finance-dialog.component";
 import {
   FinanceEmptyState,
-  FinanceField,
   FinancePageHeader,
-  FinanceSelect,
   FinanceSection,
 } from "@/features/finance/components/finance-field.component";
-import { createAccountAction } from "@/features/finance/accounts/actions/financial-account.action";
 import { getFinancialPosition } from "@/features/finance/accounts/queries/financial-position.query";
+import { FinancialAccountForm } from "@/features/finance/accounts/components/financial-account-form.component";
+import { FINANCIAL_ACCOUNT_TYPES } from "@/features/finance/accounts/constants/financial-account.constants";
 import { formatMoney } from "@/lib/money/utils/money.util";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
-
-const accountTypes = [
-  ["CHECKING", "Current / checking"],
-  ["SAVINGS", "Savings"],
-  ["CASH", "Cash"],
-  ["DIGITAL_WALLET", "Digital wallet"],
-  ["OTHER", "Other"],
-] as const;
-
-const accountIcon = {
-  CHECKING: Landmark,
-  SAVINGS: PiggyBank,
-  CASH: Banknote,
-  DIGITAL_WALLET: Smartphone,
-  OTHER: WalletCards,
-} as const;
+import { AccountArtwork } from "@/features/finance/accounts/components/account-artwork.component";
 
 export async function AccountsPage({ userId }: { userId: string }) {
   const [accounts, archived] = await Promise.all([
@@ -50,70 +25,12 @@ export async function AccountsPage({ userId }: { userId: string }) {
   ]);
   const now = DateTime.now().toMillis();
   const accountForm = (
-    <FinanceForm
-      action={createAccountAction}
-      submitLabel="Create account & reconcile"
-      resetOnSuccess
-      closeOnSuccess
-    >
-      <FinanceField
-        name="name"
-        label="Account name"
-        placeholder="e.g. ING Everyday"
-        required
-        maxLength={120}
-      />
-      <div className="finance-form-grid">
-        <FinanceSelect name="type" label="Account type" defaultValue="CHECKING">
-          {accountTypes.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </FinanceSelect>
-        <CurrencySelect
-          name="currency"
-          label="Currency"
-          defaultValue="EUR"
-          required
-        />
-      </div>
-      <label className="finance-checkbox-row">
-        <input
-          type="checkbox"
-          name="includeInLiquidSavings"
-          aria-label="Include in liquid savings"
-        />
-        <span>
-          <strong>Count this as liquid savings</strong>
-          <small>
-            Use this balance when calculating reserve and goal capacity.
-          </small>
-        </span>
-      </label>
-      <div className="finance-form-grid">
-        <FinanceField
-          name="balance"
-          label="What does it contain now?"
-          aria-label="Current balance"
-          inputMode="decimal"
-          required
-        />
-        <FinanceField
-          name="reconciledAt"
-          label="Observed at (Amsterdam)"
-          type="datetime-local"
-          required
-          defaultValue={DateTime.now()
-            .setZone(APP_TIMEZONE)
-            .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")}
-        />
-      </div>
-      <p className="finance-form-note">
-        This observed balance becomes the trusted starting point. Future
-        transactions move the recorded position from there.
-      </p>
-    </FinanceForm>
+    <FinancialAccountForm
+      settlementAccounts={accounts}
+      defaultReconciledAt={DateTime.now()
+        .setZone(APP_TIMEZONE)
+        .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")}
+    />
   );
 
   return (
@@ -121,21 +38,26 @@ export async function AccountsPage({ userId }: { userId: string }) {
       <FinancePageHeader
         eyebrow="Position"
         title="Accounts"
-        description="Where your money lives, and the latest position Become can establish from what you recorded."
+        description="Your balances, bank connections and latest updates."
         actions={
-          <FinanceDialog
-            triggerLabel="Add account"
-            title="Bring an account into view"
-            description="Name the account and tell Become what it actually contains right now."
-          >
-            {accountForm}
-          </FinanceDialog>
+          <>
+            <Link className="finance-link-action" href="/finance/connections">
+              Bank connections
+            </Link>
+            <FinanceDialog
+              triggerLabel="Add account"
+              title="Bring an account into view"
+              description="Name the account and tell Become what it actually contains right now."
+            >
+              {accountForm}
+            </FinanceDialog>
+          </>
         }
       />
 
       <FinanceSection
         title="Current accounts"
-        description="Recorded positions, not live bank feeds. Fresh reconciliations keep this picture trustworthy."
+        description="Positions use the freshest qualified manual, statement or live balance evidence available for each account."
       >
         {!accounts.length ? (
           <FinanceEmptyState
@@ -156,7 +78,6 @@ export async function AccountsPage({ userId }: { userId: string }) {
         ) : (
           <div className="finance-account-list">
             {accounts.map((account) => {
-              const Icon = accountIcon[account.type];
               const freshness = account.reconciledAt
                 ? Math.floor((now - account.reconciledAt.getTime()) / 86400000)
                 : null;
@@ -173,14 +94,17 @@ export async function AccountsPage({ userId }: { userId: string }) {
                       : "Everyday position")
                   }
                 >
-                  <span className="finance-account-icon">
-                    <Icon aria-hidden="true" />
-                  </span>
+                  <AccountArtwork
+                    name={account.name}
+                    type={account.type}
+                    institutionName={account.institutionName}
+                    compact
+                  />
                   <span className="finance-account-identity">
                     <strong>{account.name}</strong>
                     <span>
                       {
-                        accountTypes.find(
+                        FINANCIAL_ACCOUNT_TYPES.find(
                           ([value]) => value === account.type,
                         )?.[1]
                       }
@@ -194,7 +118,13 @@ export async function AccountsPage({ userId }: { userId: string }) {
                     <strong className="finance-number">
                       {account.balanceMinor === null
                         ? "Unavailable"
-                        : formatMoney(account.balanceMinor, account.currency)}
+                        : formatMoney(
+                            account.type === "CREDIT_CARD" &&
+                              account.balanceMinor < 0n
+                              ? -account.balanceMinor
+                              : account.balanceMinor,
+                            account.currency,
+                          )}
                     </strong>
                     <span
                       className={
@@ -202,11 +132,14 @@ export async function AccountsPage({ userId }: { userId: string }) {
                         (freshness !== null && freshness > 30 ? "is-stale" : "")
                       }
                     >
-                      {account.reconciledAt
-                        ? freshness === 0
-                          ? "Updated today"
-                          : "Checked " + freshness + "d ago"
-                        : "Needs a first check"}
+                      {account.type === "CREDIT_CARD" &&
+                      account.balanceMinor !== null
+                        ? "Amount owed"
+                        : account.reconciledAt
+                          ? freshness === 0
+                            ? "Updated today"
+                            : "Checked " + freshness + "d ago"
+                          : "Needs a first check"}
                     </span>
                   </span>
                   <ArrowRight aria-hidden="true" />

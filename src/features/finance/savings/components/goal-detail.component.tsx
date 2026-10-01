@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DateTime } from "luxon";
-import { AlertTriangle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Link2 } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
 import { formatMoney, moneyDecimal } from "@/lib/money/utils/money.util";
@@ -16,6 +16,7 @@ import {
 } from "@/features/finance/components/finance-field.component";
 import {
   archiveGoalAction,
+  linkGoalAccountAction,
   purchaseGoalAction,
   rebalanceAction,
   saveGoalAction,
@@ -37,11 +38,22 @@ export async function GoalDetail({
   const { goals } = await getSavings(userId);
   const goal = goals.find((item) => item.id === id);
   if (!goal) notFound();
-  const [accounts, categories, counterparties] = await Promise.all([
-    getFinancialTransactionAccountOptions(userId, goal.currency),
-    prisma.expenseCategory.findMany({ where: { userId, archivedAt: null } }),
-    getCounterpartyOptions(userId),
-  ]);
+  const [accounts, categories, counterparties, evidenceAccounts] =
+    await Promise.all([
+      getFinancialTransactionAccountOptions(userId, goal.currency),
+      prisma.expenseCategory.findMany({ where: { userId, archivedAt: null } }),
+      getCounterpartyOptions(userId),
+      prisma.financialAccount.findMany({
+        where: {
+          userId,
+          archivedAt: null,
+          currency: goal.currency,
+          type: { not: "CREDIT_CARD" },
+        },
+        select: { id: true, name: true, type: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
   const spentPercent = percent(goal.funding.spent, goal.funding.target);
   const fundedPercent = percent(goal.funding.funded, goal.funding.remaining);
 
@@ -232,6 +244,51 @@ export async function GoalDetail({
             remaining cost. Release the excess explicitly above.
           </div>
         )}
+      </FinanceSection>
+
+      <FinanceSection
+        title="Account evidence"
+        description="Optionally identify the account whose balance supports this goal. Linking evidence does not move money, allocate funds or change the account's Savings behavior."
+        action={<Link2 aria-hidden="true" className="finance-heading-icon" />}
+      >
+        <div className="finance-goal-account-link finance-surface">
+          <div>
+            <p className="eyebrow">Evidence only</p>
+            <h3>
+              {goal.accountId
+                ? (evidenceAccounts.find(
+                    (account) => account.id === goal.accountId,
+                  )?.name ?? "Linked account unavailable")
+                : "No account linked"}
+            </h3>
+            <p>
+              Goal allocations remain the explicit source of planned funding.
+              The linked account only supplies balance evidence.
+            </p>
+          </div>
+          {!goal.archivedAt && (
+            <FinanceForm
+              action={linkGoalAccountAction}
+              submitLabel="Save evidence link"
+              submitVariant="secondary"
+            >
+              <input type="hidden" name="id" value={goal.id} />
+              <FinanceSelect
+                label="Supporting account"
+                name="accountId"
+                defaultValue={goal.accountId ?? ""}
+              >
+                <option value="">No linked account</option>
+                {evidenceAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name} ·{" "}
+                    {account.type.toLowerCase().replaceAll("_", " ")}
+                  </option>
+                ))}
+              </FinanceSelect>
+            </FinanceForm>
+          )}
+        </div>
       </FinanceSection>
 
       {!goal.archivedAt && !accounts.length && (

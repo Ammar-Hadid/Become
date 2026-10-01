@@ -1,7 +1,9 @@
-import { Bot, CalendarDays, PauseCircle } from "lucide-react";
+import { Bot, CalendarDays, PauseCircle, Sparkles } from "lucide-react";
 import { getRecurringAnalytics } from "@/features/finance/recurring/queries/recurring-analytics.query";
 import { formatMoney } from "@/lib/money/utils/money.util";
 import { FinanceSection } from "@/features/finance/components/finance-field.component";
+import { FinanceForm } from "@/features/finance/components/finance-form.component";
+import { confirmRecurringSuggestionAction } from "@/features/finance/recurring/actions/recurring-expense.action";
 
 export async function RecurringAnalytics({ userId }: { userId: string }) {
   const analytics = await getRecurringAnalytics(userId);
@@ -22,7 +24,7 @@ export async function RecurringAnalytics({ userId }: { userId: string }) {
           <Bot aria-hidden="true" />
           <div>
             <strong>{analytics.automatic}</strong>
-            <span>record automatically</span>
+            <span>automatic schedules</span>
           </div>
         </article>
         <article>
@@ -33,6 +35,50 @@ export async function RecurringAnalytics({ userId }: { userId: string }) {
           </div>
         </article>
       </div>
+      {analytics.suggestions.length > 0 && (
+        <div className="finance-recurring-suggestions">
+          <header>
+            <Sparkles aria-hidden="true" />
+            <div>
+              <h3>Patterns ready for your decision</h3>
+              <p>
+                A suggestion does not affect commitments or forecasts until you
+                confirm it.
+              </p>
+            </div>
+          </header>
+          {analytics.suggestions.map((suggestion) => (
+            <article key={suggestion.key}>
+              <div>
+                <strong>{suggestion.name}</strong>
+                <small>
+                  {suggestion.type === "EXPENSE"
+                    ? "Recurring expense"
+                    : "Expected income"}{" "}
+                  · {suggestion.frequency.toLowerCase()} · next{" "}
+                  {suggestion.nextDueOn}
+                </small>
+                <small>
+                  Suggested from {suggestion.observationIds.length} reviewed
+                  transactions
+                </small>
+              </div>
+              <strong className="finance-number">
+                {formatMoney(suggestion.amountMinor, suggestion.currency)}
+              </strong>
+              <FinanceForm
+                action={confirmRecurringSuggestionAction}
+                submitLabel="Confirm pattern"
+                submitVariant="secondary"
+                formClassName=""
+                showSuccess
+              >
+                <input type="hidden" name="key" value={suggestion.key} />
+              </FinanceForm>
+            </article>
+          ))}
+        </div>
+      )}
       {(analytics.actualByCurrency.size > 0 ||
         analytics.categoryAnnualized.length > 0 ||
         analytics.largest.length > 0) && (
