@@ -15,6 +15,9 @@ test.describe("Finance open banking", () => {
   }, testInfo) => {
     test.setTimeout(120_000);
     const { userId } = await signUp(page, "Mapping Tester");
+    const bankUpdatedAt = DateTime.now()
+      .setZone("Europe/Amsterdam")
+      .startOf("minute");
     await createAccount(page, {
       name: "Travel reserve",
       type: "SAVINGS",
@@ -23,6 +26,23 @@ test.describe("Finance open banking", () => {
     });
     const savings = await prisma.financialAccount.findFirstOrThrow({
       where: { userId, name: "Travel reserve" },
+    });
+    await prisma.financialAccountBalanceSnapshot.updateMany({
+      where: { userId, accountId: savings.id },
+      data: { reconciledAt: bankUpdatedAt.minus({ days: 45 }).toJSDate() },
+    });
+    const importedAt = bankUpdatedAt.minus({ days: 7 });
+    await prisma.financialTransaction.create({
+      data: {
+        userId,
+        accountId: savings.id,
+        type: "EXPENSE",
+        amountMinor: 15000n,
+        currency: "EUR",
+        occurredAt: importedAt.toJSDate(),
+        activityOn: importedAt.toISODate(),
+        dataSource: "STATEMENT_IMPORT",
+      },
     });
     const connection = await prisma.bankConnection.create({
       data: {
@@ -33,7 +53,7 @@ test.describe("Finance open banking", () => {
         status: "CONNECTED",
         sessionId: "e2e-session",
         consentExpiresAt: DateTime.now().plus({ days: 30 }).toJSDate(),
-        lastSuccessAt: new Date(),
+        lastSuccessAt: bankUpdatedAt.toJSDate(),
       },
     });
     const external = await prisma.externalBankAccount.create({
@@ -47,6 +67,20 @@ test.describe("Finance open banking", () => {
         externalType: "CURRENT",
         currency: "EUR",
         maskedIdentifier: "•• 4821",
+      },
+    });
+    await prisma.financialBalanceObservation.create({
+      data: {
+        userId,
+        externalAccountId: external.id,
+        source: "LIVE_SYNC",
+        balanceMinor: 275000n,
+        currency: "EUR",
+        balanceType: "ITAV",
+        includesPending: true,
+        observedAt: bankUpdatedAt.toJSDate(),
+        payloadHash: `e2e-itav-${randomUUID()}`,
+        raw: { balance_type: "ITAV" },
       },
     });
 
@@ -102,6 +136,41 @@ test.describe("Finance open banking", () => {
         dataSource: "LIVE_SYNC",
         includeInLiquidSavings: true,
       });
+
+    await gotoStable(page, "/finance/accounts");
+    const savingsRow = page
+      .locator(".finance-account-row")
+      .filter({ hasText: "Travel reserve" });
+    await expect(savingsRow).toContainText(
+      "Savings · Included in liquid savings",
+    );
+    await expect(
+      savingsRow.getByText("EUR 2,750.00", { exact: true }),
+    ).toHaveCount(1);
+    await expect(savingsRow).toContainText(
+      "Available · includes pending · Bank updated today",
+    );
+    await savingsRow.click();
+    const savingsHero = page.locator(".finance-account-hero");
+    await expect(
+      page.getByRole("heading", { name: "Travel reserve", exact: true }),
+    ).toBeVisible();
+    await expect(savingsHero).toContainText("Available bank balance");
+    await expect(
+      savingsHero.getByText("EUR 2,750.00", { exact: true }),
+    ).toHaveCount(1);
+    await expect(savingsHero).toContainText(
+      "Based on the latest available balance from your bank and movement recorded after it. The bank balance includes pending movements.",
+    );
+    await expect(savingsHero).toContainText("Bank updated");
+    await expect(savingsHero).toContainText(
+      bankUpdatedAt.toFormat("d LLL yyyy, HH:mm"),
+    );
+    await expect(savingsHero).toContainText("Sync freshness");
+    await expect(savingsHero).toContainText("Synced today");
+    await expect(savingsHero).toContainText("Contributes to liquid savings");
+    await expect(savingsHero).toContainText("Ingestion source");
+    await expect(savingsHero).toContainText("live sync");
 
     await createAccount(page, {
       name: "Settlement account",

@@ -110,6 +110,41 @@ export async function AccountDetail({
           (24 * 60 * 60 * 1000),
       )
     : null;
+  const liveBalance = current?.balanceSource === "LIVE_SYNC";
+  const availableBalance =
+    liveBalance &&
+    account.type !== "CREDIT_CARD" &&
+    (current.balanceType === "ITAV" || current.balanceType === "CLAV");
+  const balanceTitle =
+    account.type === "CREDIT_CARD"
+      ? "Current debt"
+      : availableBalance
+        ? "Available bank balance"
+        : liveBalance
+          ? "Synced bank balance"
+          : "Current recorded position";
+  const balanceDescription = account.archivedAt
+    ? "Position when this account was archived."
+    : availableBalance
+      ? `Based on the latest available balance from your bank and movement recorded after it.${current.balanceIncludesPending ? " The bank balance includes pending movements." : ""}`
+      : liveBalance
+        ? `Based on the latest synced bank balance and movement recorded after it.${current.balanceIncludesPending ? " The bank balance includes pending movements." : ""}`
+        : "Latest trusted balance plus all movement recorded after it.";
+  const freshnessDescription = liveBalance
+    ? reconciliationAge === null
+      ? "Waiting for a bank balance"
+      : reconciliationAge > 30
+        ? "Bank update is over 30 days old"
+        : reconciliationAge === 0
+          ? "Synced today"
+          : "Synced " + reconciliationAge + " days ago"
+    : reconciliationAge === null
+      ? "Needs a first balance check"
+      : reconciliationAge > 30
+        ? "Ready for an update"
+        : reconciliationAge === 0
+          ? "Checked today"
+          : "Checked " + reconciliationAge + " days ago";
 
   const reconciliationForm = (
     <FinanceForm
@@ -190,11 +225,7 @@ export async function AccountDetail({
           }
         />
         <div>
-          <p className="eyebrow">
-            {account.type === "CREDIT_CARD"
-              ? "Current debt"
-              : "Current recorded position"}
-          </p>
+          <p className="eyebrow">{balanceTitle}</p>
           <strong className="finance-number">
             {current?.balanceMinor === null ||
             current?.balanceMinor === undefined
@@ -206,17 +237,13 @@ export async function AccountDetail({
                   account.currency,
                 )}
           </strong>
-          <p>
-            {account.archivedAt
-              ? "Position when this account was archived."
-              : "Latest trusted balance plus all movement recorded after it."}
-          </p>
+          <p>{balanceDescription}</p>
         </div>
         <dl>
           <div>
             <dt>
               <Clock3 aria-hidden="true" />
-              Last checked
+              {liveBalance ? "Bank updated" : "Last checked"}
             </dt>
             <dd>
               {current?.reconciledAt
@@ -231,17 +258,9 @@ export async function AccountDetail({
               ) : (
                 <CheckCircle2 aria-hidden="true" />
               )}
-              Confidence
+              {liveBalance ? "Sync freshness" : "Confidence"}
             </dt>
-            <dd>
-              {reconciliationAge === null
-                ? "Needs a first balance check"
-                : reconciliationAge > 30
-                  ? "Ready for an update"
-                  : reconciliationAge === 0
-                    ? "Checked today"
-                    : "Checked " + reconciliationAge + " days ago"}
-            </dd>
+            <dd>{freshnessDescription}</dd>
           </div>
           <div>
             <dt>Role</dt>
