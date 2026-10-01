@@ -42,6 +42,8 @@ Initial history is retrieved before account mapping and staged for later project
 
 ## Maintenance and diagnostics
 
+The shared VPS deploy script bounds the Node build heap to 1536 MiB and enables Next.js Webpack memory optimization. The verified 4 GiB host additionally required a restricted 2 GiB swap file for transient native build allocations. This is build capacity, independent of Finance or synchronization policy. Keep adequate headroom for the existing services when deploying; these settings do not change the application or worker heap.
+
 Backups, deploys and rollbacks stop the active bank worker together with the application. Their cleanup paths restore whichever services were active. All other writers, including Prisma Studio and manual migration/SQL sessions, must also be stopped during paired backups. Do not run the worker from a second checkout against production while maintenance is in progress.
 
 Inspect `journalctl -u become-bank-sync.service` for worker health. Logs omit provider bodies, tokens and account identifiers. Account details show last successful synchronization, consent expiry, connection state and the latest queued/running/failed job. Retry instructions are persisted on the connection and job so restarts cannot bypass them.

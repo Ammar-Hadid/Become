@@ -68,7 +68,8 @@ runuser -u become -- env PATH=/opt/become-node/bin:/usr/bin:/bin bash -c '
   set -a; source /etc/become/production.env; set +a
   pnpm install --frozen-lockfile --prod=false
   pnpm db:generate
-  pnpm build
+  # Leave memory headroom for the existing applications on the shared VPS.
+  NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=1536" pnpm build
 ' _ "$release"
 [[ -s $release/.next/BUILD_ID ]] || { echo 'Build ID missing.' >&2; exit 1; }
 
