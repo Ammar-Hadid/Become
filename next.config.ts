@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     ? `.next-e2e-${process.env.BECOME_E2E_PORT}`
     : undefined,
   experimental: {
+    // Keep inactive-release builds within the shared VPS memory budget.
+    webpackMemoryOptimizations: true,
     typedEnv: true,
     serverActions: { bodySizeLimit: "3mb" },
   },
