@@ -2,10 +2,8 @@ import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { getOpenBankingConfig } from "../../config/open-banking.config";
 import {
-  enableBalanceSchema,
   enableInstitutionSchema,
   enableSessionSchema,
-  enableTransactionSchema,
 } from "../schemas/enable-banking.schema";
 import {
   BankProviderError,
@@ -167,7 +165,7 @@ export class EnableBankingProvider implements BankDataProvider {
 
   async balances(accountId: string, context?: BankInteractiveContext) {
     const payload = z
-      .object({ balances: z.array(enableBalanceSchema) })
+      .object({ balances: z.array(z.unknown()) })
       .parse(
         await this.request(
           `/accounts/${encodeURIComponent(accountId)}/balances`,
@@ -176,6 +174,7 @@ export class EnableBankingProvider implements BankDataProvider {
         ),
       );
     const now = new Date();
+    // Normalize and validate each original entry without altering immutable evidence.
     return payload.balances.map((balance) =>
       normalizeEnableBalance(balance, now),
     );
@@ -194,7 +193,7 @@ export class EnableBankingProvider implements BankDataProvider {
     if (input.longestHistory) query.set("strategy", "longest");
     const payload = z
       .object({
-        transactions: z.array(enableTransactionSchema),
+        transactions: z.array(z.unknown()),
         continuation_key: z.string().nullish(),
       })
       .parse(
@@ -205,6 +204,7 @@ export class EnableBankingProvider implements BankDataProvider {
         ),
       );
     return {
+      // Each normalizer validates required facts and retains the untouched bank payload.
       observations: payload.transactions.map(normalizeEnableTransaction),
       continuationKey: payload.continuation_key || null,
     };

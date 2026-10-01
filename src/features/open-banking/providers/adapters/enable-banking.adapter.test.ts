@@ -63,6 +63,81 @@ describe("Enable Banking API boundary", () => {
       "https://api.enablebanking.com/accounts/session%2Faccount/balances",
     );
   });
+  it("imports balances with unavailable change dates and preserves the exact provider evidence", async () => {
+    const raw = {
+      name: "Booked",
+      balance_amount: { amount: "123.45", currency: "EUR" },
+      balance_type: "ITBD",
+      reference_date: null,
+      last_change_date_time: null,
+    };
+    requestFetch.mockResolvedValue(Response.json({ balances: [raw] }));
+    const [balance] = await new EnableBankingProvider(requestFetch).balances(
+      "account",
+    );
+    expect(balance).toMatchObject({ balanceMinor: 12345n, raw });
+    expect(balance.raw).toEqual(raw);
+  });
+  it("validates transactions without stripping nulls from their immutable provider evidence", async () => {
+    const raw = {
+      entry_reference: "stable",
+      transaction_amount: { amount: "87.42", currency: "EUR" },
+      credit_debit_indicator: "DBIT",
+      status: "BOOK",
+      booking_date: "2026-10-01",
+      value_date: null,
+      creditor: null,
+      debtor: { name: null },
+      creditor_account: null,
+      debtor_account: { iban: null, other: null },
+      reference_number: null,
+      remittance_information: ["Purchase"],
+    };
+    requestFetch.mockResolvedValue(
+      Response.json({ transactions: [raw], continuation_key: "next" }),
+    );
+    const result = await new EnableBankingProvider(requestFetch).transactions({
+      accountId: "account",
+    });
+    expect(result.observations[0]).toMatchObject({
+      amountMinor: 8742n,
+      counterpartyName: null,
+      counterpartyIdentity: null,
+    });
+    expect(result.observations[0].raw).toEqual(raw);
+    expect(result.continuationKey).toBe("next");
+  });
+  it("validates required balance and transaction facts at the API boundary", async () => {
+    const provider = new EnableBankingProvider(requestFetch);
+    requestFetch.mockResolvedValue(
+      Response.json({
+        balances: [
+          {
+            name: "Booked",
+            balance_type: "ITBD",
+            balance_amount: { amount: null, currency: "EUR" },
+          },
+        ],
+      }),
+    );
+    await expect(provider.balances("account")).rejects.toThrow();
+    requestFetch.mockResolvedValue(
+      Response.json({
+        transactions: [
+          {
+            entry_reference: "stable",
+            transaction_amount: { amount: "12.00", currency: "EUR" },
+            credit_debit_indicator: "DBIT",
+            status: "BOOK",
+            booking_date: null,
+          },
+        ],
+      }),
+    );
+    await expect(
+      provider.transactions({ accountId: "account" }),
+    ).rejects.toThrow("no activity date");
+  });
   it("keeps all paging filters, even when a returned page is empty", async () => {
     requestFetch.mockResolvedValue(
       Response.json({ transactions: [], continuation_key: "next" }),
