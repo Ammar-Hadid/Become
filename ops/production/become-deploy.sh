@@ -93,10 +93,23 @@ done
 
 echo 'Creating coordinated database and media backup'
 BECOME_DEPLOY_LOCK_HELD=1 /usr/local/sbin/become-backup
-echo 'Backup complete; stopping Become for migration and switch'
+echo 'Backup complete; stopping all Become writers for migration and switch'
+worker_was_active=0
+if systemctl is-active --quiet become-bank-sync.service; then
+  worker_was_active=1
+  systemctl stop become-bank-sync.service || {
+    echo 'Could not stop bank worker; attempting to restore it.' >&2
+    systemctl start become-bank-sync.service || echo 'Bank worker restart failed; inspect the service.' >&2
+    exit 1
+  }
+fi
+start_writers() {
+  systemctl start become.service
+  if (( worker_was_active )); then systemctl start become-bank-sync.service; fi
+}
 systemctl stop become.service || {
   echo 'Could not stop Become cleanly; attempting to restore the existing service.' >&2
-  systemctl start become.service || echo 'Become restart failed; inspect the service immediately.' >&2
+  start_writers || echo 'Become writers restart failed; inspect the services immediately.' >&2
   exit 1
 }
 maintenance_started=1
@@ -137,6 +150,9 @@ on_exit() {
     fi
     if (( migrated )); then
       echo 'Deployment failed after migration; restoring previous application release.' >&2
+      # Stop processes belonging to the failed release before switching its symlink back.
+      if (( worker_was_active )); then systemctl stop become-bank-sync.service || true; fi
+      systemctl stop become.service || true
       if (( switched )); then
         ln -s "$old" "$base/current.rollback.$$" && mv -Tf "$base/current.rollback.$$" "$current" || {
           echo 'ROLLBACK FAILED: inspect current symlink and Become service immediately.' >&2
@@ -144,7 +160,7 @@ on_exit() {
         }
       fi
       systemctl reset-failed become.service || true
-      if systemctl start become.service && old_health; then
+      if start_writers && old_health; then
         echo "Previous release is healthy: $old" >&2
       else
         echo 'ROLLBACK HEALTH FAILED: previous release did not recover; inspect service and schema.' >&2
@@ -168,9 +184,12 @@ ln -s "$release" "$base/current.next"
 mv -Tf "$base/current.next" "$current"
 switched=1
 systemctl reset-failed become.service || true
-systemctl start become.service
+start_writers
 echo 'Checking application and database health'
 health "$commit" || { echo 'New release health check failed.' >&2; exit 1; }
+if (( worker_was_active )) && [[ -f $release/src/features/open-banking/sync/services/bank-worker.service.ts ]]; then
+  systemctl is-active --quiet become-bank-sync.service || { echo 'Bank sync worker did not start.' >&2; exit 1; }
+fi
 echo "Deployment successful: $release"
 # Keep the current and previous release, plus up to five recent release directories.
 mapfile -t known < <(find "$releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)

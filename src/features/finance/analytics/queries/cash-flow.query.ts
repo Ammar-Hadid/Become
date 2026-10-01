@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getFinanceCoverage } from "@/features/finance/measurements/queries/finance-coverage.query";
 import type { Period } from "@/lib/dates/utils/period.util";
 export async function getCashFlow(userId: string, period: Period) {
   const groups = await prisma.financialTransaction.groupBy({
@@ -20,6 +21,8 @@ export async function getCashFlow(userId: string, period: Period) {
       transfer: bigint;
       earnedWork: bigint;
       businessRevenue: bigint;
+      refunds: bigint;
+      netSpending: bigint;
     }
   >();
   for (const group of groups) {
@@ -29,6 +32,8 @@ export async function getCashFlow(userId: string, period: Period) {
       transfer: 0n,
       earnedWork: 0n,
       businessRevenue: 0n,
+      refunds: 0n,
+      netSpending: 0n,
     };
     const amount = group._sum.amountMinor ?? 0n;
     total[
@@ -41,7 +46,15 @@ export async function getCashFlow(userId: string, period: Period) {
     if (group.inflowKind === "EARNED_WORK") total.earnedWork += amount;
     if (group.inflowKind === "BUSINESS_REVENUE")
       total.businessRevenue += amount;
+    if (group.type === "INCOME" && group.inflowKind === "REFUND")
+      total.refunds += amount;
     totals.set(group.currency, total);
   }
-  return { totals, groups };
+  for (const total of totals.values())
+    total.netSpending = total.expense - total.refunds;
+  const coverage = await getFinanceCoverage(userId, {
+    start: period.start.toUTC().toJSDate(),
+    end: period.end.toUTC().toJSDate(),
+  });
+  return { totals, groups, coverage };
 }

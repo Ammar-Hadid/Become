@@ -53,6 +53,7 @@ install -o root -g root -m 0440 "$tmp" "$sudoers"
 # Install only Become backup units. Existing timer state is left as-is.
 install -o root -g root -m 0644 "$source_dir/become-backup.service" /etc/systemd/system/become-backup.service
 install -o root -g root -m 0644 "$source_dir/become-backup.timer" /etc/systemd/system/become-backup.timer
+install -o root -g root -m 0644 "$source_dir/become-bank-sync.service" /etc/systemd/system/become-bank-sync.service
 systemctl daemon-reload
-systemd-analyze verify /etc/systemd/system/become-backup.service /etc/systemd/system/become-backup.timer
+systemd-analyze verify /etc/systemd/system/become-backup.service /etc/systemd/system/become-backup.timer /etc/systemd/system/become-bank-sync.service
 echo 'Become deployment entry point and backup units installed. Run and verify a local backup before deploying.'

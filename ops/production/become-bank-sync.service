@@ -1,0 +1,30 @@
+[Unit]
+Description=Become durable bank synchronization worker
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/srv/apps/become/current/src/features/open-banking/sync/services/bank-worker.service.ts
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=become
+Group=become
+WorkingDirectory=/srv/apps/become/current
+EnvironmentFile=/etc/become/production.env
+Environment=PATH=/opt/become-node/bin:/usr/bin:/bin
+ExecStart=/opt/become-node/bin/node node_modules/tsx/dist/cli.mjs src/features/open-banking/sync/services/bank-worker.service.ts
+Restart=always
+RestartSec=10
+TimeoutStopSec=90
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

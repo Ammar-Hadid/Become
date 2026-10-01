@@ -37,11 +37,15 @@ partial="$base/$stamp.partial"
 complete="$base/$stamp"
 mkdir -m 0700 "$partial"
 restart=0
+restart_worker=0
 cleanup() {
   local status=$?
   trap - EXIT
   if (( restart )); then
     systemctl start become.service || status=1
+  fi
+  if (( restart_worker )); then
+    systemctl start become-bank-sync.service || status=1
   fi
   if (( status != 0 )); then
     echo "Backup failed. Inspect $base and journalctl -u become-backup; a local set may exist, and no old backup was deleted." >&2
@@ -49,6 +53,10 @@ cleanup() {
   exit "$status"
 }
 trap cleanup EXIT
+if systemctl is-active --quiet become-bank-sync.service; then
+  restart_worker=1
+  systemctl stop become-bank-sync.service
+fi
 if systemctl is-active --quiet become.service; then
   restart=1
   systemctl stop become.service
@@ -66,6 +74,10 @@ mv "$partial" "$complete"
 if (( restart )); then
   systemctl start become.service
   restart=0
+fi
+if (( restart_worker )); then
+  systemctl start become-bank-sync.service
+  restart_worker=0
 fi
 printf 'Local backup complete: %s\n' "$complete"
 if (( offsite_enabled )); then

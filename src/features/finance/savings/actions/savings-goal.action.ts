@@ -1,4 +1,5 @@
 "use server";
+import { linkSavingsGoalAccount } from "../services/goal-account-evidence.service";
 import { financeMutation } from "@/features/finance/services/finance-mutation.service";
 import {
   saveSavingsGoal,
@@ -57,6 +58,16 @@ export async function linkGoalExpenseAction(data: FormData) {
       String(data.get("transactionId")),
       String(data.get("goalId")),
       String(data.get("spending")),
+    ),
+  );
+}
+
+export async function linkGoalAccountAction(data: FormData) {
+  return financeMutation((userId) =>
+    linkSavingsGoalAccount(
+      userId,
+      String(data.get("id") ?? ""),
+      String(data.get("accountId") ?? "") || null,
     ),
   );
 }

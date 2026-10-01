@@ -9,6 +9,7 @@ import {
   storedDay,
 } from "@/features/finance/recurring/utils/recurring-calendar.util";
 import { transactionValues } from "@/features/finance/transactions/services/financial-transaction.service";
+import { matchRecurringOccurrence } from "@/features/finance/recurring/services/recurring-matching.service";
 import { resolveCounterpartyId } from "@/features/finance/counterparties/services/counterparty.service";
 
 export async function lockRecurring(
@@ -16,9 +17,10 @@ export async function lockRecurring(
   userId: string,
   id: string,
 ) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId + ":finance-evidence"},0))`;
   const rows = await tx.$queryRaw<
     { id: string }[]
-  >`SELECT id FROM recurring_expense WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE`;
+  >`SELECT id FROM recurring_expense WHERE id = ${id} AND "userId" = ${userId} FOR NO KEY UPDATE`;
   if (!rows.length) throw new FinanceError("Recurring expense not found.");
   return tx.recurringExpense.findUniqueOrThrow({ where: { id, userId } });
 }
@@ -28,11 +30,18 @@ export async function processRecurringThrough(
   definition: RecurringExpense,
   through: DateTime,
 ) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${definition.userId + ":finance-evidence"},0))`;
   if (definition.status !== "ACTIVE" || definition.archivedAt) return false;
   const start = localDay(definition.processedThroughOn).plus({ days: 1 });
   if (start > through) return false;
   const batchEnd = DateTime.min(through, start.plus({ days: 61 }));
   const dates = recurringDueDates(definition, start, batchEnd);
+  const account = await tx.financialAccount.findFirst({
+    where: { id: definition.accountId, userId: definition.userId },
+    select: { dataSource: true },
+  });
+  if (!account) throw new FinanceError("Recurring account is unavailable.");
+  const evidenceBacked = account.dataSource !== "MANUAL";
   for (const due of dates) {
     const dueOn = storedDay(due);
     // Existing/reopened occurrences are never automatically posted again.
@@ -41,8 +50,13 @@ export async function processRecurringThrough(
         recurringExpenseId_dueOn: { recurringExpenseId: definition.id, dueOn },
       },
     });
-    if (existing) continue;
-    const automatic = definition.postingBehavior === "AUTOMATIC";
+    if (existing) {
+      if (evidenceBacked && existing.status === "AWAITING_CONFIRMATION")
+        await matchRecurringOccurrence(tx, existing);
+      continue;
+    }
+    const automatic =
+      !evidenceBacked && definition.postingBehavior === "AUTOMATIC";
     const counterpartyId = automatic
       ? (definition.counterpartyId ??
         (await resolveCounterpartyId(tx, definition.userId, {
@@ -65,6 +79,7 @@ export async function processRecurringThrough(
         resolvedAt: automatic ? new Date() : null,
       },
     });
+    if (evidenceBacked) await matchRecurringOccurrence(tx, occurrence);
     if (automatic) {
       await tx.financialTransaction.create({
         data: {
@@ -147,7 +162,8 @@ export async function resolveRecurringOccurrence(
   input?: unknown,
 ) {
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM recurring_expense_occurrence WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId + ":finance-evidence"},0))`;
+    await tx.$queryRaw`SELECT id FROM recurring_expense_occurrence WHERE id = ${id} AND "userId" = ${userId} FOR NO KEY UPDATE`;
     const occurrence = await tx.recurringExpenseOccurrence.findFirst({
       where: { id, userId },
     });
@@ -158,6 +174,18 @@ export async function resolveRecurringOccurrence(
         where: { id },
         data: { status: "SKIPPED", resolvedAt: new Date() },
       });
+      return;
+    }
+    const account = await tx.financialAccount.findFirst({
+      where: { id: occurrence.accountId, userId },
+      select: { dataSource: true },
+    });
+    if (account?.dataSource !== "MANUAL") {
+      const matched = await matchRecurringOccurrence(tx, occurrence);
+      if (!matched)
+        throw new FinanceError(
+          "Await the imported payment or link an existing transaction. This account uses recorded evidence.",
+        );
       return;
     }
     const values = await transactionValues(tx, userId, input);
