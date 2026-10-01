@@ -50,12 +50,11 @@ const externalType = (value: string | null) =>
     : "Account type unavailable";
 
 export async function BankConnectionsPage({ userId }: { userId: string }) {
-  const [{ configured, connections }, institutions, accounts] =
-    await Promise.all([
-      getBankConnections(userId),
-      getBankInstitutions(),
-      getFinancialPosition(userId),
-    ]);
+  const [{ connections }, institutionCatalog, accounts] = await Promise.all([
+    getBankConnections(userId),
+    getBankInstitutions(),
+    getFinancialPosition(userId),
+  ]);
   const accountNames = new Map(
     accounts.map((account) => [account.id, account.name]),
   );
@@ -73,15 +72,16 @@ export async function BankConnectionsPage({ userId }: { userId: string }) {
     .setZone(APP_TIMEZONE)
     .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-  const connectDialog = configured ? (
-    <FinanceDialog
-      triggerLabel="Connect bank"
-      title="Connect a financial institution"
-      description="Choose your bank, then authorize read-only access on the bank's own screen."
-    >
-      <BankInstitutionPicker institutions={institutions} />
-    </FinanceDialog>
-  ) : undefined;
+  const connectDialog =
+    institutionCatalog.status === "AVAILABLE" ? (
+      <FinanceDialog
+        triggerLabel="Connect bank"
+        title="Connect a financial institution"
+        description="Choose your bank, then authorize read-only access on the bank's own screen."
+      >
+        <BankInstitutionPicker institutions={institutionCatalog.institutions} />
+      </FinanceDialog>
+    ) : undefined;
 
   return (
     <>
@@ -92,7 +92,7 @@ export async function BankConnectionsPage({ userId }: { userId: string }) {
         actions={connectDialog}
       />
 
-      {!configured && (
+      {institutionCatalog.status === "NOT_CONFIGURED" && (
         <div className="open-banking-setup-callout" role="status">
           <ShieldAlert aria-hidden="true" />
           <div>
@@ -100,6 +100,56 @@ export async function BankConnectionsPage({ userId }: { userId: string }) {
             <p>
               Statement imports and manual Finance continue to work. Live
               connection setup is currently unavailable.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {institutionCatalog.status === "ACCESS_DENIED" && (
+        <div className="open-banking-setup-callout" role="status">
+          <ShieldAlert aria-hidden="true" />
+          <div>
+            <strong>Enable Banking access needs attention</strong>
+            <p>
+              If the application has not been activated, open the{" "}
+              <a
+                className="text-primary underline"
+                href="https://enablebanking.com/cp/applications"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Enable Banking control panel
+              </a>
+              , choose Become, then select “Activate by linking accounts.” The
+              owner links their own accounts there, then returns here and
+              reloads the bank list.
+            </p>
+            <p>
+              If Become is already active, the server credentials may need
+              checking.
+            </p>
+            <p>
+              <a className="text-primary underline" href="/finance/connections">
+                Reload bank list
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {institutionCatalog.status === "UNAVAILABLE" && (
+        <div className="open-banking-setup-callout" role="status">
+          <RefreshCw aria-hidden="true" />
+          <div>
+            <strong>Bank list is temporarily unavailable</strong>
+            <p>
+              Existing bank connections and statement imports remain available.
+              Reload this page to try the bank list again.
+            </p>
+            <p>
+              <a className="text-primary underline" href="/finance/connections">
+                Reload bank list
+              </a>
             </p>
           </div>
         </div>

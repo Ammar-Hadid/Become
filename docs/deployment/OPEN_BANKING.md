@@ -14,6 +14,19 @@ Become uses a server-side Enable Banking adapter and a durable PostgreSQL-backed
 
 Live production coverage must be tested with the actual owner's consent. ABN and ING current accounts are the initial supported targets. Discover Revolut under both NL and LT; a listed institution is not proof that a Dutch user's account is accessible. ING Credit Card More initially uses statement imports, and its specific parser is verified only after testing a representative redacted export. Do not present personal ABN savings or ING More as confirmed live API coverage.
 
+## Owner handoff for the deployed site
+
+The production Become application is registered for read-only Account Information with callback `https://become.ammarhadid.com/api/open-banking/callback`. The VPS has its application ID and restricted server-side private key installed. Neither a key nor a bank password needs to be entered into Become.
+
+Before the first real connection:
+
+1. Open [Enable Banking API applications](https://enablebanking.com/cp/applications), find **Become** in **PRODUCTION**, and choose **Activate by linking accounts**. Complete the provider terms and bank authorization yourself for each personal account you want the application to access. This is the provider's account whitelist; do not use Request activation for this personal setup.
+2. Return to [Become → Finance → Financial data sources](https://become.ammarhadid.com/finance/connections), reload the bank list, choose **Connect bank**, and authorize the bank again. The control-panel whitelist does not authorize a Become session.
+3. Map ABN and ING current accounts to their existing Become accounts. Map the Revolut EUR current account to the existing Become Savings account; retain its name and SAVINGS classification. Do not delete or recreate accounts. Resolve suggested overlaps with existing manual transactions before counting them as new events.
+4. Use statement import for ING Credit Card More. Live Revolut access still needs verification with the actual account; institution listing alone is insufficient.
+
+Until personal activation is complete, Enable Banking can return HTTP 403 even though the server key is installed correctly. Become keeps existing connections, statement import and Finance accessible, explains denied provider access, and offers a bank-list retry. A 401/403 may also indicate a credential or permission problem if the provider application is already active.
+
 ## Worker installation
 
 The application server alone does not run scheduled jobs. The worker runs separately against the same database and deployed release:
@@ -48,7 +61,7 @@ Backups, deploys and rollbacks stop the active bank worker together with the app
 
 Inspect `journalctl -u become-bank-sync.service` for worker health. Logs omit provider bodies, tokens and account identifiers. Account details show last successful synchronization, consent expiry, connection state and the latest queued/running/failed job. Retry instructions are persisted on the connection and job so restarts cannot bypass them.
 
-Disconnect stops local synchronization and retains history. If remote consent revocation fails, Become reports the failure and the user can retry or revoke access inside their bank. Real bank authorization, provider signup, moving funds and deployment remain user-operated setup steps.
+Disconnect stops local synchronization and retains history. If remote consent revocation fails, Become reports the failure and the user can retry or revoke access inside their bank. Real bank authorization and moving funds remain user-operated steps. Application registration, server configuration and deployment can be completed by an authorized operator.
 
 ## Statement workflow and limits
 

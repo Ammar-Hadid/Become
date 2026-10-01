@@ -1,11 +1,34 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { getOpenBankingConfig } from "../../config/open-banking.config";
 import { getBankDataProvider } from "../../providers/adapters/enable-banking.adapter";
+import {
+  BankProviderError,
+  type BankInstitution,
+} from "../../providers/types/bank-provider.types";
 
-export async function getBankInstitutions() {
-  if (!getOpenBankingConfig().configured) return [];
-  // Revolut may be listed under Lithuania, including Dutch personal customers.
-  return getBankDataProvider().institutions(["NL", "LT"]);
+type BankInstitutionCatalog = {
+  status: "NOT_CONFIGURED" | "AVAILABLE" | "ACCESS_DENIED" | "UNAVAILABLE";
+  institutions: BankInstitution[];
+};
+
+export async function getBankInstitutions(): Promise<BankInstitutionCatalog> {
+  if (!getOpenBankingConfig().configured)
+    return { status: "NOT_CONFIGURED", institutions: [] };
+  try {
+    // Revolut may be listed under Lithuania, including Dutch personal customers.
+    const institutions = await getBankDataProvider().institutions(["NL", "LT"]);
+    return { status: "AVAILABLE", institutions };
+  } catch (error) {
+    // Catalog outages must not hide existing connections or statement imports.
+    // Expose only a bounded state; provider errors can contain sensitive details.
+    return {
+      status:
+        error instanceof BankProviderError && [401, 403].includes(error.status)
+          ? "ACCESS_DENIED"
+          : "UNAVAILABLE",
+      institutions: [],
+    };
+  }
 }
 
 export async function getBankConnections(userId: string) {
