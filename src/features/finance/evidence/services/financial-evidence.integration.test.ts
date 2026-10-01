@@ -37,7 +37,11 @@ import {
   previewStatementImport,
   confirmStatementImport,
 } from "@/features/finance/statements/services/statement-import.service";
-import { confirmEvidenceTransfer } from "./evidence-transfer.service";
+import {
+  confirmEvidenceTransfer,
+  classifyIncomingEvidence,
+} from "./evidence-transfer.service";
+import { linkExpectedIncomeTransaction } from "@/features/finance/forecast/services/expected-income-matching.service";
 import { financeToday } from "@/features/finance/recurring/utils/recurring-calendar.util";
 import { evidenceDay } from "../utils/financial-evidence.util";
 const enabled = process.env.RUN_FINANCE_INTEGRATION === "1";
@@ -111,6 +115,7 @@ describe.skipIf(!enabled)(
       await prisma.financialBalanceObservation.deleteMany({ where });
       await prisma.savingsGoalExpenseAllocation.deleteMany({ where });
       await prisma.paymentSessionAllocation.deleteMany({ where });
+      await prisma.businessReceiptAllocation.deleteMany({ where });
       await prisma.financialTransaction.deleteMany({ where });
       await prisma.financialStatementImport.deleteMany({ where });
       await prisma.financeExpectedIncome.deleteMany({ where });
@@ -904,6 +909,170 @@ describe.skipIf(!enabled)(
       expect(totals.find((x) => x.type === "TRANSFER")?._sum.amountMinor).toBe(
         20000n,
       );
+    });
+    it("preserves confirmed counterparty recognition when an incoming card movement is classified as a refund", async () => {
+      const counterparty = await prisma.counterparty.create({
+        data: { userId, name: "Merchant", normalizedName: "merchant" },
+      });
+      await prisma.counterpartyIdentity.create({
+        data: {
+          userId,
+          counterpartyId: counterparty.id,
+          identityKey: "merchant-refund",
+        },
+      });
+      const card = await prisma.financialAccount.create({
+        data: {
+          userId,
+          name: "Travel",
+          bankName: "ING",
+          type: "CREDIT_CARD",
+          currency: "EUR",
+          dataSource: "LIVE_SYNC",
+          repaymentMethod: "LINKED_ACCOUNT",
+          settlementAccountId: accountId,
+        },
+      });
+      const observation = await ingestFinancialEvidence(userId, {
+        ...input("card-refund", 950n),
+        externalAccountId: undefined,
+        accountId: card.id,
+        direction: "CREDIT",
+        counterpartyIdentity: "merchant-refund",
+      });
+      expect(observation.transactionId).toBeNull();
+      const refund = await classifyIncomingEvidence(
+        userId,
+        observation.id,
+        "REFUND",
+      );
+      expect(
+        await prisma.financialTransaction.findUniqueOrThrow({
+          where: { id: refund.id },
+        }),
+      ).toMatchObject({
+        counterpartyId: counterparty.id,
+        inflowKind: "REFUND",
+        reviewedAt: null,
+        expectedIncomeId: null,
+      });
+      expect(
+        (await getFinanceActivity(userId)).today.unknownCounterparties,
+      ).toBe(0);
+    });
+    it("reopens an expected-income occurrence when its actual receipt is corrected to a refund", async () => {
+      const counterparty = await prisma.counterparty.create({
+        data: { userId, name: "Employer", normalizedName: "employer" },
+      });
+      await prisma.counterpartyIdentity.create({
+        data: {
+          userId,
+          counterpartyId: counterparty.id,
+          identityKey: "employer",
+        },
+      });
+      const today = financeToday().toISODate()!;
+      const expectation = await prisma.financeExpectedIncome.create({
+        data: {
+          userId,
+          accountId,
+          counterpartyId: counterparty.id,
+          title: "Expected receipt",
+          amountMinor: 950n,
+          currency: "EUR",
+          dueOn: today,
+        },
+      });
+      const fact = await ingestFinancialEvidence(userId, {
+        ...input("receipt", 950n),
+        direction: "CREDIT",
+        counterpartyIdentity: "employer",
+      });
+      expect(
+        await prisma.financialTransaction.findUniqueOrThrow({
+          where: { id: fact.transactionId! },
+        }),
+      ).toMatchObject({ expectedIncomeId: expectation.id });
+      const purchase = await ingestFinancialEvidence(
+        userId,
+        input("purchase", 950n),
+      );
+      await interpretFinancialTransaction(userId, {
+        id: fact.transactionId!,
+        refundOfId: purchase.transactionId!,
+      });
+      await interpretFinancialTransaction(userId, {
+        id: fact.transactionId!,
+        notes: "Refund confirmed",
+      });
+      expect(
+        await prisma.financialTransaction.findUniqueOrThrow({
+          where: { id: fact.transactionId! },
+        }),
+      ).toMatchObject({
+        inflowKind: "REFUND",
+        expectedIncomeId: null,
+        expectedIncomeDueOn: null,
+        reviewedAt: null,
+      });
+      await expect(
+        prisma.$transaction((tx) =>
+          linkExpectedIncomeTransaction(
+            tx,
+            userId,
+            expectation.id,
+            fact.transactionId!,
+            today,
+          ),
+        ),
+      ).rejects.toThrow("unlinked incoming");
+    });
+    it("requires active business receipt allocations to be corrected before reclassifying income as a refund", async () => {
+      const purchase = await ingestFinancialEvidence(
+        userId,
+        input("allocated-purchase", 950n),
+      );
+      const receipt = await ingestFinancialEvidence(userId, {
+        ...input("allocated-income", 950n),
+        direction: "CREDIT",
+      });
+      const allocation = await prisma.businessReceiptAllocation.create({
+        data: {
+          userId,
+          transactionId: receipt.transactionId!,
+          originalTransactionId: receipt.transactionId!,
+          amountMinor: 950n,
+          currencySnapshot: "EUR",
+          occurredAtSnapshot: new Date(),
+        },
+      });
+      await expect(
+        interpretFinancialTransaction(userId, {
+          id: receipt.transactionId!,
+          refundOfId: purchase.transactionId!,
+        }),
+      ).rejects.toThrow("allocations");
+      expect(
+        await prisma.financialTransaction.findUniqueOrThrow({
+          where: { id: receipt.transactionId! },
+        }),
+      ).toMatchObject({ inflowKind: "OTHER", refundOfId: null });
+      await prisma.businessReceiptAllocation.update({
+        where: { id: allocation.id },
+        data: { withdrawnAt: new Date() },
+      });
+      await interpretFinancialTransaction(userId, {
+        id: receipt.transactionId!,
+        refundOfId: purchase.transactionId!,
+      });
+      expect(
+        await prisma.financialTransaction.findUniqueOrThrow({
+          where: { id: receipt.transactionId! },
+        }),
+      ).toMatchObject({
+        inflowKind: "REFUND",
+        refundOfId: purchase.transactionId!,
+      });
     });
     it("rejects foreign identities and editing/deleting imported facts", async () => {
       await expect(

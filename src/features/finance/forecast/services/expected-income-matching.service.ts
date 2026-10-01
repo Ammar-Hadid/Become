@@ -16,6 +16,7 @@ export async function matchImportedExpectedIncomeTransaction(
   if (
     !fact ||
     fact.type !== "INCOME" ||
+    fact.inflowKind === "REFUND" ||
     fact.expectedIncomeId ||
     !fact.counterpartyId
   )
@@ -95,6 +96,7 @@ export async function linkExpectedIncomeTransaction(
     return;
   if (
     fact.type !== "INCOME" ||
+    fact.inflowKind === "REFUND" ||
     fact.expectedIncomeId ||
     fact.accountId !== income.accountId ||
     fact.currency !== income.currency

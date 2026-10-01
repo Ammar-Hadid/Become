@@ -98,6 +98,7 @@ export async function interpretFinancialTransaction(
   const data = interpretation.parse(input);
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId + ":finance-evidence"},0))`;
+    await tx.$queryRaw`SELECT id FROM financial_transaction WHERE id=${data.id} AND "userId"=${userId} FOR NO KEY UPDATE`;
     const record = await tx.financialTransaction.findFirst({
       where: { id: data.id, userId },
       include: {
@@ -127,6 +128,18 @@ export async function interpretFinancialTransaction(
         "Owned transfers do not have an external counterparty.",
       );
     if (data.refundOfId) {
+      const [payments, receipts] = await Promise.all([
+        tx.paymentSessionAllocation.count({
+          where: { userId, transactionId: record.id },
+        }),
+        tx.businessReceiptAllocation.count({
+          where: { userId, transactionId: record.id, withdrawnAt: null },
+        }),
+      ]);
+      if (payments || receipts)
+        throw new FinanceError(
+          "Correct payment and business receipt allocations before classifying this income as a refund.",
+        );
       const original = await tx.financialTransaction.findFirst({
         where: {
           id: data.refundOfId,
@@ -149,7 +162,13 @@ export async function interpretFinancialTransaction(
         notes: data.notes,
         tags: data.tags,
         refundOfId: data.refundOfId,
-        ...(data.refundOfId ? { inflowKind: "REFUND" as const } : {}),
+        ...(data.refundOfId
+          ? {
+              inflowKind: "REFUND" as const,
+              expectedIncomeId: null,
+              expectedIncomeDueOn: null,
+            }
+          : {}),
       },
     });
     if (data.rememberIdentity && data.counterpartyId)

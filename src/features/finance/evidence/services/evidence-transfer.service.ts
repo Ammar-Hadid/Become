@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { FinanceError } from "@/features/finance/types/finance.types";
+import { matchImportedRecurringTransaction } from "@/features/finance/recurring/services/recurring-matching.service";
 import { evidenceWindow } from "../utils/financial-evidence.util";
 export async function confirmEvidenceTransfer(
   userId: string,
@@ -111,6 +112,8 @@ export async function confirmEvidenceTransfer(
               accountId: from,
               destinationAccountId: to,
               inflowKind: null,
+              expectedIncomeId: null,
+              expectedIncomeDueOn: null,
               counterpartyId: null,
               expenseCategoryId: null,
               reviewedAt: null,
@@ -178,12 +181,23 @@ export async function classifyIncomingEvidence(
         "Use current confirmed evidence from an active account.",
       );
     const o = link.observation;
+    const identity = o.counterpartyIdentity
+      ? await tx.counterpartyIdentity.findUnique({
+          where: {
+            userId_identityKey: { userId, identityKey: o.counterpartyIdentity },
+          },
+          include: { counterparty: true },
+        })
+      : null;
+    const known =
+      identity && !identity.counterparty.archivedAt ? identity : null;
     const transaction = await tx.financialTransaction.create({
       data: {
         userId,
         accountId: link.accountId,
         type: "INCOME",
         inflowKind,
+        counterpartyId: known?.counterpartyId,
         amountMinor: o.amountMinor,
         currency: o.currency,
         occurredAt: o.occurredAt,
@@ -201,6 +215,7 @@ export async function classifyIncomingEvidence(
         resolvedAt: new Date(),
       },
     });
+    await matchImportedRecurringTransaction(tx, userId, transaction.id);
     return { id: transaction.id };
   });
 }
