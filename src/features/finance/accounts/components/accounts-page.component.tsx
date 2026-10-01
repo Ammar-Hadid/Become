@@ -81,6 +81,32 @@ export async function AccountsPage({ userId }: { userId: string }) {
               const freshness = account.reconciledAt
                 ? Math.floor((now - account.reconciledAt.getTime()) / 86400000)
                 : null;
+              const liveBalance = account.balanceSource === "LIVE_SYNC";
+              const availableBalance =
+                liveBalance &&
+                account.type !== "CREDIT_CARD" &&
+                (account.balanceType === "ITAV" ||
+                  account.balanceType === "CLAV");
+              const bankFreshness =
+                freshness === null
+                  ? "Bank balance unavailable"
+                  : freshness === 0
+                    ? "Bank updated today"
+                    : "Bank updated " + freshness + "d ago";
+              const balanceQualification =
+                account.type === "CREDIT_CARD" && account.balanceMinor !== null
+                  ? liveBalance
+                    ? `Amount owed${account.balanceIncludesPending ? " · includes pending" : ""} · ${bankFreshness}`
+                    : "Amount owed"
+                  : liveBalance
+                    ? availableBalance
+                      ? `Available${account.balanceIncludesPending ? " · includes pending" : ""} · ${bankFreshness}`
+                      : `Synced balance${account.balanceIncludesPending ? " · includes pending" : ""} · ${bankFreshness}`
+                    : account.reconciledAt
+                      ? freshness === 0
+                        ? "Updated today"
+                        : "Checked " + freshness + "d ago"
+                      : "Needs a first check";
               return (
                 <Link
                   href={"/finance/accounts/" + account.id}
@@ -132,14 +158,7 @@ export async function AccountsPage({ userId }: { userId: string }) {
                         (freshness !== null && freshness > 30 ? "is-stale" : "")
                       }
                     >
-                      {account.type === "CREDIT_CARD" &&
-                      account.balanceMinor !== null
-                        ? "Amount owed"
-                        : account.reconciledAt
-                          ? freshness === 0
-                            ? "Updated today"
-                            : "Checked " + freshness + "d ago"
-                          : "Needs a first check"}
+                      {balanceQualification}
                     </span>
                   </span>
                   <ArrowRight aria-hidden="true" />

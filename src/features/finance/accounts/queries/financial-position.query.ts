@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
-const suitableBalanceTypes = [
+const recordedBalanceTypes = [
   "ITBD",
   "BOOKED",
   "INTERIM_BOOKED",
@@ -11,6 +11,9 @@ const suitableBalanceTypes = [
   "PRCD",
   "OPBD",
 ];
+// Available balances can include pending movements. On a credit card they may
+// describe borrowing capacity, so they cannot establish its liability.
+const suitableBalanceTypes = [...recordedBalanceTypes, "ITAV", "CLAV"];
 export async function getFinancialPosition(
   userId: string,
   at = new Date(),
@@ -60,7 +63,12 @@ export async function getFinancialPosition(
                 userId,
                 currency: account.currency,
                 observedAt: { lte: at },
-                balanceType: { in: suitableBalanceTypes },
+                balanceType: {
+                  in:
+                    account.type === "CREDIT_CARD"
+                      ? recordedBalanceTypes
+                      : suitableBalanceTypes,
+                },
                 OR: [
                   { accountId: account.id },
                   {
@@ -99,6 +107,7 @@ export async function getFinancialPosition(
       const qualification = {
         balanceSource: baseline?.source ?? null,
         balanceIncludesPending: baseline?.includesPending ?? false,
+        balanceType: useBank ? bank.balanceType : null,
         balanceCoverage: !baseline
           ? "UNAVAILABLE"
           : at.getTime() - baseline.date.getTime() > 30 * 86400000

@@ -24,6 +24,7 @@ import { updateCreditCardConfiguration } from "@/features/finance/accounts/servi
 import { createFinancialAccount } from "@/features/finance/accounts/services/financial-account.service";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
 import { getFinancialPosition } from "@/features/finance/accounts/queries/financial-position.query";
+import { getFinanceForecast } from "@/features/finance/forecast/queries/finance-forecast.query";
 import { getFinanceActivity } from "@/features/finance/review/queries/finance-activity.query";
 import {
   interpretFinancialTransaction,
@@ -148,6 +149,227 @@ describe.skipIf(!enabled)(
       activityDate,
       counterpartyName: "Unknown merchant",
       raw: { reference },
+    });
+    it.each(["ITAV", "CLAV"])(
+      "uses a current %s bank balance for existing Savings without replaying history or changing Savings policy",
+      async (balanceType) => {
+        const observedAt = new Date();
+        const reconciledAt = new Date(observedAt.getTime() - 16 * 86400000);
+        await prisma.financialAccount.update({
+          where: { id: accountId },
+          data: {
+            name: "My reserve",
+            type: "SAVINGS",
+            dataSource: "MANUAL",
+            includeInLiquidSavings: true,
+          },
+        });
+        const snapshot = await prisma.financialAccountBalanceSnapshot.create({
+          data: { userId, accountId, balanceMinor: 100000n, reconciledAt },
+        });
+        const manual = await prisma.financialTransaction.create({
+          data: {
+            userId,
+            accountId,
+            type: "EXPENSE",
+            amountMinor: 20000n,
+            currency: "EUR",
+            occurredAt: new Date(observedAt.getTime() - 10 * 86400000),
+            dataSource: "MANUAL",
+            notes: "Keep my history",
+            tags: ["existing"],
+          },
+        });
+        await prisma.financeCurrencyPolicy.create({
+          data: { userId, currency: "EUR", protectedReserveMinor: 20000n },
+        });
+        const goal = await prisma.savingsGoal.create({
+          data: {
+            userId,
+            name: "Existing goal",
+            currency: "EUR",
+            targetAmountMinor: 50000n,
+            allocatedAmountMinor: 10000n,
+          },
+        });
+        await prisma.externalBankAccount.update({
+          where: { id: externalId },
+          data: { financialAccountId: null },
+        });
+        await ingestFinancialEvidence(userId, {
+          ...input(
+            "old-bank-income",
+            40000n,
+            financeToday(observedAt).minus({ days: 5 }).toISODate()!,
+          ),
+          direction: "CREDIT",
+        });
+        await ingestFinancialBalance(userId, {
+          source: "LIVE_SYNC",
+          externalAccountId: externalId,
+          balanceMinor: 40000n,
+          currency: "EUR",
+          balanceType,
+          observedAt,
+          includesPending: true,
+          raw: {},
+        });
+        await mapExternalFinancialAccount(userId, externalId, accountId);
+        const position = (await getFinancialPosition(userId)).find(
+          (account) => account.id === accountId,
+        );
+        expect(position).toMatchObject({
+          id: accountId,
+          name: "My reserve",
+          type: "SAVINGS",
+          includeInLiquidSavings: true,
+          balanceMinor: 40000n,
+          balanceSource: "LIVE_SYNC",
+          balanceType,
+          balanceIncludesPending: true,
+          reconciledAt: observedAt,
+        });
+        expect(
+          await prisma.financialAccountBalanceSnapshot.findUnique({
+            where: { id: snapshot.id },
+          }),
+        ).toMatchObject(snapshot);
+        expect(
+          await prisma.financialTransaction.findUnique({
+            where: { id: manual.id },
+          }),
+        ).toMatchObject(manual);
+        expect(
+          await prisma.savingsGoal.findUnique({ where: { id: goal.id } }),
+        ).toMatchObject(goal);
+        const savings = await getSavings(userId);
+        expect(savings.pools[0]).toMatchObject({
+          liquid: 40000n,
+          reserve: 20000n,
+          allocated: 10000n,
+          unallocated: 10000n,
+        });
+        await prisma.financialAccount.update({
+          where: { id: accountId },
+          data: { includeInLiquidSavings: false },
+        });
+        expect((await getSavings(userId)).pools[0]).toMatchObject({
+          liquid: 0n,
+          reserve: 20000n,
+          allocated: 10000n,
+        });
+      },
+    );
+    it.each(["ITAV", "CLAV"])(
+      "does not interpret %s available credit as credit-card debt",
+      async (balanceType) => {
+        await prisma.financialAccount.update({
+          where: { id: accountId },
+          data: { type: "CREDIT_CARD", repaymentMethod: "MANUAL" },
+        });
+        await ingestFinancialBalance(userId, {
+          source: "LIVE_SYNC",
+          externalAccountId: externalId,
+          currency: "EUR",
+          balanceType,
+          balanceMinor: 85000n,
+          includesPending: true,
+          observedAt: new Date(),
+          raw: {},
+        });
+        expect(
+          (await getFinancialPosition(userId)).find(
+            (account) => account.id === accountId,
+          ),
+        ).toMatchObject({
+          balanceMinor: null,
+          balanceSource: null,
+          balanceType: null,
+        });
+      },
+    );
+    it("prefers a booked balance over an available balance from the same observation time", async () => {
+      const observedAt = new Date();
+      for (const balance of [
+        { balanceType: "ITAV", balanceMinor: 90000n, includesPending: true },
+        { balanceType: "ITBD", balanceMinor: 100000n, includesPending: false },
+      ]) {
+        await ingestFinancialBalance(userId, {
+          source: "LIVE_SYNC",
+          externalAccountId: externalId,
+          currency: "EUR",
+          observedAt,
+          raw: {},
+          ...balance,
+        });
+      }
+      expect(
+        (await getFinancialPosition(userId)).find(
+          (account) => account.id === accountId,
+        ),
+      ).toMatchObject({
+        balanceMinor: 100000n,
+        balanceType: "ITBD",
+        balanceIncludesPending: false,
+      });
+    });
+    it.each(["FWAV", "INFO", "OTHR"])(
+      "does not use %s as a current bank balance",
+      async (balanceType) => {
+        const observedAt = new Date();
+        const reconciledAt = new Date(observedAt.getTime() - 86400000);
+        await prisma.financialAccountBalanceSnapshot.create({
+          data: { userId, accountId, balanceMinor: 10000n, reconciledAt },
+        });
+        await ingestFinancialBalance(userId, {
+          source: "LIVE_SYNC",
+          externalAccountId: externalId,
+          currency: "EUR",
+          balanceType,
+          balanceMinor: 80000n,
+          includesPending: true,
+          observedAt,
+          raw: {},
+        });
+        expect(
+          (await getFinancialPosition(userId)).find(
+            (account) => account.id === accountId,
+          ),
+        ).toMatchObject({
+          balanceMinor: 10000n,
+          balanceSource: "MANUAL",
+          balanceType: null,
+          reconciledAt,
+        });
+      },
+    );
+    it("does not subtract pending activity again when forecast starts from an available bank balance", async () => {
+      const observedAt = new Date();
+      await prisma.financeCurrencyPolicy.create({
+        data: { userId, currency: "EUR", protectedReserveMinor: 0n },
+      });
+      await ingestFinancialBalance(userId, {
+        source: "LIVE_SYNC",
+        externalAccountId: externalId,
+        currency: "EUR",
+        balanceType: "ITAV",
+        balanceMinor: 90000n,
+        includesPending: true,
+        observedAt,
+        raw: {},
+      });
+      await ingestFinancialEvidence(userId, {
+        ...input("available-hold", 10000n),
+        status: "PENDING",
+      });
+      const forecast = await getFinanceForecast(userId, 7);
+      expect(forecast.currencies[0]).toMatchObject({
+        openingSpendableMinor: 90000n,
+      });
+      expect(forecast.currencies[0].points.at(-1)?.balanceMinor).toBe(90000n);
+      expect(forecast.currencies[0].qualifications).toContain(
+        "My everyday: the observed balance includes pending activity.",
+      );
     });
     it("creates and maps a new live account without inventing a starting balance or overriding fetched bank evidence", async () => {
       await prisma.externalBankAccount.update({
