@@ -21,6 +21,12 @@ const namesIssuer = (
   );
 
 const artworkForAccount = (type: string, institutionName?: string | null) => {
+  if (type === "CASH")
+    return {
+      src: "/finance/account-artwork/cash-wallet.webp",
+      tone: "dark",
+    } as const;
+
   if (type === "SAVINGS" || type === "INVESTMENT")
     return {
       src: "/finance/account-artwork/savings-reserve.webp",
@@ -67,6 +73,7 @@ export function AccountArtwork({
   compact?: boolean;
 }) {
   const artwork = artworkForAccount(type, institutionName);
+  const cash = type === "CASH";
   const reserve = type === "SAVINGS" || type === "INVESTMENT";
 
   return (
@@ -74,6 +81,7 @@ export function AccountArtwork({
       className={cn(
         "finance-account-artwork",
         compact && "finance-account-artwork--compact",
+        cash && "finance-account-artwork--cash",
         reserve && "finance-account-artwork--savings",
         type === "CREDIT_CARD" && "finance-account-artwork--credit",
         !maskedIdentifier && "finance-account-artwork--without-mask",
@@ -88,28 +96,30 @@ export function AccountArtwork({
         loading={compact ? "lazy" : "eager"}
         sizes={compact ? "132px" : "(max-width: 720px) 92vw, 420px"}
       />
-      <span className="finance-account-artwork-copy">
-        <span
-          className={cn(
-            "finance-account-artwork-bank",
-            !institutionName && "is-missing",
+      {!cash && (
+        <span className="finance-account-artwork-copy">
+          <span
+            className={cn(
+              "finance-account-artwork-bank",
+              !institutionName && "is-missing",
+            )}
+            title={institutionName || "Add bank name"}
+          >
+            {institutionName || "Add bank name"}
+          </span>
+          <span className="finance-account-artwork-type">
+            {reserve ? "Protected funds" : accountTypeLabel(type)}
+          </span>
+          <strong className="finance-account-artwork-name" title={name}>
+            {name}
+          </strong>
+          {maskedIdentifier && (
+            <small className="finance-account-artwork-mask">
+              {maskedIdentifier}
+            </small>
           )}
-          title={institutionName || "Add bank name"}
-        >
-          {institutionName || "Add bank name"}
         </span>
-        <span className="finance-account-artwork-type">
-          {reserve ? "Protected funds" : accountTypeLabel(type)}
-        </span>
-        <strong className="finance-account-artwork-name" title={name}>
-          {name}
-        </strong>
-        {maskedIdentifier && (
-          <small className="finance-account-artwork-mask">
-            {maskedIdentifier}
-          </small>
-        )}
-      </span>
+      )}
     </span>
   );
 }
