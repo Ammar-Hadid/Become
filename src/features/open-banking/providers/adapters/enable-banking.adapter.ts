@@ -129,7 +129,20 @@ export class EnableBankingProvider implements BankDataProvider {
       }),
     );
     const url = new URL(payload.url);
-    if (url.protocol !== "https:" || url.hostname !== "auth.enablebanking.com")
+    // Enable Banking serves its AIS consent flow on these provider-owned origins.
+    // The sandbox uses a separate origin from production; accept no lookalike hosts.
+    const authorizationHosts = [
+      "auth.enablebanking.com",
+      "tilisy.enablebanking.com",
+      "tilisy-sandbox.enablebanking.com",
+    ];
+    if (
+      url.protocol !== "https:" ||
+      !authorizationHosts.includes(url.hostname) ||
+      url.username ||
+      url.password ||
+      url.port
+    )
       throw new BankProviderError("INVALID_REDIRECT", 502);
     return { url: url.href };
   }

@@ -83,6 +83,50 @@ describe("Enable Banking API boundary", () => {
       strategy: "longest",
     });
   });
+  it.each([
+    "https://auth.enablebanking.com/ais/start?sessionid=test",
+    "https://tilisy.enablebanking.com/ais/start?sessionid=test",
+    "https://tilisy-sandbox.enablebanking.com/ais/start?sessionid=test",
+  ])("accepts the provider authorization address %s", async (url) => {
+    requestFetch.mockResolvedValue(Response.json({ url }));
+    const result = await new EnableBankingProvider(
+      requestFetch,
+    ).beginAuthorization({
+      institution: {
+        name: "Mock ASPSP",
+        country: "NL",
+        logoUrl: null,
+        maximumConsentSeconds: 3600,
+        requiredPsuHeaders: [],
+      },
+      state: "state",
+      userId: "owner",
+      redirectUrl: "http://localhost:3041/api/open-banking/callback",
+    });
+    expect(result).toEqual({ url });
+  });
+  it.each([
+    "http://auth.enablebanking.com/ais/start",
+    "https://auth.enablebanking.com.evil.example/ais/start",
+    "https://owner:password@auth.enablebanking.com/ais/start",
+    "https://auth.enablebanking.com:8443/ais/start",
+  ])("rejects an unsafe authorization address %s", async (url) => {
+    requestFetch.mockResolvedValue(Response.json({ url }));
+    await expect(
+      new EnableBankingProvider(requestFetch).beginAuthorization({
+        institution: {
+          name: "ING",
+          country: "NL",
+          logoUrl: null,
+          maximumConsentSeconds: 3600,
+          requiredPsuHeaders: [],
+        },
+        state: "state",
+        userId: "owner",
+        redirectUrl: "https://become.example/api/open-banking/callback",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_REDIRECT" });
+  });
   it("rejects unexpected authorization redirect hosts", async () => {
     requestFetch.mockResolvedValue(
       Response.json({ url: "https://example.org/phishing" }),
