@@ -83,6 +83,25 @@ describe("Enable Banking API boundary", () => {
       strategy: "longest",
     });
   });
+  it.each([undefined, "page-2"])(
+    "requests all available history without an unpaired end date (page %s)",
+    async (continuationKey) => {
+      requestFetch.mockResolvedValue(Response.json({ transactions: [] }));
+      await new EnableBankingProvider(requestFetch).transactions({
+        accountId: "account",
+        dateTo: "2026-10-01",
+        longestHistory: true,
+        continuationKey,
+      });
+      const url = new URL(String(requestFetch.mock.calls[0][0]));
+      expect(url.searchParams.has("date_from")).toBe(false);
+      expect(url.searchParams.has("date_to")).toBe(false);
+      expect(url.searchParams.get("strategy")).toBe("longest");
+      expect(url.searchParams.get("continuation_key")).toBe(
+        continuationKey ?? null,
+      );
+    },
+  );
   it.each([
     "https://auth.enablebanking.com/ais/start?sessionid=test",
     "https://tilisy.enablebanking.com/ais/start?sessionid=test",

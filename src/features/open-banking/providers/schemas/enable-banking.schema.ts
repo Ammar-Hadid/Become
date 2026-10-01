@@ -3,10 +3,14 @@ import { z } from "zod";
 const amount = z.object({ amount: z.string(), currency: z.string().length(3) });
 const accountIdentity = z
   .object({
-    iban: z.string().optional(),
+    iban: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
     other: z
       .object({ identification: z.string(), scheme_name: z.string() })
-      .optional(),
+      .nullish()
+      .transform((value) => value ?? undefined),
   })
   .passthrough();
 const party = z.object({ name: z.string().optional() }).passthrough();
@@ -52,7 +56,10 @@ export const enableBalanceSchema = z
     balance_amount: amount,
     balance_type: z.string(),
     last_change_date_time: z.string().optional(),
-    reference_date: z.iso.date().optional(),
+    reference_date: z.iso
+      .date()
+      .nullish()
+      .transform((value) => value ?? undefined),
   })
   .passthrough();
 export const enableSessionSchema = z.object({
