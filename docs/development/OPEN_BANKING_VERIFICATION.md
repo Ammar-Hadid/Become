@@ -1,6 +1,6 @@
 # Open Banking verification
 
-Verified in an isolated checkout on `feature/open-banking`, based on `dc66d834f25a96f15919525139060cbc90b504ab`. The primary checkout and its original uncommitted work were preserved. No production migration, deployment, bank consent or money movement occurred.
+Verified in an isolated checkout on `feature/open-banking`, based on `dc66d834f25a96f15919525139060cbc90b504ab`. The primary checkout and its original uncommitted work were preserved. The initial implementation verification used no production migration, deployment, bank consent or money movement; the later authorized setup is recorded separately below.
 
 ## Database and application contracts
 
@@ -59,3 +59,19 @@ The provider adapter and authorization callbacks were tested with controlled pro
 No individual card artwork was supplied by verified provider data. The included original card-face illustrations use issuer-inspired colours and physical card proportions, with the actual mapped/entered bank name and Become nickname rendered as live text. They contain no invented card number, expiry or network mark. Savings remains a reserve illustration.
 
 See [setup and operations](../deployment/OPEN_BANKING.md), [architecture](../decisions/OPEN_BANKING.md) and [research](../research/OPEN_BANKING.md).
+
+## Authorized deployment and provider setup — 1 October 2026
+
+The deployable release was recreated from the existing production `origin/main`, replaying only the eight Finance/Open Banking implementation commits. Unmerged Nexo work from the original feature base was excluded. The original feature checkout and the primary checkout's pre-existing changes were preserved. Release changes are tracked in [PR 19](https://github.com/Ammar-Hadid/Become/pull/19).
+
+Before production migration, a coordinated database/media backup was restored inside a network-isolated PostgreSQL 17 container on the VPS. All three new migrations applied. Fingerprints of existing account records, balance snapshots, transactions, Savings goals and allocations matched before and after; they also matched in production after deployment. Existing manual history received MANUAL provenance and no import-review backlog.
+
+The server-side worker is installed, enabled and running under the existing `become` service account. Backup, deploy and rollback procedures coordinate both database writers. The private production RSA key was generated on the VPS, remains outside the checkout, and is restricted to `root:become` mode `0640`. Only its public certificate was transferred for provider registration. No production database backup or private provider key was downloaded to the development machine.
+
+A separate Become Sandbox application was registered with the exact local callback. Its real sandbox API successfully authenticated and returned the Dutch Mock ASPSP. Browser handoff exposed the provider's actual `tilisy-sandbox.enablebanking.com` consent origin; the adapter was corrected to accept the three exact official consent hosts while rejecting non-HTTPS, embedded credentials, lookalike domains and unexpected ports. The seven new redirect cases passed. The enabled full suite now passes **486 tests**, with the same unrelated 126 tests skipped.
+
+The VPS kernel initially killed inactive-release builds when available RAM was exhausted. Next.js Webpack memory optimization was enabled and a restricted 2 GiB swap file was added after measuring the failure; the existing fstab was backed up before persisting the swap entry. Existing application and worker services remained active throughout the failed inactive builds.
+
+Required public `/privacy` and `/terms` pages were added. Both returned HTTP 200 without authentication and were inspected on desktop/mobile. Next.js, its matching ESLint package and DOMPurify were updated to patched releases; the transitive fast-uri patch was refreshed. The production dependency audit reports no known vulnerabilities. Lint, type checking and the production build passed, and all six desktop/mobile/tablet Finance browser journeys passed with the updated dependencies.
+
+The actual sandbox consent test remains pending the owner's explicit approval of Enable Banking's end-user terms. Real bank authorization, account whitelist activation, real Revolut access and exact ING More statement parsing remain unverified and owner-operated. No money was moved and no personal accounts were removed or recreated.
