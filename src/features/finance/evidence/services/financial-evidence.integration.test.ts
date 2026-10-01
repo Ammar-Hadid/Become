@@ -149,6 +149,54 @@ describe.skipIf(!enabled)(
       counterpartyName: "Unknown merchant",
       raw: { reference },
     });
+    it("creates and maps a new live account without inventing a starting balance or overriding fetched bank evidence", async () => {
+      await prisma.externalBankAccount.update({
+        where: { id: externalId },
+        data: { financialAccountId: null },
+      });
+      await ingestFinancialBalance(userId, {
+        source: "LIVE_SYNC",
+        externalAccountId: externalId,
+        balanceMinor: 245000n,
+        currency: "EUR",
+        balanceType: "CLBD",
+        observedAt: new Date(),
+        includesPending: false,
+        raw: {},
+      });
+      const created = await createFinancialAccount(userId, {
+        name: "New Daily",
+        bankName: "Test bank",
+        type: "CHECKING",
+        currency: "EUR",
+        includeInLiquidSavings: false,
+        dataSource: "LIVE_SYNC",
+      });
+      expect(
+        await prisma.financialAccountBalanceSnapshot.count({
+          where: { userId, accountId: created.id },
+        }),
+      ).toBe(0);
+      expect(
+        (await getFinancialPosition(userId)).find(
+          (account) => account.id === created.id,
+        )?.balanceMinor,
+      ).toBeNull();
+      await mapExternalFinancialAccount(userId, externalId, created.id);
+      expect(
+        (await getFinancialPosition(userId)).find(
+          (account) => account.id === created.id,
+        ),
+      ).toMatchObject({ balanceMinor: 245000n, balanceSource: "LIVE_SYNC" });
+      await expect(
+        createFinancialAccount(userId, {
+          name: "Manual unknown",
+          type: "CHECKING",
+          currency: "EUR",
+          includeInLiquidSavings: false,
+        }),
+      ).rejects.toThrow("observed balance");
+    });
     it("retries and concurrent ingestion converge; pending100 books87.42 once, corrections append", async () => {
       const pending = {
         ...input("payment", 10000n),

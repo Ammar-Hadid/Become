@@ -57,17 +57,20 @@ export async function createFinancialAccount(userId: string, input: unknown) {
         settlementDay: data.settlementDay ?? null,
       },
     });
-    await tx.financialAccountBalanceSnapshot.create({
-      data: {
-        userId,
-        accountId: account.id,
-        balanceMinor:
-          data.type === "CREDIT_CARD"
-            ? -(data.balanceMinor < 0n ? -data.balanceMinor : data.balanceMinor)
-            : data.balanceMinor,
-        reconciledAt: data.reconciledAt,
-      },
-    });
+    if (data.balanceMinor !== null && data.reconciledAt)
+      await tx.financialAccountBalanceSnapshot.create({
+        data: {
+          userId,
+          accountId: account.id,
+          balanceMinor:
+            data.type === "CREDIT_CARD"
+              ? -(data.balanceMinor < 0n
+                  ? -data.balanceMinor
+                  : data.balanceMinor)
+              : data.balanceMinor,
+          reconciledAt: data.reconciledAt,
+        },
+      });
     return { id: account.id };
   });
 }

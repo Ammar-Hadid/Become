@@ -43,10 +43,25 @@ export const accountSchema = z
       .or(z.literal(""))
       .optional(),
     settlementDay: z.coerce.number().int().min(1).max(31).optional(),
-    balance: z.string(),
-    reconciledAt: localTimestamp,
+    balance: z.string().trim().optional(),
+    reconciledAt: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      localTimestamp.optional(),
+    ),
   })
   .superRefine((value, context) => {
+    if (value.dataSource === "MANUAL" && !value.balance)
+      context.addIssue({
+        code: "custom",
+        message: "Enter the observed balance.",
+        path: ["balance"],
+      });
+    if (value.balance && !value.reconciledAt)
+      context.addIssue({
+        code: "custom",
+        message: "Enter when this balance was observed.",
+        path: ["reconciledAt"],
+      });
     if (value.type === "CREDIT_CARD" && !value.repaymentMethod)
       context.addIssue({
         code: "custom",
@@ -66,7 +81,9 @@ export const accountSchema = z
   })
   .transform((value, context) => ({
     ...value,
-    balanceMinor: moneyValue(value.balance, value.currency, context, true),
+    balanceMinor: value.balance
+      ? moneyValue(value.balance, value.currency, context, true)
+      : null,
   }));
 export const snapshotSchema = z.object({
   accountId: z.string().min(1),
