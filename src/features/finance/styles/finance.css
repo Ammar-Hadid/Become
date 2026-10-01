@@ -4479,6 +4479,21 @@
   box-shadow: none;
 }
 
+.finance-account-artwork--cash {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.finance-account-artwork--cash::after {
+  display: none;
+}
+
+.finance-account-artwork--cash > img {
+  object-fit: contain;
+}
+
 .finance-account-artwork-copy {
   position: absolute;
   inset: var(--spacing-xl);
@@ -4595,6 +4610,12 @@
   aspect-ratio: 4 / 3;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-panel);
+  box-shadow: none;
+}
+
+.finance-account-artwork--compact.finance-account-artwork--cash {
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
 }
 
