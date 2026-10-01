@@ -13,23 +13,64 @@ import {
 export async function createFinancialAccount(userId: string, input: unknown) {
   const data = accountSchema.parse(input);
   return prisma.$transaction(async (tx) => {
+    if (
+      data.type === "CREDIT_CARD" &&
+      data.repaymentMethod === "LINKED_ACCOUNT"
+    ) {
+      const settlement = await tx.financialAccount.findFirst({
+        where: {
+          id: data.settlementAccountId!,
+          userId,
+          currency: data.currency,
+          archivedAt: null,
+          type: { notIn: ["CREDIT_CARD", "INVESTMENT"] },
+        },
+      });
+      if (!settlement)
+        throw new FinanceError(
+          "Choose an active owned settlement account in the same currency.",
+        );
+    }
     const account = await tx.financialAccount.create({
       data: {
         userId,
         name: data.name,
+        bankName: data.bankName,
         type: data.type,
         currency: data.currency,
         includeInLiquidSavings: data.includeInLiquidSavings,
+        dataSource: data.dataSource,
+        repaymentMethod:
+          data.type === "CREDIT_CARD" ? data.repaymentMethod : null,
+        settlementAccountId:
+          data.type === "CREDIT_CARD" &&
+          data.repaymentMethod === "LINKED_ACCOUNT"
+            ? data.settlementAccountId
+            : null,
+        creditLimitMinor: data.creditLimit?.trim()
+          ? parseMoney(data.creditLimit, data.currency)
+          : null,
+        statementDueMinor: data.statementDue?.trim()
+          ? parseMoney(data.statementDue, data.currency)
+          : null,
+        statementDueOn: data.statementDueOn || null,
+        settlementDay: data.settlementDay ?? null,
       },
     });
-    await tx.financialAccountBalanceSnapshot.create({
-      data: {
-        userId,
-        accountId: account.id,
-        balanceMinor: data.balanceMinor,
-        reconciledAt: data.reconciledAt,
-      },
-    });
+    if (data.balanceMinor !== null && data.reconciledAt)
+      await tx.financialAccountBalanceSnapshot.create({
+        data: {
+          userId,
+          accountId: account.id,
+          balanceMinor:
+            data.type === "CREDIT_CARD"
+              ? -(data.balanceMinor < 0n
+                  ? -data.balanceMinor
+                  : data.balanceMinor)
+              : data.balanceMinor,
+          reconciledAt: data.reconciledAt,
+        },
+      });
     return { id: account.id };
   });
 }
@@ -49,6 +90,8 @@ export async function reconcileFinancialAccount(
     let balanceMinor: bigint;
     try {
       balanceMinor = parseMoney(data.balance, account.currency);
+      if (account.type === "CREDIT_CARD")
+        balanceMinor = -(balanceMinor < 0n ? -balanceMinor : balanceMinor);
     } catch (error) {
       throw new FinanceError((error as Error).message);
     }
@@ -90,6 +133,7 @@ export async function updateFinancialAccount(
   id: string,
   data: {
     name?: string;
+    bankName?: string | null;
     includeInLiquidSavings?: boolean;
     archivedAt?: Date | null;
   },

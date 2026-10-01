@@ -22,6 +22,12 @@ previous=$(readlink -f "$base/current")
 echo 'Confirm this release is compatible with the current database schema and media format.'
 echo "Current: $previous"
 echo "Target: $target"
+worker_was_active=0
+if systemctl is-active --quiet become-bank-sync.service; then worker_was_active=1; fi
+start_writers() {
+  systemctl start become.service
+  if (( worker_was_active )); then systemctl start become-bank-sync.service; fi
+}
 on_exit() {
   local result=$?
   trap - EXIT
@@ -37,16 +43,17 @@ on_exit() {
       }
     fi
     systemctl reset-failed become.service || true
-    systemctl start become.service || echo 'RECOVERY FAILED: Become did not start.' >&2
+    start_writers || echo 'RECOVERY FAILED: Become writers did not start.' >&2
   fi
   exit "$result"
 }
 trap on_exit EXIT
+if (( worker_was_active )); then systemctl stop become-bank-sync.service; fi
 systemctl stop become.service
 ln -s "$target" "$base/current.next"
 mv -Tf "$base/current.next" "$base/current"
 systemctl reset-failed become.service || true
-systemctl start become.service
+start_writers
 expected=$(cat "$target/RELEASE_COMMIT")
 for ((attempt=1; attempt<=30; attempt++)); do
   if [[ -f $target/src/app/api/health/route.ts ]]; then

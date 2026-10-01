@@ -56,3 +56,29 @@ export async function recurringStatusAction(data: FormData) {
     ),
   );
 }
+
+export async function linkOccurrenceAction(data: FormData) {
+  return financeMutation(async (userId) => {
+    const { prisma } = await import("@/lib/db/adapters/prisma.adapter");
+    const { linkRecurringTransaction } =
+      await import("@/features/finance/recurring/services/recurring-matching.service");
+    await prisma.$transaction((tx) =>
+      linkRecurringTransaction(
+        tx,
+        userId,
+        String(data.get("occurrenceId") || ""),
+        String(data.get("transactionId") || ""),
+      ),
+    );
+  });
+}
+export async function confirmRecurringSuggestionAction(data: FormData) {
+  return financeMutation(async (userId) => {
+    const { confirmRecurringSuggestion } =
+      await import("@/features/finance/recurring/services/recurring-suggestion.service");
+    return confirmRecurringSuggestion(
+      userId,
+      z.string().min(1).max(1000).parse(data.get("key")),
+    );
+  });
+}

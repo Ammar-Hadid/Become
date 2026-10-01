@@ -73,7 +73,15 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.paymentSessionAllocation.deleteMany({ where });
       await tx.savingsGoalExpenseAllocation.deleteMany({ where });
       await tx.engineeringEvidence.deleteMany({ where });
+      await tx.bankSyncJob.deleteMany({ where });
+      await tx.financialEvidenceLink.deleteMany({ where });
+      await tx.financialEvidenceObservation.deleteMany({ where });
+      await tx.financialBalanceObservation.deleteMany({ where });
+      await tx.financialStatementImport.deleteMany({ where });
+      await tx.externalBankAccount.deleteMany({ where });
+      await tx.bankConnection.deleteMany({ where });
       await tx.financialTransaction.deleteMany({ where });
+      await tx.financeExpectedIncome.deleteMany({ where });
       await tx.recurringExpenseOccurrence.deleteMany({ where });
       await tx.recurringExpense.deleteMany({ where });
       await tx.session.deleteMany({ where });
@@ -91,6 +99,7 @@ export async function deleteDisposableBrowserUser(id: string, email: string) {
       await tx.savingsGoal.deleteMany({ where });
       await tx.financialAccountBalanceSnapshot.deleteMany({ where });
       await tx.financialAccount.deleteMany({ where });
+      await tx.counterpartyIdentity.deleteMany({ where });
       await tx.expenseCategory.deleteMany({ where });
       await tx.counterparty.deleteMany({ where });
       await tx.engineeringProject.deleteMany({ where });

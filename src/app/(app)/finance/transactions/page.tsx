@@ -12,6 +12,11 @@ export default async function Page({
     type?: string;
     currency?: string;
     account?: string;
+    day?: string;
+    review?: string;
+    category?: string;
+    counterparty?: string;
+    selected?: string;
   }>;
 }) {
   const user = await getCurrentUser();

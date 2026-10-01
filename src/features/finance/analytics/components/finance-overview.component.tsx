@@ -37,6 +37,8 @@ import {
 import { CashMovementChart } from "@/features/finance/analytics/components/cash-movement-chart.component";
 import { FinancePeriodControl } from "@/features/finance/analytics/components/finance-period-control.component";
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
+import { FinanceActivity } from "@/features/finance/review/components/finance-activity.component";
+import { getFinanceActivity } from "@/features/finance/review/queries/finance-activity.query";
 import {
   FinanceEmptyState,
   FinancePageHeader,
@@ -78,6 +80,7 @@ export async function FinanceOverview({
   const cashBuckets = getCashMovementBuckets(period);
   const [
     position,
+    activity,
     attention,
     savings,
     cash,
@@ -90,6 +93,7 @@ export async function FinanceOverview({
     cashTimeline,
   ] = await Promise.all([
     getFinancialPosition(userId),
+    getFinanceActivity(userId),
     getFinanceAttention(userId),
     getSavings(userId),
     getCashFlow(userId, period),
@@ -164,6 +168,8 @@ export async function FinanceOverview({
           </Link>
         }
       />
+
+      <FinanceActivity activity={activity} />
 
       <section className="finance-cockpit" aria-label="Current position">
         <div className="finance-position-hero">
@@ -453,6 +459,14 @@ export async function FinanceOverview({
             <p className="finance-period-caption">
               {period.label} <span>compared with {previous.label}</span>
             </p>
+            <p className="finance-coverage-note">
+              {cash.coverage.complete ? (
+                <CheckCircle2 aria-hidden="true" />
+              ) : (
+                <AlertCircle aria-hidden="true" />
+              )}
+              <span>{cash.coverage.detail}</span>
+            </p>
             {!currencies.length ? (
               <FinanceEmptyState
                 icon={<ReceiptText aria-hidden="true" />}
@@ -476,6 +490,8 @@ export async function FinanceOverview({
                     transfer: 0n,
                     earnedWork: 0n,
                     businessRevenue: 0n,
+                    refunds: 0n,
+                    netSpending: 0n,
                   };
                   const prior = priorCash.totals.get(currency);
                   const before = startSavings.get(currency);
@@ -527,6 +543,24 @@ export async function FinanceOverview({
                           Internal transfers{" "}
                           <strong className="finance-number">
                             {formatMoney(current.transfer, currency)}
+                          </strong>
+                        </p>
+                        <p>
+                          Gross expenses{" "}
+                          <strong className="finance-number">
+                            {formatMoney(current.expense, currency)}
+                          </strong>
+                        </p>
+                        <p>
+                          Refunds{" "}
+                          <strong className="finance-number">
+                            {formatMoney(current.refunds, currency)}
+                          </strong>
+                        </p>
+                        <p>
+                          Net spending{" "}
+                          <strong className="finance-number">
+                            {formatMoney(current.netSpending, currency)}
                           </strong>
                         </p>
                         <p>

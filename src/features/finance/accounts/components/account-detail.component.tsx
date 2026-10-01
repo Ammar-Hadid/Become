@@ -11,6 +11,9 @@ import {
   Clock3,
   History,
   Settings2,
+  FileUp,
+  RefreshCw,
+  ShieldCheck,
 } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -21,6 +24,7 @@ import {
   FinanceEmptyState,
   FinanceField,
   FinancePageHeader,
+  FinanceSelect,
   FinanceSection,
 } from "@/features/finance/components/finance-field.component";
 import {
@@ -30,7 +34,16 @@ import {
   updateAccountAction,
 } from "@/features/finance/accounts/actions/financial-account.action";
 import { getFinancialPosition } from "@/features/finance/accounts/queries/financial-position.query";
+import { getFinancialAccountBanking } from "@/features/finance/accounts/queries/account-banking.query";
+import { AccountArtwork } from "@/features/finance/accounts/components/account-artwork.component";
+import { CreditCardConfigurationForm } from "@/features/finance/accounts/components/credit-card-configuration-form.component";
 import { getFinancialLedger } from "@/features/finance/transactions/queries/financial-ledger.query";
+import { BankConnectionControls } from "@/features/open-banking/connections/components/bank-connection-controls.component";
+import {
+  classifyIncomingEvidenceAction,
+  confirmEvidenceTransferAction,
+  resolveEvidenceAction,
+} from "@/features/finance/review/actions/financial-review.action";
 
 export async function AccountDetail({
   userId,
@@ -48,11 +61,27 @@ export async function AccountDetail({
   const at = account.archivedAt
     ? new Date(account.archivedAt.getTime() - 1)
     : new Date();
-  const [position, ledger] = await Promise.all([
+  const [position, ledger, banking] = await Promise.all([
     getFinancialPosition(userId, at),
     getFinancialLedger(userId, { account: id }),
+    getFinancialAccountBanking(userId, id),
   ]);
   const current = position.find((item) => item.id === id);
+  const settlementAccounts = position.filter(
+    (item) =>
+      item.id !== id &&
+      item.currency === account.currency &&
+      item.type !== "CREDIT_CARD" &&
+      !item.archivedAt,
+  );
+  const debtMinor =
+    account.type === "CREDIT_CARD" &&
+    current?.balanceMinor !== null &&
+    current?.balanceMinor !== undefined
+      ? current.balanceMinor < 0n
+        ? -current.balanceMinor
+        : current.balanceMinor
+      : null;
   const anchor = cursor
     ? await prisma.financialAccountBalanceSnapshot.findFirst({
         where: { id: cursor, userId, accountId: id },
@@ -91,7 +120,11 @@ export async function AccountDetail({
     >
       <input type="hidden" name="accountId" value={id} />
       <FinanceField
-        label={"What does this account contain? (" + account.currency + ")"}
+        label={
+          account.type === "CREDIT_CARD"
+            ? `Current outstanding balance (${account.currency})`
+            : `What does this account contain? (${account.currency})`
+        }
         aria-label={"Reconciled balance (" + account.currency + ")"}
         name="balance"
         inputMode="decimal"
@@ -110,8 +143,9 @@ export async function AccountDetail({
         placeholder="Anything useful about this check"
       />
       <p className="finance-form-note">
-        This tells Become what the account actually contained at this moment.
-        Transactions after it determine the recorded position above.
+        {account.type === "CREDIT_CARD"
+          ? "Enter the positive amount currently owed. Become records it as a liability."
+          : "This tells Become what the account actually contained at this moment. Transactions after it determine the recorded position above."}
       </p>
     </FinanceForm>
   );
@@ -144,13 +178,33 @@ export async function AccountDetail({
       />
 
       <section className="finance-account-hero">
+        <AccountArtwork
+          name={account.name}
+          type={account.type}
+          institutionName={
+            banking?.externalAccounts[0]?.connection.institutionName ??
+            account.bankName
+          }
+          maskedIdentifier={
+            banking?.externalAccounts[0]?.maskedIdentifier ?? null
+          }
+        />
         <div>
-          <p className="eyebrow">Current recorded position</p>
+          <p className="eyebrow">
+            {account.type === "CREDIT_CARD"
+              ? "Current debt"
+              : "Current recorded position"}
+          </p>
           <strong className="finance-number">
             {current?.balanceMinor === null ||
             current?.balanceMinor === undefined
               ? "Unavailable"
-              : formatMoney(current.balanceMinor, account.currency)}
+              : formatMoney(
+                  account.type === "CREDIT_CARD" && current.balanceMinor < 0n
+                    ? -current.balanceMinor
+                    : current.balanceMinor,
+                  account.currency,
+                )}
           </strong>
           <p>
             {account.archivedAt
@@ -197,8 +251,344 @@ export async function AccountDetail({
                 : "Everyday financial position"}
             </dd>
           </div>
+          <div>
+            <dt>Ingestion source</dt>
+            <dd>{account.dataSource.replaceAll("_", " ").toLowerCase()}</dd>
+          </div>
         </dl>
       </section>
+
+      {account.type === "CREDIT_CARD" && (
+        <FinanceSection
+          title="Card position"
+          description="Debt, available credit, pending activity and statement obligations are kept separate. A credit limit is never counted as an asset."
+          action={
+            !account.archivedAt ? (
+              <FinanceDialog
+                triggerLabel="Card settings"
+                title="Repayment and statement settings"
+                description="Update how this card is settled and record only values supplied by a statement, provider or you."
+                variant="secondary"
+              >
+                <CreditCardConfigurationForm
+                  account={{
+                    id: account.id,
+                    bankName:
+                      banking?.externalAccounts[0]?.connection
+                        .institutionName ??
+                      account.bankName ??
+                      "",
+                    currency: account.currency,
+                    repaymentMethod: account.repaymentMethod,
+                    settlementAccountId: account.settlementAccountId,
+                    creditLimit:
+                      account.creditLimitMinor === null
+                        ? ""
+                        : moneyDecimal(
+                            account.creditLimitMinor,
+                            account.currency,
+                          ),
+                    statementBalance:
+                      account.statementBalanceMinor === null
+                        ? ""
+                        : moneyDecimal(
+                            account.statementBalanceMinor,
+                            account.currency,
+                          ),
+                    statementDue:
+                      account.statementDueMinor === null
+                        ? ""
+                        : moneyDecimal(
+                            account.statementDueMinor,
+                            account.currency,
+                          ),
+                    statementDueOn: account.statementDueOn ?? "",
+                    settlementDay: account.settlementDay,
+                  }}
+                  settlementAccounts={settlementAccounts}
+                />
+              </FinanceDialog>
+            ) : undefined
+          }
+        >
+          <dl className="finance-card-position">
+            <div>
+              <dt>Current debt</dt>
+              <dd className="finance-number">
+                {debtMinor === null
+                  ? "Unavailable"
+                  : formatMoney(debtMinor, account.currency)}
+              </dd>
+              <small>
+                {current?.balanceIncludesPending
+                  ? "Observed balance includes pending movements"
+                  : "Booked position"}
+              </small>
+            </div>
+            <div>
+              <dt>Available credit</dt>
+              <dd className="finance-number">
+                {account.creditLimitMinor === null || debtMinor === null
+                  ? "Unavailable"
+                  : formatMoney(
+                      account.creditLimitMinor > debtMinor
+                        ? account.creditLimitMinor - debtMinor
+                        : 0n,
+                      account.currency,
+                    )}
+              </dd>
+              <small>
+                {account.creditLimitMinor === null
+                  ? "No credit limit supplied"
+                  : `Limit ${formatMoney(account.creditLimitMinor, account.currency)}`}
+              </small>
+            </div>
+            <div>
+              <dt>Pending card activity</dt>
+              <dd>{banking?.pending.length ?? 0}</dd>
+              <small>Shown separately from booked spending</small>
+            </div>
+            <div>
+              <dt>Statement due</dt>
+              <dd className="finance-number">
+                {account.statementDueMinor === null
+                  ? "Unavailable"
+                  : formatMoney(account.statementDueMinor, account.currency)}
+              </dd>
+              <small>
+                {account.statementDueOn
+                  ? `Due ${DateTime.fromISO(account.statementDueOn, { zone: APP_TIMEZONE }).toFormat("d LLL yyyy")}`
+                  : "No due date supplied"}
+              </small>
+            </div>
+          </dl>
+        </FinanceSection>
+      )}
+
+      <FinanceSection
+        title="Banking evidence"
+        description="Source health, coverage and pending observations qualify this account without changing its Become name or classification."
+        action={
+          <ShieldCheck aria-hidden="true" className="finance-heading-icon" />
+        }
+      >
+        <div className="finance-account-banking-grid">
+          <article className="finance-surface">
+            <p className="eyebrow">Active source</p>
+            <h3>{account.dataSource.replaceAll("_", " ").toLowerCase()}</h3>
+            <p>
+              {account.dataSource === "MANUAL"
+                ? "Balances and transactions come from your own entries."
+                : account.dataSource === "STATEMENT_IMPORT"
+                  ? "Confirmed statement evidence feeds this account."
+                  : "A consent-based connection supplies evidence through the background scheduler."}
+            </p>
+            <dl>
+              <div>
+                <dt>Coverage through</dt>
+                <dd>
+                  {banking?.coverage
+                    ? DateTime.fromISO(banking.coverage, {
+                        zone: APP_TIMEZONE,
+                      }).toFormat("d LLL yyyy")
+                    : "Unavailable"}
+                </dd>
+              </div>
+              <div>
+                <dt>Pending activity</dt>
+                <dd>{banking?.pending.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt>Needs evidence review</dt>
+                <dd>{banking?.unresolved.length ?? 0}</dd>
+              </div>
+            </dl>
+            <Link
+              className="finance-panel-link"
+              href={`/finance/statements?account=${account.id}`}
+            >
+              <FileUp aria-hidden="true" /> Import a statement
+            </Link>
+          </article>
+
+          {banking?.externalAccounts.map((external) => (
+            <article className="finance-surface" key={external.id}>
+              <header>
+                <div>
+                  <p className="eyebrow">Live connection</p>
+                  <h3>{external.connection.institutionName}</h3>
+                </div>
+                <span
+                  className={
+                    "finance-status-pill " +
+                    (external.connection.status === "CONNECTED"
+                      ? "finance-status-pill--positive"
+                      : "finance-status-pill--warning")
+                  }
+                >
+                  <RefreshCw aria-hidden="true" />
+                  {external.connection.status.replaceAll("_", " ")}
+                </span>
+              </header>
+              <p>
+                {external.maskedIdentifier || "Masked identifier unavailable"}
+                {external.externalType
+                  ? ` · ${external.externalType.replaceAll("_", " ").toLowerCase()}`
+                  : ""}
+              </p>
+              <dl>
+                <div>
+                  <dt>Last synchronized</dt>
+                  <dd>
+                    {external.connection.lastSuccessAt
+                      ? localDisplay(external.connection.lastSuccessAt)
+                      : "Not yet"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Consent expires</dt>
+                  <dd>
+                    {external.connection.consentExpiresAt
+                      ? localDisplay(external.connection.consentExpiresAt)
+                      : "Unavailable"}
+                  </dd>
+                </div>
+              </dl>
+              <BankConnectionControls connection={external.connection} />
+            </article>
+          ))}
+        </div>
+
+        {!!banking?.unresolved.length && (
+          <div className="finance-evidence-review" id="evidence-review">
+            <header>
+              <div>
+                <p className="eyebrow">Needs interpretation</p>
+                <h3>Imported activity awaiting your decision</h3>
+              </div>
+              <span className="finance-status-pill finance-status-pill--warning">
+                <AlertTriangle aria-hidden="true" />
+                {banking.unresolved.length} open
+              </span>
+            </header>
+            {banking.unresolved.map((link) => {
+              const incomingCardMovement =
+                account.type === "CREDIT_CARD" &&
+                link.observation.direction === "CREDIT" &&
+                link.status === "STAGED";
+              return (
+                <article key={link.observationId}>
+                  <div>
+                    <strong>
+                      {link.observation.counterpartyName ||
+                        "Unknown counterparty"}
+                    </strong>
+                    <small>
+                      {DateTime.fromISO(link.observation.activityOn, {
+                        zone: APP_TIMEZONE,
+                      }).toFormat("d LLL yyyy")}{" "}
+                      · {link.needsAttention}
+                    </small>
+                  </div>
+                  {incomingCardMovement ? (
+                    <div className="finance-evidence-actions">
+                      {!!settlementAccounts.length && (
+                        <FinanceForm
+                          action={confirmEvidenceTransferAction}
+                          submitLabel="Confirm repayment"
+                          submitVariant="secondary"
+                          formClassName="finance-evidence-transfer-form"
+                          showSuccess
+                        >
+                          <input
+                            type="hidden"
+                            name="observationId"
+                            value={link.observationId}
+                          />
+                          <FinanceSelect
+                            name="otherAccountId"
+                            label="Paid from"
+                            defaultValue={
+                              account.settlementAccountId ??
+                              settlementAccounts[0].id
+                            }
+                            required
+                          >
+                            {settlementAccounts.map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {candidate.name}
+                              </option>
+                            ))}
+                          </FinanceSelect>
+                        </FinanceForm>
+                      )}
+                      <FinanceForm
+                        action={classifyIncomingEvidenceAction}
+                        submitLabel="Classify as refund"
+                        submitVariant="ghost"
+                        formClassName=""
+                        showSuccess
+                      >
+                        <input
+                          type="hidden"
+                          name="observationId"
+                          value={link.observationId}
+                        />
+                        <input type="hidden" name="inflowKind" value="REFUND" />
+                      </FinanceForm>
+                      <FinanceForm
+                        action={classifyIncomingEvidenceAction}
+                        submitLabel="Other incoming"
+                        submitVariant="ghost"
+                        formClassName=""
+                        showSuccess
+                      >
+                        <input
+                          type="hidden"
+                          name="observationId"
+                          value={link.observationId}
+                        />
+                        <input type="hidden" name="inflowKind" value="OTHER" />
+                      </FinanceForm>
+                    </div>
+                  ) : (
+                    <div className="finance-evidence-actions">
+                      <FinanceForm
+                        action={resolveEvidenceAction}
+                        submitLabel="Keep as distinct"
+                        submitVariant="secondary"
+                        formClassName=""
+                        showSuccess
+                      >
+                        <input
+                          type="hidden"
+                          name="observationId"
+                          value={link.observationId}
+                        />
+                        <input type="hidden" name="decision" value="distinct" />
+                      </FinanceForm>
+                      <FinanceForm
+                        action={resolveEvidenceAction}
+                        submitLabel="Ignore evidence"
+                        submitVariant="ghost"
+                        formClassName=""
+                        showSuccess
+                      >
+                        <input
+                          type="hidden"
+                          name="observationId"
+                          value={link.observationId}
+                        />
+                        <input type="hidden" name="decision" value="ignore" />
+                      </FinanceForm>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </FinanceSection>
 
       <FinanceSection
         title="Recent movement"
@@ -374,6 +764,22 @@ export async function AccountDetail({
                 name="name"
                 required
                 defaultValue={account.name}
+              />
+              <FinanceField
+                label={
+                  account.type === "CREDIT_CARD"
+                    ? "Bank / card issuer"
+                    : "Bank / institution"
+                }
+                name="bankName"
+                defaultValue={
+                  banking?.externalAccounts[0]?.connection.institutionName ??
+                  account.bankName ??
+                  ""
+                }
+                placeholder="Add bank name"
+                required={account.type === "CREDIT_CARD"}
+                maxLength={120}
               />
               <label className="finance-checkbox-row">
                 <input

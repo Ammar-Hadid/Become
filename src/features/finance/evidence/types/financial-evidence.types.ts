@@ -1,0 +1,37 @@
+import type { Prisma, FinancialDataSource } from "@/generated/prisma/client";
+export type { FinancialDataSource } from "@/generated/prisma/client";
+export type FinancialEvidenceInput = {
+  source: FinancialDataSource;
+  deferProjection?: boolean;
+  externalAccountId?: string;
+  accountId?: string;
+  importId?: string;
+  reference?: string | null;
+  fingerprint?: string;
+  occurrenceKey?: string;
+  status: "PENDING" | "BOOKED";
+  direction: "DEBIT" | "CREDIT";
+  amountMinor: bigint;
+  currency: string;
+  activityDate: string;
+  occurredAt?: Date;
+  bookingDate?: string | null;
+  valueDate?: string | null;
+  datePrecision?: "DATE" | "INSTANT";
+  counterpartyName?: string | null;
+  counterpartyIdentity?: string | null;
+  ownCounterpartyIdentity?: string | null;
+  description?: string | null;
+  raw: Prisma.InputJsonValue;
+};
+export type FinancialBalanceInput = {
+  source: FinancialDataSource;
+  externalAccountId?: string;
+  accountId?: string;
+  balanceMinor: bigint;
+  currency: string;
+  balanceType: string;
+  includesPending: boolean;
+  observedAt: Date;
+  raw: Prisma.InputJsonValue;
+};

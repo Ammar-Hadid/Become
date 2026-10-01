@@ -10,12 +10,14 @@ import {
   PiggyBank,
   ReceiptText,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 const links = [
   ["/finance", "Overview", LayoutDashboard],
   ["/finance/transactions", "Transactions", ReceiptText],
   ["/finance/accounts", "Accounts", Landmark],
+  ["/finance/forecast", "Forecast", TrendingUp],
   ["/finance/savings", "Savings", PiggyBank],
   ["/finance/recurring", "Recurring", CalendarClock],
   ["/finance/opportunities", "Work & Opportunities", Sparkles],

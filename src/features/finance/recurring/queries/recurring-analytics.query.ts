@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
+import { getRecurringSuggestions } from "@/features/finance/recurring/queries/recurring-suggestions.query";
 import { getPeriod } from "@/lib/dates/utils/period.util";
 import {
   annualizedRecurringAmount,
@@ -86,5 +87,6 @@ export async function getRecurringAnalytics(userId: string) {
           .slice(0, 5),
       ),
     monthLabel: month.label,
+    suggestions: await getRecurringSuggestions(userId),
   };
 }

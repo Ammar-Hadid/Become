@@ -4,6 +4,7 @@ import { isBusinessReceipt } from "@/features/finance/business-receipts/services
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
+  AlertTriangle,
   ArrowDownLeft,
   ArrowLeft,
   ArrowRight,
@@ -13,6 +14,7 @@ import {
   PiggyBank,
   ReceiptText,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -33,6 +35,10 @@ import { getPaymentCandidates } from "@/features/finance/payments/queries/paymen
 import { linkGoalExpenseAction } from "@/features/finance/savings/actions/savings-goal.action";
 import { getCounterpartyOptions } from "@/features/finance/counterparties/queries/counterparty.query";
 import { getFinancialTransactionAccountOptions } from "@/features/finance/transactions/queries/financial-transaction-account-options.query";
+import {
+  interpretTransactionAction,
+  reviewTransactionAction,
+} from "@/features/finance/review/actions/financial-review.action";
 
 const typeCopy = {
   INCOME: { label: "Income", className: "is-income", icon: ArrowDownLeft },
@@ -63,6 +69,10 @@ export async function TransactionDetail({
       workSource: true,
       incomeOpportunity: true,
       recurringExpenseOccurrence: true,
+      evidenceLinks: {
+        where: { status: "PROJECTED" },
+        include: { observation: true },
+      },
     },
   });
   if (!record) notFound();
@@ -172,6 +182,14 @@ export async function TransactionDetail({
               <dd>Recurring commitment</dd>
             </div>
           )}
+          <div>
+            <dt>Source</dt>
+            <dd>{record.dataSource.toLowerCase().replaceAll("_", " ")}</dd>
+          </div>
+          <div>
+            <dt>Review</dt>
+            <dd>{record.reviewedAt ? "Reviewed" : "Needs review"}</dd>
+          </div>
         </dl>
         {record.notes && (
           <p className="finance-transaction-note">{record.notes}</p>
@@ -204,7 +222,14 @@ export async function TransactionDetail({
         </FinanceSection>
       )}
 
-      {isBusinessReceipt(record) && <BusinessReceipts userId={userId} transactionId={id} amountMinor={record.amountMinor} currency={record.currency} />}
+      {isBusinessReceipt(record) && (
+        <BusinessReceipts
+          userId={userId}
+          transactionId={id}
+          amountMinor={record.amountMinor}
+          currency={record.currency}
+        />
+      )}
 
       {record.type === "EXPENSE" && (
         <FinanceSection
@@ -265,48 +290,179 @@ export async function TransactionDetail({
         </FinanceSection>
       )}
 
-      <FinanceSection
-        title="Corrections"
-        description="Financial history should reflect what actually happened. Use these controls only to correct the recorded fact."
-        action={<ReceiptText className="finance-heading-icon" />}
-      >
-        <details className="finance-details">
-          <summary>Edit recorded fact</summary>
-          <div className="finance-details-body finance-settings-panel">
-            <TransactionForm
-              workOptions={workOptions}
-              accounts={accounts}
-              categories={categories}
-              counterparties={counterparties}
-              initial={{
-                ...record,
-                expenseCategoryName: record.expenseCategory?.name,
-                counterpartyName: record.counterparty?.name,
-                amount: moneyDecimal(record.amountMinor, record.currency),
-                occurredAt: DateTime.fromJSDate(record.occurredAt)
-                  .setZone(APP_TIMEZONE)
-                  .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"),
-              }}
-            />
-          </div>
-        </details>
-        <details className="finance-details finance-danger-details">
-          <summary>Delete as a correction</summary>
-          <div className="finance-details-body">
-            <p className="finance-quiet-copy">
-              Deleting changes recorded balances and removes linked financial
-              evidence. This cannot be undone here.
-            </p>
+      {record.dataSource !== "MANUAL" && (
+        <FinanceSection
+          title="Interpretation and review"
+          description="The imported amount, direction and source dates stay immutable. Your counterparty, category, notes, tags and review decision remain editable."
+          action={<ShieldCheck className="finance-heading-icon" />}
+        >
+          {!record.counterpartyId && record.type !== "TRANSFER" && (
+            <div className="finance-callout">
+              <AlertTriangle aria-hidden="true" />
+              Confirm a counterparty before marking this imported transaction
+              reviewed.
+            </div>
+          )}
+          <div className="finance-imported-interpretation finance-surface">
             <FinanceForm
-              action={deleteTransactionAction}
-              submitLabel="Confirm transaction deletion"
-              submitVariant="danger"
+              action={interpretTransactionAction}
+              submitLabel="Save interpretation"
+              submitVariant="secondary"
             >
-              <input type="hidden" name="id" value={id} />
+              <input type="hidden" name="id" value={record.id} />
+              {record.type !== "TRANSFER" && (
+                <FinanceSelect
+                  label="Counterparty"
+                  name="counterpartyId"
+                  defaultValue={record.counterpartyId ?? ""}
+                >
+                  <option value="">Unknown</option>
+                  {counterparties.map((counterparty) => (
+                    <option key={counterparty.id} value={counterparty.id}>
+                      {counterparty.name}
+                    </option>
+                  ))}
+                </FinanceSelect>
+              )}
+              {record.type === "EXPENSE" && (
+                <FinanceSelect
+                  label="Category"
+                  name="categoryId"
+                  defaultValue={record.expenseCategoryId ?? ""}
+                >
+                  <option value="">Uncategorized</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </FinanceSelect>
+              )}
+              <label>
+                <span className="field-label">Notes</span>
+                <textarea
+                  className="text-input finance-textarea"
+                  name="notes"
+                  defaultValue={record.notes ?? ""}
+                />
+              </label>
+              <FinanceField
+                label="Tags"
+                name="tags"
+                defaultValue={record.tags.join(", ")}
+                placeholder="Comma separated"
+              />
+              {record.evidenceLinks.some(
+                (link) => link.observation.counterpartyIdentity,
+              ) && (
+                <label className="finance-checkbox-row">
+                  <input type="checkbox" name="rememberIdentity" />
+                  <span>
+                    <strong>Remember this external identity</strong>
+                    <small>
+                      Apply this confirmed mapping to future evidence. Existing
+                      transactions remain unchanged.
+                    </small>
+                  </span>
+                </label>
+              )}
             </FinanceForm>
+            {!record.reviewedAt &&
+              (record.type === "TRANSFER" || record.counterpartyId) && (
+                <FinanceForm
+                  action={reviewTransactionAction}
+                  submitLabel="Mark transaction reviewed"
+                  submitVariant="primary"
+                >
+                  <input type="hidden" name="id" value={record.id} />
+                </FinanceForm>
+              )}
           </div>
-        </details>
-      </FinanceSection>
+
+          <details className="finance-raw-evidence finance-surface">
+            <summary>Raw bank evidence</summary>
+            <div>
+              {record.evidenceLinks.map((link) => (
+                <article key={link.observationId}>
+                  <dl>
+                    <div>
+                      <dt>Source</dt>
+                      <dd>
+                        {link.observation.source
+                          .toLowerCase()
+                          .replaceAll("_", " ")}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Activity date</dt>
+                      <dd>{link.observation.activityOn}</dd>
+                    </div>
+                    <div>
+                      <dt>Booking status</dt>
+                      <dd>{link.observation.bookingStatus.toLowerCase()}</dd>
+                    </div>
+                    <div>
+                      <dt>Reference</dt>
+                      <dd>
+                        {link.observation.externalReference ?? "Unavailable"}
+                      </dd>
+                    </div>
+                  </dl>
+                  {link.observation.description && (
+                    <p>{link.observation.description}</p>
+                  )}
+                  <pre>{JSON.stringify(link.observation.raw, null, 2)}</pre>
+                </article>
+              ))}
+            </div>
+          </details>
+        </FinanceSection>
+      )}
+
+      {record.dataSource === "MANUAL" && (
+        <FinanceSection
+          title="Corrections"
+          description="Financial history should reflect what actually happened. Use these controls only to correct the recorded fact."
+          action={<ReceiptText className="finance-heading-icon" />}
+        >
+          <details className="finance-details">
+            <summary>Edit recorded fact</summary>
+            <div className="finance-details-body finance-settings-panel">
+              <TransactionForm
+                workOptions={workOptions}
+                accounts={accounts}
+                categories={categories}
+                counterparties={counterparties}
+                initial={{
+                  ...record,
+                  expenseCategoryName: record.expenseCategory?.name,
+                  counterpartyName: record.counterparty?.name,
+                  amount: moneyDecimal(record.amountMinor, record.currency),
+                  occurredAt: DateTime.fromJSDate(record.occurredAt)
+                    .setZone(APP_TIMEZONE)
+                    .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"),
+                }}
+              />
+            </div>
+          </details>
+          <details className="finance-details finance-danger-details">
+            <summary>Delete as a correction</summary>
+            <div className="finance-details-body">
+              <p className="finance-quiet-copy">
+                Deleting changes recorded balances and removes linked financial
+                evidence. This cannot be undone here.
+              </p>
+              <FinanceForm
+                action={deleteTransactionAction}
+                submitLabel="Confirm transaction deletion"
+                submitVariant="danger"
+              >
+                <input type="hidden" name="id" value={id} />
+              </FinanceForm>
+            </div>
+          </details>
+        </FinanceSection>
+      )}
     </>
   );
 }

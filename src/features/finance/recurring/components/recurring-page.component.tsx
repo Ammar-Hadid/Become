@@ -183,7 +183,9 @@ export async function RecurringPage({ userId }: { userId: string }) {
                     {definition.account.name} ·{" "}
                     {frequencyCopy[definition.frequency]} ·{" "}
                     {definition.postingBehavior === "AUTOMATIC"
-                      ? "Records automatically"
+                      ? definition.account.dataSource === "MANUAL"
+                        ? "Records automatically"
+                        : "Matched to imported payments"
                       : "You confirm first"}
                   </p>
                 </div>
@@ -269,7 +271,9 @@ export async function RecurringPage({ userId }: { userId: string }) {
                     </strong>
                     <span>
                       {definition.postingBehavior === "AUTOMATIC"
-                        ? "Automatic"
+                        ? definition.account.dataSource === "MANUAL"
+                          ? "Automatic"
+                          : "Matched to imported payments"
                         : "Confirm first"}
                     </span>
                   </div>

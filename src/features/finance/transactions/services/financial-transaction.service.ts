@@ -1,6 +1,10 @@
+import { matchImportedRecurringTransaction } from "@/features/finance/recurring/services/recurring-matching.service";
 import { lockFinancialTransaction } from "@/features/finance/transactions/services/transaction-lock.service";
 export { lockFinancialTransaction } from "@/features/finance/transactions/services/transaction-lock.service";
-import { validateBusinessReceiptEdit, withdrawDeletedReceipt } from "@/features/finance/business-receipts/services/business-receipt.service";
+import {
+  validateBusinessReceiptEdit,
+  withdrawDeletedReceipt,
+} from "@/features/finance/business-receipts/services/business-receipt.service";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { transactionSchema } from "@/features/finance/transactions/schemas/financial-transaction.schema";
@@ -117,8 +121,26 @@ export async function saveFinancialTransaction(
   id?: string,
 ) {
   return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId + ":finance-evidence"},0))`;
     if (id) await lockFinancialTransaction(tx, userId, id);
     const data = await transactionValues(tx, userId, input);
+    if (id) {
+      const imported = await tx.financialTransaction.findFirst({
+        where: { id, userId, evidenceLinks: { some: { status: "PROJECTED" } } },
+      });
+      if (
+        imported &&
+        (imported.amountMinor !== data.amountMinor ||
+          imported.currency !== data.currency ||
+          imported.accountId !== data.accountId ||
+          imported.occurredAt.getTime() !== data.occurredAt.getTime() ||
+          imported.type !== data.type ||
+          imported.destinationAccountId !== data.destinationAccountId)
+      )
+        throw new FinanceError(
+          "Imported amounts, accounts, direction and bank dates are immutable. Edit Become interpretation instead.",
+        );
+    }
     await assertTransferFunds(tx, userId, data, id);
     if (id) {
       const old = await tx.financialTransaction.findUniqueOrThrow({
@@ -177,6 +199,8 @@ export async function saveFinancialTransaction(
     const record = id
       ? await tx.financialTransaction.update({ where: { id, userId }, data })
       : await tx.financialTransaction.create({ data });
+    if (record.type === "INCOME")
+      await matchImportedRecurringTransaction(tx, userId, record.id);
     return { id: record.id };
   });
 }
@@ -186,6 +210,14 @@ export async function deleteFinancialTransaction(userId: string, id: string) {
     const record = await tx.financialTransaction.findUniqueOrThrow({
       where: { id, userId },
     });
+    if (
+      await tx.financialEvidenceLink.findFirst({
+        where: { userId, transactionId: id },
+      })
+    )
+      throw new FinanceError(
+        "Imported events retain their evidence. Resolve or exclude the evidence instead of deleting it.",
+      );
     await invalidatePaymentAttribution(tx, userId, id);
     await tx.savingsGoal.updateMany({
       where: {

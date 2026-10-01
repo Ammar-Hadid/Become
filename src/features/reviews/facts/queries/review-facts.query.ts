@@ -1,3 +1,4 @@
+import { getFinanceCoverage } from "@/features/finance/measurements/queries/finance-coverage.query";
 import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import { readSessionReviewDomainTime } from "@/features/sessions/measurements/queries/session-review-domain-time.query";
 import { measurePacket } from "@/features/reviews/facts/utils/review-payload.util";
@@ -62,7 +63,27 @@ export async function readReviewFacts(
         : { items: [], omitted: 0 },
       readReviewSeasonChapters(tx, userId, period),
     ]);
-  const metrics = reviewMetrics(current, previous, period, domains);
+  const financeCoverage = domains.includes("finance")
+    ? await getFinanceCoverage(
+        userId,
+        { start: scope.start, end: scope.end },
+        at,
+        tx,
+      )
+    : null;
+  const metrics = reviewMetrics(current, previous, period, domains).map(
+    (metric) =>
+      metric.domain === "finance" && financeCoverage
+        ? {
+            ...metric,
+            qualification: `${metric.qualification} ${financeCoverage.detail}`,
+            fingerprint: reviewFingerprint({
+              base: metric.fingerprint,
+              coverage: financeCoverage,
+            }),
+          }
+        : metric,
+  );
   const totalSeconds = Number(
     current.find((m) => m.metricKey === "sessions.focused")?.value ?? 0,
   );
@@ -169,12 +190,18 @@ export async function readReviewFacts(
       return {
         domain,
         state: recorded ? "RECORDED" : "NOT_RECORDED",
-        detail: recorded
-          ? "Qualified records are available. Absence of other records does not establish inactivity."
-          : "No qualifying records in this window; recorded counts are zero, while unrecorded outcomes remain unknown.",
+        detail:
+          domain === "finance" && financeCoverage
+            ? financeCoverage.detail
+            : recorded
+              ? "Qualified records are available. Absence of other records does not establish inactivity."
+              : "No qualifying records in this window; recorded counts are zero, while unrecorded outcomes remain unknown.",
       };
     }),
     warnings: [
+      ...(financeCoverage && !financeCoverage.complete
+        ? [financeCoverage.detail]
+        : []),
       "Facts use evidence available at evaluation time, including later corrections. They do not reconstruct everything known historically.",
       "Money is separated by currency and classification. Business receipt allocations are a perspective on Finance money, not additional income.",
       ...(period.state === "OPEN"
