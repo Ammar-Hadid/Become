@@ -291,6 +291,8 @@ async function applyCorrection(
   o: FinancialEvidenceObservation,
   transactionId: string,
 ) {
+  // Allocation writers lock the event first; take the same lock before inspecting amounts or sessions.
+  await db.$queryRaw`SELECT id FROM financial_transaction WHERE id=${transactionId} AND "userId"=${userId} FOR NO KEY UPDATE`;
   const old = await db.financialTransaction.findUniqueOrThrow({
     where: { id: transactionId, userId },
   });

@@ -43,6 +43,7 @@ export async function confirmEvidenceTransfer(
     const ids = [from, to].sort();
     await tx.$queryRaw`SELECT id FROM financial_account WHERE id IN (${ids[0]},${ids[1]}) AND "userId"=${userId} ORDER BY id FOR NO KEY UPDATE`;
     if (link.transactionId) {
+      await tx.$queryRaw`SELECT id FROM financial_transaction WHERE id=${link.transactionId} AND "userId"=${userId} FOR NO KEY UPDATE`;
       const old = await tx.financialTransaction.findUniqueOrThrow({
         where: { id: link.transactionId, userId },
         include: {
