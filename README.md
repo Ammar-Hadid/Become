@@ -40,7 +40,7 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-COTS discovery uses category-specific external sources; credentialed adapters require setup. Nexo supports explicit, reviewed Entrepreneurship synthesis; COTS AI, Gmail, and social-platform integrations remain deferred. Finance has no bank integration or FX conversion.
+COTS discovery uses category-specific external sources; credentialed adapters require setup. Nexo supports explicit, reviewed Entrepreneurship synthesis; COTS AI, Gmail, and social-platform integrations remain deferred. Finance includes consent-based Open Banking integration, statement imports and deterministic forecasting. Provider setup and real-account consent are required; FX conversion remains outside the model.
 
 ## Entrepreneurship and Nexo
 
@@ -290,8 +290,8 @@ underfunding without changing allocations. Completing a goal never creates an
 expense or silently releases savings. Changes to a completed goal's spending
 flag completion for review.
 
-Recurring automatic posting records the user's scheduled assumption; it is not
-bank verification. An authenticated action checks due expenses on Finance entry;
+For manual accounts, recurring automatic posting records the user's scheduled assumption; it is not
+bank verification. Imported accounts instead match scheduled expectations to actual evidence. An authenticated action checks due expenses on Finance entry;
 there is also a Check due expenses button. Processing uses bounded batches and
 unique occurrence/posting keys. This does not guarantee background execution.
 Deleting a generated expense reopens its occurrence for manual confirmation.
@@ -306,6 +306,23 @@ Run `pnpm test:finance:integration` against local PostgreSQL after applying
 migrations. It creates isolated test users, exercises actual foreign keys and
 concurrent allocation/recurrence mutations, and cleans up fixtures. Finance
 Playwright tests likewise clean up their own users. No bank credentials are used.
+
+## Finance Open Banking
+
+Finance supports LIVE_SYNC, STATEMENT_IMPORT and MANUAL through one evidence and ledger pipeline. Enable Banking is the initial personal-account adapter; ING More starts with CSV/text-PDF statements. Existing account IDs, nicknames and Savings policy survive external mapping and changes of source. Imported facts are immutable while categories, counterparties, notes, tags and review remain editable.
+
+Today and previous unresolved days have separate review sections. Accounts expose connection health, freshness and masked external identity. Credit cards require a settlement account for linked repayment. Forecast provides 7/30/90-day explained projections, recurring suggestions and confirmed expected income; balance-only investments and liabilities remain separate per currency.
+
+Apply the additive migrations and regenerate Prisma before running the app. Start the durable worker with `pnpm bank:worker` after configuring server-only credentials and provider policy. Follow [Open Banking setup](docs/deployment/OPEN_BANKING.md), [integration contracts](docs/decisions/OPEN_BANKING.md) and [research](docs/research/OPEN_BANKING.md). Real Revolut coverage and exact ING statement parsing remain setup checks, not claims of working production connections.
+
+The isolated feature acceptance suites are opt-in:
+
+```bash
+RUN_FINANCE_INTEGRATION=1 RUN_OPEN_BANKING_INTEGRATION=1 pnpm test
+BECOME_E2E_PORT=3041 pnpm exec playwright test e2e/open-banking.spec.ts
+```
+
+Use a dedicated migrated local PostgreSQL test database. No real bank credentials or production deployment are needed for these checks.
 
 ## Entrepreneurship (Phase 4)
 
