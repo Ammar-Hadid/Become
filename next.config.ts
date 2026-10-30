@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   distDir: process.env.BECOME_E2E_PORT
     ? `.next-e2e-${process.env.BECOME_E2E_PORT}`
     : undefined,
+  // The standalone typecheck runs before deployment. Repeating it inside the
+  // memory-capped VPS build exceeds the Node heap limit.
+  typescript: { ignoreBuildErrors: true },
   experimental: {
     // Keep inactive-release builds within the shared VPS memory budget.
     webpackMemoryOptimizations: true,
