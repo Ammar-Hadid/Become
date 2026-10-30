@@ -1,0 +1,2 @@
+# Local-only demo artwork remains in Git but is not part of production releases.
+assets/living-seasons/levi-2026-q4/* export-ignore
