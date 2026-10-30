@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { test, expect } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 test("currency menus support keyboard selection, saving, reset, and optional filters", async ({
   page,
@@ -14,10 +15,7 @@ test("currency menus support keyboard selection, saving, reset, and optional fil
     .fill(`currency-${randomUUID()}@example.test`);
   await page.getByTestId("password-input").fill("currency-test-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL("/");
-  await expect(
-    page.getByRole("heading", { level: 1, name: /Currency/ }),
-  ).toBeVisible();
+  await deferAutomaticSeasonOpening(page);
   await page.goto("/finance/accounts");
   await page.getByRole("button", { name: "Add account", exact: true }).click();
   const dialog = page.getByRole("dialog");

@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircleMore } from "lucide-react";
@@ -79,7 +85,7 @@ function DecisionReflectionForm({
       </div>
       <label className="thinking-form-field">
         <span>Reflected on</span>
-        <input
+        <Input
           type="date"
           name="reflectedOn"
           value={reflectedOn}
@@ -89,7 +95,7 @@ function DecisionReflectionForm({
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>What did you learn?</span>
-        <textarea
+        <Textarea
           name="reflection"
           value={reflection}
           onChange={(event) => setReflection(event.target.value)}
@@ -105,13 +111,9 @@ function DecisionReflectionForm({
         </p>
       )}
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Add reflection"}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -126,12 +128,12 @@ export function DecisionReflection({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
+      variant="secondary"
       eyebrow="Look back honestly"
       triggerLabel="Add reflection"
       title="How did the decision hold up?"
       description="Record what became clear after the choice had time to play out."
-      unstyledTrigger
-      className="thinking-secondary-action"
       triggerIcon={<MessageCircleMore aria-hidden="true" />}
     >
       <DecisionReflectionForm

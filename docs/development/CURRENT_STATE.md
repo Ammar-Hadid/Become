@@ -1,5 +1,8 @@
 # Current development state
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Phases 1–7 are merged into the repository, including the completed Content/script-editor and thumbnail work, persistent session pause/resume, COTS curation, and the review/finale experience. Production preparation is documented in [the deployment walkthrough](../deployment/PRODUCTION.md). The repository is authoritative for what exists; the master specification also describes future work. See [Phase 7 verification](../decisions/PHASE_7.md) for acceptance details and migration isolation.
 
 ## Available now
@@ -25,15 +28,19 @@ Phases 1–7 are merged into the repository, including the completed Content/scr
   exact source-qualified criteria, dated manual judgments, independent experiments,
   meaningful history, private filesystem media, manual quotes and chapter library.
   See [Phase 5 decisions](../decisions/PHASE_5.md).
-- COTS: explicit source category and identity context, external image/text
-  discovery, durable selections and imports, private local previews, collection
-  reuse/preferences, contextual seasonal presence, and proactive opening with
-  persistent deferral. See [Phase 5.5 setup and limits](../decisions/PHASE_5_5.md).
+- COTS: source category and identity context, retained character suggestions,
+  Character-first six-stage onboarding with catalogue-backed identity confirmation,
+  original-image review, AI profile/intent drafting and the integrated Living Season
+  workspace. Generic image and quote search remain removed; character-bound
+  source images can be retrieved and imported privately. The legacy outer
+  opening stages, reflection/title/intention editing, Season goal assignment,
+  poster crop flow, and legacy Standards/Images/Words/Finalization authoring
+  are removed; stored history remains readable.
 - Content: one work/variants/releases/channels, owned thumbnails, dedicated rich script editing with autosave and conflict recovery, DOCX/TXT import/export, linked Sessions, explicit release corrections and dated manual lifetime observations.
 - Ideas and Decisions: global captures, explicit promotion into canonical work, original reasoning, changes, supersession and later reflections.
 - Reviews: all four periods, qualified cross-domain facts, historical intention coverage, source pagination, user-selected moments, optional writing, immutable final editions and explicit amendments. Multi-quarter reviews keep distinct Season chapters.
 - Season transition: prior participating Season → progressively revealed finale → existing current opening, with quiet no-COTS/sparse paths, persistent deferral/progress, skip/replay, duplicate-tab coordination and active-work guards. Carry-forward words are reviewable suggestions.
-- Phase 8 foundations: bounded period/current/targeted contracts and a versioned source-grounded persona-profile input. Phase 7 supplies no researched profile and performs no AI generation.
+- Phase 8 foundations: bounded period/current/targeted contracts and a versioned source-grounded persona-profile input. Phase 7 itself had no researched profile or AI generation; later Living Season work adds approved character profiles and provider-dependent text tasks.
 - Business attention is available on Home; Finance also surfaces receipt attribution
   that needs review. Legacy Entrepreneurship domain links redirect to the dedicated
   workspace and preserve query parameters.
@@ -61,7 +68,7 @@ business allocations are separate dimensions of one payment, never additive mone
 - Completed Session timing is not generally editable or deletable.
 - No Contact directory, email sending, campaigns, AI evidence judgments, invoicing,
   subscription billing, projected recurring revenue, acquisition ROI or business
-  effective hourly rate. Credentialed COTS sources require setup; AI commentary, generated farewells/chat, recurring-commitment compliance, and later phases remain deferred.
+  effective hourly rate. Credentialed COTS sources and Living Season AI tasks require setup; generated farewells and recurring-commitment compliance remain deferred.
 - No guessed historical business categorization or automatic validation labels.
 - Global reference catalog synchronization remains an explicit developer operation.
 - Balance reconciliation is an observed anchor; missing anchors mean unknown.
@@ -72,5 +79,5 @@ business allocations are separate dimensions of one payment, never additive mone
 See [Phase 4 delivery and verification](../decisions/PHASE_4.md) for exact passed,
 skipped and unresolved checks, screenshots, and the primary user walkthrough.
 Finance's existing contract remains [PHASE_3_FINANCE.md](../product/PHASE_3_FINANCE.md).
-The shared [motion system](../design/MOTION_SYSTEM.md) governs local reveals,
-navigation guidance, state changes and reduced-motion behavior.
+The shared [motion infrastructure](../design/MOTION_SYSTEM.md) defines token reuse,
+layer lifecycle, state correctness and reduced-motion behavior.

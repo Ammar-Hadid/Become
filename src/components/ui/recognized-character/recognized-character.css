@@ -1,0 +1,100 @@
+.recognized-character {
+  display: grid;
+  grid-template-columns: var(--recognition-picture-width) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--spacing-sm) var(--spacing-lg);
+  min-width: 0;
+}
+.recognized-character-picture {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--recognition-picture-width);
+  height: var(--recognition-picture-height);
+  flex-shrink: 0;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.recognized-character-picture img {
+  object-fit: contain;
+}
+.recognized-character-picture:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--spacing-xs);
+}
+.recognized-character-copy {
+  min-width: 0;
+}
+.recognized-character-copy h2,
+.recognized-character-copy p {
+  margin: 0;
+}
+.recognized-character-copy > p {
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+.recognized-character-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  grid-column: 2;
+}
+@media (max-width: 480px) {
+  .recognized-character {
+    grid-template-columns: var(--recognition-picture-width-mobile) minmax(
+        0,
+        1fr
+      );
+    gap: var(--spacing-sm) var(--spacing-md);
+  }
+  .recognized-character-actions {
+    grid-column: 1 / -1;
+  }
+  .recognized-character-picture {
+    width: var(--recognition-picture-width-mobile);
+    height: var(--recognition-picture-height-mobile);
+  }
+}
+.reference-version-groups {
+  display: grid;
+  gap: var(--space-action-section);
+}
+.reference-version-list {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+.reference-version-option {
+  justify-content: flex-start;
+  width: 100%;
+  padding: var(--spacing-md);
+  height: auto;
+  text-align: left;
+  white-space: normal;
+  gap: var(--spacing-lg);
+}
+.reference-version-option > span:not(.reference-version-no-cover) {
+  display: grid;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  flex: 1;
+}
+.reference-version-option img,
+.reference-version-no-cover {
+  width: 54px;
+  height: 76px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--color-surface);
+  border-radius: var(--radius-control);
+}
+.reference-version-option[aria-pressed="true"] {
+  border-color: var(--color-primary);
+}
+.reference-version-option strong {
+  font-weight: 600;
+}
+.reference-version-option .type-caption {
+  color: var(--color-text-secondary);
+}

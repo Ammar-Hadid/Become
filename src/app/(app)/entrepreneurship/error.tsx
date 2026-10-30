@@ -1,5 +1,8 @@
 "use client";
+
 import { useEffect } from "react";
+import { Button } from "@/components/ui/buttons/button.component";
+import { WorkspacePanel } from "@/components/ui/workspace/workspace.component";
 
 export default function Error({
   error,
@@ -12,15 +15,22 @@ export default function Error({
     console.error(error);
   }, [error]);
   return (
-    <div className="business-empty business-zone">
-      <h2>These records couldn’t be loaded.</h2>
-      <p>Your saved work is still there.</p>
-      <button
-        className="finance-dialog-trigger finance-dialog-trigger--secondary"
-        onClick={retry}
+    <div role="alert">
+      <WorkspacePanel
+        title="These records couldn’t load."
+        description="Try again to reload your Entrepreneurship workspace."
+        actions={
+          <Button type="button" variant="secondary" onClick={retry}>
+            Try again
+          </Button>
+        }
       >
-        Try again
-      </button>
+        {error.digest && (
+          <p className="text-body-sm text-text-muted">
+            Reference {error.digest}
+          </p>
+        )}
+      </WorkspacePanel>
     </div>
   );
 }

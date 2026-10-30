@@ -1,5 +1,10 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { Button } from "@/components/ui/buttons/button.component";
 import { Search } from "lucide-react";
 import { FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -53,7 +58,7 @@ export function DirectionListFilters({
         <label className="sr-only" htmlFor={`direction-${entity}-search`}>
           Search {entity}
         </label>
-        <input
+        <Input
           id={`direction-${entity}-search`}
           name="search"
           defaultValue={search}
@@ -62,15 +67,13 @@ export function DirectionListFilters({
       </div>
       <label>
         <span className="sr-only">State</span>
-        <span className="select-wrap">
-          <select name="status" defaultValue={status}>
-            {statuses.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </span>
+        <NativeSelect name="status" defaultValue={status}>
+          {statuses.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </NativeSelect>
       </label>
       <label className="direction-archive-toggle">
         <input
@@ -81,7 +84,9 @@ export function DirectionListFilters({
         />
         <span>Archived</span>
       </label>
-      <button type="submit">Apply</button>
+      <Button type="submit" variant="secondary">
+        Apply
+      </Button>
       {(search || status || archived) && (
         <Link href={action} scroll={false}>
           Clear

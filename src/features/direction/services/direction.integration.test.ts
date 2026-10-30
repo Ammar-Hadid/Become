@@ -4,11 +4,7 @@ import { randomUUID } from "node:crypto";
 import { DateTime, Settings } from "luxon";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { saveGoal } from "./goal.service";
-import {
-  saveSeason,
-  assignSeasonGoals,
-} from "@/features/seasons/services/season.service";
-import { emptySeasonDraft } from "@/features/seasons/utils/season-calendar.util";
+import { saveSeason } from "@/features/seasons/services/season.service";
 import { changeSeasonLifecycle } from "@/features/seasons/services/season-lifecycle.service";
 import { getGoalView } from "@/features/direction/queries/direction.query";
 import { getDirectionHistory } from "@/features/direction/queries/direction-history.query";
@@ -75,7 +71,14 @@ describe.skipIf(!enabled)("Phase 5 owned local PostgreSQL", () => {
       quarter: 3,
       expectedVersion: 0,
       operationKey: randomUUID(),
-      draft: emptySeasonDraft(),
+      draft: {
+        character: {
+          name: "",
+          sourceCategory: null,
+          sourceWork: "",
+          adaptation: "",
+        },
+      },
     };
     const saved = await Promise.all([
       saveSeason(userId, s),
@@ -87,11 +90,31 @@ describe.skipIf(!enabled)("Phase 5 owned local PostgreSQL", () => {
     expect(await saveGoal(userId, g)).toEqual(await saveGoal(userId, g));
     expect(await prisma.goal.count({ where: { userId } })).toBe(1);
   });
-  it("preserves partial answers and rejects stale forms", async () => {
-    const d = emptySeasonDraft();
-    d.answers.meaningful = "A steady practice";
-    d.answers.deferredSteps = [2];
-    d.stage = 3;
+  it("preserves historical answers, saves inspiration, and rejects stale forms", async () => {
+    await prisma.userSeason.create({
+      data: {
+        userId,
+        year: 2026,
+        quarter: 3,
+        version: 0,
+        title: "Historical title",
+        intention: "Historical intention",
+        answers: { meaningful: "A steady practice", deferredSteps: [2] },
+        character: {
+          motivation: "Keep a steady practice",
+          avoid: "Old boundary",
+          standards: [],
+        },
+      },
+    });
+    const d = {
+      character: {
+        name: "Updated identity",
+        sourceCategory: null,
+        sourceWork: "",
+        adaptation: "",
+      },
+    };
     const s = await saveSeason(userId, {
       year: 2026,
       quarter: 3,
@@ -113,6 +136,25 @@ describe.skipIf(!enabled)("Phase 5 owned local PostgreSQL", () => {
       }),
     ).rejects.toThrow("changed");
     expect(s.version).toBe(1);
+    const stored = await getSeasonView(userId, 2026, 3);
+    expect(stored.title).toBe("Historical title");
+    expect(stored.intention).toBe("Historical intention");
+    expect(stored.character.motivation).toBe("Keep a steady practice");
+    expect(stored.character.name).toBe("Updated identity");
+    await expect(
+      saveSeason(userId, {
+        year: 2026,
+        quarter: 3,
+        expectedVersion: s.version,
+        operationKey: randomUUID(),
+        draft: {
+          character: {
+            ...d.character,
+            standards: [{ key: "new", trait: "New", behavior: "Change" }],
+          },
+        },
+      }),
+    ).rejects.toThrow();
   });
   it("fulfills a late opening, snoozes one current cue, and never replays missed cues", async () => {
     const clock = Settings.now;
@@ -130,7 +172,14 @@ describe.skipIf(!enabled)("Phase 5 owned local PostgreSQL", () => {
         quarter: 3,
         expectedVersion: 0,
         operationKey: randomUUID(),
-        draft: emptySeasonDraft(),
+        draft: {
+          character: {
+            name: "",
+            sourceCategory: null,
+            sourceWork: "",
+            adaptation: "",
+          },
+        },
         complete: true,
       });
       expect((await getSeasonView(userId, 2026, 3)).cadence).toBeNull();
@@ -227,43 +276,6 @@ describe.skipIf(!enabled)("Phase 5 owned local PostgreSQL", () => {
     expect(captured).not.toContain("Renamed platform");
     expect(captured).toContain("1000 EUR");
     expect(captured).toContain("2027-03-01");
-  });
-  it("assigns one main goal atomically without changing its horizon", async () => {
-    const season = await saveSeason(userId, {
-      year: 2026,
-      quarter: 3,
-      expectedVersion: 0,
-      operationKey: randomUUID(),
-      draft: emptySeasonDraft(),
-    });
-    const a = await saveGoal(userId, { operationKey: randomUUID(), draft }),
-      b = await saveGoal(userId, {
-        operationKey: randomUUID(),
-        draft: { ...draft, title: "Another goal" },
-      });
-    await expect(
-      assignSeasonGoals(userId, {
-        year: 2026,
-        quarter: 3,
-        expectedVersion: season.version,
-        operationKey: randomUUID(),
-        goals: [
-          { goalId: a.id, role: "PRIMARY" },
-          { goalId: b.id, role: "PRIMARY" },
-        ],
-      }),
-    ).rejects.toThrow("at most one");
-    await assignSeasonGoals(userId, {
-      year: 2026,
-      quarter: 3,
-      expectedVersion: season.version,
-      operationKey: randomUUID(),
-      goals: [
-        { goalId: a.id, role: "PRIMARY" },
-        { goalId: b.id, role: "SUPPORTING" },
-      ],
-    });
-    expect((await getGoalView(userId, a.id))?.targetOn).toBe("2027-03-01");
   });
   it("rejects another user's source and leaves no partial goal", async () => {
     const other = await prisma.user.create({

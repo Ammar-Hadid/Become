@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -41,19 +43,19 @@ export function ExperimentDetail({
           <p>{experiment.question}</p>
         </div>
         {experiment.status !== "CONCLUDED" ? (
-          <Link
-            className="direction-secondary-action"
+          <WorkspaceLink
+            variant="secondary"
             href={`/direction/experiments/${experiment.id}/edit`}
           >
             <Pencil aria-hidden="true" /> Edit experiment
-          </Link>
+          </WorkspaceLink>
         ) : (
-          <Link
-            className="direction-secondary-action"
+          <WorkspaceLink
+            variant="secondary"
             href={`/direction/experiments/new?repeatFrom=${encodeURIComponent(experiment.id)}`}
           >
             <FlaskConical aria-hidden="true" /> Repeat this attempt
-          </Link>
+          </WorkspaceLink>
         )}
       </header>
 
@@ -100,7 +102,7 @@ export function ExperimentDetail({
       </div>
 
       {experiment.status === "CONCLUDED" && (
-        <section className="direction-conclusion-card">
+        <Card className="direction-conclusion-card">
           <p className="eyebrow">
             Conclusion ·{" "}
             {experiment.outcome?.replaceAll("_", " ").toLowerCase()}
@@ -113,10 +115,10 @@ export function ExperimentDetail({
               snapshot remains preserved below.
             </aside>
           )}
-        </section>
+        </Card>
       )}
 
-      <section
+      <Card
         className="direction-evidence-panel"
         aria-labelledby="experiment-evidence-title"
       >
@@ -165,7 +167,7 @@ export function ExperimentDetail({
             </div>
           </div>
         )}
-      </section>
+      </Card>
 
       {experiment.evaluation.contentCohort?.sources.length ? (
         <section

@@ -1,5 +1,6 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { GripVertical, Trash2 } from "lucide-react";
 
@@ -54,7 +55,7 @@ export function InterviewQuestionNode({
       <div className="interview-question-node-fields" contentEditable={false}>
         <label>
           Ask
-          <textarea
+          <Textarea
             value={prompt}
             disabled={readOnly}
             rows={2}
@@ -65,7 +66,7 @@ export function InterviewQuestionNode({
         </label>
         <label>
           Listen for <span>Optional</span>
-          <textarea
+          <Textarea
             value={intent}
             disabled={readOnly}
             rows={2}
@@ -76,7 +77,7 @@ export function InterviewQuestionNode({
         </label>
         <label>
           Follow-up prompts <span>One per line · optional</span>
-          <textarea
+          <Textarea
             value={probes.join("\n")}
             disabled={readOnly}
             rows={Math.max(2, Math.min(5, probes.length + 1))}

@@ -1,0 +1,180 @@
+/* Candidate composition only; shared materials, controls and Gold Drift are reused. */
+.activation-review {
+  display: grid;
+  grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+  grid-template-areas: "introduction recap" "action recap";
+  column-gap: clamp(2rem, 5vw, 6rem);
+  row-gap: var(--space-action-section);
+  align-content: center;
+  padding-block: var(--spacing-3xl);
+  min-height: calc(100svh - 14rem);
+}
+.activation-introduction {
+  grid-area: introduction;
+  display: grid;
+  align-self: end;
+  gap: var(--spacing-2xl);
+  min-width: 0;
+}
+.activation-introduction > .type-overline,
+.activation-introduction h1 em {
+  color: var(--color-primary);
+  font-style: normal;
+}
+.activation-introduction h1 {
+  font-size: clamp(3rem, 5.8vw, 6rem);
+  margin: 0;
+}
+.activation-introduction h1 > span {
+  display: block;
+}
+.activation-description {
+  color: var(--color-text-secondary);
+  max-width: 42ch;
+}
+.activation-recap {
+  grid-area: recap;
+  align-self: center;
+  display: grid;
+  gap: var(--spacing-2xl);
+}
+.activation-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+.activation-portrait {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+}
+.activation-portrait img {
+  object-fit: cover;
+}
+.activation-identity-copy {
+  display: grid;
+  gap: var(--spacing-xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.activation-identity-copy > .type-body-sm {
+  color: var(--color-text-secondary);
+}
+.activation-recap-list {
+  display: grid;
+  margin: 0;
+}
+.activation-recap-list > div {
+  display: grid;
+  gap: var(--spacing-xs);
+  padding-block: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  min-width: 0;
+}
+.activation-recap-list > div:last-child {
+  padding-bottom: 0;
+}
+.activation-recap-list dt {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+}
+.activation-recap-list dt svg {
+  width: var(--spacing-lg);
+  height: var(--spacing-lg);
+  flex: none;
+  color: var(--color-success);
+}
+.activation-recap-list dd {
+  margin: 0;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+.activation-recap-list .type-caption {
+  color: var(--color-text-muted);
+}
+.activation-action {
+  grid-area: action;
+  align-self: start;
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-lg);
+  color: var(--color-text-secondary);
+  min-width: 0;
+}
+.activation-action > .become-button {
+  min-width: 15rem;
+}
+.activation-error {
+  color: var(--color-danger);
+}
+.activation-preview-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+.activation-preview-footer {
+  flex: 1;
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.activation-preview-footer > .activation-preview-secondary {
+  justify-content: space-between;
+}
+.activation-preview-controls {
+  color: var(--color-text-muted);
+  padding: var(--spacing-lg) var(--space-app-page-gutter);
+}
+.activation-preview-controls summary {
+  cursor: pointer;
+}
+.activation-preview-controls > .activation-preview-secondary {
+  padding-block: var(--spacing-lg);
+}
+.activation-preview-status {
+  color: var(--color-text-secondary);
+}
+.activation-preview-success {
+  display: grid;
+  gap: var(--spacing-xl);
+  padding-block: var(--spacing-4xl);
+}
+@media (max-width: 1023px) {
+  .activation-review {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "introduction" "recap" "action";
+    gap: var(--spacing-4xl);
+    padding-block: var(--spacing-lg);
+    min-height: 0;
+  }
+  .activation-introduction {
+    gap: var(--spacing-lg);
+  }
+  .activation-introduction h1 {
+    font-size: clamp(2.75rem, 8vw, 4rem);
+  }
+  .activation-description {
+    font-size: var(--text-body);
+  }
+  .activation-action > .become-button {
+    width: 100%;
+    min-width: 0;
+  }
+  .activation-recap {
+    gap: var(--spacing-xl);
+  }
+  .activation-portrait {
+    width: 64px;
+    height: 64px;
+  }
+  .activation-preview-controls {
+    padding-inline: var(--space-page-edge-mobile);
+  }
+}

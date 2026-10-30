@@ -140,3 +140,142 @@
     display: flex;
   }
 }
+
+/* The sign-in experience uses the same quiet glass language as the workspace. */
+.auth-page {
+  display: block;
+  min-height: 100dvh;
+}
+.auth-experience {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.85fr);
+  align-items: center;
+  gap: clamp(3rem, 7vw, 9rem);
+  padding: clamp(2rem, 6vw, 6rem);
+  min-height: 100dvh;
+  overflow: clip;
+}
+.auth-experience::before {
+  inset: 0;
+  max-height: none;
+  background: radial-gradient(
+    ellipse at 28% 54%,
+    color-mix(in srgb, var(--color-primary) 6%, transparent),
+    transparent 55%
+  );
+}
+.auth-welcome {
+  display: flex;
+  min-height: 36rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--spacing-4xl);
+}
+.auth-welcome-copy {
+  max-width: 37rem;
+}
+.auth-welcome h1 {
+  font-family: var(--text-hero--font-family);
+  font-size: clamp(2.5rem, 4.9vw, 5rem);
+  line-height: 1.08;
+  font-weight: 550;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+.auth-welcome h1 span {
+  color: var(--color-primary);
+}
+.auth-welcome-copy > p:last-child {
+  margin-top: var(--spacing-2xl);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+}
+.auth-purpose {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xl);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+.auth-purpose span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.auth-purpose svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary);
+}
+.auth-experience .auth-entry {
+  width: 100%;
+  max-width: 34rem;
+  justify-self: end;
+  padding: clamp(1.5rem, 3.3vw, 3rem);
+}
+.auth-entry h2 {
+  font-size: clamp(1.5rem, 2.1vw, 2rem);
+  font-weight: 550;
+  letter-spacing: -0.04em;
+  line-height: 1.25;
+}
+.auth-entry-description {
+  margin-top: var(--spacing-md);
+  color: var(--color-text-secondary);
+}
+.auth-entry .auth-form-wrap {
+  margin-top: var(--spacing-2xl);
+}
+.auth-entry .auth-mode-switch {
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--workspace-control-radius);
+  background: color-mix(in srgb, var(--color-background) 40%, transparent);
+}
+.auth-entry .auth-mode-switch button {
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+}
+.auth-entry .auth-mode-switch button.active {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+.auth-entry .auth-mode-switch button.active::after {
+  display: none;
+}
+.auth-entry .password-toggle {
+  right: var(--spacing-sm);
+}
+@media (max-width: 60rem) {
+  .auth-experience {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-3xl);
+    padding: var(--spacing-2xl);
+  }
+  .auth-welcome {
+    min-height: 0;
+    gap: var(--spacing-3xl);
+  }
+  .auth-welcome-copy {
+    display: none;
+  }
+  .auth-purpose {
+    display: none;
+  }
+  .auth-experience .auth-entry {
+    max-width: 34rem;
+    justify-self: center;
+  }
+  .auth-welcome {
+    max-width: 34rem;
+    width: 100%;
+    justify-self: center;
+  }
+}
+@media (max-width: 30rem) {
+  .auth-experience {
+    padding: var(--space-page-edge-mobile);
+    align-content: center;
+  }
+}

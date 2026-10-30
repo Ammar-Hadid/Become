@@ -1,3 +1,5 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+import { Card } from "@/components/ui/cards/card.component";
 import { calculateSessionMilliseconds } from "@/features/sessions/timing/utils/session-duration.util";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -77,7 +79,10 @@ export async function FinanceWorkDetail({
           .toFormat("d LLL yyyy, HH:mm")} · ${minutes} min recorded`}
       />
 
-      <section className="finance-work-session-hero">
+      <Card
+        material="elevated-glass"
+        className="finance-detail-focus finance-detail-focus--work"
+      >
         <span className="finance-work-session-icon">
           <BriefcaseBusiness aria-hidden="true" />
         </span>
@@ -110,7 +115,7 @@ export async function FinanceWorkDetail({
             </dd>
           </div>
         </dl>
-      </section>
+      </Card>
 
       <FinanceSection
         title="Payments connected to this work"
@@ -192,8 +197,10 @@ export async function FinanceWorkDetail({
                 <dd>{session.incomeOpportunity?.title ?? "Unassigned"}</dd>
               </div>
             </dl>
-            <details className="finance-details finance-work-correction">
-              <summary>Correct work details</summary>
+            <WorkspaceDisclosure
+              title={<>Correct work details</>}
+              className="finance-disclosure"
+            >
               <div className="finance-details-body finance-settings-panel">
                 <FinanceForm
                   action={correctFinanceSessionAction}
@@ -266,7 +273,7 @@ export async function FinanceWorkDetail({
                   )}
                 </FinanceForm>
               </div>
-            </details>
+            </WorkspaceDisclosure>
           </FinanceSection>
         )}
     </>

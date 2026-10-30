@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button.component";
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import {
   ENGINEERING_EVIDENCE_TYPE_OPTIONS,
@@ -63,7 +64,10 @@ export function TimerController({
   engineeringProjects,
   financeOptions,
 }: TimerControllerProps) {
+  const { play } = useInterfaceSound();
   const dialogRef = useRef<HTMLElement>(null);
+  const previousDialogOpen = useRef(false);
+  const skipCloseSound = useRef(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [resolvedSession, setResolvedSession] =
     useState<SessionDetailItem | null>(null);
@@ -129,6 +133,14 @@ export function TimerController({
   const pending = Boolean(pendingOperation);
   const [error, setError] = useState<string | null>(null);
   const dialogPresence = usePresence(dialogOpen);
+
+  useEffect(() => {
+    if (previousDialogOpen.current === dialogOpen) return;
+    previousDialogOpen.current = dialogOpen;
+    if (dialogOpen) play("layerOpened");
+    else if (!skipCloseSound.current) play("returned");
+    skipCloseSound.current = false;
+  }, [dialogOpen, play]);
 
   useModalLayer({
     open: dialogOpen,
@@ -280,6 +292,7 @@ export function TimerController({
     });
     setEngineeringContext("");
     setEngineeringProjectId("");
+    skipCloseSound.current = true;
     setDialogOpen(false);
   }
 
@@ -342,6 +355,7 @@ export function TimerController({
       setIncludeEvidence(false);
       setEvidenceTitle("");
       setEvidenceDetails("");
+      skipCloseSound.current = true;
       setDialogOpen(false);
       window.requestAnimationFrame(focusVisibleTimerTrigger);
       if (body.session?.domain.slug === "entrepreneurship")

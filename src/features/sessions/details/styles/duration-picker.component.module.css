@@ -1,30 +1,67 @@
 .picker {
   width: 100%;
   overflow: hidden;
+  border: var(--drawer-edge-width) solid var(--drawer-domain-border);
+  border-radius: var(--drawer-duration-radius);
+  background: color-mix(
+    in srgb,
+    var(--drawer-domain-subtle) 68%,
+    var(--color-surface-elevated)
+  );
+  box-shadow:
+    inset var(--drawer-accent-rail-width) 0 0 var(--drawer-domain-base),
+    inset 0 1px 0
+      color-mix(in srgb, var(--drawer-domain-accent) 18%, transparent);
 }
 
 .labels,
 .wheels {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: var(--spacing-2xl);
-  padding-right: var(--spacing-xl);
-  padding-left: var(--spacing-xl);
+  column-gap: var(--drawer-duration-column-gap);
+  padding-inline: var(--drawer-duration-padding);
 }
 
 .labels {
-  padding-top: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
+  border-bottom: var(--drawer-edge-width) solid var(--drawer-domain-border);
+  padding-block: var(--spacing-md);
   color: var(--color-text-secondary);
   text-align: center;
 }
 
+.labels > span {
+  font-family: var(--text-label--font-family);
+  font-size: var(--text-label);
+  font-weight: var(--text-label--font-weight);
+  letter-spacing: var(--text-label--letter-spacing);
+  line-height: var(--text-label--line-height);
+}
+
 .wheels {
-  --duration-picker-row-height: calc(var(--spacing-4xl) + var(--spacing-lg));
+  --duration-picker-row-height: var(--drawer-duration-row-height);
 
   position: relative;
   height: calc(var(--duration-picker-row-height) * 5);
   overflow: hidden;
+}
+
+.wheels::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: calc(var(--duration-picker-row-height) * 2);
+  right: var(--drawer-duration-padding);
+  left: var(--drawer-duration-padding);
+  height: var(--duration-picker-row-height);
+  border-block: var(--drawer-edge-width) solid var(--drawer-domain-accent);
+  background: color-mix(
+    in srgb,
+    var(--drawer-domain-base) var(--drawer-duration-selection-fill-strength),
+    transparent
+  );
+  box-shadow: 0 0 var(--spacing-sm)
+    color-mix(in srgb, var(--drawer-domain-accent) 18%, transparent);
+  pointer-events: none;
 }
 
 .columnViewport {
@@ -36,6 +73,11 @@
   cursor: ns-resize;
   touch-action: none;
   user-select: none;
+}
+
+.columnViewport + .columnViewport {
+  border-left: var(--drawer-edge-width) solid
+    color-mix(in srgb, var(--drawer-domain-border) 58%, transparent);
 }
 
 .track {
@@ -68,9 +110,11 @@
   border: 0;
   background: transparent;
   color: var(--color-text-primary);
-  font-size: var(--text-h2);
-  font-weight: 500;
-  line-height: var(--text-h2--line-height);
+  font-family: var(--text-metric-sm--font-family);
+  font-size: var(--text-metric-sm);
+  font-weight: var(--text-metric-sm--font-weight);
+  letter-spacing: var(--text-metric-sm--letter-spacing);
+  line-height: var(--text-metric-sm--line-height);
   font-variant-numeric: tabular-nums;
   opacity: 1;
   outline: none;
@@ -98,32 +142,26 @@
   opacity: 0.4;
 }
 
-.value[role="spinbutton"] {
-  color: var(--color-primary);
-  font-size: var(--text-h1);
-  font-weight: 600;
-  line-height: var(--text-h1--line-height);
+.value[role="spinbutton"],
+.entry {
+  color: var(--drawer-domain-accent);
+  font-family: var(--text-metric-md--font-family);
+  font-size: var(--text-metric-md);
+  font-weight: var(--text-metric-md--font-weight);
+  letter-spacing: var(--text-metric-md--letter-spacing);
+  line-height: var(--text-metric-md--line-height);
 }
 
 .entry {
   cursor: text;
-  color: var(--color-primary);
-  font-size: var(--text-h1);
-  font-weight: 600;
-  line-height: var(--text-h1--line-height);
   text-align: center;
-  caret-color: var(--color-primary);
+  caret-color: var(--drawer-domain-accent);
 }
 
-.value:focus-visible {
-  text-decoration: underline;
-  text-decoration-color: var(--color-primary);
-  text-underline-offset: var(--spacing-xs);
-}
-
+.value:focus-visible,
 .entry:focus-visible {
   text-decoration: underline;
-  text-decoration-color: var(--color-primary);
+  text-decoration-color: var(--drawer-domain-accent);
   text-underline-offset: var(--spacing-xs);
 }
 
@@ -132,7 +170,7 @@
 }
 
 .picker[aria-disabled="true"] {
-  opacity: 0.55;
+  opacity: var(--button-disabled-opacity);
 }
 
 .picker[aria-disabled="true"] .columnViewport {

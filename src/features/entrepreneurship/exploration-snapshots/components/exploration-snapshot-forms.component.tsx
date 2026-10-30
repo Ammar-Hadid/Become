@@ -221,7 +221,7 @@ export function SnapshotClaimForm({
   if (observations.length === 0)
     return (
       <Link
-        className="finance-dialog-trigger"
+        className="become-button become-button--primary become-button--md"
         href={explorationHref(nicheId, "/evidence/observations")}
       >
         Keep an observation first
@@ -229,6 +229,7 @@ export function SnapshotClaimForm({
     );
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Snapshot review"
       title="Add to what you know"
       triggerLabel="Add finding"
@@ -276,6 +277,7 @@ export function SnapshotClaimForm({
 export function SnapshotUncertaintyForm({ nicheId }: { nicheId: string }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Keep the question open"
       title="Name an uncertainty"
       triggerLabel="Add uncertainty"
@@ -327,6 +329,7 @@ export function SnapshotPublishForm({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Historical record"
       title="Publish this snapshot"
       triggerLabel="Publish snapshot"

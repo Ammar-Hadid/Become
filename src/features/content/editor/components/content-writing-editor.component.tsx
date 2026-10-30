@@ -1,5 +1,9 @@
 "use client";
 
+import { WorkspacePanel } from "@/components/ui/workspace/workspace.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -93,11 +97,11 @@ export function ContentWritingEditor({
     : undefined;
 
   return (
-    <section className="content-writing" aria-labelledby="writing-title">
+    <WorkspacePanel className="content-writing" aria-labelledby="writing-title">
       <header>
         <div>
           <p className="eyebrow">Make this variant</p>
-          <h2 id="writing-title">Find the shape before the polish.</h2>
+          <h2 id="writing-title">Shape this version.</h2>
         </div>
         <ContentSaveState
           status={autosave.status}
@@ -128,7 +132,7 @@ export function ContentWritingEditor({
       >
         <label className="content-writing-field content-writing-field--hook">
           <span>Hook</span>
-          <textarea
+          <Textarea
             name="hook"
             value={draft.hook}
             onChange={(event) => update("hook", event.target.value)}
@@ -138,7 +142,7 @@ export function ContentWritingEditor({
         </label>
         <label className="content-writing-field">
           <span>Outline / talking points</span>
-          <textarea
+          <Textarea
             name="outline"
             value={draft.outline}
             onChange={(event) => update("outline", event.target.value)}
@@ -179,7 +183,7 @@ export function ContentWritingEditor({
           </summary>
           <label>
             <span className="sr-only">Production notes</span>
-            <textarea
+            <Textarea
               name="productionNotes"
               value={draft.productionNotes}
               onChange={(event) =>
@@ -191,6 +195,6 @@ export function ContentWritingEditor({
           </label>
         </details>
       </form>
-    </section>
+    </WorkspacePanel>
   );
 }

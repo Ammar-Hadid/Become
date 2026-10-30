@@ -1,4 +1,5 @@
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
+import { openSessionHistory } from "./utils/session-history.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
 
 async function createAccount(page: Page) {
@@ -11,13 +12,16 @@ async function createAccount(page: Page) {
   await page.getByTestId("auth-submit").click();
   await deferAutomaticSeasonOpening(page);
   await expect(
-    page.getByRole("heading", { name: /Engineering/ }),
+    page.getByRole("region", { name: "Dashboard lenses" }),
   ).toBeVisible();
 }
 
 async function openStartTimer(page: Page) {
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "What are you working on?" })
+    .getByRole("button", { name: "Engineering", exact: true })
+    .click();
 }
 
 test("engineering sessions keep their own context with or without a project", async ({
@@ -30,6 +34,7 @@ test("engineering sessions keep their own context with or without a project", as
   await page
     .getByTestId("engineering-project-context")
     .selectOption("PERSONAL");
+  await page.getByText("Links, dates & notes", { exact: true }).click();
   await page
     .getByTestId("engineering-project-live-url")
     .fill("https://become.example.com");
@@ -75,7 +80,9 @@ test("engineering sessions keep their own context with or without a project", as
     .poll(async () =>
       Number(
         await page
-          .locator('[data-testid="active-timer-trigger"]:visible')
+          .locator(
+            '[aria-label="Focus timer controls"] [data-elapsed-seconds]:visible',
+          )
           .getAttribute("data-elapsed-seconds"),
       ),
     )
@@ -100,6 +107,9 @@ test("engineering sessions keep their own context with or without a project", as
     .getByTestId("engineering-evidence-title")
     .fill("Engineering workspace completed");
   await page.getByTestId("confirm-stop-timer").click();
+  await expect(page.getByTestId("confirm-stop-timer")).not.toBeVisible();
+  await expect(page.getByTestId("dashboard-active-session")).toHaveCount(0);
+  await openSessionHistory(page);
 
   await page
     .getByTestId("session-row-trigger")
@@ -169,6 +179,9 @@ test("engineering sessions keep their own context with or without a project", as
     page.getByTestId("completion-engineering-project-select"),
   ).toHaveValue("");
   await page.getByTestId("confirm-stop-timer").click();
+  await expect(page.getByTestId("confirm-stop-timer")).not.toBeVisible();
+  await expect(page.getByTestId("dashboard-active-session")).toHaveCount(0);
+  await openSessionHistory(page);
 
   await page
     .getByTestId("session-row-trigger")
@@ -183,8 +196,9 @@ test("engineering sessions keep their own context with or without a project", as
   await page.getByRole("button", { name: "Close session details" }).click();
 
   await page.goto("/engineering");
+  await page.getByText("Explore the details", { exact: true }).click();
   const projectContextAnalytics = page
-    .locator(".engineering-breakdown")
+    .locator(".workspace-panel")
     .filter({ hasText: "Projects worked on by context" });
   await expect(projectContextAnalytics).toContainText("Professional");
   await expect(projectContextAnalytics).toContainText("1 project");

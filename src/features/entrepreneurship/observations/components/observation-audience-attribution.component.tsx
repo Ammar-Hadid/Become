@@ -1,5 +1,7 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useId, useState } from "react";
 import type { AudienceOption } from "@/features/entrepreneurship/audiences/types/audience.types";
 import { DeferredSegments } from "@/features/entrepreneurship/audiences/components/deferred-segments.component";
@@ -45,8 +47,8 @@ export function ObservationAudienceAttributionFields({
       </p>
       <label className="field-label">
         Buying context
-        <select
-          className="text-input mt-sm"
+        <NativeSelect
+          className="mt-sm"
           value={value.marketType}
           onChange={(event) =>
             onChange({ ...value, marketType: event.target.value })
@@ -56,7 +58,7 @@ export function ObservationAudienceAttributionFields({
           <option value="B2C">Consumers</option>
           <option value="B2B">Businesses</option>
           <option value="BOTH">Consumers & businesses</option>
-        </select>
+        </NativeSelect>
       </label>
       <BusinessRecordPicker
         kind="segment"
@@ -81,8 +83,8 @@ export function ObservationAudienceAttributionFields({
       />
       <label className="field-label">
         Audience boundary
-        <textarea
-          className="text-input mt-sm"
+        <Textarea
+          className="mt-sm"
           rows={3}
           maxLength={2000}
           value={value.audienceDescription}
@@ -93,8 +95,8 @@ export function ObservationAudienceAttributionFields({
       </label>
       <label className="field-label">
         Why this attribution?
-        <textarea
-          className="text-input mt-sm"
+        <Textarea
+          className="mt-sm"
           rows={3}
           maxLength={2000}
           value={reason}

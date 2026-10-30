@@ -2,29 +2,26 @@ import { expect, type Page } from "@playwright/test";
 
 export async function deferAutomaticSeasonOpening(page: Page) {
   const opening = /\/direction\/seasons\/\d{4}\/[1-4]\/opening/;
-  await expect(page).toHaveURL(
-    (url) => url.pathname === "/" || opening.test(url.pathname),
-    { timeout: 15_000 },
+  await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/, { timeout: 30_000 });
+  // Sign-up briefly visits Home before the automatic arrival. Navigating away
+  // during that intermediate state races the pending client navigation.
+  await expect(page).toHaveURL(opening, { timeout: 15_000 });
+  const deferred = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/direction/cots" &&
+      response.request().method() === "POST" &&
+      response.request().postDataJSON()?.action === "DEFER_OPENING",
   );
-  // Early interaction can suppress the first automatic arrival. Explicitly
-  // defer through the real arrival surface so a later Home visit cannot
-  // interrupt these domain journeys. Dedicated COTS suites test auto-arrival.
-  if (!opening.test(new URL(page.url()).pathname)) {
-    await page.goto("/direction");
-    const href = await page
-      .getByRole("link", { name: "Open your season" })
-      .getAttribute("href");
-    if (!href)
-      throw new Error("The current Season entry point is unavailable.");
-    const arrival = new URL(href, page.url());
-    arrival.searchParams.set("arrival", "season");
-    await page.goto(arrival.toString());
-  }
   await page.getByRole("button", { name: "Not now", exact: true }).click();
+  // Not now returns immediately; the next journey waits for the saved choice
+  // so a full navigation does not abort this fixture's background request.
+  expect((await deferred).ok()).toBe(true);
   await expect(page).toHaveURL((url) => url.pathname === "/", {
     timeout: 15_000,
   });
-  await expect(page.locator("#dashboard-greeting")).toBeVisible({
+  await expect(
+    page.getByRole("region", { name: "Dashboard lenses", exact: true }),
+  ).toBeVisible({
     timeout: 15_000,
   });
 }

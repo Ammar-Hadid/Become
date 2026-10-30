@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import type { ReactNode } from "react";
 import { AudienceSummary } from "@/features/entrepreneurship/audiences/components/audience-fields.component";
 import {
@@ -43,7 +44,11 @@ export function OfferResponseJournal({
     ),
   );
   return (
-    <section className="business-zone business-zone--ledger">
+    <Card
+      material="glass"
+      spacing="dense"
+      className="business-zone business-zone--ledger"
+    >
       <div className="business-row-heading">
         <div>
           <p className="eyebrow">Separate people, separate outcomes</p>
@@ -230,6 +235,6 @@ export function OfferResponseJournal({
             : "Record when you shared these terms, then keep individual responses here."}
         </p>
       )}
-    </section>
+    </Card>
   );
 }

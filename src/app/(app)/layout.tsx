@@ -1,5 +1,4 @@
 import { getFinanceWorkOptions } from "@/features/finance/queries/finance-options.query";
-import { CotsImportController } from "@/features/seasons/discovery/components/cots-import-controller.component";
 import { CotsPresentationProvider } from "@/features/seasons/presentation/components/cots-presentation-provider.component";
 import { getSeasonLoadingSnapshot } from "@/features/seasons/presentation/queries/season-loading.query";
 import { redirect } from "next/navigation";
@@ -8,6 +7,7 @@ import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensur
 import { getEngineeringProjectOptions } from "@/features/engineering/queries/engineering.query";
 import { getAppSessionData } from "@/features/sessions/queries/session.query";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
+import { seasonCalendar } from "@/features/seasons/utils/season-calendar.util";
 
 export default async function AuthenticatedLayout({
   children,
@@ -32,6 +32,9 @@ export default async function AuthenticatedLayout({
       domains={appData.domains}
       timerSnapshot={appData.timerSnapshot}
       engineeringProjects={engineeringProjects}
+      seasonDaysLeft={
+        seasonCalendar(seasonLoading.year, seasonLoading.quarter).daysAfterToday
+      }
     >
       <CotsPresentationProvider
         userId={user.id}
@@ -39,7 +42,6 @@ export default async function AuthenticatedLayout({
         quarter={seasonLoading.quarter}
         initialMedia={seasonLoading.media}
       >
-        <CotsImportController />
         {children}
       </CotsPresentationProvider>
     </AppShell>

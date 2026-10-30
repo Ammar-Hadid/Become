@@ -20,7 +20,12 @@ export type DirectionCommand =
       quarter: number;
       expectedVersion: number;
       operationKey: string;
-      draft: SeasonDraft;
+      draft: {
+        character: Pick<
+          SeasonDraft["character"],
+          "name" | "sourceCategory" | "sourceWork" | "adaptation"
+        >;
+      };
       complete?: boolean;
     }
   | {
@@ -30,18 +35,6 @@ export type DirectionCommand =
       operationKey: string;
       draft: GoalDraft;
       reason?: string;
-    }
-  | {
-      type: "ASSIGN_SEASON_GOALS";
-      year: number;
-      quarter: number;
-      expectedVersion: number;
-      operationKey: string;
-      goals: {
-        goalId: string;
-        role: "PRIMARY" | "SUPPORTING";
-        note: string;
-      }[];
     }
   | {
       type: "SAVE_EXPERIMENT";
@@ -85,51 +78,7 @@ export type DirectionCommand =
       milestone?: "MIDPOINT" | "FINAL_14" | "FINAL_7" | "FINAL_3" | "ENDED";
       snoozeDays?: 1 | 3 | 7;
       note?: string;
-    }
-  | {
-      type: "SAVE_SEASON_MEDIA";
-      year: number;
-      quarter: number;
-      expectedVersion: number;
-      operationKey: string;
-      mediaId: string;
-      draft?: SeasonMediaDraft;
-      retire?: boolean;
-    }
-  | {
-      type: "SAVE_SEASON_QUOTE";
-      year: number;
-      quarter: number;
-      expectedVersion: number;
-      operationKey: string;
-      quoteId?: string;
-      draft?: SeasonQuoteDraft;
-      retire?: boolean;
     };
-
-export type ManualProvenanceDraft = {
-  sourceUrl: string;
-  sourceTitle: string;
-  credit: string;
-  attributionVerified: boolean;
-};
-
-export type SeasonMediaDraft = {
-  alt: string;
-  decorative: boolean;
-  focalX: number;
-  focalY: number;
-  poster: boolean;
-  provenance: ManualProvenanceDraft;
-};
-
-export type SeasonQuoteDraft = {
-  text: string;
-  attribution: string;
-  kind: "EXACT" | "PARAPHRASE" | "UNKNOWN";
-  featured: boolean;
-  provenance: ManualProvenanceDraft;
-};
 
 function isCommandResult(value: unknown): value is CommandResult {
   if (!value || typeof value !== "object" || !("error" in value)) return false;
@@ -145,6 +94,7 @@ export async function sendDirectionCommand(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(command),
+      signal: AbortSignal.timeout(15_000),
     });
     const result = await response.json().catch(() => null);
 

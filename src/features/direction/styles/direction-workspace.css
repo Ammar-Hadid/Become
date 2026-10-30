@@ -1,0 +1,323 @@
+.direction-shell.workspace {
+  --direction-line: color-mix(
+    in srgb,
+    var(--workspace-accent) 24%,
+    transparent
+  );
+}
+.direction-shell .direction-section-heading {
+  margin-bottom: var(--space-overview-section);
+}
+.direction-shell .direction-section-heading h1,
+.direction-shell .thinking-masthead h1 {
+  font-size: var(--text-page-title);
+  line-height: var(--text-page-title--line-height);
+  letter-spacing: var(--text-page-title--letter-spacing);
+  font-weight: var(--text-page-title--font-weight);
+}
+.direction-shell .direction-section-heading > div > p:last-child,
+.direction-shell .thinking-masthead > div > p:last-child {
+  max-width: 65ch;
+}
+.direction-shell .direction-library {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+.direction-shell .direction-library > .direction-section-heading {
+  margin: 0;
+}
+.direction-shell .direction-goal-list--library {
+  border: 0;
+}
+.direction-shell .direction-goal-row {
+  min-width: 0;
+  padding: var(--space-dense-row) var(--spacing-lg);
+}
+.direction-shell .direction-goal-title-row {
+  gap: var(--spacing-lg);
+}
+.direction-shell .direction-goal-main > p {
+  max-width: 65ch;
+}
+.simple-goal-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-block: var(--spacing-sm);
+}
+.simple-goal-domains > span {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--workspace-accent) 9%, transparent);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+.simple-goal-fields {
+  display: grid;
+  gap: var(--space-action-field);
+}
+.simple-goal-editor > .workspace-link {
+  margin-bottom: var(--spacing-xl);
+}
+.simple-goal-detail > .workspace-link {
+  justify-self: start;
+}
+.simple-goal-detail .workspace-header {
+  margin-bottom: 0;
+}
+.simple-goal-detail .workspace-panel-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.simple-goal-detail .workspace-panel-heading h2 > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--workspace-accent);
+}
+.simple-goal-season-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+.direction-shell .direction-goal-form {
+  display: grid;
+  gap: var(--space-action-section);
+}
+.direction-shell .direction-editor-panel {
+  margin: 0;
+}
+.direction-shell .direction-editor-intro {
+  margin-bottom: var(--space-action-section);
+}
+.direction-shell .direction-editor-mark {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.direction-shell .direction-form-grid {
+  gap: var(--space-action-field);
+}
+.direction-shell .direction-goal-facts {
+  gap: var(--space-dense-grid);
+}
+.direction-shell .direction-goal-masthead {
+  margin-bottom: var(--space-overview-section);
+}
+.direction-shell .thinking-masthead {
+  border: 0;
+  margin-bottom: var(--space-overview-section);
+  padding-bottom: 0;
+}
+.direction-shell .idea-making,
+.direction-shell .idea-outputs,
+.direction-shell .thinking-history {
+  margin-top: var(--space-overview-section);
+}
+.direction-shell .idea-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: var(--space-overview-grid);
+}
+.direction-shell .idea-shelf > li {
+  min-width: 0;
+}
+.direction-shell .idea-shelf > li > a {
+  padding: var(--space-overview-panel);
+  border: 1px solid var(--material-glass-edge);
+  border-radius: var(--radius-panel);
+  background: var(--material-glass-background);
+  backdrop-filter: blur(var(--material-glass-blur));
+}
+.direction-shell .decision-journal {
+  margin-top: var(--spacing-xl);
+}
+.direction-shell .thinking-detail-header h1 {
+  font-size: var(--text-page-title);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.direction-shell .thinking-filters {
+  gap: var(--spacing-lg);
+  margin-block: var(--spacing-xl);
+}
+.direction-shell .thinking-search {
+  min-width: 0;
+  flex: 1;
+}
+.direction-shell .thinking-search .become-input {
+  flex: 1;
+  min-width: 0;
+}
+.direction-shell .direction-lifecycle {
+  border: 0;
+  padding: 0;
+}
+.direction-shell .season-detail-grid {
+  gap: var(--space-overview-grid);
+}
+@media (max-width: 45rem) {
+  .direction-shell .direction-section-heading {
+    align-items: flex-start;
+    gap: var(--spacing-xl);
+  }
+  .direction-shell .direction-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .direction-shell .direction-field-wide {
+    grid-column: auto;
+  }
+  .direction-shell .thinking-filters {
+    align-items: stretch;
+  }
+  .direction-shell .thinking-search {
+    flex-basis: 100%;
+  }
+}
+.season-workspace > .workspace-header {
+  margin-bottom: 0;
+}
+.season-workspace-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-overview-grid);
+}
+.season-workspace-records {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.season-workspace-records > li {
+  display: grid;
+  gap: var(--spacing-xs);
+  padding-block: var(--space-dense-row);
+  border-bottom: 1px solid var(--color-border);
+}
+.season-workspace-records > li:last-child {
+  border-bottom: 0;
+}
+.season-workspace-records .workspace-link {
+  justify-content: space-between;
+  height: auto;
+  min-height: 2.75rem;
+  text-align: left;
+  white-space: normal;
+  padding-inline: 0;
+}
+.season-workspace-records > li > span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+.season-workspace-empty {
+  display: grid;
+  gap: var(--spacing-lg);
+  justify-items: start;
+  color: var(--color-text-secondary);
+  padding-block: var(--spacing-xl);
+}
+.season-workspace-empty > svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--workspace-accent);
+}
+.season-workspace-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+.season-workspace-notes dt {
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+.season-workspace-notes dd {
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+}
+.direction-shell
+  .direction-search:not(.direction-search--filters):has(.become-input) {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  border: 0;
+}
+.direction-shell .direction-search .become-input {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 60rem) {
+  .season-workspace-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 45rem) {
+  .season-workspace-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.direction-shell .direction-lifecycle-actions > .become-button {
+  border-radius: var(--button-radius);
+  min-height: var(--button-height-md);
+  padding-inline: var(--button-padding-inline-md);
+  gap: var(--button-gap);
+}
+.direction-shell .direction-lifecycle-actions {
+  flex-wrap: wrap;
+}
+.direction-shell .direction-search--filters > .become-button {
+  border: 1px solid var(--button-secondary-edge);
+  border-radius: var(--button-radius);
+  background: var(--button-secondary-rest);
+  color: var(--button-secondary-foreground);
+  padding-inline: var(--button-padding-inline-md);
+}
+
+/* Shared controls retain their geometry inside older Direction form layouts. */
+.direction-shell .become-native-select select {
+  min-height: 0;
+}
+.direction-shell .direction-search-input:has(.become-input) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+.direction-shell .direction-search-input .become-input::placeholder {
+  color: var(--color-text-muted);
+}
+.direction-shell .direction-editor,
+.direction-shell .thinking-detail,
+.direction-shell .decision-standalone {
+  max-width: none;
+  margin-inline: 0;
+}
+.direction-shell .idea-making > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+.direction-shell .idea-promotion-actions {
+  flex: 0 1 28rem;
+}
+@media (max-width: 45rem) {
+  .direction-shell .idea-promotion-actions {
+    flex-basis: auto;
+    max-width: none;
+    justify-content: flex-start;
+  }
+}
+
+/* Long measurement labels must not become the grid's minimum page width. */
+.direction-shell .direction-criterion-editors {
+  grid-template-columns: minmax(0, 1fr);
+}
+.direction-shell .direction-criterion-editor {
+  min-width: 0;
+}
+.direction-shell .direction-criterion-editor > summary > span:first-child {
+  flex: 1;
+}
+.direction-shell .direction-criterion-editor > summary > span:last-child,
+.direction-shell .direction-criterion-editor > summary em,
+.direction-shell .direction-criterion-editor > summary svg,
+.direction-shell .direction-back-link > svg {
+  flex: none;
+}

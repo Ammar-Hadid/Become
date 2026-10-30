@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
 import { useRouter } from "next/navigation";
 import {
@@ -49,9 +50,9 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
       placement="bottom-end"
       closeOnSelect={false}
       trigger={(props) => (
-        <button {...props} className="business-icon-button">
+        <Button variant="ghost" size="icon" {...props}>
           <MoreHorizontal aria-hidden="true" />
-        </button>
+        </Button>
       )}
     >
       <MenuItem
@@ -69,6 +70,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
       </MenuItem>
       {!message.hasObservation && message.speakerRole === "PARTICIPANT" && (
         <RecordDialog
+          treatment="workspace"
           eyebrow="Explicit promotion"
           triggerLabel="Keep as observation"
           triggerIcon={<NotebookPen aria-hidden="true" />}
@@ -123,6 +125,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
         </RecordDialog>
       )}
       <RecordDialog
+        treatment="workspace"
         eyebrow="Historical correction"
         triggerLabel="Correct message"
         triggerIcon={<Pencil aria-hidden="true" />}
@@ -171,6 +174,7 @@ export function ConversationMessageMenu({ message }: { message: Message }) {
         </RecordForm>
       </RecordDialog>
       <RecordDialog
+        treatment="workspace"
         eyebrow="Remove from the current exchange"
         triggerLabel="Void message"
         triggerIcon={<EyeOff aria-hidden="true" />}

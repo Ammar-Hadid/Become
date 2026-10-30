@@ -1,4 +1,8 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useBusinessRouter as useRouter } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { useTransition } from "react";
 import { TIMEFRAMES, type Timeframe } from "@/lib/dates/utils/period.util";
@@ -31,19 +35,19 @@ export function BusinessPeriodControl({
     >
       <label>
         <span className="sr-only">Timeframe</span>
-        <select name="timeframe" defaultValue={timeframe}>
+        <NativeSelect name="timeframe" defaultValue={timeframe}>
           {TIMEFRAMES.map((value) => (
             <option key={value} value={value}>
               {value[0].toUpperCase() + value.slice(1)}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </label>
       <label>
         <span className="sr-only">Reference date</span>
-        <input name="date" type="date" defaultValue={date} max={max} />
+        <Input name="date" type="date" defaultValue={date} max={max} />
       </label>
-      <button>View</button>
+      <Button variant="secondary">View</Button>
     </form>
   );
 }

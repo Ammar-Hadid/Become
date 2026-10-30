@@ -25,6 +25,7 @@ export async function saveContentThumbnail(
       response = await fetch("/api/content/media/upload", {
         method: "POST",
         body,
+        signal: AbortSignal.timeout(60_000),
       });
     } else {
       const { variantId, ...body } = command;
@@ -34,6 +35,7 @@ export async function saveContentThumbnail(
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15_000),
         },
       );
     }

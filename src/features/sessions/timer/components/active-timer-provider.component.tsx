@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import type {
   ActiveSessionData,
   ActiveTimerState,
@@ -39,6 +40,7 @@ export function ActiveTimerProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { play } = useInterfaceSound();
   const [snapshot, setSnapshot] = useState(serverSnapshot);
   const snapshotRef = useRef(serverSnapshot);
   const [nowMs, setNowMs] = useState<number | null>(null);
@@ -77,7 +79,7 @@ export function ActiveTimerProvider({
       ) {
         void fetch(
           `/api/sessions/${encodeURIComponent(current.activeSession.id)}`,
-          { cache: "no-store" },
+          { cache: "no-store", signal: AbortSignal.timeout(15_000) },
         )
           .then(async (response) => (response.ok ? response.json() : null))
           .then((session: SessionDetailItem | null) => {
@@ -100,6 +102,7 @@ export function ActiveTimerProvider({
     try {
       const response = await fetch("/api/sessions/active", {
         cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
       });
       const incoming: unknown = await response.json();
       if (!response.ok || !isTimerSnapshot(incoming)) return false;
@@ -174,6 +177,7 @@ export function ActiveTimerProvider({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
+          signal: AbortSignal.timeout(15_000),
         });
         const body = (await response.json()) as TimerMutationResult<Session> & {
           timer?: unknown;
@@ -184,6 +188,7 @@ export function ActiveTimerProvider({
             throw new Error("Timer commit could not be confirmed.");
           if (response.status === 409 && !isTimerSnapshot(body.timer))
             await reconcileTimer();
+          play("actionBlocked");
           return {
             ok: false,
             error: body.error ?? "Could not save the timer change.",
@@ -212,6 +217,15 @@ export function ActiveTimerProvider({
                 ? "Session saved."
                 : "Focus session started.",
         );
+        play(
+          operation === "start"
+            ? "focusStarted"
+            : operation === "resume"
+              ? "focusResumed"
+              : operation === "pause"
+                ? "focusPaused"
+                : "focusFinished",
+        );
         channelRef.current?.postMessage("changed");
         router.refresh();
         return { ...body, ok: true };
@@ -235,7 +249,7 @@ export function ActiveTimerProvider({
         setPendingOperation(null);
       }
     },
-    [acceptSnapshot, reconcileTimer, rememberCompletion, router],
+    [acceptSnapshot, reconcileTimer, rememberCompletion, router, play],
   );
 
   const startSession = useCallback(

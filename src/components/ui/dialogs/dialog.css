@@ -1,0 +1,149 @@
+@layer components {
+  .become-dialog-backdrop {
+    position: fixed;
+    z-index: var(--dialog-z-index);
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow-y: auto;
+    padding: var(--dialog-viewport-gutter);
+  }
+
+  .become-dialog {
+    display: grid;
+    box-sizing: border-box;
+    width: min(100%, var(--dialog-width));
+    max-width: var(--dialog-max-width);
+    max-height: var(--dialog-max-height);
+    overflow-y: auto;
+    border-width: var(--dialog-edge-width);
+    border-style: solid;
+    border-radius: var(--dialog-radius);
+    padding: var(--dialog-padding);
+    text-align: left;
+  }
+
+  .become-dialog__header {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--dialog-header-gap);
+  }
+
+  .become-dialog__copy {
+    display: grid;
+    min-width: 0;
+    gap: var(--dialog-copy-gap);
+  }
+
+  .become-dialog__header > .become-button {
+    flex: 0 0 auto;
+  }
+
+  .become-dialog__body {
+    min-width: 0;
+    margin-top: var(--dialog-content-gap);
+  }
+
+  .become-dialog__footer {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--dialog-action-gap);
+    margin-top: var(--dialog-content-gap);
+  }
+}
+
+.become-dialog-backdrop {
+  background: var(--dialog-backdrop-color);
+  -webkit-backdrop-filter: blur(var(--dialog-backdrop-blur));
+  backdrop-filter: blur(var(--dialog-backdrop-blur));
+}
+
+.become-dialog {
+  border-color: var(--dialog-edge);
+  background: var(--dialog-background);
+  box-shadow: var(--dialog-top-light), var(--dialog-depth);
+  color: var(--color-text-primary);
+}
+
+.become-dialog__eyebrow {
+  color: var(--color-primary);
+}
+
+.become-dialog__description {
+  color: var(--dialog-description-color);
+}
+
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .become-dialog {
+    background: var(--dialog-gloss), var(--dialog-glass-background);
+    -webkit-backdrop-filter: blur(var(--dialog-blur));
+    backdrop-filter: blur(var(--dialog-blur));
+  }
+}
+
+.become-dialog-backdrop[data-state="open"] {
+  animation: become-dialog-backdrop-in var(--motion-surface-duration)
+    var(--dialog-enter-ease) both;
+}
+
+.become-dialog-backdrop[data-state="open"] .become-dialog {
+  animation: become-dialog-in var(--motion-surface-duration)
+    var(--dialog-enter-ease) both;
+}
+
+.become-dialog-backdrop[data-state="closed"] {
+  pointer-events: none;
+  animation: become-dialog-backdrop-out var(--motion-surface-duration)
+    var(--dialog-exit-ease) both;
+}
+
+.become-dialog-backdrop[data-state="closed"] .become-dialog {
+  animation: become-dialog-out var(--motion-surface-duration)
+    var(--dialog-exit-ease) both;
+}
+
+@keyframes become-dialog-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes become-dialog-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes become-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--dialog-distance)) scale(var(--dialog-scale));
+  }
+}
+
+@keyframes become-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--dialog-distance)) scale(var(--dialog-scale));
+  }
+}
+
+@media (max-width: 30rem) {
+  .become-dialog__footer > .become-button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-dialog-backdrop,
+  .become-dialog {
+    animation: none;
+    transition: none;
+  }
+}

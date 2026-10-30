@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import { DateTime } from "luxon";
 import { ArrowLeft, ArrowRight, MessageSquareText } from "lucide-react";
@@ -131,7 +132,7 @@ export async function ReachActivityDetail({
             />
             {bridge ? (
               <Link
-                className="finance-dialog-trigger"
+                className="become-button become-button--primary become-button--md"
                 href={explorationWorkspaceHref(
                   nicheId,
                   "conversations",
@@ -142,7 +143,7 @@ export async function ReachActivityDetail({
               </Link>
             ) : revision.kind === "REPLY_RECEIVED" ? (
               <Link
-                className="finance-dialog-trigger"
+                className="become-button become-button--primary become-button--md"
                 href={`${explorationWorkspaceHref(nicheId, "conversations")}?linkedInteractionId=${encodeURIComponent(activityId)}`}
               >
                 <MessageSquareText aria-hidden="true" /> Start conversation
@@ -152,10 +153,10 @@ export async function ReachActivityDetail({
         )}
       </header>
 
-      <div className="exploration-stage-columns reach-activity-columns">
-        <div>
-          <section className="exploration-stage-section">
-            <header>
+      <div className="business-detail-grid">
+        <div className="business-detail-main">
+          <Card className="business-detail-section">
+            <header className="business-section-heading">
               <div>
                 <p className="eyebrow">Recorded event</p>
                 <h3>What happened</h3>
@@ -176,10 +177,10 @@ export async function ReachActivityDetail({
             {revision.notes && (
               <p className="business-prose">{revision.notes}</p>
             )}
-          </section>
+          </Card>
 
-          <section className="exploration-stage-section">
-            <header>
+          <Card className="business-detail-section">
+            <header className="business-section-heading">
               <div>
                 <p className="eyebrow">Contact trail</p>
                 <h3>Replies</h3>
@@ -230,7 +231,7 @@ export async function ReachActivityDetail({
                 No reply has been recorded yet.
               </p>
             )}
-          </section>
+          </Card>
 
           {record.revisions.length > 1 && (
             <details className="business-disclosure">
@@ -257,16 +258,19 @@ export async function ReachActivityDetail({
           )}
         </div>
 
-        <aside className="exploration-field-notes-static">
-          <section className="exploration-field-note exploration-field-note--major">
+        <aside className="business-aside">
+          <Card spacing="dense" className="business-aside-section">
             <p className="eyebrow">Contact context</p>
             <h3>{participantName}</h3>
             <p>
               {revision.nicheSnapshot ?? workspace.niche.name} ·{" "}
               {humanize(revision.audienceContext?.marketType ?? "UNKNOWN")}
             </p>
-          </section>
-          <section className="exploration-field-note reach-next-action">
+          </Card>
+          <Card
+            spacing="dense"
+            className="business-aside-section reach-next-action"
+          >
             <p className="eyebrow">Next action</p>
             {!readOnly && (
               <FollowUpForm target={{ interactionId: activityId }} />
@@ -284,7 +288,7 @@ export async function ReachActivityDetail({
                 No next action chosen yet.
               </p>
             )}
-          </section>
+          </Card>
         </aside>
       </div>
     </div>

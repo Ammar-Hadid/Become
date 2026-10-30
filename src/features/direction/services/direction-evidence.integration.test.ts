@@ -17,13 +17,9 @@ import {
   updateEngineeringProject,
 } from "@/features/engineering/projects/services/engineering-project.service";
 import { engineeringProjectSchema } from "@/features/engineering/schemas/engineering.schema";
-import {
-  saveSeason,
-  assignSeasonGoals,
-} from "@/features/seasons/services/season.service";
+import { saveSeason } from "@/features/seasons/services/season.service";
 import { changeSeasonLifecycle } from "@/features/seasons/services/season-lifecycle.service";
 import { getSeasonView } from "@/features/seasons/queries/season.query";
-import { emptySeasonDraft } from "@/features/seasons/utils/season-calendar.util";
 import type {
   CriterionDraft,
   ExperimentDraft,
@@ -562,24 +558,39 @@ describe.skipIf(!enabled)("Phase 5 exact evidence and history", () => {
       quarter: 2,
       expectedVersion: 0,
       operationKey: randomUUID(),
-      draft: { ...emptySeasonDraft(), title: "Earlier chapter" },
+      draft: {
+        character: {
+          name: "",
+          sourceCategory: null,
+          sourceWork: "",
+          adaptation: "",
+        },
+      },
       complete: true,
     });
     const g = await saveGoal(userId, {
       operationKey: randomUUID(),
       draft: { ...goal([]), startOn: "2026-04-01", targetOn: "2027-03-01" },
     });
-    const role = await assignSeasonGoals(userId, {
-      year: 2026,
-      quarter: 2,
-      expectedVersion: saved.version,
-      operationKey: randomUUID(),
-      goals: [{ goalId: g.id, role: "PRIMARY" }],
+    // Seed a historical assignment: the removed live assignment command must
+    // not be needed to verify archived Season outcomes.
+    await prisma.userSeason.update({
+      where: { id: saved.id },
+      data: { title: "Earlier chapter" },
+    });
+    await prisma.seasonGoal.create({
+      data: {
+        userId,
+        seasonId: saved.id,
+        goalId: g.id,
+        role: "PRIMARY",
+        position: 0,
+      },
     });
     const input = {
       year: 2026,
       quarter: 2,
-      expectedVersion: role.version,
+      expectedVersion: saved.version,
       operationKey: randomUUID(),
       action: "CLOSE",
       note: "Keep the practice",

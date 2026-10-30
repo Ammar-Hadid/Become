@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
 import { useId, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button.component";
@@ -58,9 +59,9 @@ export function DeferredSegments({
           New segment name
         </label>
         <div className="gap-sm flex items-center">
-          <input
+          <Input
             id={id}
-            className="text-input min-w-0 flex-1"
+            className="min-w-0 flex-1"
             value={draft}
             maxLength={160}
             placeholder="For example, competitive cloth-mousepad users"

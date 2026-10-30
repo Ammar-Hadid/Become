@@ -1,0 +1,308 @@
+.engineering-workspace-navigation {
+  padding: calc(
+      var(--nav-rail-offset-block) + var(--nav-rail-launcher-size) +
+        var(--spacing-sm)
+    )
+    var(--space-page-edge) 0;
+}
+.engineering-workspace .page-shell {
+  padding-top: var(--space-overview-section);
+}
+.engineering-overview {
+  display: grid;
+  gap: var(--space-overview-section);
+}
+.engineering-overview-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--space-overview-grid);
+}
+.engineering-focus-card {
+  display: grid;
+  align-content: space-between;
+  gap: var(--spacing-xl);
+}
+.engineering-focus-value {
+  font-size: clamp(2.8rem, 5vw, 5.5rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 1.05;
+  margin-top: var(--spacing-md);
+}
+.engineering-focus-comparison {
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-md);
+}
+.engineering-focus-card .timeframe-switcher {
+  align-self: start;
+  width: fit-content;
+  flex-wrap: wrap;
+}
+.engineering-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-dense-grid);
+}
+.engineering-overview-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: var(--space-overview-grid);
+  align-items: start;
+}
+.engineering-overview-body > * {
+  min-width: 0;
+}
+.engineering-project-shortlist {
+  display: grid;
+}
+.engineering-project-shortlist a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+.engineering-project-shortlist a:last-child {
+  border-bottom: 0;
+}
+.engineering-project-shortlist a:hover {
+  color: var(--color-primary);
+}
+.engineering-project-shortlist strong,
+.engineering-project-shortlist small {
+  display: block;
+}
+.engineering-project-shortlist small {
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+}
+.engineering-project-shortlist svg {
+  width: 1rem;
+  flex-shrink: 0;
+}
+.engineering-primary-breakdowns,
+.engineering-detail-grid {
+  display: grid;
+  gap: var(--space-overview-grid);
+}
+.engineering-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.engineering-time-breakdown {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.engineering-time-breakdown h3 {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+}
+.engineering-breakdown-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  font-size: var(--text-body-sm);
+}
+.engineering-breakdown-label > span:last-child {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.engineering-quiet-facts {
+  display: grid;
+}
+.engineering-quiet-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.engineering-quiet-facts > div:last-child {
+  border-bottom: 0;
+}
+.engineering-quiet-facts dt {
+  color: var(--color-text-secondary);
+}
+.engineering-quiet-facts dd {
+  font-variant-numeric: tabular-nums;
+}
+.engineering-workspace .engineering-route-content {
+  margin-top: var(--space-overview-section);
+}
+.engineering-workspace .engineering-list-toolbar {
+  margin-bottom: var(--spacing-xl);
+}
+.engineering-list-toolbar .timeframe-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+.engineering-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.engineering-inline-link svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.engineering-workspace .engineering-record-list {
+  margin-top: 0;
+  border-top: 0;
+}
+.engineering-workspace .engineering-record-row {
+  padding: var(--spacing-xl) var(--spacing-sm);
+  gap: var(--spacing-lg);
+}
+.engineering-workspace .engineering-record-row:last-child {
+  border-bottom: 0;
+}
+.engineering-workspace .engineering-record-copy {
+  max-width: 65ch;
+}
+.engineering-workspace .engineering-form {
+  display: grid;
+  gap: var(--space-action-section);
+  max-width: none;
+}
+.engineering-workspace .engineering-form-grid {
+  margin: 0;
+  padding: 0;
+  gap: var(--space-action-field);
+}
+.engineering-workspace .engineering-form-actions {
+  margin-top: 0;
+  padding: var(--spacing-lg) 0;
+  border: 0;
+}
+.engineering-workspace .engineering-form-note {
+  margin-top: 0;
+}
+.engineering-workspace .engineering-form > .workspace-disclosure[open] {
+  border-bottom: 0;
+}
+.engineering-workspace .engineering-project-page {
+  display: grid;
+  gap: var(--space-overview-section);
+}
+.engineering-workspace .engineering-project-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+  margin: 0;
+}
+.engineering-workspace .engineering-project-facts > div {
+  padding: 0;
+}
+.engineering-workspace .engineering-project-stack,
+.engineering-workspace .engineering-project-links,
+.engineering-workspace .engineering-project-notes,
+.engineering-workspace .engineering-output-section {
+  margin: 0;
+}
+.engineering-workspace .engineering-project-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xl);
+}
+.engineering-workspace .engineering-project-notes > p {
+  white-space: pre-wrap;
+  color: var(--color-text-secondary);
+}
+.engineering-workspace .engineering-section-heading {
+  margin-bottom: var(--spacing-xl);
+}
+.engineering-workspace .engineering-evidence-ledger {
+  margin-top: var(--space-overview-section);
+}
+.engineering-workspace .engineering-evidence-entry {
+  border-radius: var(--radius-control);
+}
+.engineering-workspace .engineering-evidence-summary {
+  padding-right: var(--spacing-xl);
+}
+.engineering-workspace .engineering-evidence-year {
+  grid-template-columns: 4rem minmax(0, 1fr);
+}
+.engineering-workspace .engineering-tech-combobox {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.engineering-workspace .engineering-tech-combobox > svg {
+  display: none;
+}
+.engineering-workspace .engineering-tech-combobox .become-input {
+  width: 100%;
+}
+@media (max-width: 1100px) {
+  .engineering-overview-top {
+    grid-template-columns: 1fr;
+  }
+  .engineering-overview-body {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+  .engineering-workspace .engineering-project-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .engineering-workspace-navigation {
+    padding-top: var(--spacing-xl);
+  }
+  .engineering-overview-body,
+  .engineering-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .engineering-overview-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .engineering-overview-metrics > :last-child {
+    grid-column: 1 / -1;
+  }
+  .engineering-workspace .engineering-project-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .engineering-workspace .engineering-evidence-year {
+    grid-template-columns: 1fr;
+  }
+  .engineering-workspace .engineering-form-actions {
+    flex-wrap: wrap;
+  }
+  .engineering-workspace .engineering-record-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+}
+
+.engineering-focus-card .timeframe-switcher {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.engineering-project-page > .become-button {
+  justify-self: start;
+}
+.engineering-project-page .section-title {
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+  font-weight: 550;
+}
+
+/* Custom technology identifiers must leave their icon and remove action visible. */
+.engineering-workspace .engineering-selected-technologies > span,
+.engineering-workspace .engineering-technology-stack > span {
+  min-width: 0;
+  max-width: 100%;
+}
+.engineering-workspace .engineering-technology-name,
+.engineering-workspace .engineering-tech-options > button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.engineering-workspace .engineering-selected-technologies > span > svg,
+.engineering-workspace .engineering-technology-stack > span > svg,
+.engineering-workspace .engineering-selected-technologies button {
+  flex: none;
+}

@@ -1,0 +1,252 @@
+@layer components {
+  .become-selection-label {
+    display: flex;
+    min-width: 0;
+    min-height: var(--selection-row-height);
+    align-items: center;
+    gap: var(--selection-gap);
+    cursor: pointer;
+  }
+
+  .become-selection-copy {
+    display: grid;
+    min-width: 0;
+    gap: var(--selection-copy-gap);
+  }
+
+  .become-selection {
+    position: relative;
+    display: grid;
+    box-sizing: border-box;
+    width: var(--selection-size);
+    height: var(--selection-size);
+    flex: 0 0 auto;
+    appearance: none;
+    place-items: center;
+    margin: 0;
+    border-width: var(--selection-edge-width);
+    border-style: solid;
+    padding: 0;
+  }
+
+  .become-selection--switch {
+    display: block;
+    width: var(--selection-switch-width);
+    height: var(--selection-switch-height);
+  }
+}
+
+/* Native control resets are unlayered, so selection typography and visual
+   states are unlayered while geometry remains utility-friendly. */
+.become-selection-text {
+  color: var(--color-text-primary);
+  font-family: var(--text-body--font-family);
+  font-size: var(--text-body);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--text-body--letter-spacing);
+  line-height: var(--text-body--line-height);
+}
+
+.become-selection-help {
+  color: var(--color-text-secondary);
+  font-family: var(--text-caption--font-family);
+  font-size: var(--text-caption);
+  font-weight: var(--text-caption--font-weight);
+  letter-spacing: var(--text-caption--letter-spacing);
+  line-height: var(--text-caption--line-height);
+}
+
+.become-selection {
+  border-color: var(--selection-edge);
+  background: var(--selection-background);
+  color: var(--selection-mark-color);
+  outline: 0;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color var(--selection-feedback-duration)
+    var(--selection-easing);
+}
+
+.become-selection--checkbox {
+  border-radius: var(--selection-checkbox-radius);
+}
+
+.become-selection--radio {
+  border-radius: var(--selection-radio-radius);
+}
+
+.become-selection--checkbox::after,
+.become-selection--radio::after {
+  content: "";
+  display: block;
+  transition: opacity var(--selection-feedback-duration) var(--selection-easing);
+}
+
+.become-selection--switch::after {
+  content: "";
+  display: block;
+}
+
+.become-selection--checkbox::after {
+  width: var(--selection-check-width);
+  height: var(--selection-check-height);
+  border: solid currentColor;
+  border-width: 0 var(--selection-mark-stroke) var(--selection-mark-stroke) 0;
+  opacity: 0;
+  transform: translateY(var(--selection-check-offset))
+    rotate(var(--selection-check-rotation));
+}
+
+.become-selection--checkbox:checked::after {
+  opacity: 1;
+}
+
+.become-selection--checkbox:indeterminate::after {
+  width: var(--selection-mixed-mark-width);
+  height: var(--selection-mixed-mark-height);
+  border: 0;
+  background: currentColor;
+  opacity: 1;
+  transform: none;
+}
+
+.become-selection--radio::after {
+  width: var(--selection-radio-mark-size);
+  height: var(--selection-radio-mark-size);
+  border-radius: var(--selection-radio-radius);
+  background: currentColor;
+  opacity: 0;
+}
+
+.become-selection--radio:checked::after {
+  opacity: 1;
+}
+
+.become-selection--checkbox:is(:checked, :indeterminate),
+.become-selection--radio:checked {
+  border-color: var(--selection-accent);
+  background: var(--selection-accent);
+}
+
+.become-selection--switch {
+  border-radius: var(--selection-switch-radius);
+  background: var(--selection-switch-background);
+}
+
+.become-selection--switch::after {
+  position: absolute;
+  inset-block-start: var(--selection-switch-thumb-block-offset);
+  inset-inline-start: var(--selection-switch-thumb-inline-offset);
+  width: var(--selection-switch-thumb-size);
+  height: var(--selection-switch-thumb-size);
+  border-radius: var(--selection-switch-thumb-radius);
+  background: var(--selection-switch-thumb);
+  transform: translateX(0);
+  transition:
+    transform var(--selection-switch-duration) var(--selection-easing),
+    background-color var(--selection-feedback-duration) var(--selection-easing);
+}
+
+.become-selection--switch:checked {
+  border-color: var(--selection-accent);
+  background: var(--selection-accent);
+}
+
+.become-selection--switch:checked::after {
+  background: var(--selection-mark-color);
+  transform: translateX(var(--selection-switch-thumb-travel));
+}
+
+.become-selection-label:where(:hover) .become-selection:where(:not(:disabled)) {
+  border-color: var(--selection-edge-hover);
+}
+
+.become-selection-label:where(:hover)
+  .become-selection:where(
+    :checked,
+    .become-selection--checkbox:indeterminate
+  ):where(:not(:disabled)) {
+  border-color: var(--selection-accent-hover);
+  background: var(--selection-accent-hover);
+}
+
+.become-selection:focus-visible {
+  border-color: var(--selection-focus-color);
+  outline: 0;
+  box-shadow: none;
+}
+
+.become-selection:where(
+    :checked,
+    .become-selection--checkbox:indeterminate
+  ):focus-visible {
+  border-color: var(--selection-focus-checked-color);
+}
+
+.become-selection[aria-invalid="true"] {
+  border-color: var(--selection-error-color);
+}
+
+.become-selection[aria-invalid="true"]:not(:checked) {
+  background: var(--selection-error-background);
+}
+
+.become-selection-label:has(.become-selection:disabled) {
+  cursor: not-allowed;
+  opacity: var(--selection-disabled-opacity);
+}
+
+.become-selection:disabled {
+  cursor: not-allowed;
+}
+
+.become-selection-label[data-domain="engineering"] {
+  --selection-accent: var(--color-domain-engineering-accent);
+  --selection-accent-hover: color-mix(
+    in srgb,
+    var(--color-domain-engineering-accent)
+      var(--selection-domain-hover-strength),
+    var(--color-background)
+  );
+  --selection-focus-color: var(--color-domain-engineering-accent);
+}
+
+.become-selection-label[data-domain="finance"] {
+  --selection-accent: var(--color-domain-finance-accent);
+  --selection-accent-hover: color-mix(
+    in srgb,
+    var(--color-domain-finance-accent) var(--selection-domain-hover-strength),
+    var(--color-background)
+  );
+  --selection-focus-color: var(--color-domain-finance-accent);
+}
+
+.become-selection-label[data-domain="entrepreneurship"] {
+  --selection-accent: var(--color-domain-entrepreneurship-accent);
+  --selection-accent-hover: color-mix(
+    in srgb,
+    var(--color-domain-entrepreneurship-accent)
+      var(--selection-domain-hover-strength),
+    var(--color-background)
+  );
+  --selection-focus-color: var(--color-domain-entrepreneurship-accent);
+}
+
+.become-selection-label[data-domain="content"] {
+  --selection-accent: var(--color-domain-content-accent);
+  --selection-accent-hover: color-mix(
+    in srgb,
+    var(--color-domain-content-accent) var(--selection-domain-hover-strength),
+    var(--color-background)
+  );
+  --selection-focus-color: var(--color-domain-content-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-selection,
+  .become-selection--checkbox::after,
+  .become-selection--radio::after,
+  .become-selection--switch::after {
+    transition: none;
+  }
+}

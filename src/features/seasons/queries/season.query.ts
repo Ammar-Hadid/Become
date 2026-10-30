@@ -11,6 +11,7 @@ import {
   seasonCalendar,
 } from "@/features/seasons/utils/season-calendar.util";
 import { seasonIdentitySchema } from "@/features/seasons/schemas/season.schema";
+import { livingBannerLedgerSchema } from "@/features/seasons/living/schemas/living-character-banner.schema";
 import {
   getGoalView,
   getExperimentView,
@@ -41,6 +42,17 @@ export async function getSeasonView(
       quotes: { where: { retiredAt: null }, orderBy: { createdAt: "asc" } },
       goals: { orderBy: { position: "asc" } },
       milestones: true,
+      livingPack: {
+        select: {
+          characterBanner: true,
+          briefRevision: true,
+          profiles: {
+            orderBy: { version: "desc" },
+            take: 1,
+            select: { version: true },
+          },
+        },
+      },
     },
   });
   const previous = await tx.userSeason.findFirst({
@@ -55,6 +67,34 @@ export async function getSeasonView(
     select: { year: true, quarter: true, title: true, closingNote: true },
   });
   const cots = row ? await getCotsIdentity(userId, row.id, tx) : null;
+  const bannerLedger = livingBannerLedgerSchema.safeParse(
+    row?.livingPack?.characterBanner,
+  );
+  const approvedBanner = bannerLedger.success
+    ? [...bannerLedger.data.revisions]
+        .reverse()
+        .find(
+          (revision) =>
+            revision.approvedAt &&
+            revision.identityId === cots?.row.id &&
+            revision.profileVersion === row?.livingPack?.profiles[0]?.version &&
+            revision.briefRevision === row?.livingPack?.briefRevision,
+        )
+    : null;
+  const characterBanner =
+    approvedBanner && row
+      ? {
+          name: cots?.view.displayName ?? row.title,
+          sourceWork: cots?.view.sourceWork ?? "",
+          adaptation: cots?.view.adaptation ?? "",
+          desktopSrc: `/api/direction/seasons/living/banner/${identity.year}/${identity.quarter}/${approvedBanner.revision}/desktop`,
+          phoneSrc: `/api/direction/seasons/living/banner/${identity.year}/${identity.quarter}/${approvedBanner.revision}/phone`,
+          alt: `${cots?.view.displayName ?? row.title} character banner`,
+          quote: approvedBanner.quote,
+          attribution: approvedBanner.attribution,
+          rightLine: approvedBanner.rightLine,
+        }
+      : null;
   const uses = row
     ? await tx.seasonMediaUse.findMany({
         where: {
@@ -158,6 +198,7 @@ export async function getSeasonView(
           : "Revisit your opening intention, the evidence you have recorded, and the time that remains.",
     };
   return {
+    characterBanner,
     cotsIdentity: cots?.view ?? null,
     openingDeferred: Boolean(row?.openingDeferredAt),
     presentation: seasonPresentation(

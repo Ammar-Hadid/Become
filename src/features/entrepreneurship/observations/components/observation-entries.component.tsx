@@ -1,4 +1,8 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useEffect, useRef, useState } from "react";
 import { observationInputSchema } from "@/features/entrepreneurship/interactions/schemas/interaction.schema";
 import { humanize } from "@/features/entrepreneurship/shared/utils/business.util";
@@ -142,8 +146,7 @@ export function ObservationEntries({
             )}
             <label className="field-label">
               Observation kind
-              <select
-                className="text-input"
+              <NativeSelect
                 value={entry.kind}
                 onChange={(e) => update(entry.id, "kind", e.target.value)}
               >
@@ -158,12 +161,11 @@ export function ObservationEntries({
                     {humanize(kind)}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <label className="field-label">
               Wording
-              <select
-                className="text-input"
+              <NativeSelect
                 value={entry.wordingMode}
                 onChange={(e) =>
                   update(entry.id, "wordingMode", e.target.value)
@@ -171,20 +173,18 @@ export function ObservationEntries({
               >
                 <option value="PARAPHRASE">Paraphrase</option>
                 <option value="QUOTE">Exact quote</option>
-              </select>
+              </NativeSelect>
             </label>
             <label className="field-label">
               Statement or behavior
-              <textarea
-                className="text-input"
+              <Textarea
                 value={entry.statement}
                 onChange={(e) => update(entry.id, "statement", e.target.value)}
               />
             </label>
             <label className="field-label">
               Source excerpt or context
-              <textarea
-                className="text-input"
+              <Textarea
                 value={entry.sourceDescription}
                 onChange={(e) =>
                   update(entry.id, "sourceDescription", e.target.value)
@@ -238,8 +238,7 @@ export function ObservationEntries({
             </details>
             <label className="field-label">
               Related problem · optional
-              <select
-                className="text-input"
+              <NativeSelect
                 value={entry.problemId}
                 onChange={(e) => update(entry.id, "problemId", e.target.value)}
               >
@@ -249,12 +248,11 @@ export function ObservationEntries({
                     {p.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <label className="field-label">
               Relationship to problem
-              <select
-                className="text-input"
+              <NativeSelect
                 value={entry.stance}
                 onChange={(e) => update(entry.id, "stance", e.target.value)}
               >
@@ -263,12 +261,11 @@ export function ObservationEntries({
                     {humanize(stance)}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
             <label className="field-label">
               Your interpretation
-              <textarea
-                className="text-input"
+              <Textarea
                 value={entry.explanation}
                 onChange={(e) =>
                   update(entry.id, "explanation", e.target.value)
@@ -276,19 +273,23 @@ export function ObservationEntries({
               />
             </label>
             <div className="business-actions">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
-                className="business-text-link"
+
                 onClick={() =>
                   setEntries((rows) => rows.filter((r) => r.id !== entry.id))
                 }
                 aria-label={`Remove observation ${index + 1}`}
               >
                 Remove observation
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
-                className="business-text-link"
+
                 disabled={!index}
                 onClick={() =>
                   setEntries((rows) => {
@@ -302,14 +303,15 @@ export function ObservationEntries({
                 }
               >
                 Move observation up
-              </button>
+              </Button>
             </div>
           </div>
         </details>
       ))}
-      <button
+      <Button
+        variant="secondary"
         type="button"
-        className="finance-dialog-trigger finance-dialog-trigger--secondary"
+
         disabled={entries.length >= 30}
         onClick={() => {
           const id = crypto.randomUUID();
@@ -330,7 +332,7 @@ export function ObservationEntries({
         }}
       >
         Add observation
-      </button>
+      </Button>
     </div>
   );
 }

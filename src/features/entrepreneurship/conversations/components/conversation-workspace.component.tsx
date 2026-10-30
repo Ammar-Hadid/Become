@@ -1,3 +1,7 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { Input } from "@/components/ui/forms/input.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { Button } from "@/components/ui/buttons/button.component";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -127,12 +131,12 @@ export async function ConversationWorkspace({
       <header className="workspace-heading conversation-page-heading">
         <div>
           <p className="eyebrow">Conversations</p>
-          <h2>Keep the exchange intact.</h2>
-          <p>Review the words, context, and observations in one place.</p>
+          <h2>Conversations</h2>
+          <p>Keep the conversation, then pull out what you learned.</p>
         </div>
         <div className="business-actions">
           <Link
-            className="finance-dialog-trigger finance-dialog-trigger--secondary"
+            className="become-button become-button--secondary become-button--md"
             href={explorationWorkspaceHref(nicheId, "conversations", "/guides")}
           >
             Interview guides
@@ -150,7 +154,7 @@ export async function ConversationWorkspace({
         <label className="workspace-search">
           <Search aria-hidden="true" />
           <span className="sr-only">Search conversations</span>
-          <input
+          <Input
             name="q"
             type="search"
             defaultValue={query}
@@ -159,17 +163,17 @@ export async function ConversationWorkspace({
         </label>
         <label className="workspace-filter">
           <span className="sr-only">Conversation status</span>
-          <select name="status" defaultValue={status ?? ""}>
+          <NativeSelect name="status" defaultValue={status ?? ""}>
             <option value="">All statuses</option>
             <option value="PLANNED">Planned</option>
             <option value="IN_PROGRESS">In progress</option>
             <option value="PAUSED">Paused</option>
             <option value="COMPLETED">Completed</option>
-          </select>
+          </NativeSelect>
         </label>
-        <button className="workspace-filter-button" type="submit">
+        <Button variant="secondary" type="submit">
           Filter
-        </button>
+        </Button>
         {(query || status) && (
           <Link
             className="business-text-link"
@@ -185,7 +189,7 @@ export async function ConversationWorkspace({
         className="conversation-workspace"
         data-empty={!conversation || undefined}
       >
-        <aside className="conversation-index" aria-label="Conversations">
+        <Card className="conversation-index" aria-label="Conversations">
           <header>
             <span>{page.items.length} shown</span>
           </header>
@@ -245,7 +249,7 @@ export async function ConversationWorkspace({
               More conversations <ArrowRight aria-hidden="true" />
             </Link>
           )}
-        </aside>
+        </Card>
 
         {conversation ? (
           <ConversationDetail
@@ -267,7 +271,7 @@ export async function ConversationWorkspace({
             }
           />
         ) : (
-          <section className="conversation-welcome">
+          <Card className="conversation-welcome">
             <MessageSquareDashed aria-hidden="true" />
             <h3>Open a conversation.</h3>
             <p>
@@ -286,7 +290,7 @@ export async function ConversationWorkspace({
                 Open latest conversation <ArrowRight aria-hidden="true" />
               </Link>
             )}
-          </section>
+          </Card>
         )}
       </div>
     </div>
@@ -326,7 +330,7 @@ function ConversationDetail({
 
   return (
     <>
-      <section
+      <Card
         className="conversation-thread"
         aria-labelledby="conversation-title"
       >
@@ -515,9 +519,9 @@ function ConversationDetail({
               defaultPlatform={revision.platform}
             />
           )}
-      </section>
+      </Card>
 
-      <aside className="conversation-context" aria-label="Conversation context">
+      <Card className="conversation-context" aria-label="Conversation context">
         <header>
           <span>Context</span>
           <Link
@@ -586,7 +590,7 @@ function ConversationDetail({
             ))}
           </section>
         )}
-      </aside>
+      </Card>
     </>
   );
 }

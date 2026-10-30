@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -46,8 +47,9 @@ export function ConversationStateControls({
   if (status === "COMPLETED") return null;
   if (status === "CANCELLED") {
     return (
-      <button
-        className="finance-dialog-trigger"
+      <Button
+        variant="primary"
+
         type="button"
         onClick={async () => {
           await resumeConversationAction(conversationId, crypto.randomUUID());
@@ -55,12 +57,13 @@ export function ConversationStateControls({
         }}
       >
         <Play aria-hidden="true" /> Resume conversation
-      </button>
+      </Button>
     );
   }
   return (
     <div className="business-actions">
       <RecordDialog
+        treatment="workspace"
         eyebrow="Debrief"
         triggerLabel="Finish conversation"
         triggerIcon={<SquareCheckBig aria-hidden="true" />}
@@ -135,8 +138,10 @@ export function ConversationStateControls({
                 ))}
               </div>
               {next && (
-                <button
-                  className="business-text-link"
+                <Button
+                  variant="ghost"
+                  size="sm"
+
                   type="button"
                   disabled={loadingMore}
                   onClick={() => {
@@ -156,7 +161,7 @@ export function ConversationStateControls({
                   }}
                 >
                   {loadingMore ? "Loading messages…" : "Load more messages"}
-                </button>
+                </Button>
               )}
               {loadError && <p role="alert">{loadError}</p>}
             </fieldset>
@@ -172,6 +177,7 @@ export function ConversationStateControls({
         </RecordForm>
       </RecordDialog>
       <RecordDialog
+        treatment="workspace"
         eyebrow="Interrupted work"
         triggerLabel="Pause conversation"
         triggerIcon={<PauseCircle aria-hidden="true" />}

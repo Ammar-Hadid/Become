@@ -57,6 +57,7 @@ export function CriterionSourceList({
     try {
       const response = await fetch(
         `/api/direction/criteria/${encodeURIComponent(criterionId)}/sources?cursor=${encodeURIComponent(cursor)}`,
+        { signal: AbortSignal.timeout(15_000) },
       );
       const body = (await response.json().catch(() => null)) as
         (CriterionEvaluation & { error?: string }) | null;

@@ -1,5 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Lightbulb } from "lucide-react";
 import { IdeaActions } from "@/features/direction/thinking/ideas/components/idea-actions.component";
@@ -48,7 +50,7 @@ export function IdeaDetail({
         </span>
         <div>
           <p className="eyebrow">An idea worth returning to</p>
-          <h2>{idea.title}</h2>
+          <h1>{idea.title}</h1>
           <p className="thinking-detail-date">
             Parked{" "}
             <time dateTime={idea.createdAt}>
@@ -91,7 +93,7 @@ export function IdeaDetail({
         </ul>
       )}
 
-      <section className="idea-making" aria-labelledby="idea-making-title">
+      <Card className="idea-making" aria-labelledby="idea-making-title">
         <div>
           <p className="eyebrow">Make from this</p>
           <h3 id="idea-making-title">Give the thought a next life.</h3>
@@ -107,9 +109,9 @@ export function IdeaDetail({
             defaultStartOn={defaultStartOn}
           />
         )}
-      </section>
+      </Card>
 
-      <section className="idea-outputs" aria-labelledby="idea-outputs-title">
+      <Card className="idea-outputs" aria-labelledby="idea-outputs-title">
         <header>
           <p className="eyebrow">Became</p>
           <h3 id="idea-outputs-title">
@@ -147,13 +149,10 @@ export function IdeaDetail({
         ) : (
           <p>This idea has not become another record yet.</p>
         )}
-      </section>
+      </Card>
 
       {idea.history.length > 0 && (
-        <section
-          className="thinking-history"
-          aria-labelledby="idea-history-title"
-        >
+        <Card className="thinking-history" aria-labelledby="idea-history-title">
           <header>
             <p className="eyebrow">History</p>
             <h3 id="idea-history-title">The thread stays intact.</h3>
@@ -194,7 +193,7 @@ export function IdeaDetail({
               }}
             />
           </ol>
-        </section>
+        </Card>
       )}
     </article>
   );

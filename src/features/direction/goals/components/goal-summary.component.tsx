@@ -1,30 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  CircleAlert,
-  CircleCheck,
-  CircleDashed,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { GoalView } from "@/features/direction/types/direction.types";
-
-function evaluationState(goal: GoalView) {
-  if (goal.liveChangedSinceConclusion)
-    return {
-      label: "Evidence changed",
-      icon: <CircleAlert aria-hidden="true" />,
-    };
-  if (goal.evaluation.criteriaMet === true)
-    return {
-      label: "Criteria reached",
-      icon: <CircleCheck aria-hidden="true" />,
-    };
-  if (goal.evaluation.criteriaMet === null)
-    return {
-      label: "Needs judgment",
-      icon: <CircleDashed aria-hidden="true" />,
-    };
-  return { label: "In progress", icon: <CircleDashed aria-hidden="true" /> };
-}
 
 function lifecycleLabel(goal: GoalView) {
   if (goal.archivedAt) return "Archived";
@@ -38,8 +14,6 @@ function lifecycleLabel(goal: GoalView) {
 }
 
 export function GoalSummary({ goal }: { goal: GoalView }) {
-  const state = evaluationState(goal);
-
   return (
     <Link className="direction-goal-row" href={`/direction/goals/${goal.id}`}>
       <div className="direction-goal-main">
@@ -49,13 +23,14 @@ export function GoalSummary({ goal }: { goal: GoalView }) {
             <span className="direction-goal-lifecycle">
               {lifecycleLabel(goal)}
             </span>
-            <span className="direction-goal-state">
-              {state.icon}
-              {state.label}
-            </span>
           </span>
         </div>
-        <p>{goal.progressSummary}</p>
+        <p>{goal.description || ""}</p>
+        <span className="simple-goal-domains">
+          {goal.domains.map((domain) => (
+            <span key={domain.id}>{domain.name}</span>
+          ))}
+        </span>
         <span className="direction-goal-horizon">
           {goal.targetOn
             ? `${goal.startOn} — ${goal.targetOn}`

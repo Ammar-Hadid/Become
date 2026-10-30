@@ -187,92 +187,6 @@
   filter: saturate(0.84) contrast(1.04);
 }
 
-.season-poster-image-editor {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  cursor: grab;
-  outline: none;
-  touch-action: none;
-  user-select: none;
-}
-
-.season-poster-image-editor[data-dragging] {
-  cursor: grabbing;
-}
-
-.season-poster-image-editor[aria-disabled="true"] {
-  cursor: wait;
-}
-
-.season-poster-image-editor::after {
-  content: "";
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  border: 1px solid rgba(232, 168, 62, 0.82);
-  pointer-events: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(10, 11, 13, 0.72),
-    inset 0 0 2rem rgba(232, 168, 62, 0.06);
-}
-
-.season-poster-image-editor:focus-visible::after {
-  border-width: 2px;
-  box-shadow:
-    inset 0 0 0 2px rgba(10, 11, 13, 0.78),
-    inset 0 0 2.5rem rgba(232, 168, 62, 0.1);
-}
-
-.season-poster-image-guide {
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 33.15%,
-      rgba(244, 241, 234, 0.34) 33.25% 33.45%,
-      transparent 33.55% 66.45%,
-      rgba(244, 241, 234, 0.34) 66.55% 66.75%,
-      transparent 66.85%
-    ),
-    linear-gradient(
-      0deg,
-      transparent 33.15%,
-      rgba(244, 241, 234, 0.34) 33.25% 33.45%,
-      transparent 33.55% 66.45%,
-      rgba(244, 241, 234, 0.34) 66.55% 66.75%,
-      transparent 66.85%
-    );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-content) var(--ease-enter);
-}
-
-.season-poster-image-editor:hover .season-poster-image-guide,
-.season-poster-image-editor:focus-visible .season-poster-image-guide,
-.season-poster-image-editor[data-dragging] .season-poster-image-guide {
-  opacity: 1;
-}
-
-.season-poster-image-label {
-  position: absolute;
-  z-index: 4;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  border: 1px solid rgba(232, 168, 62, 0.32);
-  border-radius: 999px;
-  background: rgba(9, 10, 12, 0.76);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  color: #dfbd83;
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  backdrop-filter: blur(12px);
-}
-
 .season-poster-fallback {
   position: absolute;
   inset: 0;
@@ -501,9 +415,5 @@
 @media (prefers-reduced-motion: reduce) {
   .season-poster-anchor:hover .season-poster--archive {
     transform: none;
-  }
-
-  .season-poster-image-guide {
-    transition: none;
   }
 }

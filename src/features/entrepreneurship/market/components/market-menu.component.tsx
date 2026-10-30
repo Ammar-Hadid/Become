@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
@@ -21,9 +23,9 @@ export function MarketMenu({
         label={`${kind === "company" ? "Business" : "Exploration"} actions`}
         placement="bottom-end"
         trigger={(props) => (
-          <button {...props} className="business-icon-button">
+          <Button variant="ghost" size="icon" {...props}>
             <MoreHorizontal aria-hidden="true" />
-          </button>
+          </Button>
         )}
       >
         <MenuItem

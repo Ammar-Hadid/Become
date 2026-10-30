@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import { getAudienceMetrics } from "@/features/entrepreneurship/analytics/queries/audience-metrics.query";
 import { getEvidenceJournal } from "@/features/entrepreneurship/evidence/queries/evidence-journal.query";
 import { audienceInclude } from "@/features/entrepreneurship/audiences/utils/audience.util";
@@ -107,9 +108,9 @@ export async function getExplorationSummary(userId: string, nicheId: string) {
       prisma.$queryRaw<
         { interactions: number; contacted: number; conversations: number }[]
       >`SELECT COUNT(*)::int AS interactions, COUNT(DISTINCT r."companyId") FILTER (WHERE r.kind <> 'ATTEMPT_NO_CONTACT')::int AS contacted, COUNT(*) FILTER (WHERE r.kind='CONVERSATION')::int AS conversations FROM interaction i JOIN interaction_revision r ON r."interactionId"=i.id AND r.version=i.version WHERE i."userId"=${userId} AND i."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,
-      prisma.$queryRaw<
-        { seconds: number; sessions: number }[]
-      >`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
+      prisma.$queryRaw<{ seconds: number; sessions: number }[]>(
+        Prisma.sql`SELECT COALESCE(SUM(${sessionFocusedSecondsSql("session")}), 0)::float8 AS seconds, COUNT(*)::int AS sessions FROM session WHERE "userId"=${userId} AND "businessNicheId"=${nicheId}`,
+      ),
       prisma.$queryRaw<
         { count: number }[]
       >`SELECT COUNT(*)::int AS count FROM observation o JOIN observation_revision r ON r."observationId"=o.id AND r.version=o.version WHERE o."userId"=${userId} AND o."voidedAt" IS NULL AND r."nicheId"=${nicheId}`,

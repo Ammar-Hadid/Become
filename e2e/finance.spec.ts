@@ -24,7 +24,7 @@ test.describe("Phase 3 Finance", () => {
     await page.getByTestId("auth-submit").click();
     await deferAutomaticSeasonOpening(page);
     await expect(
-      page.getByRole("heading", { name: /Finance\./ }),
+      page.getByRole("region", { name: "Dashboard lenses" }),
     ).toBeVisible();
   });
   test.afterEach(async () => {
@@ -84,7 +84,7 @@ test.describe("Phase 3 Finance", () => {
     await transfer.getByLabel("To account").selectOption({ label: "Savings" });
     await save(transfer, "Record transaction");
     await page.goto("/settings");
-    await expect(page).toHaveURL(/\/settings\/personal/);
+    await expect(page).toHaveURL(/\/settings\/application/);
     await page
       .getByRole("navigation", { name: "Settings sections" })
       .getByRole("link", { name: "Finance", exact: true })
@@ -211,10 +211,11 @@ test.describe("Phase 3 Finance", () => {
       "You're EUR 2,111.61 below your EUR 3,000.00 protected reserve.",
     );
     await expect(
-      reality.getByRole("img", {
-        name: /29.6% of the EUR 3,000.00 protected reserve is covered/,
+      reality.getByRole("progressbar", {
+        name: "EUR protected reserve coverage",
+        exact: true,
       }),
-    ).toBeVisible();
+    ).toHaveAttribute("aria-valuenow", "29.6");
     await expect(reality).not.toContainText(
       "Goal plan exceeds available capacity",
     );
@@ -232,19 +233,19 @@ test.describe("Phase 3 Finance", () => {
     await page.goto("/finance");
     const savingsSnapshot = page
       .getByRole("heading", {
-        name: "What your savings are holding space for",
+        name: "Savings reserve",
       })
       .locator("../../..");
     await expect(
-      savingsSnapshot.getByRole("img", {
-        name: /29.6% of the EUR 3,000.00 protected reserve is covered/,
+      savingsSnapshot.getByRole("progressbar", {
+        name: "EUR protected reserve coverage",
+        exact: true,
       }),
-    ).toBeVisible();
-    await expect(savingsSnapshot).toContainText("29.6% of reserve covered");
+    ).toHaveAttribute("aria-valuenow", "29.6");
+    await expect(savingsSnapshot).toContainText("29.6%");
+    await expect(savingsSnapshot).toContainText("EUR 3,000.00");
     await expect(savingsSnapshot).toContainText("Reserve not yet covered");
-    await expect(savingsSnapshot).toContainText(
-      "EUR 2,111.61 still needed to reach the protected reserve.",
-    );
+    await expect(savingsSnapshot).toContainText("EUR 2,111.61 still needed.");
   });
 
   test("recurring confirmation/automatic posting and payment-first work attribution", async ({
@@ -321,7 +322,7 @@ test.describe("Phase 3 Finance", () => {
     await expect(
       page.getByRole("heading", { name: "Accepted. Choose what comes next." }),
     ).toBeVisible();
-    await page.getByText("Create WorkSource", { exact: true }).click();
+    await page.getByText("Create work source", { exact: true }).click();
     const source = form(page, "Confirm create work source");
     await expect(source.getByLabel("Work source name")).toHaveValue(
       "Client Alpha",
@@ -333,7 +334,10 @@ test.describe("Phase 3 Finance", () => {
     ).toBeVisible();
     await page.reload();
     await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-    await page.getByRole("button", { name: "Finance", exact: true }).click();
+    await page
+      .getByRole("dialog", { name: "What are you working on?" })
+      .getByRole("button", { name: "Finance", exact: true })
+      .click();
     await page
       .getByTestId("activity-select")
       .selectOption({ label: "Paid work" });
@@ -347,15 +351,16 @@ test.describe("Phase 3 Finance", () => {
     await page.getByTestId("session-description").fill("Client delivery");
     await page.getByTestId("confirm-start-timer").click();
     await expect(
-      page.locator('[data-testid="active-timer-trigger"]:visible'),
+      page.getByRole("button", { name: "End focus session", exact: true }),
     ).toBeVisible();
-    await page.locator('[data-testid="active-timer-trigger"]:visible').click();
-    await page.getByRole("dialog").getByTestId("end-session").click();
+    await page
+      .getByRole("button", { name: "End focus session", exact: true })
+      .click();
     await expect(page.getByRole("dialog")).not.toContainText("payment");
     await page.getByTestId("confirm-stop-timer").click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
-      page.locator('[data-testid="active-timer-trigger"]:visible'),
+      page.getByRole("button", { name: "End focus session", exact: true }),
     ).toHaveCount(0);
     await page.goto("/finance/transactions");
     await page.getByText("Add transaction", { exact: true }).click();
@@ -440,7 +445,7 @@ test.describe("Phase 3 Finance", () => {
     await save(opportunity, "Save opportunity", false);
     await page.getByRole("link", { name: "Not now", exact: true }).click();
     await page.getByRole("link", { name: /Deferred next project/ }).click();
-    await page.getByText("Link existing WorkSource", { exact: true }).click();
+    await page.getByText("Link existing work source", { exact: true }).click();
     const link = form(page, "Confirm link");
     await link
       .getByLabel("Existing work source")
@@ -607,7 +612,7 @@ test.describe("Phase 3 Finance", () => {
       "Preserve this entry",
     );
     const close = page.getByRole("button", {
-      name: "Close Record money movement",
+      name: "Close What happened with your money?",
       exact: true,
     });
     page.once("dialog", (dialog) => dialog.dismiss());
@@ -644,19 +649,22 @@ test.describe("Phase 3 Finance", () => {
     await save(transaction, "Record transaction");
     await page.goto("/finance/transactions");
 
-    const userIdentity = page.locator('[data-testid="user-identity"]:visible');
-    if (!(await userIdentity.isVisible())) {
+    const accountTrigger = page
+      .getByRole("button", { name: "Account", exact: true })
+      .filter({ visible: true });
+    if (!(await accountTrigger.isVisible())) {
       await page.getByRole("button", { name: "Open navigation" }).click();
     }
-    await userIdentity.click();
+    await accountTrigger.click();
     const accountMenu = page.getByRole("menu", { name: "Account" });
     await expect(accountMenu.getByRole("menuitem")).toHaveText([
+      "Session history",
       "Settings",
       "Sign out",
     ]);
     await accountMenu.getByRole("menuitem", { name: "Settings" }).click();
 
-    await expect(page).toHaveURL(/\/settings\/personal$/);
+    await expect(page).toHaveURL(/\/settings\/application$/);
     await page
       .getByRole("navigation", { name: "Settings sections" })
       .getByRole("link", { name: "Finance", exact: true })

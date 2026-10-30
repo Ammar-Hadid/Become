@@ -1,8 +1,15 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { WorkspacePanel } from "@/components/ui/workspace/workspace.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Beaker, Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
@@ -100,7 +107,7 @@ export function ExperimentEditor({
     try {
       const response = await fetch(
         `/api/direction/experiments/${encodeURIComponent(option.id)}`,
-        { cache: "no-store" },
+        { cache: "no-store", signal: AbortSignal.timeout(15_000) },
       );
       if (!response.ok) throw new Error();
       const prior: ExperimentView = await response.json();
@@ -198,11 +205,7 @@ export function ExperimentEditor({
         <p className="eyebrow">
           {experiment ? "Refine the trial" : "A bounded way to learn"}
         </p>
-        <h1>
-          {experiment
-            ? "Edit the experiment."
-            : "Turn uncertainty into an attempt."}
-        </h1>
+        <h1>{experiment ? "Edit experiment" : "Try something new"}</h1>
         <p>
           {!experiment && previousAttempt
             ? `A fresh attempt after “${previousAttempt.name}”. Its earlier result stays unchanged.`
@@ -216,29 +219,15 @@ export function ExperimentEditor({
         onSubmit={submit}
         aria-busy={pending}
       >
-        <section
-          className="direction-editor-panel"
-          aria-labelledby="experiment-question-title"
+        <WorkspacePanel
+          title="What are you testing?"
+          description="Name the experiment, ask a question, and choose an approach."
+          spacing="action"
         >
-          <div className="direction-editor-intro">
-            <span className="direction-editor-mark" aria-hidden="true">
-              <Beaker />
-            </span>
-            <div>
-              <p className="eyebrow">One attempt</p>
-              <h2 id="experiment-question-title">
-                What are you trying to learn?
-              </h2>
-              <p>
-                The next attempt can repeat this one later without rewriting its
-                result.
-              </p>
-            </div>
-          </div>
           <div className="direction-form-grid">
             <label className="direction-field-wide">
               <span className="field-label">Experiment name</span>
-              <input
+              <Input
                 className="text-input"
                 name="title"
                 value={protocol.title}
@@ -253,7 +242,7 @@ export function ExperimentEditor({
             </label>
             <label className="direction-field-wide">
               <span className="field-label">Question</span>
-              <textarea
+              <Textarea
                 className="text-input text-input--textarea-md"
                 name="question"
                 value={protocol.question}
@@ -268,7 +257,7 @@ export function ExperimentEditor({
             </label>
             <label className="direction-field-wide">
               <span className="field-label">Approach</span>
-              <textarea
+              <Textarea
                 className="text-input text-input--textarea-md"
                 name="approach"
                 value={protocol.approach}
@@ -281,9 +270,17 @@ export function ExperimentEditor({
                 aria-invalid={Boolean(fieldErrors.approach) || undefined}
               />
             </label>
+          </div>
+        </WorkspacePanel>
+        <WorkspacePanel
+          title="When will you check the result?"
+          description="Choose a target date or describe a clear stopping point."
+          spacing="action"
+        >
+          <div className="direction-form-grid">
             <label>
               <span className="field-label">Starts</span>
-              <input
+              <Input
                 className="text-input"
                 type="date"
                 name="startOn"
@@ -298,7 +295,7 @@ export function ExperimentEditor({
               <span className="field-label">
                 Target date <span>— optional with a stopping condition</span>
               </span>
-              <input
+              <Input
                 className="text-input"
                 type="date"
                 name="targetOn"
@@ -312,7 +309,7 @@ export function ExperimentEditor({
               <span className="field-label">
                 Stopping condition <span>— optional with a target date</span>
               </span>
-              <input
+              <Input
                 className="text-input"
                 name="stoppingCondition"
                 value={protocol.stoppingCondition}
@@ -329,11 +326,19 @@ export function ExperimentEditor({
                 }
               />
             </label>
+          </div>
+        </WorkspacePanel>
+        <WorkspaceDisclosure
+          title="Links & context"
+          description="Connect a goal, domains, earlier attempts, or the records you will follow."
+          defaultOpen={Boolean(experiment || repeatFrom)}
+        >
+          <div className="direction-form-grid">
             <label className="direction-field-wide">
               <span className="field-label">
                 Evidence you expect <span>— optional</span>
               </span>
-              <textarea
+              <Textarea
                 className="text-input text-input--textarea-sm"
                 name="expectedEvidence"
                 value={protocol.expectedEvidence}
@@ -435,24 +440,24 @@ export function ExperimentEditor({
                 exploration, and date scope.
               </p>
             </div>
-            {requiresRevisionReason && (
-              <label className="direction-field-wide">
-                <span className="field-label">Reason for this revision</span>
-                <textarea
-                  className="text-input text-input--textarea-sm"
-                  name="reason"
-                  maxLength={2000}
-                  required
-                  placeholder={
-                    recoveredDraft
-                      ? "What changed after the recovered save?"
-                      : "What changed in this attempt or its evidence definition?"
-                  }
-                />
-              </label>
-            )}
           </div>
-        </section>
+        </WorkspaceDisclosure>
+        {requiresRevisionReason && (
+          <label className="direction-field-wide">
+            <span className="field-label">Reason for this revision</span>
+            <Textarea
+              className="text-input text-input--textarea-sm"
+              name="reason"
+              maxLength={2000}
+              required
+              placeholder={
+                recoveredDraft
+                  ? "What changed after the recovered save?"
+                  : "What changed in this attempt or its evidence definition?"
+              }
+            />
+          </label>
+        )}
 
         {!experiment && previousAttempt && (
           <p className="direction-field-hint" role="status">
@@ -467,18 +472,24 @@ export function ExperimentEditor({
           </p>
         )}
 
-        <CriterionBuilder
-          context="EXPERIMENT"
-          criteria={criteria}
-          criterionMode={criterionMode}
-          scopeOptions={experiment?.criterionScopes}
-          preview={preview}
-          previewError={previewError}
-          previewPending={previewPending}
-          onChange={setCriteria}
-          onModeChange={setCriterionMode}
-          onPreview={() => void previewEvidence()}
-        />
+        <WorkspaceDisclosure
+          title="Optional measurements"
+          description="Add evidence-based checks when a simple observation is not enough."
+          defaultOpen={criteria.length > 0}
+        >
+          <CriterionBuilder
+            context="EXPERIMENT"
+            criteria={criteria}
+            criterionMode={criterionMode}
+            scopeOptions={experiment?.criterionScopes}
+            preview={preview}
+            previewError={previewError}
+            previewPending={previewPending}
+            onChange={setCriteria}
+            onModeChange={setCriterionMode}
+            onPreview={() => void previewEvidence()}
+          />
+        </WorkspaceDisclosure>
 
         {(result.error || Object.keys(fieldErrors).length > 0) && (
           <div className="season-form-error" role="alert">

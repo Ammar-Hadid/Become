@@ -3,7 +3,13 @@
 import { useActionState } from "react";
 import { DateTime } from "luxon";
 import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { Input } from "@/components/ui/forms/input.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import {
+  WorkspacePanel,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import { ENGINEERING_EVIDENCE_TYPE_OPTIONS } from "@/features/engineering/constants/engineering.constants";
 import {
@@ -49,18 +55,23 @@ export function EngineeringEvidenceForm({
         .toFormat("yyyy-MM-dd'T'HH:mm")
     : DateTime.now().setZone(APP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm");
 
+  // Successful saves redirect; returned validation errors must preserve the draft.
   return (
     <form
       action={formAction}
+      onReset={(event) => event.preventDefault()}
       className="engineering-form"
       aria-busy={pending}
       data-pending={pending || undefined}
     >
-      <div className="engineering-form-grid">
-        <label className="block">
-          <span className="field-label">Evidence type</span>
-          <span className="select-wrap">
-            <select
+      <WorkspacePanel
+        title="What changed?"
+        description="Capture what you built, solved, or learned."
+      >
+        <div className="engineering-form-grid">
+          <label className="block">
+            <span className="field-label">Evidence type</span>
+            <NativeSelect
               name="type"
               defaultValue={evidence?.type ?? "FEATURE_COMPLETED"}
               data-testid="engineering-evidence-type-select"
@@ -70,39 +81,35 @@ export function EngineeringEvidenceForm({
                   {option.label}
                 </option>
               ))}
-            </select>
-          </span>
-        </label>
-        <label className="block">
-          <span className="field-label">Occurred at</span>
-          <input
-            className="text-input"
-            type="datetime-local"
-            name="occurredAt"
-            defaultValue={occurredAt}
-            required
-          />
-        </label>
-        <label className="engineering-form-wide block">
-          <span className="field-label">Evidence</span>
-          <input
-            className="text-input"
-            name="title"
-            defaultValue={evidence?.title ?? ""}
-            maxLength={160}
-            required
-            autoFocus
-            placeholder="What was built, solved, or learned?"
-            data-testid="engineering-evidence-title"
-          />
-        </label>
-        <label className="block">
-          <span className="field-label">
-            Project{" "}
-            <span className="text-text-muted normal-case">— optional</span>
-          </span>
-          <span className="select-wrap">
-            <select
+            </NativeSelect>
+          </label>
+          <label className="block">
+            <span className="field-label">Occurred at</span>
+            <Input
+              type="datetime-local"
+              name="occurredAt"
+              defaultValue={occurredAt}
+              required
+            />
+          </label>
+          <label className="engineering-form-wide block">
+            <span className="field-label">Evidence</span>
+            <Input
+              name="title"
+              defaultValue={evidence?.title ?? ""}
+              maxLength={160}
+              required
+              autoFocus
+              placeholder="What was built, solved, or learned?"
+              data-testid="engineering-evidence-title"
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">
+              Project{" "}
+              <span className="text-text-muted normal-case">— optional</span>
+            </span>
+            <NativeSelect
               name="projectId"
               defaultValue={selectedProjectId ?? evidence?.project?.id ?? ""}
             >
@@ -112,16 +119,14 @@ export function EngineeringEvidenceForm({
                   {project.name}
                 </option>
               ))}
-            </select>
-          </span>
-        </label>
-        <label className="block">
-          <span className="field-label">
-            Session{" "}
-            <span className="text-text-muted normal-case">— optional</span>
-          </span>
-          <span className="select-wrap">
-            <select
+            </NativeSelect>
+          </label>
+          <label className="block">
+            <span className="field-label">
+              Session{" "}
+              <span className="text-text-muted normal-case">— optional</span>
+            </span>
+            <NativeSelect
               name="sessionId"
               defaultValue={selectedSessionId ?? evidence?.session?.id ?? ""}
             >
@@ -134,22 +139,21 @@ export function EngineeringEvidenceForm({
                     .toFormat("d LLL")}
                 </option>
               ))}
-            </select>
-          </span>
-        </label>
-        <label className="engineering-form-wide block">
-          <span className="field-label">
-            Details{" "}
-            <span className="text-text-muted normal-case">— optional</span>
-          </span>
-          <textarea
-            className="text-input text-input--textarea-md resize-y"
-            name="details"
-            defaultValue={evidence?.details ?? ""}
-            maxLength={5000}
-          />
-        </label>
-      </div>
+            </NativeSelect>
+          </label>
+          <label className="engineering-form-wide block">
+            <span className="field-label">
+              Details{" "}
+              <span className="text-text-muted normal-case">— optional</span>
+            </span>
+            <Textarea
+              name="details"
+              defaultValue={evidence?.details ?? ""}
+              maxLength={5000}
+            />
+          </label>
+        </div>
+      </WorkspacePanel>
       <p className="engineering-form-note">
         A linked session keeps its own context. Project links never determine or
         rewrite session context.
@@ -160,9 +164,9 @@ export function EngineeringEvidenceForm({
         </p>
       )}
       <div className="engineering-form-actions">
-        <Link href="/engineering/evidence" className="text-link">
+        <WorkspaceLink href="/engineering/evidence" variant="ghost">
           <ArrowLeft className="size-4" /> Cancel
-        </Link>
+        </WorkspaceLink>
         <Button
           type="submit"
           size="lg"

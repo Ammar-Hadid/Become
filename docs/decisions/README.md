@@ -1,6 +1,9 @@
 # Architecture decision records
 
-The repository and [current development state](../development/CURRENT_STATE.md) describe what is implemented. These phase records retain decisions and historical verification checkpoints; older checkpoints are not current release status.
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
+The repository and [current development state](../development/CURRENT_STATE.md) describe what is implemented. These phase records retain decisions and historical verification checkpoints; older checkpoints are not current release status. Historical UI descriptions and screenshots are verification records, not requirements for new frontend composition or UX.
 
 - [Phase 3 — Finance implementation](phase-3-implementation.md)
 - [Phase 4 — Entrepreneurship](PHASE_4.md)

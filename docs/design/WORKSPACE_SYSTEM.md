@@ -1,0 +1,13 @@
+# Workspace composition — 27 October 2026
+
+The owner explicitly authorized new shared treatments during the whole-app redesign and separately requested redesigning existing buttons. This is task-level design authorization; it does not claim individual preview approval or alter the admission rule for future work.
+
+`src/components/ui/workspace/` provides opt-in composition. Workspace selects an area accent and a bounded ambient background. Apply `page-shell` once at the route boundary; nested workspaces do not create another outer gutter or max-width. WorkspaceHeader establishes one purpose and a primary action. WorkspacePanel is an actual shared Card, with a quiet header and optional action. WorkspaceMetric is an actual Card with labeled values; facts, currency and unknown states remain feature-owned. Use divided records inside a panel rather than a card around every line.
+
+WorkspaceNavigation uses native links, identifies the current route by longest prefix (or explicit active state for route aliases), and contains horizontal overflow on phones. WorkspaceDisclosure uses native details/summary and keeps children mounted so closing it does not lose draft values. Never hide a required, empty field behind a closed disclosure. NativeSelect retains native form semantics and the shared select geometry, with reserved chevron space.
+
+Workspace's button treatment uses the existing Button component with opt-in values in `src/app/styles/tokens.css`: 44px default and 48px large height, 10px icon gap, 20px default horizontal padding, softly rounded corners, a clear domain-accent primary action, a quiet glass secondary action and a low-emphasis ghost action. Danger and success remain semantic. WorkspaceLink supplies the same action presentation with native link behavior. RecordDialog's `treatment="workspace"` uses Button for normal triggers; unstyled menu triggers retain their menu role. Defaults remain legacy so protected screens do not change.
+
+Motion reuses Precision Light tokens and disables movement for reduced motion. Sound is supplemental: local navigation/disclosure choices use Pulse Pin; opening a substantial form uses Aperture; confirmed explicit saves use Soft Ascent and blocked saves use Red Offset. Shared RecordForm and RecordDialog apply these cues only within Workspace. Existing global mute and repetition controls apply. No hover, typing, autosave or initial-load cue was added.
+
+The approved dashboard and Season opening do not opt in. New shared values cannot alter their typography, surfaces, spacing, motion, sound or button composition. Shared material values remain unchanged; the new roles compose them for different information needs.

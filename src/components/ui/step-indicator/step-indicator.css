@@ -1,0 +1,135 @@
+.opening-step-indicator {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--step-count, 4), minmax(0, 1fr));
+  width: 100%;
+}
+.opening-step-indicator > li {
+  position: relative;
+  display: grid;
+  gap: var(--spacing-xs);
+  min-width: 0;
+  color: var(--color-text-secondary);
+}
+.opening-step-number {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+}
+.opening-step-label {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  width: fit-content;
+  padding-right: var(--spacing-sm);
+  min-height: 1.5rem;
+}
+.opening-step-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--color-text-muted);
+  border-radius: 50%;
+  background: var(--color-background);
+}
+.opening-step-marker svg {
+  width: 11px;
+  height: 11px;
+}
+.opening-step-indicator > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 17px;
+  right: var(--spacing-sm);
+  top: 0.9rem;
+  height: 1px;
+  background: var(--color-border);
+}
+.opening-step-indicator[data-variant="numbered"] > li::after {
+  top: 0.9rem;
+  left: 2rem;
+}
+.opening-step-indicator > li[data-state="current"] {
+  color: var(--color-primary);
+}
+.opening-step-indicator > li[data-state="current"] .opening-step-number {
+  color: var(--color-primary);
+}
+.opening-step-indicator > li[data-state="current"] .opening-step-marker {
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+.opening-step-indicator > li[data-state="complete"] .opening-step-marker {
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.opening-step-indicator > li[data-state="complete"]::after {
+  background: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+.opening-step-indicator[data-variant="phase"] {
+  display: flex;
+  gap: var(--spacing-lg);
+  width: auto;
+}
+.opening-step-indicator[data-variant="phase"] > li {
+  flex: 0 1 auto;
+}
+.opening-step-indicator[data-variant="phase"] .opening-step-marker {
+  width: 20px;
+  height: 3px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-border);
+  box-shadow: none;
+}
+.opening-step-indicator[data-variant="phase"] .opening-step-marker svg {
+  display: none;
+}
+.opening-step-indicator[data-variant="phase"]
+  > li[data-state="current"]
+  .opening-step-marker {
+  background: var(--color-primary);
+}
+.opening-step-indicator[data-variant="phase"]
+  > li[data-state="complete"]
+  .opening-step-marker {
+  background: var(--color-success);
+}
+.opening-step-indicator[data-variant="phase"] > li::after {
+  display: none;
+}
+.opening-step-indicator[data-variant="phase"] .opening-step-label {
+  font-size: var(--text-caption);
+  padding: 0;
+}
+@media (max-width: 1023px) {
+  .opening-step-indicator[data-variant="phase"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+  }
+  .opening-step-indicator[data-variant="numbered"] .opening-step-label {
+    font-size: var(--text-caption);
+    gap: var(--spacing-2xs);
+    align-items: start;
+    padding-right: var(--spacing-xs);
+  }
+  .opening-step-indicator[data-variant="numbered"] .opening-step-marker {
+    width: 12px;
+    height: 12px;
+    margin-top: 3px;
+  }
+  .opening-step-indicator[data-variant="numbered"] > li::after {
+    right: var(--spacing-xs);
+  }
+}
+@media (max-width: 420px) {
+  .opening-step-indicator[data-variant="phase"] {
+    grid-row: 2;
+  }
+}

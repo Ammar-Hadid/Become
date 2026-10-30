@@ -5,6 +5,7 @@ node_modules
 playwright-report
 test-results
 coverage
+storybook-static
 .env
 .env.local
 .env.*

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import type { LucideIcon } from "lucide-react";
 import { FinanceDialog } from "@/features/finance/components/finance-dialog.component";
 import { FinanceField } from "@/features/finance/components/finance-field.component";
@@ -88,7 +89,7 @@ export function ReusableEntityManagement({
 
   return (
     <>
-      <section className="finance-settings-section">
+      <Card spacing="dense" className="finance-settings-card">
         <div className="finance-settings-intro">
           <span>
             <Icon aria-hidden="true" />
@@ -130,10 +131,10 @@ export function ReusableEntityManagement({
             </div>
           </div>
         )}
-      </section>
+      </Card>
 
       {archivedItems.length > 0 && (
-        <section className="finance-settings-section">
+        <Card spacing="dense" className="finance-settings-card">
           <div className="finance-settings-intro">
             <span>
               <Icon aria-hidden="true" />
@@ -147,7 +148,7 @@ export function ReusableEntityManagement({
             </div>
           </div>
           {list(archivedItems, true)}
-        </section>
+        </Card>
       )}
     </>
   );

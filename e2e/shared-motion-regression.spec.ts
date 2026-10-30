@@ -21,7 +21,8 @@ const SURFACES: Array<{
   {
     href: "/",
     label: "home",
-    ready: (page) => page.locator("#dashboard-greeting"),
+    ready: (page) =>
+      page.getByRole("region", { name: "Dashboard lenses", exact: true }),
   },
   {
     href: "/engineering",
@@ -33,25 +34,28 @@ const SURFACES: Array<{
     href: "/finance",
     label: "finance",
     ready: (page) =>
-      page.locator("main h1").getByText("Finance", { exact: true }),
+      page.getByRole("heading", { name: "Your money, in focus", exact: true }),
   },
   {
     href: "/content",
     label: "content",
     ready: (page) =>
-      page.locator("main h1").getByText("Content", { exact: true }),
+      page.getByRole("heading", { name: "Make the next one.", exact: true }),
   },
   {
     href: "/direction",
     label: "direction",
     ready: (page) =>
-      page.locator("main h1").getByText("Direction", { exact: true }),
+      page.getByRole("heading", {
+        name: /^Season [1-4] · [0-9]{4}$/,
+        exact: true,
+      }),
   },
   {
     href: "/reviews",
     label: "reviews",
     ready: (page) =>
-      page.getByRole("heading", { name: "The days, understood." }),
+      page.getByRole("heading", { name: "See what the days added up to." }),
   },
   {
     href: "/sessions",
@@ -61,14 +65,16 @@ const SURFACES: Array<{
   {
     href: "/settings/finance",
     label: "settings-finance",
-    ready: (page) => page.getByRole("heading", { name: "Settings" }),
+    ready: (page) =>
+      page.getByRole("heading", { name: "Finance", exact: true }),
   },
   {
     href: "/settings/nexo",
     label: "settings-nexo",
     ready: (page) =>
       page.getByRole("heading", {
-        name: "Configure requested synthesis.",
+        name: "AI connections",
+        exact: true,
       }),
   },
 ];
@@ -125,7 +131,9 @@ async function inspectAccountMenu(
   });
   if (mobile) await navigationTrigger.click();
 
-  const accountTrigger = page.locator('[data-testid="user-identity"]:visible');
+  const accountTrigger = page.locator(
+    mobile ? ".app-mobile-nav-profile:visible" : ".app-header-account:visible",
+  );
   await accountTrigger.click();
   const menu = page.getByRole("menu", { name: "Account" });
   await expect(menu).toBeVisible();
@@ -186,21 +194,41 @@ async function inspectContentDialog(
   await expect(trigger).toBeFocused();
 }
 
-async function inspectDirectionMenu(
+async function inspectDirectionNavigation(
   page: Page,
   testInfo: TestInfo,
   viewport: (typeof VIEWPORTS)[number],
 ) {
   if (viewport.width >= 1024) return;
   await page.goto("/direction");
-  const trigger = page.locator(".direction-navigation-trigger:visible");
-  await trigger.click();
-  const menu = page.getByRole("menu", { name: "Choose a Direction view" });
-  await expect(menu).toBeVisible();
-  await attachScreenshot(page, testInfo, `${viewport.label}-direction-menu`);
-  await page.keyboard.press("Escape");
-  await expect(menu).toHaveCount(0);
-  await expect(trigger).toBeFocused();
+  const navigation = page.getByRole("navigation", {
+    name: "Direction navigation",
+  });
+  const current = navigation.getByRole("link", {
+    name: "This Season",
+    exact: true,
+  });
+  await expect(current).toHaveAttribute("aria-current", "page");
+  await current.focus();
+  await page.keyboard.press("Tab");
+  await expect(
+    navigation.getByRole("link", { name: "Goals", exact: true }),
+  ).toBeFocused();
+  const last = navigation.getByRole("link", { name: "Reviews", exact: true });
+  await last.focus();
+  await expect(last).toBeFocused();
+  const navBounds = await navigation.boundingBox();
+  const linkBounds = await last.boundingBox();
+  expect(linkBounds!.x).toBeGreaterThanOrEqual(navBounds!.x - 1);
+  expect(linkBounds!.x + linkBounds!.width).toBeLessThanOrEqual(
+    navBounds!.x + navBounds!.width + 1,
+  );
+  await assertNoPageOverflow(page);
+  await attachScreenshot(
+    page,
+    testInfo,
+    `${viewport.label}-direction-navigation`,
+  );
 }
 
 async function inspectCots(
@@ -211,17 +239,10 @@ async function inspectCots(
   await page.goto("/direction");
   await page.getByRole("link", { name: "Open your season" }).click();
   await expect(
-    page.getByRole("textbox", { name: "Carry forward" }),
+    page.getByRole("textbox", { name: "Character name", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(
-    page.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Who belongs in this season?" }),
+    page.getByRole("button", { name: "Find my character", exact: true }),
   ).toBeVisible();
   await assertNoPageOverflow(page);
   await attachScreenshot(page, testInfo, `${viewport.label}-cots-identity`);
@@ -238,22 +259,27 @@ for (const viewport of VIEWPORTS) {
 
     const motionTokens = await page.evaluate(() => {
       const style = getComputedStyle(document.documentElement);
+      // Production CSS minifies equivalent 150ms values to .15s.
+      const milliseconds = (name: string) => {
+        const value = style.getPropertyValue(name).trim();
+        return parseFloat(value) * (value.endsWith("ms") ? 1 : 1000);
+      };
       return {
-        response: style.getPropertyValue("--duration-response").trim(),
-        control: style.getPropertyValue("--duration-control").trim(),
-        content: style.getPropertyValue("--duration-content").trim(),
-        surface: style.getPropertyValue("--duration-surface").trim(),
-        emphasis: style.getPropertyValue("--duration-emphasis").trim(),
-        activeCycle: style.getPropertyValue("--duration-active-cycle").trim(),
+        response: milliseconds("--duration-response"),
+        control: milliseconds("--duration-control"),
+        content: milliseconds("--duration-content"),
+        surface: milliseconds("--duration-surface"),
+        emphasis: milliseconds("--duration-emphasis"),
+        activeCycle: milliseconds("--duration-active-cycle"),
       };
     });
     expect(motionTokens).toEqual({
-      response: "90ms",
-      control: "150ms",
-      content: "220ms",
-      surface: "300ms",
-      emphasis: "420ms",
-      activeCycle: "1400ms",
+      response: 90,
+      control: 150,
+      content: 220,
+      surface: 300,
+      emphasis: 420,
+      activeCycle: 1400,
     });
 
     await inspectAccountMenu(page, testInfo, viewport);
@@ -271,7 +297,7 @@ for (const viewport of VIEWPORTS) {
     }
 
     await inspectContentDialog(page, testInfo, viewport);
-    await inspectDirectionMenu(page, testInfo, viewport);
+    await inspectDirectionNavigation(page, testInfo, viewport);
     await inspectCots(page, testInfo, viewport);
     expect(pageErrors).toEqual([]);
   });

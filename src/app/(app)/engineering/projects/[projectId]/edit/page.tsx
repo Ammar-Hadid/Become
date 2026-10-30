@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EngineeringProjectForm } from "@/features/engineering/projects/components/engineering-project-form.component";
@@ -24,13 +25,11 @@ export default async function EditEngineeringProjectPage({
   if (!project) notFound();
   return (
     <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow mb-md">Engineering project</p>
-          <h1>Edit {project.name}.</h1>
-        </div>
-      </header>
-      <section className="mt-4xl">
+      <WorkspaceHeader
+        eyebrow="Engineering project"
+        title={<> Edit {project.name}. </>}
+      />
+      <section className="engineering-route-content">
         <EngineeringProjectForm
           project={project}
           technologyCatalog={technologyCatalog}

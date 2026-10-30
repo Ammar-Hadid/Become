@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import Link from "next/link";
 import { Archive, ArrowLeft, ArrowUpRight } from "lucide-react";
 import { z } from "zod";
@@ -39,7 +40,7 @@ export async function ExplorationSnapshotHistory({
 }) {
   const editions = await getExplorationSnapshotHistory(userId, nicheId);
   return (
-    <section className="exploration-history direct-workspace">
+    <Card className="exploration-history direct-workspace">
       <header className="workspace-heading">
         <div>
           <p className="eyebrow">Historical truth</p>
@@ -240,6 +241,6 @@ export async function ExplorationSnapshotHistory({
           </Link>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

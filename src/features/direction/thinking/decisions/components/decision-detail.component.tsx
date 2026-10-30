@@ -1,5 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Quote } from "lucide-react";
 import { DecisionActions } from "@/features/direction/thinking/decisions/components/decision-actions.component";
@@ -52,7 +54,7 @@ export function DecisionDetail({
         </span>
         <div>
           <p className="eyebrow">Decision · version {decision.version}</p>
-          <h2>{decision.choice}</h2>
+          <h1>{decision.choice}</h1>
           <p className="thinking-detail-date">
             Decided{" "}
             <time dateTime={decision.decidedOn}>
@@ -115,7 +117,7 @@ export function DecisionDetail({
         decision.alternatives ||
         decision.expectedOutcome ||
         decision.reconsiderWhen) && (
-        <section
+        <Card
           className="decision-context"
           aria-labelledby="decision-context-title"
         >
@@ -149,7 +151,7 @@ export function DecisionDetail({
               </div>
             )}
           </dl>
-        </section>
+        </Card>
       )}
 
       {(decision.supersedes || decision.supersededBy) && (
@@ -187,7 +189,6 @@ export function DecisionDetail({
             decision={decision}
             options={options}
             defaultDecidedOn={defaultDecidedOn}
-            className="thinking-quiet-action"
           />
           {!decision.supersededBy && (
             <DecisionDialog
@@ -195,13 +196,12 @@ export function DecisionDetail({
               supersedes={decision}
               options={options}
               defaultDecidedOn={defaultDecidedOn}
-              className="thinking-quiet-action"
             />
           )}
         </section>
       )}
 
-      <section
+      <Card
         className="decision-reflections"
         aria-labelledby="decision-reflections-title"
       >
@@ -238,10 +238,10 @@ export function DecisionDetail({
             />
           </ol>
         )}
-      </section>
+      </Card>
 
       {decision.history.length > 0 && (
-        <section
+        <Card
           className="thinking-history"
           aria-labelledby="decision-history-title"
         >
@@ -299,7 +299,7 @@ export function DecisionDetail({
               }}
             />
           </ol>
-        </section>
+        </Card>
       )}
     </article>
   );

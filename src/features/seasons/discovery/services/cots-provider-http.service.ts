@@ -62,6 +62,8 @@ export async function providerJson(
     windowMs?: number;
     timeoutMs?: number;
     redirects?: "same-origin" | "same-origin-preserve-query";
+    method?: "GET" | "POST";
+    body?: string;
   } = {},
 ): Promise<unknown> {
   await reserveProviderRequest(
@@ -70,18 +72,14 @@ export async function providerJson(
       (provider === "wikimedia" ? WIKIMEDIA_REQUESTS_PER_MINUTE : 40),
     options.windowMs ?? 60_000,
   );
-  if (provider === "serpapi")
-    await reserveProviderRequest("serpapi:hour", 50, 3_600_000);
-  if (provider === "clipcafe")
-    await reserveProviderRequest("clipcafe:minute", 8, 60_000);
-  if (provider === "animechan")
-    await reserveProviderRequest("animechan:day", 90, 86_400_000);
   try {
     const signal = AbortSignal.timeout(options.timeoutMs ?? 10_000);
     let requestUrl = url;
     let response: Response | null = null;
     for (let redirects = 0; redirects <= 2; redirects++) {
       response = await fetch(requestUrl, {
+        method: options.method,
+        body: options.body,
         cache: "no-store",
         redirect: "manual",
         signal,
@@ -205,5 +203,3 @@ export const string = (value: unknown) =>
   typeof value === "string" ? value : "";
 export const array = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : [];
-export const integer = (value: unknown) =>
-  typeof value === "number" && Number.isFinite(value) ? value : null;

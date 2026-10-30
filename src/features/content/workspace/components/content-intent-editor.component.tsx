@@ -1,5 +1,9 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import { useEffect, useRef, useState } from "react";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { sendContentCommand } from "@/features/content/commands/utils/content-command.util";
@@ -74,7 +78,8 @@ export function ContentIntentEditor({
       <div className="content-intent-title-row">
         <label>
           <span className="sr-only">Working title</span>
-          <input
+          <Input
+            variant="featured"
             name="title"
             value={draft.title}
             onChange={(event) => update("title", event.target.value)}
@@ -120,7 +125,7 @@ export function ContentIntentEditor({
         <div className="content-intent-fields">
           <label>
             <span>Purpose</span>
-            <textarea
+            <Textarea
               name="purpose"
               value={draft.purpose}
               onChange={(event) => update("purpose", event.target.value)}
@@ -130,7 +135,7 @@ export function ContentIntentEditor({
           </label>
           <label>
             <span>For</span>
-            <textarea
+            <Textarea
               name="audience"
               value={draft.audience}
               onChange={(event) => update("audience", event.target.value)}
@@ -149,7 +154,7 @@ export function ContentIntentEditor({
           </summary>
           <label>
             <span className="sr-only">Creative notes</span>
-            <textarea
+            <Textarea
               name="notes"
               value={draft.notes}
               onChange={(event) => update("notes", event.target.value)}

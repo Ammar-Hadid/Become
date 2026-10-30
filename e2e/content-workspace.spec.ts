@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { test, expect, type Page } from "./utils/browser-test.util";
@@ -15,9 +16,7 @@ async function workspace(page: Page, origin: string) {
     .getByTestId("password-input")
     .fill("become-disposable-content-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
-    timeout: 15_000,
-  });
+  await deferAutomaticSeasonOpening(page);
   const response = await page.request.post("/api/content/commands", {
     headers: { origin },
     data: {
@@ -59,7 +58,7 @@ test("Content focus ticks and can restart after completion without waiting for a
 
   // A timer begun elsewhere must be visible here and finish before Content starts.
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page.getByRole("dialog", { name: "What are you working on?" }).getByRole("button", { name: "Engineering", exact: true }).click();
   await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("confirm-start-timer").click();
   await expect(
@@ -181,7 +180,7 @@ test("recent releases show the released variant thumbnail and a responsive date"
   });
   expect(released.ok(), await released.text()).toBe(true);
   await page.goto("/content");
-  const row = page.locator(".content-recent li");
+  const row = page.locator(".content-release-shortlist li");
   await row.scrollIntoViewIfNeeded();
   await expect(row.locator("img")).toHaveAttribute(
     "src",

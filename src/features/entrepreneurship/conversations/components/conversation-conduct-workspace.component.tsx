@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -110,7 +111,7 @@ export async function ConversationConductWorkspace({
           guideCompleted={Boolean(session.guideCompletedAt)}
         />
       )}
-      <section className="conduct-conversation" aria-labelledby="conduct-title">
+      <Card className="conduct-conversation" aria-labelledby="conduct-title">
         <header>
           <div>
             <Link
@@ -228,7 +229,7 @@ export async function ConversationConductWorkspace({
               defaultPlatform={revision.platform}
             />
           )}
-      </section>
+      </Card>
     </div>
   );
 }

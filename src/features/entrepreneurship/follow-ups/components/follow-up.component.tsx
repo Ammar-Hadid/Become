@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
 import { useState, useTransition } from "react";
 import { MoreHorizontal, Check } from "lucide-react";
 import { DateTime } from "luxon";
@@ -29,6 +31,7 @@ export function FollowUpForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       triggerRole={record ? "menuitem" : undefined}
       unstyledTrigger={Boolean(record)}
       icon={!record}
@@ -128,23 +131,25 @@ export function FollowUpRecord({
       {!exploration?.archived && !readOnly && (
         <div className="business-actions">
           {!resolved && (
-            <button
-              className="business-icon-button"
+            <Button
+              variant="ghost"
+              size="icon"
+
               aria-label={`Complete ${record.title}`}
               disabled={pending}
               onClick={() => resolve("COMPLETE")}
             >
               <Check aria-hidden="true" />
-            </button>
+            </Button>
           )}
           <SubMenu
             label="Follow-up actions"
             placement="bottom-end"
             closeOnSelect={false}
             trigger={(props) => (
-              <button {...props} className="business-icon-button">
+              <Button variant="ghost" size="icon" {...props}>
                 <MoreHorizontal aria-hidden="true" />
-              </button>
+              </Button>
             )}
           >
             <FollowUpForm target={target} record={record} />

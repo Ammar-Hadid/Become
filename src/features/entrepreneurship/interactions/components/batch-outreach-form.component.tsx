@@ -1,4 +1,7 @@
 "use client";
+import { Input } from "@/components/ui/forms/input.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { useState } from "react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
@@ -66,42 +69,29 @@ function BatchFields({
     <label className="field-label">
       {label}
       {name === "channel" ? (
-        <select
-          className="text-input"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
+        <NativeSelect value={value} onChange={(e) => onChange(e.target.value)}>
           {channels.map((c) => (
             <option key={c} value={c}>
               {humanize(c)}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       ) : name === "platform" ? (
-        <select
-          className="text-input"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
+        <NativeSelect value={value} onChange={(e) => onChange(e.target.value)}>
           {directMessagePlatforms.map((platform) => (
             <option key={platform} value={platform}>
               {directMessagePlatformLabels[platform]}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       ) : name === "occurredAt" ? (
-        <input
-          className="text-input"
+        <Input
           type="date"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : (
-        <textarea
-          className="text-input"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <Textarea value={value} onChange={(e) => onChange(e.target.value)} />
       )}
     </label>
   );
@@ -311,6 +301,7 @@ export function BatchOutreachForm({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Manual record"
       triggerLabel="Record batch outreach"
       title="Record messages already sent"

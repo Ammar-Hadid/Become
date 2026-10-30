@@ -12,7 +12,9 @@ async function createAccount(page: Page) {
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
   await deferAutomaticSeasonOpening(page);
-  await expect(page.getByRole("heading", { name: /Session/ })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Dashboard lenses" }),
+  ).toBeVisible();
 }
 
 async function recordSession(
@@ -25,7 +27,10 @@ async function recordSession(
   },
 ) {
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "What are you working on?" })
+    .getByRole("button", { name: "Engineering", exact: true })
+    .click();
   await page
     .getByTestId("activity-select")
     .selectOption({ label: details.activity });
@@ -63,8 +68,9 @@ test("completed sessions share one responsive details experience across contexts
   });
   await recordSession(page, { activity: "Learning" });
 
+  await page.goto("/sessions");
   const homeUrl = new URL(page.url());
-  expect(homeUrl.pathname).toBe("/");
+  expect(homeUrl.pathname).toBe("/sessions");
   const homeSession = page
     .getByTestId("session-row-trigger")
     .filter({ hasText: "Polish the evidence experience" });
@@ -74,7 +80,7 @@ test("completed sessions share one responsive details experience across contexts
   await page.keyboard.press("Enter");
 
   const openUrl = new URL(page.url());
-  expect(openUrl.pathname).toBe("/");
+  expect(openUrl.pathname).toBe("/sessions");
   const completedSessionId = openUrl.searchParams.get("session");
   expect(completedSessionId).toBeTruthy();
   await expect(page.getByTestId("session-details")).toBeVisible();
@@ -134,7 +140,7 @@ test("completed sessions share one responsive details experience across contexts
   await homeSession.click();
   await page.goBack();
   await expect(page.getByTestId("session-details")).toHaveCount(0);
-  await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/sessions");
   await page.goForward();
   await expect(page.getByTestId("session-details")).toBeVisible();
   await page.getByRole("button", { name: "Close session details" }).click();
@@ -144,9 +150,6 @@ test("completed sessions share one responsive details experience across contexts
     .toBeNull();
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeOpen);
 
-  const viewHistory = page.getByRole("link", { name: /View history/ });
-  await expect(viewHistory).toHaveAttribute("href", "/sessions");
-  await viewHistory.click();
   await expect(page).toHaveURL(/\/sessions$/);
   await page
     .getByTestId("session-row-trigger")
@@ -187,9 +190,11 @@ test("completed sessions share one responsive details experience across contexts
 
 test("corrects a forgotten stop time from session details", async ({
   page,
+  isMobile,
 }) => {
   await createAccount(page);
   await recordSession(page, { activity: "Coding", focus: "Forgotten stop" });
+  await page.goto("/sessions");
   await page
     .getByTestId("session-row-trigger")
     .filter({ hasText: "Forgotten stop" })
@@ -221,13 +226,15 @@ test("corrects a forgotten stop time from session details", async ({
   const drawerScrollBeforeWheel = await page
     .getByTestId("session-details")
     .evaluate((drawer) => drawer.scrollTop);
-  await page.mouse.wheel(0, -120);
+  if (!isMobile) {
+    await page.mouse.wheel(0, -120);
+    expect(
+      await page
+        .getByTestId("session-details")
+        .evaluate((drawer) => drawer.scrollTop),
+    ).toBe(drawerScrollBeforeWheel);
+  } else await minutes.press("Home");
   await expect(minutes).toHaveAttribute("aria-valuenow", "0");
-  expect(
-    await page
-      .getByTestId("session-details")
-      .evaluate((drawer) => drawer.scrollTop),
-  ).toBe(drawerScrollBeforeWheel);
   const minuteBounds = await minutes.boundingBox();
   expect(minuteBounds).not.toBeNull();
   const minuteCenterX = minuteBounds!.x + minuteBounds!.width / 2;
@@ -259,19 +266,21 @@ test("corrects a forgotten stop time from session details", async ({
     );
   }
 
-  await page.waitForTimeout(250);
-  await hours.hover();
-  for (let tick = 0; tick < 3; tick += 1) {
-    await page.mouse.wheel(0, 120);
+  if (!isMobile) {
+    await page.waitForTimeout(250);
+    await hours.hover();
+    for (let tick = 0; tick < 3; tick += 1) {
+      await page.mouse.wheel(0, 120);
+      await expect(hours).toHaveAttribute("aria-valuenow", "24");
+      expect(await wheelOffset()).toBe(0);
+      await page.waitForTimeout(120);
+    }
+    await page.mouse.wheel(0, -120);
+    await expect(hours).toHaveAttribute("aria-valuenow", "23");
+    await page.mouse.wheel(0, 400);
     await expect(hours).toHaveAttribute("aria-valuenow", "24");
     expect(await wheelOffset()).toBe(0);
-    await page.waitForTimeout(120);
   }
-  await page.mouse.wheel(0, -120);
-  await expect(hours).toHaveAttribute("aria-valuenow", "23");
-  await page.mouse.wheel(0, 400);
-  await expect(hours).toHaveAttribute("aria-valuenow", "24");
-  expect(await wheelOffset()).toBe(0);
   await hours.press("End");
 
   async function hardSwipeHours(direction: -1 | 1) {
@@ -318,18 +327,20 @@ test("corrects a forgotten stop time from session details", async ({
   await hoursInput.press("Enter");
   await hardSwipeHours(1);
   await expect(hours).toHaveAttribute("aria-valuenow", "0");
-  await hours.hover();
-  for (let tick = 0; tick < 3; tick += 1) {
-    await page.mouse.wheel(0, -120);
+  if (!isMobile) {
+    await hours.hover();
+    for (let tick = 0; tick < 3; tick += 1) {
+      await page.mouse.wheel(0, -120);
+      await expect(hours).toHaveAttribute("aria-valuenow", "0");
+      expect(await wheelOffset()).toBe(0);
+      await page.waitForTimeout(120);
+    }
+    await page.mouse.wheel(0, 120);
+    await expect(hours).toHaveAttribute("aria-valuenow", "1");
+    await page.mouse.wheel(0, -400);
     await expect(hours).toHaveAttribute("aria-valuenow", "0");
     expect(await wheelOffset()).toBe(0);
-    await page.waitForTimeout(120);
   }
-  await page.mouse.wheel(0, 120);
-  await expect(hours).toHaveAttribute("aria-valuenow", "1");
-  await page.mouse.wheel(0, -400);
-  await expect(hours).toHaveAttribute("aria-valuenow", "0");
-  expect(await wheelOffset()).toBe(0);
   await hours.press("End");
   await hours.press("ArrowDown");
   await minutes.press("ArrowDown");

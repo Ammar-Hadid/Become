@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/buttons/button.component";
+import { Card } from "@/components/ui/cards/card.component";
+import { Input } from "@/components/ui/forms/input.component";
 import { ArrowRight, ArrowUpRight, Search, UsersRound, X } from "lucide-react";
 import Link from "next/link";
 import {
@@ -99,11 +102,8 @@ export function AudiencePage({
       >
         <div>
           {nicheId && <p className="eyebrow">Audience</p>}
-          <h2>Who are you learning from?</h2>
-          <p>
-            Describe useful groups. Keep people and businesses when their
-            identity helps you return to the conversation.
-          </p>
+          <h2>Your audience</h2>
+          <p>Keep the groups, people and businesses you want to learn from.</p>
         </div>
         <AudienceForm kind={kind} nicheId={nicheId} />
       </header>
@@ -112,7 +112,9 @@ export function AudiencePage({
         className="workspace-split"
         data-detail={selected ? "open" : undefined}
       >
-        <section
+        <Card
+          material="glass"
+          spacing="dense"
           className={`business-zone business-zone--ledger workspace-collection${archived ? "business-zone--archived" : ""}`}
         >
           <div className="business-row-heading audience-records-heading flex-wrap">
@@ -140,28 +142,21 @@ export function AudiencePage({
           <form action={base} className="mb-xl gap-sm flex items-center">
             <input type="hidden" name="kind" value={kind} />
             {archived && <input type="hidden" name="archived" value="true" />}
-            <label className="relative min-w-0 flex-1">
+            <label className="workspace-search min-w-0 flex-1">
               <span className="sr-only">
                 Search {kind === "segment" ? "segments" : "people"}
               </span>
-              <Search
-                className="left-lg text-text-muted absolute top-1/2 size-4 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <input
-                className="text-input audience-search-input pl-4xl"
+              <Search className="size-4 shrink-0" aria-hidden="true" />
+              <Input
                 type="search"
                 name="q"
                 defaultValue={search}
                 placeholder={`Search ${kind === "segment" ? "segments" : "people"}…`}
               />
             </label>
-            <button
-              type="submit"
-              className="finance-dialog-trigger finance-dialog-trigger--secondary"
-            >
+            <Button variant="secondary" type="submit">
               Search
-            </button>
+            </Button>
           </form>
           {data.records.length ? (
             <div className="workspace-record-list">
@@ -250,9 +245,11 @@ export function AudiencePage({
               More {kind === "segment" ? "segments" : "people"} →
             </Link>
           )}
-        </section>
+        </Card>
         {selected && (
-          <aside
+          <Card
+            material="glass"
+            spacing="dense"
             className="workspace-inspector"
             aria-label="Selected audience record"
           >
@@ -296,7 +293,7 @@ export function AudiencePage({
               </dl>
             </div>
             <Link
-              className="workspace-inspector-primary"
+              className="become-button become-button--secondary become-button--md workspace-inspector-action"
               href={withExplorationReturn(
                 explorationWorkspaceHref(
                   nicheId!,
@@ -308,7 +305,7 @@ export function AudiencePage({
             >
               Open full record <ArrowRight aria-hidden="true" />
             </Link>
-          </aside>
+          </Card>
         )}
       </div>
     </div>

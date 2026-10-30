@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
 import { Archive, Ellipsis, Pause, Play, Settings } from "lucide-react";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import {
@@ -34,9 +36,9 @@ export function RecurringActionMenu(props: RecurringActionMenuProps) {
       className="finance-recurring-action-menu"
       closeOnSelect={false}
       trigger={(triggerProps) => (
-        <button {...triggerProps} className="finance-recurring-action-trigger">
+        <Button {...triggerProps} variant="ghost" size="icon">
           <Ellipsis aria-hidden="true" />
-        </button>
+        </Button>
       )}
     >
       <RecurringActionMenuItems {...props} />

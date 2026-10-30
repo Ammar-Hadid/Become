@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { Input } from "@/components/ui/forms/input.component";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -98,8 +100,8 @@ export async function ReachWorkspace({
       <header className="workspace-heading">
         <div>
           <p className="eyebrow">Outreach</p>
-          <h2>Move the next exchange forward.</h2>
-          <p>Targets, replies and follow-ups in one working queue.</p>
+          <h2>Outreach</h2>
+          <p>See who to contact and what needs a reply.</p>
         </div>
         {!workspace.niche.archivedAt && (
           <div className="business-actions">
@@ -131,7 +133,7 @@ export async function ReachWorkspace({
             <input type="hidden" name="view" value="follow-ups" />
           )}
           <Search aria-hidden="true" />
-          <input
+          <Input
             type="search"
             name="q"
             defaultValue={query}
@@ -160,7 +162,11 @@ export async function ReachWorkspace({
         data-detail={selected ? "open" : undefined}
         data-targets={targets.length > 0 ? "present" : undefined}
       >
-        <section className="workspace-collection outreach-queue">
+        <Card
+          material="glass"
+          spacing="dense"
+          className="workspace-collection outreach-queue"
+        >
           <header className="workspace-collection-heading">
             <div>
               <p className="eyebrow">
@@ -295,10 +301,14 @@ export async function ReachWorkspace({
               <ArrowRight aria-hidden="true" />
             </Link>
           )}
-        </section>
+        </Card>
 
         {selected ? (
-          <aside className="workspace-inspector outreach-inspector">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="workspace-inspector outreach-inspector"
+          >
             <header className="workspace-inspector-heading">
               <div>
                 <p className="eyebrow">
@@ -353,7 +363,7 @@ export async function ReachWorkspace({
               ) : null}
             </div>
             <Link
-              className="workspace-inspector-primary"
+              className="become-button become-button--secondary become-button--md workspace-inspector-action"
               href={withExplorationReturn(
                 explorationWorkspaceHref(
                   nicheId,
@@ -365,7 +375,7 @@ export async function ReachWorkspace({
             >
               Open full record <ArrowRight aria-hidden="true" />
             </Link>
-          </aside>
+          </Card>
         ) : targets.length > 0 ? (
           <aside className="outreach-targets">
             <header className="workspace-collection-heading">

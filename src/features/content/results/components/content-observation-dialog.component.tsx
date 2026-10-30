@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import { useRef, useState, type FormEvent } from "react";
 import { DateTime } from "luxon";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
@@ -101,7 +107,7 @@ function ContentObservationForm({
       </p>
       <label className="content-form-field content-form-field--wide">
         <span>Observed at · Amsterdam time</span>
-        <input
+        <Input
           type="datetime-local"
           name="observedAt"
           value={observedAt}
@@ -115,7 +121,7 @@ function ContentObservationForm({
           <span>
             {field[0].toUpperCase() + field.slice(1)} <small>Optional</small>
           </span>
-          <input
+          <Input
             inputMode="numeric"
             pattern="[0-9]*"
             name={field}
@@ -135,7 +141,7 @@ function ContentObservationForm({
         <span>
           Note <small>Optional</small>
         </span>
-        <textarea
+        <Textarea
           name="note"
           value={draft.note}
           onChange={(event) => setDraft({ ...draft, note: event.target.value })}
@@ -149,13 +155,14 @@ function ContentObservationForm({
         </p>
       )}
       <footer className="content-dialog-actions">
-        <button
+        <Button
+          variant="primary"
           type="submit"
-          className="content-primary-action"
+          className="content-action"
           disabled={pending || !hasMetric}
         >
           {pending ? "Recording…" : "Record results"}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -168,12 +175,12 @@ export function ContentObservationDialog(props: {
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Manual results"
       triggerLabel="Record results"
       title="What does this release show now?"
       description="Enter lifetime totals as observed. Leave anything you did not check as Not reported."
-      unstyledTrigger
-      className="content-observation-trigger"
+      variant="secondary"
       icon={false}
     >
       <ContentObservationForm {...props} />

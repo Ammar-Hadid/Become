@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/ui/empty-states/empty-state.component";
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
 import { DateTime } from "luxon";
 import { ArrowRight, Lightbulb } from "lucide-react";
 import Link from "next/link";
@@ -93,9 +95,9 @@ function StandardEvidenceRecord({
       {!compact && (
         <Link
           href={`/engineering/evidence/${item.id}/edit`}
-          className="text-link shrink-0"
+          className="text-link engineering-inline-link shrink-0"
         >
-          Edit <ArrowRight className="size-3.5" />
+          Edit <ArrowRight className="size-3.5" aria-hidden="true" />
         </Link>
       )}
     </article>
@@ -104,29 +106,29 @@ function StandardEvidenceRecord({
 
 function EvidenceEmptyState() {
   return (
-    <div className="engineering-evidence-empty">
-      <span aria-hidden="true">
-        <Lightbulb />
-      </span>
-      <div>
-        <h2>No evidence recorded yet</h2>
-        <p>
-          Features, fixes, lessons, deployments, decisions, and discoveries will
-          form your Engineering history here.
-        </p>
-      </div>
-      <Link href="/engineering/evidence/new" className="text-link">
-        Add the first record <ArrowRight aria-hidden="true" />
-      </Link>
-    </div>
+    <EmptyState
+      pattern="editorial-canvas"
+      area="engineering"
+      title="No evidence recorded yet"
+      description="Keep a feature, fix, lesson, or discovery. A short note is enough to begin."
+      action={
+        <WorkspaceLink href="/engineering/evidence/new" variant="primary">
+          Add the first record <ArrowRight />
+        </WorkspaceLink>
+      }
+    />
   );
 }
 
 function CompactEmptyState() {
   return (
-    <div className="empty-state">
-      <p>No Engineering evidence recorded yet.</p>
-    </div>
+    <EmptyState
+      pattern="publication-pause"
+      area="engineering"
+      size="compact"
+      title="No Engineering evidence recorded yet"
+      description="Capture what changed when the work is fresh."
+    />
   );
 }
 

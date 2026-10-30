@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -119,7 +125,7 @@ function IdeaContentForm({ idea }: { idea: IdeaView }) {
       </p>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Working title</span>
-        <input
+        <Input
           name="title"
           value={draft.title}
           onChange={(event) =>
@@ -140,7 +146,7 @@ function IdeaContentForm({ idea }: { idea: IdeaView }) {
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Purpose</span>
-        <textarea
+        <Textarea
           name="purpose"
           value={draft.purpose}
           onChange={(event) =>
@@ -170,14 +176,10 @@ function IdeaContentForm({ idea }: { idea: IdeaView }) {
         recoveredLabel="content"
       />
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending ? "Creating…" : "Create content"}
           {!pending && <ArrowRight aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -246,7 +248,7 @@ function IdeaGoalForm({
       <PromotionNote action="Create goal" />
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Goal</span>
-        <input
+        <Input
           name="goalTitle"
           value={draft.title}
           onChange={(event) =>
@@ -267,7 +269,7 @@ function IdeaGoalForm({
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Why this matters · optional</span>
-        <textarea
+        <Textarea
           name="goalDescription"
           value={draft.description ?? ""}
           onChange={(event) =>
@@ -291,7 +293,7 @@ function IdeaGoalForm({
       </label>
       <label className="thinking-form-field">
         <span>Starts</span>
-        <input
+        <Input
           type="date"
           name="goalStartOn"
           value={draft.startOn}
@@ -303,7 +305,7 @@ function IdeaGoalForm({
       </label>
       <label className="thinking-form-field">
         <span>Target date · optional</span>
-        <input
+        <Input
           type="date"
           name="goalTargetOn"
           value={draft.targetOn ?? ""}
@@ -314,7 +316,7 @@ function IdeaGoalForm({
         />
       </label>
       <p className="thinking-form-hint thinking-form-field--wide">
-        Evidence can be added in the goal after it is created.
+        You can assign domains and update the goal after creating it.
       </p>
       <PromotionError
         error={error}
@@ -322,14 +324,10 @@ function IdeaGoalForm({
         recoveredLabel="goal"
       />
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending ? "Creating…" : "Create goal"}
           {!pending && <ArrowRight aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -403,7 +401,7 @@ function IdeaExperimentForm({
       <PromotionNote action="Create experiment" />
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Experiment name</span>
-        <input
+        <Input
           name="experimentTitle"
           value={draft.title}
           onChange={(event) =>
@@ -424,7 +422,7 @@ function IdeaExperimentForm({
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Question</span>
-        <textarea
+        <Textarea
           name="experimentQuestion"
           value={draft.question}
           onChange={(event) =>
@@ -448,7 +446,7 @@ function IdeaExperimentForm({
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Approach</span>
-        <textarea
+        <Textarea
           name="experimentApproach"
           value={draft.approach}
           onChange={(event) =>
@@ -461,7 +459,7 @@ function IdeaExperimentForm({
       </label>
       <label className="thinking-form-field">
         <span>Starts</span>
-        <input
+        <Input
           type="date"
           name="experimentStartOn"
           value={draft.startOn}
@@ -473,7 +471,7 @@ function IdeaExperimentForm({
       </label>
       <label className="thinking-form-field">
         <span>Target date · optional</span>
-        <input
+        <Input
           type="date"
           name="experimentTargetOn"
           value={draft.targetOn ?? ""}
@@ -485,7 +483,7 @@ function IdeaExperimentForm({
       </label>
       <label className="thinking-form-field thinking-form-field--wide">
         <span>Or stop when…</span>
-        <input
+        <Input
           name="experimentStoppingCondition"
           value={draft.stoppingCondition ?? ""}
           onChange={(event) =>
@@ -505,14 +503,10 @@ function IdeaExperimentForm({
         recoveredLabel="experiment"
       />
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending ? "Creating…" : "Create experiment"}
           {!pending && <ArrowRight aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -608,14 +602,10 @@ function IdeaLinkForm({
       </div>
       <PromotionError error={error} />
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending || !selected}
-        >
+        <Button variant="primary" type="submit" disabled={pending || !selected}>
           {pending ? "Linking…" : "Link existing"}
           {!pending && <Link2 aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -633,45 +623,44 @@ export function IdeaPromote({
   return (
     <div className="idea-promotion-actions">
       <RecordDialog
+        treatment="workspace"
         eyebrow="From thought to work"
         triggerLabel="Create content"
         title="Give this idea a place to become real."
         description="A content workspace opens with one version. You can change its format or add another later."
-        unstyledTrigger
-        className="thinking-primary-action"
         triggerIcon={<Play aria-hidden="true" />}
       >
         <IdeaContentForm idea={idea} />
       </RecordDialog>
       <RecordDialog
+        treatment="workspace"
         eyebrow="From thought to direction"
+        variant="secondary"
         triggerLabel="Set a goal"
         title="Name the outcome this idea points toward."
-        description="Start with meaning and dates. Define evidence in the full goal when it helps."
-        unstyledTrigger
-        className="thinking-secondary-action"
+        description="Start with the outcome. Add dates or notes when they help."
         triggerIcon={<Compass aria-hidden="true" />}
       >
         <IdeaGoalForm idea={idea} defaultStartOn={defaultStartOn} />
       </RecordDialog>
       <RecordDialog
+        treatment="workspace"
         eyebrow="From thought to learning"
+        variant="secondary"
         triggerLabel="Run an experiment"
         title="Turn this idea into one bounded attempt."
         description="Choose what you will try and when you will stop to learn."
-        unstyledTrigger
-        className="thinking-secondary-action"
         triggerIcon={<Beaker aria-hidden="true" />}
       >
         <IdeaExperimentForm idea={idea} defaultStartOn={defaultStartOn} />
       </RecordDialog>
       <RecordDialog
+        treatment="workspace"
         eyebrow="Connect the thread"
+        variant="quiet"
         triggerLabel="Link existing"
         title="This idea already became something."
         description="Point to existing content, a goal, or an experiment without creating a copy."
-        unstyledTrigger
-        className="thinking-quiet-action"
         triggerIcon={<Link2 aria-hidden="true" />}
       >
         <IdeaLinkForm idea={idea} options={options} />

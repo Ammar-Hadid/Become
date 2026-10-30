@@ -1,5 +1,7 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
+import { Card } from "@/components/ui/cards/card.component";
 import { useId, useState } from "react";
 import NextLink from "next/link";
 import { ArrowUpRight, ExternalLink, MessageSquareText } from "lucide-react";
@@ -184,7 +186,7 @@ export function EvidenceSourceObservations({
   const revealCount = Math.min(OBSERVATION_STEP, remaining);
 
   return (
-    <section className="business-detail-section">
+    <Card material="glass" spacing="dense" className="business-detail-section">
       <div className="business-row-heading">
         <div>
           <p className="eyebrow">Drawn from this source</p>
@@ -211,9 +213,10 @@ export function EvidenceSourceObservations({
             ))}
           </ol>
           {remaining > 0 && (
-            <button
+            <Button
+              variant="secondary"
               aria-controls={listId}
-              className="finance-dialog-trigger finance-dialog-trigger--secondary mt-xl"
+              className="mt-xl"
               type="button"
               onClick={() =>
                 setVisibleCount((current) =>
@@ -224,7 +227,7 @@ export function EvidenceSourceObservations({
               {remaining <= OBSERVATION_STEP
                 ? `Show all ${remaining} remaining`
                 : `Show next ${revealCount}`}
-            </button>
+            </Button>
           )}
         </>
       ) : (
@@ -234,6 +237,6 @@ export function EvidenceSourceObservations({
           <p>The conversation remains useful source context on its own.</p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

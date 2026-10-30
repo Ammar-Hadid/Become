@@ -1,0 +1,97 @@
+.become-artwork-upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--spacing-lg);
+  height: 100%;
+}
+.artwork-upload-target {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: var(--artwork-upload-preview-ratio);
+  min-height: var(--artwork-upload-preview-min-height);
+}
+.artwork-upload-drop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.artwork-upload-drop:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+.artwork-upload-drop:hover,
+[data-dragging="true"] .artwork-upload-drop {
+  border-color: var(--color-primary);
+}
+.artwork-upload-drop:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.artwork-upload-drop img {
+  object-fit: contain;
+}
+.artwork-upload-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+}
+.artwork-upload-empty > svg {
+  width: 32px;
+  height: 32px;
+  color: var(--color-primary);
+}
+.artwork-upload-replace {
+  position: absolute;
+  bottom: var(--spacing-md);
+  left: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-background);
+  border-radius: var(--radius-panel);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.artwork-upload-replace svg {
+  width: 16px;
+  height: 16px;
+}
+.artwork-upload-file {
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+}
+
+.artwork-upload-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+.artwork-upload-success {
+  color: var(--color-success);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.artwork-upload-success svg {
+  width: var(--text-caption);
+  height: var(--text-caption);
+}
+.artwork-upload-error {
+  color: var(--color-danger);
+}
+@media (max-width: 1023px) {
+  .artwork-upload-target {
+    min-height: var(--artwork-upload-preview-mobile-height);
+  }
+}

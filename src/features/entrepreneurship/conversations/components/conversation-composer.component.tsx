@@ -1,5 +1,8 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
@@ -13,6 +16,8 @@ type PendingMessage = {
   body: string;
   channel: string;
   platform: string | null;
+  occurredAt: string;
+  guideQuestionId: string | null;
 };
 
 export function ConversationComposer({
@@ -63,37 +68,46 @@ export function ConversationComposer({
       body: trimmed,
       channel: defaultChannel,
       platform: defaultPlatform,
+      occurredAt: new Date().toISOString(),
+      guideQuestionId: guideQuestionId ?? null,
     };
     setPendingMessage(attempt);
     setError(null);
     setSendStatus("saving");
     startTransition(async () => {
-      const result = await addConversationMessageAction(
-        conversationId,
-        attempt.operationKey,
-        {
-          speakerRole: attempt.speakerRole,
-          speakerName: attempt.speakerName,
-          body: attempt.body,
-          occurredAt: new Date().toISOString(),
-          channel: attempt.channel,
-          platform: attempt.platform,
-          guideQuestionId: guideQuestionId ?? null,
-        },
-      );
-      if (result.error) {
-        setError(result.error);
+      try {
+        const result = await addConversationMessageAction(
+          conversationId,
+          attempt.operationKey,
+          {
+            speakerRole: attempt.speakerRole,
+            speakerName: attempt.speakerName,
+            body: attempt.body,
+            occurredAt: attempt.occurredAt,
+            channel: attempt.channel,
+            platform: attempt.platform,
+            guideQuestionId: attempt.guideQuestionId,
+          },
+        );
+        if (result.error) {
+          setError(result.error);
+          setSendStatus("error");
+          return;
+        }
+        setBody((current) => (current.trim() === attempt.body ? "" : current));
+        setPendingMessage(null);
+        setSendStatus("saved");
+        onSent?.();
+        router.refresh();
+        requestAnimationFrame(() =>
+          formRef.current?.querySelector("textarea")?.focus(),
+        );
+      } catch {
+        setError(
+          "The save could not be confirmed. Retry with the same save to check it.",
+        );
         setSendStatus("error");
-        return;
       }
-      setBody("");
-      setPendingMessage(null);
-      setSendStatus("saved");
-      onSent?.();
-      router.refresh();
-      requestAnimationFrame(() =>
-        formRef.current?.querySelector("textarea")?.focus(),
-      );
     });
   };
 
@@ -106,7 +120,7 @@ export function ConversationComposer({
         >
           <span>{pendingMessage.speakerName}</span>
           <p>{pendingMessage.body}</p>
-          <small>{error ? "Not saved" : "Sending…"}</small>
+          <small>{error ? "Save not confirmed" : "Sending…"}</small>
         </div>
       )}
       <form
@@ -120,7 +134,7 @@ export function ConversationComposer({
       >
         <label>
           <span>Speaker</span>
-          <select
+          <NativeSelect
             value={speakerRole}
             onChange={(event) =>
               setSpeakerRole(event.target.value as "ME" | "PARTICIPANT")
@@ -128,11 +142,11 @@ export function ConversationComposer({
           >
             <option value="PARTICIPANT">{participantName}</option>
             <option value="ME">Me</option>
-          </select>
+          </NativeSelect>
         </label>
         <label className="conversation-composer-body">
           <span>Message</span>
-          <textarea
+          <Textarea
             value={body}
             rows={3}
             maxLength={12000}
@@ -151,9 +165,13 @@ export function ConversationComposer({
             }}
           />
         </label>
-        <button type="submit" disabled={!body.trim() || pending}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={!body.trim() || pending}
+        >
           <Send aria-hidden="true" /> {pending ? "Sending…" : "Add message"}
-        </button>
+        </Button>
       </form>
       <p className="conversation-composer-hint">
         Enter to add · Shift + Enter for a new line
@@ -161,9 +179,13 @@ export function ConversationComposer({
       {error && pendingMessage && (
         <p className="conversation-composer-error" role="alert">
           {error}{" "}
-          <button type="button" onClick={() => send(pendingMessage)}>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => send(pendingMessage)}
+          >
             Retry with the same save
-          </button>
+          </Button>
         </p>
       )}
       <span className="sr-only" role="status" aria-live="polite">
@@ -172,7 +194,7 @@ export function ConversationComposer({
           : sendStatus === "saved"
             ? "Message saved"
             : sendStatus === "error"
-              ? "Message not saved"
+              ? "Message save not confirmed"
               : ""}
       </span>
     </div>

@@ -1,3 +1,6 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+import { ProgressIndicator } from "@/components/ui/progress/progress-indicator.component";
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DateTime } from "luxon";
@@ -147,25 +150,18 @@ export async function GoalDetail({
         </div>
       )}
 
-      <section className="finance-goal-hero">
+      <Card
+        material="elevated-glass"
+        className="finance-detail-focus finance-detail-focus--goal"
+      >
         <h2 className="sr-only">Goal funding and spending</h2>
-        <div className="finance-goal-ring">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" r="52" />
-            <circle
-              className="is-progress"
-              cx="60"
-              cy="60"
-              r="52"
-              pathLength="100"
-              strokeDasharray={spentPercent + " 100"}
-            />
-          </svg>
-          <span>
-            <strong>{spentPercent}%</strong>
-            <small>fulfilled</small>
-          </span>
-        </div>
+        <ProgressIndicator
+          variant="segmented-halo"
+          value={spentPercent}
+          label="Confirmed goal fulfillment"
+          caption="FULFILLED"
+          area="finance"
+        />
         <div className="finance-goal-hero-copy">
           <p className="eyebrow">Confirmed progress</p>
           <strong className="finance-number">
@@ -202,7 +198,7 @@ export async function GoalDetail({
             </dd>
           </div>
         </dl>
-      </section>
+      </Card>
 
       <FinanceSection
         title="Funding intention"
@@ -213,9 +209,11 @@ export async function GoalDetail({
             <span>
               Remaining cost funded <strong>{fundedPercent}%</strong>
             </span>
-            <i>
-              <b style={{ width: fundedPercent + "%" }} />
-            </i>
+            <ProgressIndicator
+              value={fundedPercent}
+              label="Remaining cost funded"
+              area="finance"
+            />
           </div>
           <FinanceForm
             key={goal.allocatedAmountMinor.toString()}
@@ -305,8 +303,10 @@ export async function GoalDetail({
           title="Goal settings"
           description="Change the target or lifecycle only when the goal itself has changed."
         >
-          <details className="finance-details">
-            <summary>Edit goal details</summary>
+          <WorkspaceDisclosure
+            title={<>Edit goal details</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body finance-settings-panel">
               <FinanceForm
                 action={saveGoalAction}
@@ -378,7 +378,7 @@ export async function GoalDetail({
                 </FinanceForm>
               </div>
             </div>
-          </details>
+          </WorkspaceDisclosure>
         </FinanceSection>
       )}
 

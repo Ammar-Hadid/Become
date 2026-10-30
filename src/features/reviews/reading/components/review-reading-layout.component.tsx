@@ -1,3 +1,4 @@
+import { Workspace } from "@/components/ui/workspace/workspace.component";
 import type { ReactNode } from "react";
 import type { ReviewView } from "@/features/reviews/contracts/types/review.types";
 import styles from "../styles/review-reading.module.css";
@@ -14,8 +15,9 @@ export function ReviewReadingLayout({
   timeframe?: ReviewView["facts"]["period"]["timeframe"];
 }) {
   return (
-    <div
-      className={`page-shell ${styles.shell}`}
+    <Workspace
+      area="direction"
+      className={`page-shell ${styles.shell} ${styles.workspace}`}
       data-testid="review-reading"
       data-timeframe={timeframe}
     >
@@ -24,6 +26,6 @@ export function ReviewReadingLayout({
         <aside className={styles.contents}>{navigation}</aside>
         <article className={styles.document}>{children}</article>
       </div>
-    </div>
+    </Workspace>
   );
 }

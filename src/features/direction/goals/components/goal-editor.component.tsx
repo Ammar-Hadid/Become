@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SimpleGoalEditor } from "./simple-goal-editor.component";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Compass, Save } from "lucide-react";
 import { FormEvent, type MouseEvent, useRef, useState } from "react";
@@ -33,7 +34,7 @@ function safeReturnTo(value?: string) {
   return value?.startsWith("/direction") ? value : undefined;
 }
 
-export function GoalEditor({
+function LegacyGoalEditor({
   goal,
   domainOptions,
   defaultStartOn,
@@ -380,5 +381,14 @@ export function GoalEditor({
         </footer>
       </form>
     </div>
+  );
+}
+
+/** The approved ritual keeps its composition; standalone goal authoring is simple. */
+export function GoalEditor(props: Parameters<typeof LegacyGoalEditor>[0]) {
+  return props.presentation === "ritual" ? (
+    <LegacyGoalEditor {...props} />
+  ) : (
+    <SimpleGoalEditor {...props} />
   );
 }

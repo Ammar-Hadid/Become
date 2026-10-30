@@ -1,5 +1,8 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+import { Button } from "@/components/ui/buttons/button.component";
+
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -32,10 +35,12 @@ import {
 } from "@/features/content/editor/components/content-script-dialogs.component";
 import { ContentScriptFindReplace } from "@/features/content/editor/components/content-script-find-replace.component";
 import { ContentScriptSaveState } from "@/features/content/editor/components/content-script-save-state.component";
-import { ContentScriptToolbar } from "@/features/content/editor/components/content-script-toolbar.component";
+import { DocumentEditorToolbar } from "@/components/ui/document-editor/components/document-editor-toolbar.component";
+import { addScriptRowAbove } from "@/features/content/editor/utils/content-script-table.util";
 import { useContentScriptAutosave } from "@/features/content/editor/hooks/content-script-autosave.hook";
 import { useContentScriptNavigationGuard } from "@/features/content/editor/hooks/content-script-navigation-guard.hook";
 import { DocumentEditorStage } from "@/components/ui/document-editor/components/document-editor-stage.component";
+import { DocumentEditorGuide } from "@/components/ui/document-editor/components/document-editor-guide.component";
 
 type EditorDialog = "image" | "link" | "shortcuts" | null;
 
@@ -101,7 +106,6 @@ export function ContentScriptEditor({
     result: ScriptImportResult;
   } | null>(null);
   const [importApplyError, setImportApplyError] = useState<string | null>(null);
-  const [guideTop, setGuideTop] = useState(0);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const manuscriptRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -121,22 +125,6 @@ export function ContentScriptEditor({
     [],
   );
 
-  const updateGuide = useCallback((current: TiptapEditor) => {
-    if (!manuscriptRef.current) return;
-    const selection = current.state.selection;
-    const blockPosition =
-      selection.$from.depth > 0 ? selection.$from.before(1) : selection.from;
-    const blockNode = current.view.nodeDOM(blockPosition);
-    const activeBlock =
-      blockNode instanceof HTMLElement
-        ? blockNode
-        : (blockNode?.parentElement ?? null);
-    if (!(activeBlock instanceof HTMLElement)) return;
-    const manuscriptBounds = manuscriptRef.current.getBoundingClientRect();
-    const blockBounds = activeBlock.getBoundingClientRect();
-    setGuideTop(Math.max(0, blockBounds.top - manuscriptBounds.top));
-  }, []);
-
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
@@ -145,7 +133,7 @@ export function ContentScriptEditor({
     editable: !initialData.readOnly,
     editorProps: {
       attributes: {
-        class: "content-script-prose",
+        class: "content-script-prose document-editor-prose",
         role: "textbox",
         "aria-label": "Script body",
         "aria-multiline": "true",
@@ -188,13 +176,6 @@ export function ContentScriptEditor({
     },
     onUpdate({ editor: current }) {
       setScriptDocument({ schemaVersion: 1, content: current.getJSON() });
-      requestAnimationFrame(() => updateGuide(current));
-    },
-    onSelectionUpdate({ editor: current }) {
-      requestAnimationFrame(() => updateGuide(current));
-    },
-    onCreate({ editor: current }) {
-      requestAnimationFrame(() => updateGuide(current));
     },
   });
 
@@ -507,7 +488,12 @@ export function ContentScriptEditor({
       aria-label={`${initialData.contentTitle} script editor`}
       aria-busy={activity ? "true" : undefined}
     >
-      <header className="content-script-chrome">
+      <Card
+        as="div"
+        material="glass"
+        spacing="dense"
+        className="content-script-chrome"
+      >
         <div className="content-script-identity">
           <Link
             href={initialData.returnHref}
@@ -538,9 +524,10 @@ export function ContentScriptEditor({
               status={autosave.status}
             />
             {!initialData.readOnly && (
-              <button
+              <Button
                 type="button"
-                className="content-script-save"
+                variant="secondary"
+                className="content-script-save-action"
                 data-attention={saveAttention ? "true" : undefined}
                 disabled={autosave.status === "saving" || Boolean(activity)}
                 onClick={() =>
@@ -553,16 +540,21 @@ export function ContentScriptEditor({
                 <Save aria-hidden="true" />
                 <span>Save</span>
                 <kbd>⌘S</kbd>
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
         {editor && (
           <div ref={toolbarRef} className="content-script-instrument-rail">
-            <ContentScriptToolbar
+            <DocumentEditorToolbar
               editor={editor}
               readOnly={initialData.readOnly}
+              mode="full"
+              documentName="Script"
+              onAddRowAbove={() =>
+                editor.chain().focus().command(addScriptRowAbove).run()
+              }
               onEditImage={() => setDialog("image")}
               onEditLink={() => setDialog("link")}
               onExport={(format) => void exportDocument(format)}
@@ -584,7 +576,7 @@ export function ContentScriptEditor({
             onClose={() => setFindOpen(false)}
           />
         )}
-      </header>
+      </Card>
 
       <input
         ref={imageInputRef}
@@ -675,26 +667,23 @@ export function ContentScriptEditor({
         label="Script document"
         className="content-script-document-stage"
         canvasClassName="content-script-manuscript"
+        canvasRef={manuscriptRef}
       >
-        <div ref={manuscriptRef} className="contents">
-          <div className="content-script-guide" aria-hidden="true">
-            <span style={{ transform: `translateY(${guideTop}px)` }} />
+        <DocumentEditorGuide editor={editor} containerRef={manuscriptRef} />
+        {editor ? (
+          <EditorContent editor={editor} />
+        ) : (
+          <div className="content-script-loading" role="status">
+            Opening script…
           </div>
-          {editor ? (
-            <EditorContent editor={editor} />
-          ) : (
-            <div className="content-script-loading" role="status">
-              Opening script…
-            </div>
-          )}
-          {editor && !initialData.readOnly && (
-            <ContentScriptBlockControls
-              editor={editor}
-              containerRef={manuscriptRef}
-              onEditImage={() => setDialog("image")}
-            />
-          )}
-        </div>
+        )}
+        {editor && !initialData.readOnly && (
+          <ContentScriptBlockControls
+            editor={editor}
+            containerRef={manuscriptRef}
+            onEditImage={() => setDialog("image")}
+          />
+        )}
       </DocumentEditorStage>
 
       {editor && dialog === "link" && (

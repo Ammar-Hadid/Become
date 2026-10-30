@@ -1,0 +1,109 @@
+.become-tooltip-anchor {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.become-tooltip {
+  --tooltip-accent: var(--tooltip-default-accent);
+  --tooltip-edge: color-mix(
+    in srgb,
+    var(--tooltip-accent) var(--tooltip-edge-strength),
+    var(--color-border)
+  );
+  position: fixed;
+  z-index: var(--tooltip-z-index);
+  display: inline-flex;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: var(--tooltip-max-width);
+  min-height: var(--tooltip-min-height);
+  align-items: center;
+  border: var(--tooltip-edge-width) solid var(--tooltip-edge);
+  border-radius: var(--tooltip-radius);
+  padding-block: var(--tooltip-padding-block);
+  padding-inline: var(--tooltip-padding-inline);
+  background: color-mix(
+    in srgb,
+    var(--color-surface) var(--tooltip-glass-opacity),
+    transparent
+  );
+  box-shadow:
+    inset 0 var(--tooltip-top-light-width) 0
+      color-mix(
+        in srgb,
+        var(--color-text-primary) var(--tooltip-top-light-strength),
+        transparent
+      ),
+    0 var(--tooltip-shadow-y) var(--tooltip-shadow-blur)
+      rgb(0 0 0 / var(--tooltip-shadow-opacity)),
+    0 0 var(--tooltip-glow-radius)
+      color-mix(
+        in srgb,
+        var(--tooltip-accent) var(--tooltip-glow-strength),
+        transparent
+      );
+  color: var(--color-text-primary);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  backdrop-filter: blur(var(--tooltip-blur));
+  animation: become-tooltip-enter var(--tooltip-arrival-duration)
+    var(--tooltip-arrival-ease) both;
+}
+
+.become-tooltip[data-tooltip-area="engineering"] {
+  --tooltip-accent: var(--color-domain-engineering-accent);
+}
+.become-tooltip[data-tooltip-area="finance"] {
+  --tooltip-accent: var(--color-domain-finance-accent);
+}
+.become-tooltip[data-tooltip-area="entrepreneurship"] {
+  --tooltip-accent: var(--color-domain-entrepreneurship-accent);
+}
+.become-tooltip[data-tooltip-area="content"] {
+  --tooltip-accent: var(--color-domain-content-accent);
+}
+
+.become-tooltip::before,
+.become-tooltip::after {
+  position: absolute;
+  width: var(--tooltip-corner-size);
+  height: var(--tooltip-corner-size);
+  border-color: var(--tooltip-accent);
+  border-style: solid;
+  content: "";
+  filter: drop-shadow(
+    0 0 var(--tooltip-corner-glow-radius) var(--tooltip-accent)
+  );
+  pointer-events: none;
+}
+
+.become-tooltip::before {
+  top: calc(-1 * var(--tooltip-edge-width));
+  left: calc(-1 * var(--tooltip-edge-width));
+  border-width: var(--tooltip-corner-width) 0 0 var(--tooltip-corner-width);
+}
+
+.become-tooltip::after {
+  right: calc(-1 * var(--tooltip-edge-width));
+  bottom: calc(-1 * var(--tooltip-edge-width));
+  border-width: 0 var(--tooltip-corner-width) var(--tooltip-corner-width) 0;
+}
+
+@keyframes become-tooltip-enter {
+  from {
+    opacity: 0;
+    filter: brightness(var(--tooltip-entry-brightness));
+  }
+  to {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-tooltip {
+    animation: none;
+  }
+}

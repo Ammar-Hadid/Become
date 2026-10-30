@@ -1,0 +1,151 @@
+.opening-step-content {
+  margin-top: clamp(2rem, 6vh, 4rem);
+  display: grid;
+  gap: var(--spacing-xl);
+  animation: opening-content-arrive var(--motion-surface-duration)
+    var(--motion-surface-ease) both;
+}
+@keyframes opening-content-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.opening-preparation-form,
+.opening-confirmation-content,
+.opening-summary-content {
+  display: grid;
+  gap: var(--spacing-xl);
+  min-width: 0;
+}
+.opening-preparation-form .become-input-field {
+  width: 100%;
+}
+.opening-primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.opening-primary-actions > .become-button {
+  min-height: 48px;
+}
+.opening-preparation-form > .opening-primary-actions {
+  margin-top: var(--spacing-xs);
+}
+.opening-source-details > :not(summary) {
+  margin-top: var(--spacing-md);
+}
+.opening-source-details summary {
+  cursor: pointer;
+}
+.opening-summary-content a {
+  color: var(--color-primary);
+}
+.opening-preparation-working {
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-lg);
+}
+.opening-error {
+  color: var(--color-danger);
+}
+.opening-layout-review-controls {
+  padding: var(--spacing-lg) var(--space-app-page-gutter);
+  color: var(--color-text-muted);
+  background: var(--color-background);
+}
+.opening-review-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding-block: var(--spacing-lg);
+}
+.opening-existing-imagery .season-onboarding-candidate {
+  padding: 0;
+  min-height: 0;
+}
+.opening-existing-imagery :is(.guided-topbar, .guided-progress) {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .opening-step-content {
+    margin-top: var(--spacing-4xl);
+    gap: var(--spacing-3xl);
+  }
+  .opening-preparation-form,
+  .opening-confirmation-content,
+  .opening-summary-content {
+    gap: var(--spacing-3xl);
+  }
+  .opening-layout-footer,
+  .opening-layout-review-controls {
+    padding-inline: var(--space-page-edge-mobile);
+  }
+}
+@media (max-width: 420px) {
+  .opening-primary-actions {
+    align-items: stretch;
+  }
+  .opening-primary-actions .become-button {
+    flex: 1 1 auto;
+  }
+}
+@media (min-width: 1024px) and (max-height: 800px) {
+  .opening-step-content {
+    margin-top: var(--spacing-xl);
+    gap: var(--spacing-lg);
+  }
+  .opening-preparation-form {
+    gap: var(--spacing-lg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .opening-step-content {
+    animation: none;
+  }
+}
+.opening-layout-content > .opening-layout-review-controls {
+  padding-inline: 0;
+  background: transparent;
+  margin-top: var(--spacing-xl);
+}
+
+.connected-season-preparation .guided-entry {
+  width: 100%;
+}
+.connected-season-preparation .cots-character-entry-form {
+  gap: var(--spacing-xl);
+}
+.connected-season-imagery {
+  display: grid;
+  gap: var(--spacing-xl);
+  min-width: 0;
+}
+@media (max-width: 1023px) {
+  .connected-season-preparation .guided-entry,
+  .connected-season-preparation .cots-character-entry-form {
+    gap: var(--spacing-3xl);
+  }
+}
+
+/* Preserve the approved preparation action placement inside the fixed footer. */
+.become-season-ritual .guided-footer {
+  flex: 1;
+  width: 100%;
+}
+.become-season-ritual[data-split="true"]
+  .guided-footer
+  > .guided-inline-actions {
+  width: 100%;
+  justify-content: space-between;
+}
+.connected-season-preparation .guided-entry > .become-button,
+.connected-season-preparation .cots-character-entry-form > .become-button {
+  justify-self: start;
+  min-height: 48px;
+}

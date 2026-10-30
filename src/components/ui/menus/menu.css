@@ -1,97 +1,169 @@
-.submenu {
-  position: relative;
+@layer components {
+  :where(.submenu) {
+    position: relative;
+  }
+
+  :where(.menu) {
+    position: absolute;
+    z-index: var(--menu-z-index);
+    display: grid;
+    border-width: var(--menu-edge-width);
+    border-style: solid;
+    border-radius: var(--menu-radius);
+    padding: var(--menu-inset);
+  }
+
+  :where(.menu--top-stretch) {
+    right: 0;
+    bottom: calc(100% + var(--menu-offset));
+    left: 0;
+  }
+
+  :where(.menu--bottom-end) {
+    top: calc(100% + var(--menu-offset));
+    right: 0;
+    width: max-content;
+    min-width: var(--menu-min-width);
+    max-width: var(--menu-max-width);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  :where(.menu-item) {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--menu-item-height);
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--menu-item-gap);
+    cursor: pointer;
+    border-width: var(--menu-item-edge-width);
+    border-style: solid;
+    border-radius: var(--menu-item-radius);
+    padding-block: var(--menu-item-padding-block);
+    padding-inline: var(--menu-item-padding-inline);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  :where(.menu-item > svg) {
+    width: var(--menu-icon-size);
+    height: var(--menu-icon-size);
+    flex: 0 0 auto;
+  }
+
+  :where(.menu-item[role="menuitemradio"]) {
+    justify-content: space-between;
+  }
 }
 
+/* The document reset is unlayered, so menu surface, type, and interaction
+   states are unlayered while geometry remains utility-friendly. */
 .menu {
-  position: absolute;
-  z-index: 40;
-  display: grid;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface-elevated);
-  padding: var(--spacing-xs);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.24);
+  border-color: var(--menu-edge);
+  background: var(--menu-background);
+  box-shadow: var(--menu-shadow);
+  animation: become-menu-enter var(--menu-feedback-duration)
+    var(--menu-feedback-ease) both;
 }
 
-.menu[data-state="open"] {
-  animation: menu-in var(--duration-control) var(--ease-enter);
-}
-
-.menu[data-state="closed"] {
+.menu:is([aria-hidden="true"], [data-state="closed"]) {
+  display: none;
+  visibility: hidden;
   pointer-events: none;
-  animation: menu-out var(--duration-response) var(--ease-exit) both;
-}
-
-.menu--top-stretch {
-  right: 0;
-  bottom: calc(100% + var(--spacing-sm));
-  left: 0;
-  transform-origin: bottom center;
-}
-
-.menu--bottom-end {
-  top: calc(100% + var(--spacing-sm));
-  right: 0;
-  width: max-content;
-  max-width: calc(100vw - 1rem);
-  min-width: 13.5rem;
-  transform-origin: top right;
 }
 
 .menu-item {
-  display: flex;
-  width: 100%;
-  min-height: var(--spacing-input-height-sm);
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-  border-radius: calc(var(--radius-panel) - var(--spacing-xs));
-  padding: var(--spacing-sm) var(--spacing-md);
+  border-color: var(--menu-item-edge);
+  background: transparent;
+  color: var(--menu-item-text);
+  font-family: var(--text-body--font-family);
   font-size: var(--text-body);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--text-body--letter-spacing);
   line-height: var(--text-body--line-height);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  text-align: left;
-  white-space: nowrap;
   transition:
-    background-color var(--duration-control) var(--ease-move),
-    color var(--duration-control) var(--ease-move);
-}
-
-.menu-item:hover,
-.menu-item:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary);
-  outline: none;
+    border-color var(--menu-feedback-duration) var(--menu-feedback-ease),
+    background-color var(--menu-feedback-duration) var(--menu-feedback-ease),
+    color var(--menu-feedback-duration) var(--menu-feedback-ease);
 }
 
 .menu-item > svg {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
-  color: var(--color-text-muted);
-  transition: color var(--duration-control) var(--ease-move);
+  color: var(--menu-icon-color);
+  transition: color var(--menu-feedback-duration) var(--menu-feedback-ease);
 }
 
-.menu-item:hover > svg,
-.menu-item:focus-visible > svg {
-  color: var(--color-primary);
-}
-
-@keyframes menu-in {
+@keyframes become-menu-enter {
   from {
     opacity: 0;
-    transform: translateY(var(--distance-control)) scale(var(--scale-pressed));
+    transform: translateY(calc(-1 * var(--menu-arrival-distance)));
   }
 }
 
-@keyframes menu-out {
-  to {
-    transform: translateY(calc(var(--distance-control) / 2))
-      scale(var(--scale-pressed));
-    opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu-item,
+  .menu-item > svg {
+    animation: none;
+    transition: none;
   }
+}
+
+.menu-item:where(:not(:disabled):not([aria-disabled="true"])):hover {
+  background: var(--menu-item-hover);
+  color: var(--menu-hover-text);
+}
+
+.menu-item:where(:not(:disabled):not([aria-disabled="true"])):focus-visible {
+  border-color: var(--menu-focus-color);
+  background: var(--menu-item-hover);
+  color: var(--menu-hover-text);
+  outline: 0;
+  box-shadow: none;
+}
+
+.menu-item[aria-checked="true"] {
+  background: var(--menu-selected-fill);
+  color: var(--menu-selected-text);
+}
+
+.menu-item:is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+  opacity: var(--menu-disabled-opacity);
+}
+
+.menu-item[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+.menu-item:where(:not(:disabled):not([aria-disabled="true"])):is(
+    :hover,
+    :focus-visible
+  )
+  > svg,
+.menu-item[aria-checked="true"] > svg {
+  color: var(--menu-selected-text);
+}
+
+.menu-item--danger,
+.menu-item--danger > svg {
+  color: var(--menu-danger);
+}
+
+.menu-item--danger:where(:not(:disabled):not([aria-disabled="true"])):hover {
+  background: var(--menu-danger-hover);
+}
+
+.menu-item--danger:where(:not(:disabled):not([aria-disabled="true"])):is(
+    :hover,
+    :focus-visible
+  ),
+.menu-item--danger:where(:not(:disabled):not([aria-disabled="true"])):is(
+    :hover,
+    :focus-visible
+  )
+  > svg {
+  color: var(--menu-danger);
 }

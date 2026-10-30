@@ -1,4 +1,5 @@
 "use client";
+import { Input } from "@/components/ui/forms/input.component";
 import { useEffect, useRef, useState } from "react";
 import { useMarketFilterChange } from "@/features/entrepreneurship/market/components/market-filters.component";
 
@@ -22,10 +23,10 @@ export function CompanySearch({ search }: { search: string }) {
       <label className="field-label" htmlFor="company-search">
         Search companies
       </label>
-      <input
+      <Input
         id="company-search"
         type="search"
-        className="text-input"
+
         autoComplete="off"
         maxLength={120}
         value={query}

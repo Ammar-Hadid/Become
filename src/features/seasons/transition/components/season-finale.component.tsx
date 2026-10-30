@@ -3,7 +3,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import {
+  Workspace,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
+import {
+  InterfaceSoundProvider,
+  InterfaceSoundContext,
+} from "@/components/ui/sound/components/interface-sound-provider.component";
+import { Card } from "@/components/ui/cards/card.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import type { SeasonTransitionView } from "@/features/reviews/contracts/types/review.types";
 import { ReviewArtwork } from "@/features/reviews/reading/components/review-artwork.component";
@@ -27,10 +42,14 @@ const passages = [
 
 export function SeasonFinale({ view }: { view: SeasonTransitionView }) {
   return (
-    <SeasonFinaleSession
-      key={`${view.storageScope}:${view.replay ? "replay" : "ritual"}`}
-      view={view}
-    />
+    <InterfaceSoundProvider>
+      <Workspace area="direction">
+        <SeasonFinaleSession
+          key={`${view.storageScope}:${view.replay ? "replay" : "ritual"}`}
+          view={view}
+        />
+      </Workspace>
+    </InterfaceSoundProvider>
   );
 }
 
@@ -40,6 +59,7 @@ function SeasonFinaleSession({
   view: SeasonTransitionView;
 }) {
   const router = useRouter();
+  const sound = useContext(InterfaceSoundContext);
   const { view, pending, error, ready, command } =
     useSeasonTransition(initialView);
   const [replayMovement, setReplayMovement] = useState(0);
@@ -117,6 +137,7 @@ function SeasonFinaleSession({
     setDirection(index > movement ? "forward" : "back");
     if (view.replay) {
       setReplayMovement(index);
+      sound?.play("controlConfirmed");
       return;
     }
     navigationPending.current = true;
@@ -125,7 +146,8 @@ function SeasonFinaleSession({
         const result = await command("BEGIN");
         if (!result?.transition || result.error) return;
       } else if (!hasControl) return;
-      await command("ADVANCE", index);
+      const result = await command("ADVANCE", index);
+      if (result?.transition && !result.error) sound?.play("controlConfirmed");
     } finally {
       navigationPending.current = false;
     }
@@ -139,8 +161,10 @@ function SeasonFinaleSession({
     }
     if (view.replay) return;
     const result = await command("COMPLETE");
-    if (result?.transition && !result.error)
+    if (result?.transition && !result.error) {
+      sound?.play("seasonMilestone");
       router.replace(result.transition.destinationHref);
+    }
   }
 
   if (!review)
@@ -263,7 +287,7 @@ function SeasonFinaleSession({
       )}
 
       <article className={styles.document}>
-        <section
+        <Card
           className={`${styles.passage} ${styles.beginning}`}
           hidden={!visible(0)}
           aria-labelledby="finale-passage-0"
@@ -322,9 +346,9 @@ function SeasonFinaleSession({
               </figcaption>
             </figure>
           )}
-        </section>
+        </Card>
 
-        <section
+        <Card
           className={`${styles.passage} ${styles.days}`}
           hidden={!visible(1)}
           aria-labelledby="finale-passage-1"
@@ -339,9 +363,9 @@ function SeasonFinaleSession({
               headingRefs.current[1] = node;
             }}
           />
-        </section>
+        </Card>
 
-        <section
+        <Card
           className={`${styles.passage} ${styles.changed}`}
           hidden={!visible(2)}
           aria-labelledby="finale-passage-2"
@@ -355,9 +379,9 @@ function SeasonFinaleSession({
               headingRefs.current[2] = node;
             }}
           />
-        </section>
+        </Card>
 
-        <section
+        <Card
           className={`${styles.passage} ${styles.closing}`}
           hidden={!visible(3)}
           aria-labelledby="finale-passage-3"
@@ -449,7 +473,7 @@ function SeasonFinaleSession({
               finalize your written review.
             </p>
           </details>
-        </section>
+        </Card>
       </article>
 
       <footer className={styles.controls} ref={controlsRef}>
@@ -464,34 +488,34 @@ function SeasonFinaleSession({
         </div>
         <div className={styles.controlActions}>
           {!view.replay && (
-            <button
-              className={styles.exitAction}
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => leave("DEFER")}
               disabled={leaving}
             >
               Not now
-            </button>
+            </Button>
           )}
           {!view.replay && (
-            <button
-              className={styles.exitAction}
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => leave("SKIP")}
               disabled={leaving}
             >
               Skip finale
-            </button>
+            </Button>
           )}
           {!view.replay && view.disposition === "COMPLETED" ? (
-            <Link className={styles.finishLink} href={view.destinationHref}>
+            <WorkspaceLink variant="primary" href={view.destinationHref}>
               {view.destinationLabel}
               <ArrowRight aria-hidden="true" />
-            </Link>
+            </WorkspaceLink>
           ) : view.replay && movement === 3 ? (
-            <Link className={styles.finishLink} href={view.destinationHref}>
+            <WorkspaceLink variant="primary" href={view.destinationHref}>
               Return to the review <ArrowRight aria-hidden="true" />
-            </Link>
+            </WorkspaceLink>
           ) : (
             <Button
               type="button"

@@ -1,0 +1,39 @@
+.reference-inline-candidate .opening-step-indicator {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.reference-world-form {
+  --input-featured-size: var(--season-entry-field-size);
+}
+.reference-candidate-note {
+  color: var(--color-text-secondary);
+}
+.reference-candidate-workspace {
+  display: grid;
+  gap: var(--space-action-section);
+  padding-top: var(--space-action-section);
+}
+.reference-world-form,
+.reference-direction-summary {
+  display: grid;
+  gap: var(--space-action-field);
+}
+.reference-world-form > .become-button,
+.reference-direction-summary > .become-button {
+  justify-self: start;
+}
+.reference-direction-summary h2 {
+  color: var(--color-text-secondary);
+}
+.reference-direction-summary p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .reference-world-form > .become-button {
+    width: 100%;
+  }
+}
+.reference-character-options {
+  display: grid;
+  gap: var(--spacing-md);
+}

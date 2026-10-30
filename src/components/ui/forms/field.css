@@ -1,0 +1,137 @@
+@layer components {
+  :where(input.text-input, textarea.text-input) {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: var(--field-height);
+    border-width: var(--field-border-width);
+    border-style: solid;
+    border-radius: var(--field-radius);
+    outline: 0;
+    padding-inline: var(--field-padding-inline);
+    padding-block: var(--field-padding-block);
+  }
+
+  :where(textarea.text-input) {
+    height: auto;
+    min-height: var(--field-textarea-min-height);
+    padding-block: var(--field-textarea-padding-block);
+    resize: vertical;
+  }
+
+  :where(textarea.text-input--textarea-sm) {
+    min-height: var(--field-textarea-min-height);
+  }
+
+  :where(textarea.text-input--textarea-md) {
+    min-height: var(--field-textarea-min-height-md);
+  }
+
+  :where(textarea.text-input--textarea-lg) {
+    min-height: var(--field-textarea-min-height-lg);
+  }
+
+  :where(.become-field-label, .field-label) {
+    display: block;
+    margin-block-end: var(--field-label-gap);
+    color: var(--field-label-text);
+    font-family: var(--text-label--font-family);
+    font-size: var(--text-label);
+    font-weight: var(--text-label--font-weight);
+    letter-spacing: var(--text-label--letter-spacing);
+    line-height: var(--text-label--line-height);
+  }
+
+  :where(.become-field-help, .become-field-error) {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--field-helper-gap);
+    margin-block-start: var(--field-helper-gap);
+    font-family: var(--text-caption--font-family);
+    font-size: var(--text-caption);
+    font-weight: var(--text-caption--font-weight);
+    letter-spacing: var(--text-caption--letter-spacing);
+    line-height: var(--text-caption--line-height);
+  }
+
+  .become-field-help {
+    color: var(--field-help);
+  }
+
+  .become-field-error {
+    color: var(--field-error-color);
+  }
+
+  .become-field-error > svg {
+    width: var(--field-message-icon-size);
+    height: var(--field-message-icon-size);
+    flex: 0 0 auto;
+    margin-top: var(--spacing-2xs);
+  }
+
+  .become-field--engineering {
+    --field-focus-color: var(--color-domain-engineering-accent);
+  }
+
+  .become-field--finance {
+    --field-focus-color: var(--color-domain-finance-accent);
+  }
+
+  .become-field--entrepreneurship {
+    --field-focus-color: var(--color-domain-entrepreneurship-accent);
+  }
+
+  .become-field--content {
+    --field-focus-color: var(--color-domain-content-accent);
+  }
+}
+
+/* The document reset uses unlayered font inheritance on native controls, so
+   approved field typography is unlayered while geometry stays utility-friendly. */
+:is(input.text-input, textarea.text-input) {
+  border-color: var(--field-edge-rest);
+  background: var(--field-background);
+  color: var(--field-text);
+  font-family: var(--text-body--font-family);
+  font-size: var(--text-body);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--text-body--letter-spacing);
+  line-height: var(--text-body--line-height);
+  transition:
+    border-color var(--motion-control-duration) var(--motion-control-ease),
+    background-color var(--motion-control-duration) var(--motion-control-ease);
+}
+
+:is(input.text-input, textarea.text-input)::placeholder {
+  color: var(--field-placeholder);
+}
+
+:is(input.text-input, textarea.text-input):where(
+    :not(:disabled):not([readonly])
+  ):hover {
+  border-color: var(--field-edge-hover);
+}
+
+:is(input.text-input, textarea.text-input):focus-visible {
+  border-color: var(--field-focus-color);
+  outline: 0;
+  box-shadow: none;
+}
+
+:is(input.text-input, textarea.text-input)[aria-invalid="true"] {
+  --field-focus-color: var(--field-error-color);
+
+  border-color: var(--field-error-color);
+  background: var(--field-error-background);
+}
+
+:is(input.text-input, textarea.text-input):disabled {
+  cursor: not-allowed;
+  opacity: var(--field-disabled-opacity);
+}
+
+:is(input.text-input, textarea.text-input)[readonly] {
+  background: var(--field-background-readonly);
+  color: var(--field-readonly-text);
+}

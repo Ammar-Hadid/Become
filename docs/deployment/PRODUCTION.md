@@ -4,11 +4,11 @@ For ongoing deployments after the one-time production setup, use
 [automatic deployment](AUTO_DEPLOY.md). This document remains the first-install
 and recovery walkthrough.
 
-Prepared 13 September 2026. This is a walkthrough to execute later; no VPS or Neon changes were made during preparation. Read the [readiness report](READINESS.md) first.
+Originally prepared 13 September 2026; database instructions updated 28 October 2026. Production now uses self-hosted PostgreSQL. See [database setup and operations](SELF_HOSTED_DATABASE.md) for the installed layout and verification. The [readiness report](READINESS.md) is historical evidence.
 
-The deployment is one Next.js process behind Caddy on your existing Hetzner CPX22, with a dedicated Neon PostgreSQL database. Media stays on the VPS. This guide assumes Ubuntu 24.04 LTS or Debian 12/13 with systemd and a sudo-capable SSH account. If your server uses another OS or another proxy already owns ports 80/443, resolve that difference before running the installation commands. Do not replace, stop, or repurpose Auctus services, files, databases, users, or proxy configuration.
+The deployment is one Next.js process behind Caddy on your existing Hetzner CPX22, with a dedicated PostgreSQL 17 container on the same VPS. Media stays on the VPS. This guide assumes Ubuntu 24.04 LTS or Debian 12/13 with systemd and a sudo-capable SSH account. If your server uses another OS or another proxy already owns ports 80/443, resolve that difference before running the installation commands. Do not replace, stop, or repurpose Auctus services, files, databases, users, or proxy configuration.
 
-Commands marked **LOCAL** run on your Mac in this repository. Commands marked **VPS** run in your SSH session. SQL runs in Neon's SQL Editor unless stated otherwise. Replace example values before running a block. Run blocks one at a time; stop at errors. In nano, save with Ctrl+O, Enter, then exit with Ctrl+X.
+Commands marked **LOCAL** run on your Mac in this repository. Commands marked **VPS** run in your SSH session. SQL runs through the root-only maintenance connection on the VPS. Replace example values before running a block. Run blocks one at a time; stop at errors. In nano, save with Ctrl+O, Enter, then exit with Ctrl+X.
 
 Use these names throughout:
 
@@ -28,40 +28,31 @@ Use these names throughout:
 
 A release contains application code, dependencies, generated Prisma, and `.next`. It never contains production `.env` files or uploaded media. Do not create a `public/uploads` directory or a Caddy file-server route for media.
 
-## 1. Create and configure Neon
+## 1. Create the dedicated PostgreSQL service
 
-1. Create/sign into your Neon account and enable account MFA. Create a **new project dedicated to Become**, named `become-production`.
-2. Choose a European region close to your actual VPS region. Select PostgreSQL **17** to match the local database and migration verification. Use a production branch, a database called `become`, and an owner role called `become_owner`. If the console initially creates different names, create/select these names before continuing.
-3. Select the production branch/database in the SQL Editor. Confirm with `SELECT current_database(), current_user(), version();`. Do not connect any development test runner to this database.
-4. Configure the project's restore/history window and spending/usage alerts deliberately. Record the actual available retention in your password manager; it depends on your Neon plan. A database restore window does not back up media on the VPS.
-5. Generate a separate app-role password with `openssl rand -hex 32` on your Mac and save it in your password manager. Create the low-privilege runtime role **with SQL**, not the Neon console role-creation button:
+Follow [self-hosted database setup](SELF_HOSTED_DATABASE.md). On a new host, first
+create the dedicated directories/account in section 3. Use the production Compose
+file in `ops/production/postgresql/`, not the development Compose file at the repo
+root. It publishes only `127.0.0.1:15433`, persists under
+`/srv/data/become/postgresql`, and has its own network and resource limits.
 
-```sql
--- Replace the password literal before running. Run once in database become.
-CREATE ROLE become_app LOGIN PASSWORD 'REPLACE_WITH_RANDOM_HEX_PASSWORD'
-  NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
-REVOKE ALL ON DATABASE become FROM PUBLIC;
-GRANT CONNECT ON DATABASE become TO become_app;
-REVOKE CREATE ON SCHEMA public FROM PUBLIC;
-GRANT USAGE ON SCHEMA public TO become_app;
-```
-
-The owner must own the database and have permission to create tables in `public`. The runtime role must not be a member of `become_owner` or `neon_superuser`. Neon console-created roles have elevated membership; SQL-created roles let us avoid giving that to the running app. [Neon role behavior](https://neon.com/docs/reference/compatibility)
-
-This guide starts production **empty**. It does not transfer your real local history. If you want that history in production, first rehearse a paired local database-and-media restore into a separate Neon database and media directory using section 14. Do not mix local rows into an already populated production database or import development test databases.
+The initialization script creates `become_owner` for migrations and `become_app`
+for application reads/writes. Neither is a superuser; the app cannot create tables.
+Owner default privileges give the app access to tables added by future migrations.
+The database starts empty; no old provider data is imported.
 
 ## 2. Understand the two database URLs and migration commands
 
-In Neon's **Connect** dialog, select the correct branch, database, and role. Copy two connection strings into your password manager:
+Both URLs use `127.0.0.1:15433/become?sslmode=disable`. Runtime uses `become_app`
+in `/etc/become/production.env`; maintenance uses `become_owner` in root-only
+`/etc/become/maintenance.env`. There is no external pooler. The existing Prisma
+`pg` adapter manages its connection pool.
 
-- **Runtime:** `become_app`, pooled connection (hostname contains `-pooler`). Put it in `DATABASE_URL` in `production.env`.
-- **Maintenance:** `become_owner`, direct connection (pooling disabled). Put it in `DIRECT_DATABASE_URL` in `maintenance.env`.
+Unencrypted PostgreSQL traffic stays on this host's loopback/Docker bridge.
+Remote administration must use SSH forwarding; never expose this port publicly.
+TLS verification remains required if moving PostgreSQL to a remote host later.
 
-If the SQL-created app role is not listed by the connection dialog, use the same pooled hostname/database with its SQL-created username and password. Do not manually guess the endpoint hostname. Use URL-encoded passwords; the random hexadecimal passwords above need no encoding.
-
-For this deployment, use `sslmode=verify-full&channel_binding=require`. The application uses `pg` through Prisma's PostgreSQL adapter and verifies the server certificate. The PostgreSQL CLI additionally uses the OS CA file from `PGSSLROOTCERT`. Never use `rejectUnauthorized=false`, `sslmode=disable`, or a certificate-verification bypass. [Neon connection security](https://neon.com/docs/security/security-overview)
-
-This repository's `prisma.config.ts` reads **DATABASE_URL**, not DIRECT_DATABASE_URL. Maintenance commands below deliberately set `DATABASE_URL` to the direct owner URL for that command. Runtime continues to use its separate pooled app URL.
+This repository's `prisma.config.ts` reads **DATABASE_URL**, not DIRECT_DATABASE_URL. Maintenance commands below deliberately set `DATABASE_URL` to the direct owner URL for that command. Runtime continues to use its separate app-role URL.
 
 Use `pnpm db:deploy` (`prisma migrate deploy`) in production. It applies committed `migration.sql` files. **Never run `db:migrate`, `migrate dev`, `db push`, `migrate reset`, or a test suite against production.** `db:generate` only generates code; it does not apply migrations. `db:sync-tech` writes built-in reference data only. Migrations remain unchanged by this cleanup.
 
@@ -146,7 +137,7 @@ pg_dump --version
 pg_restore --version
 ```
 
-All three should be 17.x or a newer supported client. `pg_dump` cannot dump a newer server major version than its own. Do not install/run the repository's Docker Compose PostgreSQL on this VPS; Neon is the production database. [pg_dump compatibility](https://www.postgresql.org/docs/current/app-pgdump.html)
+All three should be 17.x or a newer supported client. `pg_dump` cannot dump a newer server major version than its own. Use the dedicated production Compose configuration in `ops/production/postgresql/`; the repository-root Compose file is for local development only. [pg_dump compatibility](https://www.postgresql.org/docs/current/app-pgdump.html)
 
 ## 5. Prepare the production environment files
 
@@ -162,7 +153,7 @@ Complete runtime file:
 
 ```dotenv
 NODE_ENV='production'
-DATABASE_URL='postgresql://become_app:YOUR_APP_PASSWORD@YOUR_POOLER_HOST/become?sslmode=verify-full&channel_binding=require'
+DATABASE_URL='postgresql://become_app:YOUR_APP_PASSWORD@127.0.0.1:15433/become?sslmode=disable'
 BETTER_AUTH_SECRET='YOUR_OPENSSL_RAND_HEX_32_OUTPUT'
 BETTER_AUTH_URL='https://become.example.com'
 APP_TIMEZONE='Europe/Amsterdam'
@@ -190,8 +181,7 @@ sudo nano /etc/become/maintenance.env
 ```
 
 ```dotenv
-DIRECT_DATABASE_URL='postgresql://become_owner:YOUR_OWNER_PASSWORD@YOUR_DIRECT_HOST/become?sslmode=verify-full&channel_binding=require'
-PGSSLROOTCERT='/etc/ssl/certs/ca-certificates.crt'
+DIRECT_DATABASE_URL='postgresql://become_owner:YOUR_OWNER_PASSWORD@127.0.0.1:15433/become?sslmode=disable'
 ```
 
 The running app cannot read the owner password. Keep maintenance credentials in your password manager as well.
@@ -331,7 +321,7 @@ CSP with strict nonces is not configured for HTML in this release. Do not paste 
 
 Use SSH keys and keep your existing SSH session open while testing a second login. Record the actual SSH port from `sudo sshd -T | grep '^port '`. Do not assume it is 22. Ensure console/recovery access in Hetzner is available before changing firewall or SSH settings.
 
-Review **both** the Hetzner Cloud Firewall and the current host firewall. Preserve every legitimate existing rule needed by Auctus or other services. For Become, permit inbound TCP 80/443 publicly and your actual SSH port from your administrator IP/VPN. UDP 443 is optional for HTTP/3. Do not allow 3010, 5432, Prisma Studio, or Caddy's admin port publicly. Allow outbound HTTPS/DNS and PostgreSQL TCP 5432 to Neon; backup storage needs outbound SSH port 23 in the Storage Box example.
+Review **both** the Hetzner Cloud Firewall and the current host firewall. Preserve every legitimate existing rule needed by Auctus or other services. For Become, permit inbound TCP 80/443 publicly and your actual SSH port from your administrator IP/VPN. UDP 443 is optional for HTTP/3. Do not allow 3010, 5432, 15433, Prisma Studio, or Caddy's admin port publicly. Allow outbound HTTPS/DNS; PostgreSQL stays on the VPS; backup storage needs outbound SSH port 23 in the Storage Box example.
 
 If UFW is already active, add only missing Become web rules:
 
@@ -344,11 +334,11 @@ sudo ss -ltnp
 
 Do **not** run `ufw reset` or blindly `ufw enable` on the shared VPS. If it is currently disabled, first inventory and explicitly allow all existing services and the real SSH port before a separate activation. Docker-published ports can bypass assumptions about UFW; inspect container port mappings too. Become needs no production Docker ports.
 
-Do not expose Prisma Studio in production. Keep Neon, DNS, GitHub, SSH and backup credentials separate and enable MFA on the control-plane accounts. Maintain OS and app security updates on a schedule; a clean dependency audit today is not a permanent guarantee. Auth uses production rate limiting in memory in this single process; counters reset on restart. Public self-service registration, email verification, and password-reset delivery are not configured. Use a strong password manager-held owner password and closed registration for this first personal deployment.
+Do not expose Prisma Studio in production. Keep database, DNS, GitHub, SSH and backup credentials separate and enable MFA on the control-plane accounts. Maintain OS and app security updates on a schedule; a clean dependency audit today is not a permanent guarantee. Auth uses production rate limiting in memory in this single process; counters reset on restart. Public self-service registration, email verification, and password-reset delivery are not configured. Use a strong password manager-held owner password and closed registration for this first personal deployment.
 
 ## 10. Back up the database and media together
 
-A PostgreSQL dump alone cannot restore uploaded images. A VPS snapshot alone cannot restore Neon. Use matched sets made while **all Become writers are stopped**. The provided backup stops only `become.service`, dumps PostgreSQL, archives media, verifies archive structure/checksums, and restarts Become even after failures. When both Restic settings are configured in `/etc/become/backup.env`, it also sends an encrypted copy off the VPS; a failed offsite copy fails the backup. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
+A PostgreSQL dump alone cannot restore uploaded images. A live filesystem copy alone is not a verified PostgreSQL backup. Use matched sets made while **all Become writers are stopped**. The provided backup stops active Become web, bank-sync, and Season-onboarding services, dumps PostgreSQL, archives media, verifies archive structure/checksums, and restarts Become even after failures. When both Restic settings are configured in `/etc/become/backup.env`, it also sends an encrypted copy off the VPS; a failed offsite copy fails the backup. Expect a short nightly interruption; an active timer's persisted state survives, but avoid editing during the window. Do not run Prisma Studio, migrations, manual writes, or a second app process during a backup.
 
 The current local-only setup does not protect against losing the VPS. One future offsite option is a **separate Hetzner Storage Box** (an additional purchase). You can substitute another supported Restic destination. Keep credentials and encryption password outside the VPS in your password manager. A backup is not validated until a restore has been tested. The Restic steps below are optional until an offsite destination is available.
 
@@ -437,7 +427,7 @@ After reviewing the preview and testing recovery, run the same `forget` with `--
 
 ## 11. Apply the first production migration and create the owner
 
-Before starting: verify the selected Neon database is empty, the owner URL is correct, and the release hash is the one you built. Neon production must not contain your test schemas. These commands intentionally load maintenance credentials only in the root-controlled maintenance process.
+Before starting: verify the selected Become database is empty, the owner URL is correct, and the release hash is the one you built. The production database must not contain your test schemas. These commands intentionally load maintenance credentials only in the root-controlled maintenance process.
 
 **VPS:**
 
@@ -448,8 +438,9 @@ cd "$1"
 set -a
 source /etc/become/maintenance.env
 set +a
-export PGDATABASE="$DIRECT_DATABASE_URL"
-psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), current_user(), version();'
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$DIRECT_DATABASE_URL"
+psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), current_user, version();'
 psql -X -v ON_ERROR_STOP=1 -c "SELECT count(*) AS existing_tables FROM pg_tables WHERE schemaname='public';"
 # Expect zero existing application tables on the FIRST deployment.
 # If it is not empty, stop and investigate before running the next block.
@@ -472,7 +463,8 @@ export DATABASE_URL="$DIRECT_DATABASE_URL"
 # Use an explicit executable: this is a maintenance shell, not pnpm's script PATH.
 ./node_modules/.bin/tsx prisma/seed.ts --reference-data-only
 ./node_modules/.bin/prisma migrate status
-export PGDATABASE="$DIRECT_DATABASE_URL"
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$DIRECT_DATABASE_URL"
 psql -X -v ON_ERROR_STOP=1 <<'SQL'
 GRANT USAGE ON SCHEMA public TO become_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO become_app;
@@ -506,7 +498,7 @@ curl -I http://127.0.0.1:3010/sign-in
 6. Remove only the two bootstrap matcher/respond lines from Become's Caddy block. Validate the whole config and reload Caddy again. Other site blocks remain unchanged.
 7. Run the first paired/offsite backup: `sudo systemctl start become-backup.service`. Check `sudo journalctl -u become-backup -n 80 --no-pager` and the Restic snapshot list. Do section 14's rehearsal before relying on it.
 
-If the app returns 500, inspect its journal for missing env values, Neon credentials/SSL, missing migrations, or media permissions. Do not turn off auth, SSL or origin checks to get past an error.
+If the app returns 500, inspect its journal for missing env values, PostgreSQL service health or credentials, missing migrations, or media permissions. Do not turn off auth, SSL or origin checks to get past an error.
 
 ## 12. Production smoke tests
 
@@ -537,7 +529,7 @@ Expect a non-2xx response indicating signup is disabled. If it succeeds, close s
 Use a short maintenance window. Building an inactive release does not require downtime. Migrations and the release switch do. Keep at least the previous working release, its runtime version, and its paired backup.
 
 1. **LOCAL:** review the change and all new migrations, run lint/build/typecheck/tests against a disposable database, and run `pnpm audit`. Commit, choose the full new hash, archive, transfer and build it using section 6. Do not rebuild inside `current`.
-2. Read each new migration. Rehearse it against a restored production backup/isolated Neon branch if it changes existing data or constraints. Decide whether the old app remains compatible with the new schema; record that rollback decision before proceeding.
+2. Read each new migration. Rehearse it against a restored production backup in an isolated database if it changes existing data or constraints. Decide whether the old app remains compatible with the new schema; record that rollback decision before proceeding.
 3. **VPS:** run `sudo systemctl start become-backup.service`, verify the completed local/offsite set and note its timestamp. Disable the timer temporarily with `sudo systemctl stop become-backup.timer` to avoid a scheduled run during deployment.
 4. Record the old release: `readlink -f /srv/apps/become/current`. Then open a root maintenance shell and hold the shared lock:
 
@@ -590,7 +582,7 @@ Keep the app stopped. Capture `prisma migrate status` and relevant logs. Do not 
 
 ### Paired restore to a new database and media directory
 
-This is also the rehearsal you must complete before relying on backups. Restoring an older set loses writes after its timestamp; preserve the current state first and explicitly choose the recovery point. Neon point-in-time restore can help recover database mistakes within the configured history window, but you still need matching media. A newer DB paired with older media can contain broken references. [Neon restore behavior](https://neon.com/blog/announcing-point-in-time-restore)
+This is also the rehearsal you must complete before relying on backups. Restoring an older set loses writes after its timestamp; preserve the current state first and explicitly choose the recovery point. This installation uses logical database/media backups; it has no continuous WAL archive or point-in-time recovery. Recovery is limited to a verified backup timestamp. A newer DB paired with older media can contain broken references.
 
 1. Stop the backup timer and all Become writers for an actual cutover. For a rehearsal, use separate ports/config/directories and keep production running. Hold the maintenance lock during an actual recovery.
 2. Choose a successful backup timestamp and its matching release hash. If the VPS was lost, rebuild only Become's dedicated paths/runtime on the replacement server, recover the root backup credentials from your password manager, then fetch the exact Restic snapshot into a staging directory:
@@ -609,7 +601,7 @@ FETCH_BACKUP
 
 Restic preserves absolute source paths beneath the target. Locate the chosen set under `recovery-staging/srv/backups/become/<timestamp>` and verify `sha256sum -c SHA256SUMS` **from that directory**. Also run `pg_restore --list database.dump` and `tar -tzf media.tar.gz`.
 
-3. In Neon, create a new **empty** recovery database (for example `become_recovery_20260913`) owned by `become_owner`. Do not create a branch inheriting all production tables and then restore the dump on top. Keep the original production database intact. Save its direct recovery connection in a new root-only `/etc/become/recovery.env` as `RECOVERY_DATABASE_URL='postgresql://.../become_recovery_20260913?sslmode=verify-full&channel_binding=require'` plus `PGSSLROOTCERT`.
+3. Create a new **empty** recovery database in Become's container, for example `docker exec become-postgres createdb -U postgres -O become_owner become_recovery_20261028`. Keep the original production database intact. Save the owner recovery connection in a new root-only `/etc/become/recovery.env` as `RECOVERY_DATABASE_URL='postgresql://become_owner:OWNER_PASSWORD@127.0.0.1:15433/become_recovery_20261028?sslmode=disable'`. Restrict database CONNECT and grant app access only for an actual cutover; a rehearsal needs no runtime access.
 4. Restore the database without replaying migrations over the dump first; the dump already contains its migration history:
 
 ```bash
@@ -618,9 +610,10 @@ set -euo pipefail
 set -a
 source /etc/become/recovery.env
 set +a
-export PGDATABASE="$RECOVERY_DATABASE_URL"
+source /usr/local/sbin/become-pg-connection
+become_set_pg_connection "$RECOVERY_DATABASE_URL"
 BECOME_BACKUP_SET=/srv/backups/become/REPLACE_WITH_VERIFIED_TIMESTAMP
-psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), current_user();'
+psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), current_user;'
 # Confirm the output is the NEW recovery database before the next command.
 # Stream the restored SQL into psql, which reads PGDATABASE from the environment.
 # pipefail and ON_ERROR_STOP make either side fail the command on errors.
@@ -643,7 +636,7 @@ sudo find /srv/data/become-restore -type f -exec chmod 0600 {} +
 For an offsite-recovered set, substitute the actual staging backup path. Use only your verified backup archive. This is not an instruction to untar unknown archives as root.
 
 6. Test the matching release against the recovered database/media with a separate env file and unused loopback port. Preserve `NODE_ENV=production`, a distinct HTTPS test hostname and corresponding Caddy bootstrap restriction; keep registration disabled. An isolated service must have its own name, WorkingDirectory, env path, port and `ReadWritePaths=/srv/data/become-restore .../.next`. Do not point the real `become.service` at it for a rehearsal. Verify login, record counts, reviews, uploads, missing-image errors and restart persistence. The test account/password must exist in the chosen backup. Do not run disposable-fixture test suites against recovered personal data.
-7. For an actual recovery after validation: keep Become stopped, preserve the old data root by renaming it to a timestamped recovery holding directory, move `/srv/data/become-restore` to `/srv/data/become`, point the runtime URL and maintenance URL at the recovered database, and point `current` at the matching tested release. Update default grants and, if necessary, certificate/domain settings. Keep `BETTER_AUTH_SECRET` from the matched configuration.
+7. For an actual recovery after validation: keep Become stopped, preserve only the old `/srv/data/become/media` directory in a timestamped holding directory and move `/srv/data/become-restore/media` into its place. Keep `/srv/data/become/postgresql` at its original path throughout; do not move the live database storage. Then point the runtime URL and maintenance URL at the recovered database, and point `current` at the matching tested release. Update default grants and, if necessary, certificate/domain settings. Keep `BETTER_AUTH_SECRET` from the matched configuration.
 8. Start Become, run smoke tests, verify the previous database/media remain available for investigation, and make a new offsite backup before resuming the timer. Record the restore timestamp and any accepted data loss. Rotate credentials if the incident involved compromise.
 
 ### Lost password / failed host / media-only failure

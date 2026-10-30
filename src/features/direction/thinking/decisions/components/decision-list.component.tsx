@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Card } from "@/components/ui/cards/card.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -83,7 +89,7 @@ export function DecisionList({
       <header className="thinking-masthead">
         <div>
           <p className="eyebrow">A record of chosen paths</p>
-          <h2>Decisions</h2>
+          <h1>Decisions</h1>
           <p>
             Keep the choice beside the reason. Return later to see what held up,
             what changed, and why.
@@ -111,7 +117,7 @@ export function DecisionList({
           <label className="sr-only" htmlFor="decision-search">
             Search decisions
           </label>
-          <input
+          <Input
             ref={searchRef}
             id="decision-search"
             value={searchValue}
@@ -170,7 +176,7 @@ export function DecisionList({
           })}
         </ol>
       ) : (
-        <section className="thinking-empty" aria-label="No decisions">
+        <Card className="thinking-empty" aria-label="No decisions">
           <p className="eyebrow">
             {archived ? "The archive is quiet" : "No decisions recorded yet"}
           </p>
@@ -182,18 +188,18 @@ export function DecisionList({
           <p>
             A decision needs a choice and a reason. Everything else can wait.
           </p>
-        </section>
+        </Card>
       )}
 
       {page.nextCursor && (
-        <button
+        <Button
+          variant="secondary"
           type="button"
-          className="thinking-more"
           onClick={() => void page.loadMore()}
           disabled={page.pending}
         >
           {page.pending ? "Loading…" : "More decisions"}
-        </button>
+        </Button>
       )}
       {page.error && (
         <p className="thinking-pagination-error" role="alert">

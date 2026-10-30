@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { randomUUID } from "node:crypto";
 import {
   test,
@@ -18,9 +19,7 @@ async function createDisposableContentUser(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-content-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
-    timeout: 15_000,
-  });
+  await deferAutomaticSeasonOpening(page);
 }
 
 function waitForThinkingCommand(page: Page, type: string) {
@@ -173,16 +172,21 @@ test("an idea becomes one variant released and measured on three channels", asyn
     "Focus activity",
     "Scripting",
   );
+  const makingTime = page
+    .getByRole("complementary", { name: "Variant progress", exact: true })
+    .getByRole("region", { name: /^Making time(?: · Live)?$/ });
   await Promise.all([
     page.waitForResponse(
       (response) =>
         new URL(response.url()).pathname === "/api/sessions" &&
         response.status() === 201,
     ),
-    page.getByRole("button", { name: "Start focus" }).click(),
+    makingTime.getByRole("button", { name: "Start focus" }).click(),
   ]);
-  await expect(page.getByRole("button", { name: "End session" })).toBeVisible();
-  await page.getByRole("button", { name: "End session" }).click();
+  await expect(
+    makingTime.getByRole("button", { name: "End session" }),
+  ).toBeVisible();
+  await makingTime.getByRole("button", { name: "End session" }).click();
   await page.getByTestId("session-outcome").fill("Finished the short script.");
   await Promise.all([
     page.waitForResponse((response) =>

@@ -1,3 +1,5 @@
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
+import "@/features/finance/styles/finance-workspace.css";
 import Link from "next/link";
 import { ArrowLeft, Handshake, UsersRound } from "lucide-react";
 import {
@@ -17,14 +19,11 @@ export async function CounterpartyManagement({ userId }: { userId: string }) {
         Finance settings
       </Link>
 
-      <header className="finance-settings-heading">
-        <p className="eyebrow">Counterparties</p>
-        <h2>Manage who your transactions are with.</h2>
-        <p>
-          Rename people and organizations without rewriting history. Archived
-          counterparties remain on past transactions but stay out of new entry.
-        </p>
-      </header>
+      <WorkspaceHeader
+        eyebrow="Finance settings"
+        title="Counterparties"
+        description="The people and organizations you pay or receive money from. Archived records stay in your history."
+      />
 
       <ReusableEntityManagement
         noun="counterparty"

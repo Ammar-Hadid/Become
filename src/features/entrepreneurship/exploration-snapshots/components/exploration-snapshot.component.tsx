@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -175,7 +176,9 @@ function SnapshotLane({
 }) {
   const copy = laneCopy[lane];
   return (
-    <section
+    <Card
+      material="glass"
+      spacing="dense"
       className="exploration-snapshot-lane"
       aria-labelledby={`lane-${lane}`}
     >
@@ -206,7 +209,7 @@ function SnapshotLane({
           </span>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 

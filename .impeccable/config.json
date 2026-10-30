@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/features/content/editor/components/content-script-editor.component.tsx"
+        ],
+        "createdAt": "2026-10-07T12:00:35.675Z",
+        "reason": "False positive: this file only checks a pasted HTML string for img tags and does not render an img element."
+      }
+    ]
+  }
+}

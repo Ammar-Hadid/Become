@@ -11,13 +11,8 @@
 .exploration-workspace-main .business-offer-list {
   gap: 0;
 }
-
 .exploration-workspace-main .business-zone--ledger {
   margin-block: calc(var(--spacing-4xl) + var(--spacing-2xl));
-  padding: 0;
-  border-width: 1px 0 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 .exploration-workspace-main
@@ -260,11 +255,6 @@
   .conversation-workspace[data-empty] {
     grid-template-columns: minmax(0, 1fr);
   }
-
-  .conversation-index {
-    border-right: 0;
-  }
-
   .conversation-workspace:not([data-empty]) .conversation-index {
     display: none;
   }
@@ -349,7 +339,6 @@
   .conversation-workspace[data-empty] {
     min-height: 20rem;
   }
-
   .conversation-workspace[data-empty] .conversation-welcome {
     display: none;
   }
@@ -388,10 +377,6 @@
 
   .exploration-snapshot-edition {
     justify-items: start;
-  }
-
-  .exploration-snapshot-lane {
-    padding-inline: 0;
   }
 
   .exploration-snapshot-claim-copy {

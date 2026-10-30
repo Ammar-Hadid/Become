@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { CompanyWorkSourceForm } from "@/features/entrepreneurship/market/components/company-work-source.component";
 import { CompanyReceipts } from "@/features/finance/business-receipts/components/company-receipts.component";
 import {
@@ -123,27 +124,39 @@ export async function MarketDetail({
       </header>
       <div className="business-detail-grid">
         <div className="business-detail-main">
-          <section className="business-detail-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <h3>{company ? "Context" : "Exploration scope"}</h3>
             <p className="business-prose">
               {company
                 ? company.notes || "No context recorded yet."
                 : niche?.scope || "No scope recorded yet."}
             </p>
-          </section>
+          </Card>
           {company && (
-            <section className="business-detail-section">
+            <Card
+              material="glass"
+              spacing="dense"
+              className="business-detail-section"
+            >
               <h3>Interactions</h3>
               <InteractionJournal
                 userId={userId}
                 companyId={id}
                 nicheId={nicheId}
               />
-            </section>
+            </Card>
           )}
           {company && (
             <>
-              <section className="business-detail-section">
+              <Card
+                material="glass"
+                spacing="dense"
+                className="business-detail-section"
+              >
                 <div className="business-row-heading">
                   <h3>Work relationship</h3>
                   <CompanyWorkSourceForm
@@ -167,7 +180,7 @@ export async function MarketDetail({
                 ) : (
                   <p className="business-hint">No WorkSource connected yet.</p>
                 )}
-              </section>
+              </Card>
               {nicheId && (
                 <p className="business-hint">
                   Work relationships and receipts belong to this shared company
@@ -179,7 +192,11 @@ export async function MarketDetail({
           )}
           {niche && (
             <>
-              <section className="business-detail-section">
+              <Card
+                material="glass"
+                spacing="dense"
+                className="business-detail-section"
+              >
                 <div className="business-row-heading">
                   <h3>Direction · {humanize(niche.direction)}</h3>
                   <DirectionForm id={id} direction={niche.direction} />
@@ -193,8 +210,12 @@ export async function MarketDetail({
                     <p className="business-prose">{decision.rationale}</p>
                   </article>
                 ))}
-              </section>
-              <section className="business-detail-section">
+              </Card>
+              <Card
+                material="glass"
+                spacing="dense"
+                className="business-detail-section"
+              >
                 <h3>Companies in this niche</h3>
                 <div className="business-related-list">
                   {niche.companies.map(({ company: item }) => (
@@ -208,21 +229,29 @@ export async function MarketDetail({
                     </Link>
                   ))}
                 </div>
-              </section>
+              </Card>
             </>
           )}
         </div>
         <aside className="business-aside">
           {company && (
-            <section className="business-detail-section">
+            <Card
+              material="glass"
+              spacing="dense"
+              className="business-detail-section"
+            >
               <h3>Next actions</h3>
               <FollowUpForm target={{ companyId: id }} />
               {followUps.map((followUp) => (
                 <FollowUpRecord key={followUp.id} record={followUp} />
               ))}
-            </section>
+            </Card>
           )}
-          <section className="business-aside-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-aside-section"
+          >
             <p className="eyebrow">At a glance</p>
             <p className="mt-lg">Added {businessDate(record.createdAt)}</p>
             {company && (
@@ -237,7 +266,7 @@ export async function MarketDetail({
                 </p>
               </>
             )}
-          </section>
+          </Card>
         </aside>
       </div>
     </>

@@ -1,0 +1,17 @@
+.nexo-season-result {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.nexo-season-result > div:not(.living-ink-copy) {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+.nexo-season-result ul {
+  display: grid;
+  gap: var(--spacing-xs);
+  padding-inline-start: var(--spacing-lg);
+  color: var(--color-text-secondary);
+}
+.nexo-season-error {
+  color: var(--color-danger);
+}

@@ -1,0 +1,321 @@
+@layer components {
+  .become-drawer-backdrop {
+    position: fixed;
+    z-index: var(--drawer-z-index);
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .become-drawer {
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+    box-sizing: border-box;
+    width: min(100%, var(--drawer-width));
+    height: var(--drawer-height);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-width: var(--drawer-edge-width) 0 var(--drawer-edge-width)
+      var(--drawer-edge-width);
+    border-style: solid;
+    border-radius: var(--drawer-radius) 0 0 var(--drawer-radius);
+    padding: var(--drawer-padding);
+    text-align: left;
+  }
+
+  .become-drawer__header {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--drawer-header-gap);
+    padding-bottom: var(--drawer-section-gap);
+  }
+
+  .become-drawer__body {
+    min-width: 0;
+  }
+
+  .become-drawer__footer {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    padding-top: var(--drawer-section-gap);
+  }
+}
+
+.become-drawer-domain-theme {
+  --drawer-domain-base: var(--color-primary);
+  --drawer-domain-hover: var(--color-primary-hover);
+  --drawer-domain-accent: var(--color-primary);
+  --drawer-domain-subtle: var(--color-primary-subtle);
+  --drawer-domain-border: var(--color-primary-muted);
+  --drawer-domain-on-base: var(--color-on-primary);
+  --drawer-resolved-identity-fill-strength: var(
+    --drawer-default-identity-fill-strength
+  );
+  --drawer-card-background: linear-gradient(
+    145deg,
+    color-mix(
+      in srgb,
+      var(--drawer-domain-subtle) var(--drawer-card-domain-strength),
+      var(--color-surface-elevated)
+    ),
+    color-mix(in srgb, var(--color-surface-elevated) 82%, transparent)
+  );
+  --drawer-card-edge: color-mix(
+    in srgb,
+    var(--drawer-domain-border) var(--drawer-card-edge-strength),
+    var(--color-border)
+  );
+  --drawer-icon-background: color-mix(
+    in srgb,
+    var(--drawer-domain-subtle) var(--drawer-close-icon-fill-strength),
+    var(--color-surface-elevated)
+  );
+  --drawer-icon-edge: color-mix(
+    in srgb,
+    var(--drawer-domain-border) var(--drawer-close-icon-edge-strength),
+    var(--color-border)
+  );
+  --drawer-focus-card-background: linear-gradient(
+    145deg,
+    color-mix(
+      in srgb,
+      var(--drawer-domain-subtle) var(--drawer-focus-card-strength),
+      var(--color-surface-elevated)
+    ),
+    color-mix(
+      in srgb,
+      var(--drawer-domain-base) var(--drawer-focus-fill-strength),
+      var(--color-surface-elevated)
+    )
+  );
+  --drawer-identity-background: linear-gradient(
+    135deg,
+    color-mix(
+      in srgb,
+      var(--drawer-domain-base) var(--drawer-resolved-identity-fill-strength),
+      var(--color-surface-elevated)
+    ),
+    color-mix(
+      in srgb,
+      var(--drawer-domain-subtle) 82%,
+      var(--color-surface-elevated)
+    )
+  );
+  --drawer-identity-edge: color-mix(
+    in srgb,
+    var(--drawer-domain-accent) var(--drawer-identity-edge-strength),
+    var(--drawer-domain-border)
+  );
+  --drawer-domain-wash: radial-gradient(
+    circle at 14% 0%,
+    color-mix(in srgb, var(--drawer-domain-subtle) 72%, transparent) 0%,
+    transparent 43%
+  );
+  --drawer-edge-light: linear-gradient(
+    180deg,
+    transparent 2%,
+    color-mix(
+        in srgb,
+        var(--drawer-domain-accent) var(--drawer-edge-glow-strength),
+        transparent
+      )
+      24%,
+    color-mix(
+        in srgb,
+        var(--drawer-domain-hover) var(--drawer-edge-glow-strength),
+        transparent
+      )
+      72%,
+    transparent 98%
+  );
+  --drawer-section-line: linear-gradient(
+    90deg,
+    var(--drawer-divider),
+    color-mix(
+      in srgb,
+      var(--drawer-domain-accent) var(--drawer-divider-accent-strength),
+      var(--drawer-divider)
+    ),
+    var(--drawer-divider)
+  );
+}
+
+.become-drawer-domain-theme:is(
+  [data-domain="engineering"],
+  [data-domain="finance"],
+  [data-domain="entrepreneurship"],
+  [data-domain="content"]
+) {
+  --drawer-resolved-identity-fill-strength: var(
+    --drawer-identity-fill-strength
+  );
+}
+
+.become-drawer-domain-theme[data-domain="engineering"] {
+  --drawer-domain-base: var(--color-domain-engineering);
+  --drawer-domain-hover: var(--color-domain-engineering-hover);
+  --drawer-domain-accent: var(--color-domain-engineering-accent);
+  --drawer-domain-subtle: var(--color-domain-engineering-subtle);
+  --drawer-domain-border: var(--color-domain-engineering-border);
+  --drawer-domain-on-base: var(--color-text-primary);
+}
+
+.become-drawer-domain-theme[data-domain="finance"] {
+  --drawer-domain-base: var(--color-domain-finance);
+  --drawer-domain-hover: var(--color-domain-finance-hover);
+  --drawer-domain-accent: var(--color-domain-finance-accent);
+  --drawer-domain-subtle: var(--color-domain-finance-subtle);
+  --drawer-domain-border: var(--color-domain-finance-border);
+  --drawer-domain-on-base: var(--color-text-primary);
+}
+
+.become-drawer-domain-theme[data-domain="entrepreneurship"] {
+  --drawer-domain-base: var(--color-domain-entrepreneurship);
+  --drawer-domain-hover: var(--color-domain-entrepreneurship-hover);
+  --drawer-domain-accent: var(--color-domain-entrepreneurship-accent);
+  --drawer-domain-subtle: var(--color-domain-entrepreneurship-subtle);
+  --drawer-domain-border: var(--color-domain-entrepreneurship-border);
+  --drawer-domain-on-base: var(--color-text-primary);
+}
+
+.become-drawer-domain-theme[data-domain="content"] {
+  --drawer-domain-base: var(--color-domain-content);
+  --drawer-domain-hover: var(--color-domain-content-hover);
+  --drawer-domain-accent: var(--color-domain-content-accent);
+  --drawer-domain-subtle: var(--color-domain-content-subtle);
+  --drawer-domain-border: var(--color-domain-content-border);
+  --drawer-domain-on-base: var(--color-text-primary);
+}
+
+.become-drawer-backdrop {
+  background: var(--drawer-backdrop-color);
+  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
+  backdrop-filter: blur(var(--drawer-backdrop-blur));
+}
+
+.become-drawer {
+  border-color: var(--drawer-edge);
+  background: var(--drawer-background);
+  box-shadow: var(--drawer-top-light), var(--drawer-depth);
+  color: var(--color-text-primary);
+}
+
+.become-drawer::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0 auto 0 0;
+  width: var(--drawer-edge-width);
+  background: var(--drawer-edge-light);
+  box-shadow: 0 0 var(--drawer-edge-glow-size)
+    color-mix(
+      in srgb,
+      var(--drawer-domain-accent) var(--drawer-edge-glow-strength),
+      transparent
+    );
+  pointer-events: none;
+}
+
+.become-drawer::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: 11rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--drawer-domain-hover) 8%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.become-drawer > * {
+  position: relative;
+  z-index: 1;
+}
+
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .become-drawer {
+    background:
+      var(--drawer-gloss), var(--drawer-domain-wash),
+      var(--drawer-glass-background);
+    -webkit-backdrop-filter: blur(var(--drawer-blur));
+    backdrop-filter: blur(var(--drawer-blur));
+  }
+}
+
+.become-drawer-backdrop[data-state="open"] {
+  animation: become-drawer-backdrop-in var(--drawer-duration)
+    var(--drawer-enter-ease) both;
+}
+
+.become-drawer-backdrop[data-state="open"] .become-drawer {
+  animation: become-drawer-in var(--drawer-duration) var(--drawer-enter-ease)
+    both;
+}
+
+.become-drawer-backdrop[data-state="closed"] {
+  pointer-events: none;
+  animation: become-drawer-backdrop-out var(--drawer-duration)
+    var(--drawer-exit-ease) both;
+}
+
+.become-drawer-backdrop[data-state="closed"] .become-drawer {
+  animation: become-drawer-out var(--drawer-duration) var(--drawer-exit-ease)
+    both;
+}
+
+@keyframes become-drawer-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes become-drawer-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes become-drawer-in {
+  from {
+    transform: translateX(var(--drawer-distance));
+  }
+}
+
+@keyframes become-drawer-out {
+  to {
+    transform: translateX(var(--drawer-distance));
+  }
+}
+
+@media (max-width: 30rem) {
+  .become-drawer {
+    width: 100vw;
+    border-inline: 0;
+    border-radius: 0;
+  }
+
+  .become-drawer__footer > .become-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-drawer-backdrop,
+  .become-drawer {
+    animation: none;
+    transition: none;
+  }
+}

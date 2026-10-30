@@ -9,6 +9,25 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* Escape the page's isolated stacking context while retaining workspace controls. */
+.workspace.conduct-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--drawer-z-index);
+}
+
+.workspace.conduct-guide-overlay::before {
+  display: none;
+}
+
+.conduct-guide-overlay .conduct-guide-scrim {
+  z-index: 0;
+}
+
+.conduct-guide-overlay .conduct-guide-pane {
+  z-index: 1;
+}
+
 .conduct-guide-pane {
   display: flex;
   min-width: 0;
@@ -27,7 +46,12 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.conduct-guide-pane > header > div {
+  min-width: 0;
+}
+
 .conduct-guide-pane > header h2 {
+  overflow-wrap: anywhere;
   margin-top: var(--spacing-xs);
   font-size: var(--text-h4);
   line-height: var(--text-h4--line-height);
@@ -91,8 +115,7 @@
   background: transparent;
 }
 
-.conduct-guide-document
-  .interview-guide-document-question[data-state="asked"],
+.conduct-guide-document .interview-guide-document-question[data-state="asked"],
 .conduct-guide-document
   .interview-guide-document-question[data-state="skipped"] {
   opacity: 0.58;
@@ -100,7 +123,11 @@
 
 .conduct-guide-document
   .interview-guide-document-question[data-state="active"] {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+  border-color: color-mix(
+    in srgb,
+    var(--color-primary) 50%,
+    var(--color-border)
+  );
   background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
@@ -158,7 +185,6 @@
   flex: 0 0 auto;
   color: var(--color-text-muted);
 }
-
 .conduct-conversation {
   display: flex;
   min-width: 0;
@@ -283,6 +309,7 @@
 
   .conduct-guide-pane > header button {
     display: grid;
+    flex: none;
     width: var(--spacing-input-height-sm);
     height: var(--spacing-input-height-sm);
     place-items: center;

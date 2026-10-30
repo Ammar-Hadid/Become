@@ -1,0 +1,83 @@
+.copy-success-page {
+  min-height: 100svh;
+  color: var(--color-text-primary);
+  background: var(--color-background);
+}
+.copy-success-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--space-app-page-gutter);
+  border-bottom: 1px solid var(--color-border);
+}
+.copy-success-page-header .become-brand__symbol {
+  width: 28px;
+  height: 36px;
+}
+.copy-success-page-header .become-brand__wordmark {
+  font-size: var(--text-section-title);
+}
+.copy-success-page-header a {
+  color: var(--color-text-secondary);
+}
+.copy-success-page-main {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-action-section);
+  padding: var(--spacing-4xl) var(--space-app-page-gutter);
+}
+.copy-success-introduction {
+  display: grid;
+  gap: var(--spacing-lg);
+  max-width: 65ch;
+}
+.copy-success-introduction .type-overline {
+  color: var(--color-primary);
+}
+.copy-success-introduction h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 4vw, 4.5rem);
+}
+.copy-success-introduction .type-body-lg,
+.copy-success-note {
+  color: var(--color-text-secondary);
+}
+.copy-success-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--spacing-2xl);
+  width: min(100%, 44rem);
+}
+.copy-success-action {
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-md);
+}
+.copy-success-message {
+  min-height: 1.5em;
+  color: var(--color-success);
+}
+.copy-success-message--failed {
+  color: var(--color-danger);
+}
+.copy-success-test-controls {
+  display: grid;
+  gap: var(--spacing-md);
+  color: var(--color-text-muted);
+}
+.copy-success-test-controls > .become-button {
+  margin-block: var(--spacing-lg);
+}
+.copy-success-test-controls summary {
+  cursor: pointer;
+}
+@media (max-width: 1023px) {
+  .copy-success-page-header {
+    padding-inline: var(--space-page-edge-mobile);
+  }
+  .copy-success-page-main {
+    padding: var(--spacing-3xl) var(--space-page-edge-mobile);
+  }
+}

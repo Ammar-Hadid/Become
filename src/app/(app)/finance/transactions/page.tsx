@@ -17,6 +17,8 @@ export default async function Page({
     category?: string;
     counterparty?: string;
     selected?: string;
+    period?: string;
+    date?: string;
   }>;
 }) {
   const user = await getCurrentUser();

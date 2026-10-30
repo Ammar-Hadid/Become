@@ -1,5 +1,7 @@
 "use client";
 
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
+import { Radio } from "@/components/ui/forms/selection.component";
 import { useEffect, useRef, useState } from "react";
 import { Check, Eye, Globe, MessagesSquare } from "lucide-react";
 import {
@@ -30,6 +32,7 @@ function EvidenceCaptureFields({
   captureLanes,
   ...props
 }: Parameters<typeof CaptureFields>[0] & { captureLanes: CaptureLane[] }) {
+  const sound = useInterfaceSound();
   const [lane, setLane] = useState<CaptureLane>(captureLanes[0]);
   const [saved, setSaved] = useState<{ id?: string; lane: CaptureLane } | null>(
     null,
@@ -100,16 +103,17 @@ function EvidenceCaptureFields({
               className={`gap-sm rounded-control p-md sm:p-lg text-body relative flex cursor-pointer items-center border sm:flex-col sm:items-start ${lane === id ? "border-primary/40 bg-primary/5 text-text-primary" : "border-border text-text-secondary hover:bg-surface-elevated"}`}
             >
               <span className="gap-sm flex items-center">
-                <input
-                  type="radio"
+                <Radio
                   name="evidence-lane"
                   aria-label={`${label} ${hint}`}
                   checked={lane === id}
                   onChange={() => {
                     if (
                       confirmRecordFormDiscard(formRegion.current ?? undefined)
-                    )
+                    ) {
+                      if (lane !== id) sound.play("controlConfirmed");
                       setLane(id);
+                    }
                   }}
                   className="accent-primary"
                 />
@@ -179,6 +183,7 @@ export function EvidenceCapture(
   ];
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="From the field"
       title="Keep evidence"
       triggerLabel={triggerLabel ?? "Keep evidence"}

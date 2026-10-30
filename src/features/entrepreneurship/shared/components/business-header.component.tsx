@@ -1,6 +1,8 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
 import { BusinessNavigation } from "@/features/entrepreneurship/shared/components/business-navigation.component";
 export function BusinessHeader() {
   const path = usePathname();
@@ -10,22 +12,20 @@ export function BusinessHeader() {
     <>
       {!home && (
         <Link href="/entrepreneurship" className="business-back">
-          ← Explorations
+          <ArrowLeft aria-hidden="true" /> Explorations
         </Link>
       )}
-      <header className="business-masthead">
-        <div>
-          <p className="eyebrow">
-            {home ? "Follow your curiosity" : "Across every exploration"}
-          </p>
-          <h1>{home ? "Entrepreneurship" : "Global history"}</h1>
-        </div>
-        <p>
-          {home
-            ? "Explore. Listen. Decide what’s worth pursuing."
-            : "The audiences, evidence and offers you’ve kept."}
-        </p>
-      </header>
+      <WorkspaceHeader
+        eyebrow={home ? "Entrepreneurship" : "Your complete record"}
+        title={
+          home ? "Find your next opportunity." : "Across your explorations"
+        }
+        description={
+          home
+            ? "Start with a question. Learn from real people. Decide what to pursue."
+            : "Find the people, evidence and offers you have kept."
+        }
+      />
       {!home && <BusinessNavigation />}
     </>
   );

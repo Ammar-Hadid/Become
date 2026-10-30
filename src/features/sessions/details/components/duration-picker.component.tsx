@@ -243,6 +243,7 @@ function DurationColumn({
   const offsetRef = useRef(0);
   const pointer = useRef<{
     id: number;
+    captureTarget: Element;
     startY: number;
     lastY: number;
     lastTime: number;
@@ -511,8 +512,14 @@ function DurationColumn({
     setSettling(false);
     updateOffset(0);
     suppressClick.current = false;
+    // A fast first move can leave the wheel before crossing its drag threshold.
+    // Capture on the original target so ordinary value clicks still reach it.
+    const captureTarget =
+      event.target instanceof Element ? event.target : event.currentTarget;
+    captureTarget.setPointerCapture(event.pointerId);
     pointer.current = {
       id: event.pointerId,
+      captureTarget,
       startY: event.clientY,
       lastY: event.clientY,
       lastTime: event.timeStamp,
@@ -537,6 +544,7 @@ function DurationColumn({
       if (Math.abs(totalDistance) < DRAG_CAPTURE_THRESHOLD_PX) return;
       activePointer.moved = true;
       event.currentTarget.setPointerCapture(event.pointerId);
+      activePointer.captureTarget = event.currentTarget;
       applyTravel(totalDistance);
       return;
     }
@@ -550,8 +558,8 @@ function DurationColumn({
 
     suppressClick.current = activePointer.moved;
     pointer.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (activePointer.captureTarget.hasPointerCapture(event.pointerId)) {
+      activePointer.captureTarget.releasePointerCapture(event.pointerId);
     }
 
     const releaseDelay = event.timeStamp - activePointer.lastTime;

@@ -1,13 +1,25 @@
 "use client";
 
 import { DateTime } from "luxon";
-import { CalendarDays, Clock3, Pause, X } from "lucide-react";
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronRight,
+  Clock3,
+  Coffee,
+  FileText,
+  Target,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useId, useRef, type AnimationEvent } from "react";
-import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
+import { Button } from "@/components/ui/buttons/button.component";
+import { Drawer } from "@/components/ui/drawers/drawer.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
 import type { MotionPresenceState } from "@/components/ui/motion/hooks/use-presence.hook";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { SessionTimeEditor } from "@/features/sessions/details/components/session-time-editor.component";
+import styles from "@/features/sessions/details/styles/session-details-drawer.component.module.css";
 import type { SessionDetailItem } from "@/features/sessions/types/session.types";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import { formatDuration } from "@/lib/dates/utils/period.util";
@@ -34,7 +46,7 @@ export function SessionDetailsDrawer({
   children,
 }: SessionDetailsDrawerProps) {
   const titleId = useId();
-  const drawerRef = useRef<HTMLElement>(null);
+  const descriptionId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const startedAt = DateTime.fromISO(session.startedAt).setZone(APP_TIMEZONE);
   const endedAt = session.endedAt
@@ -46,190 +58,214 @@ export function SessionDetailsDrawer({
   const hasEvidence = Boolean(focus || outcome || notes || children);
   const activity = session.contentActivitySnapshot || session.activityType.name;
 
-  useModalLayer({
-    open,
-    containerRef: drawerRef,
-    initialFocusRef: closeButtonRef,
-    onClose,
-  });
-
   return (
-    <div
-      className="session-details-backdrop"
-      data-state={presenceState}
-      aria-hidden={!open}
-      inert={exiting}
-      onAnimationEnd={onPresenceAnimationEnd}
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      data-testid="session-details-backdrop"
-    >
-      <section
-        ref={drawerRef}
-        className="session-details-drawer"
-        role="dialog"
-        aria-modal="true"
-        tabIndex={-1}
-        aria-labelledby={titleId}
-        data-testid="session-details"
-      >
-        <header className="session-details-header">
-          <div className="min-w-0">
-            <p className="eyebrow mb-md">Session details</p>
-            <h2
-              id={titleId}
-              className="text-h3 font-semibold tracking-[-0.04em]"
-            >
+    <Drawer
+      open={open}
+      presenceState={presenceState}
+      exiting={exiting}
+      onPresenceAnimationEnd={onPresenceAnimationEnd}
+      onClose={onClose}
+      titleId={titleId}
+      descriptionId={descriptionId}
+      domain={session.domain.slug}
+      initialFocusRef={closeButtonRef}
+      testId="session-details"
+      backdropTestId="session-details-backdrop"
+      header={
+        <>
+          <div className={styles.headingCopy}>
+            <p className={`type-overline ${styles.eyebrow}`}>Session details</p>
+            <h2 id={titleId} className="type-section-title">
               {focus || activity}
             </h2>
-            <p className="text-text-secondary mt-sm text-body">
+            <p
+              id={descriptionId}
+              className={`type-body-sm ${styles.secondary}`}
+            >
               {session.domain.name} · {activity}
             </p>
           </div>
-          <button
+          <Button
             ref={closeButtonRef}
             type="button"
-            className="icon-button shrink-0"
+            variant="ghost"
+            size="icon"
+            className={styles.closeButton}
             onClick={onClose}
             aria-label="Close session details"
           >
-            <X className="size-4" />
-          </button>
-        </header>
-
-        <div className="session-details-summary">
-          <div
-            className="session-details-domain-icon"
-            style={{ color: session.domain.analyticsColor ?? undefined }}
+            <X aria-hidden="true" />
+          </Button>
+        </>
+      }
+    >
+      <div className={`${styles.identity} ${styles.card}`}>
+        <DomainIcon slug={session.domain.slug} treatment="featured" />
+        <div className={styles.identityCopy}>
+          <p className="type-widget-title" data-testid="session-detail-domain">
+            {session.domain.name}
+          </p>
+          <p
+            className={`type-body-sm ${styles.secondary}`}
+            data-testid="session-detail-activity"
           >
-            <DomainIcon slug={session.domain.slug} />
-          </div>
-          <div>
-            <p
-              className="text-body font-medium"
-              data-testid="session-detail-domain"
+            {activity}
+          </p>
+          {session.contentId && (
+            <Link
+              href={`/content/${session.contentId}`}
+              className={`type-body-sm ${styles.contentLink}`}
             >
-              {session.domain.name}
-            </p>
-            <p
-              className="text-text-muted mt-xs text-body"
-              data-testid="session-detail-activity"
-            >
-              {activity}
-            </p>
-            {session.contentId && (
-              <Link
-                href={`/content/${session.contentId}`}
-                className="text-primary mt-sm text-body-sm hover:text-primary-hover focus-visible:outline-primary block focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                {session.contentTitleSnapshot || "Untitled content"}
-                {session.contentVariantSnapshot
-                  ? ` · ${session.contentVariantSnapshot}`
-                  : ""}
-              </Link>
-            )}
-          </div>
+              {session.contentTitleSnapshot || "Untitled content"}
+              {session.contentVariantSnapshot
+                ? ` · ${session.contentVariantSnapshot}`
+                : ""}
+            </Link>
+          )}
         </div>
+        {session.contentId ? (
+          <ChevronRight className={styles.chevron} aria-hidden="true" />
+        ) : null}
+      </div>
 
-        <dl className="session-details-timing">
+      <div className={styles.metrics}>
+        <div
+          className={`${styles.card} ${styles.metric} ${styles.focusMetric}`}
+        >
+          <div className={styles.metricHeading}>
+            <IconFrame area={session.domain.slug} treatment="compact">
+              <Clock3 />
+            </IconFrame>
+            <p className="type-label">Focused time</p>
+          </div>
+          <p
+            className={`type-metric-md ${styles.accentText}`}
+            data-testid="session-detail-duration"
+          >
+            {formatDetailDuration(session.durationSeconds)}
+          </p>
+        </div>
+        {session.totalPausedMilliseconds > 0 && (
+          <div className={`${styles.card} ${styles.metric}`}>
+            <div className={styles.metricHeading}>
+              <IconFrame area={session.domain.slug} treatment="compact">
+                <Coffee />
+              </IconFrame>
+              <p className="type-label">Break time</p>
+            </div>
+            <p
+              className="type-metric-sm"
+              data-testid="session-detail-break-time"
+            >
+              {formatDetailDuration(
+                Math.floor(session.totalPausedMilliseconds / 1000),
+              )}
+            </p>
+            <p className={`type-caption ${styles.muted}`}>
+              Excluded from focused time
+            </p>
+          </div>
+        )}
+      </div>
+
+      <SessionTimeEditor session={session} onSaved={onSessionUpdated} />
+
+      <dl className={`${styles.card} ${styles.timeline}`}>
+        <div className={styles.timelineRow}>
+          <IconFrame area={session.domain.slug} treatment="compact">
+            <CalendarDays />
+          </IconFrame>
           <div>
-            <dt>
-              <CalendarDays aria-hidden="true" /> Started
-            </dt>
-            <dd data-testid="session-detail-start">
+            <dt className={`type-label ${styles.muted}`}>Started</dt>
+            <dd
+              className={`type-body ${styles.secondary}`}
+              data-testid="session-detail-start"
+            >
               {formatDateTime(startedAt)}
             </dd>
           </div>
-          {endedAt && (
+        </div>
+        {endedAt && (
+          <div className={styles.timelineRow}>
+            <IconFrame area={session.domain.slug} treatment="compact">
+              <CalendarDays />
+            </IconFrame>
             <div>
-              <dt>
-                <CalendarDays aria-hidden="true" /> Ended
-              </dt>
-              <dd data-testid="session-detail-end">
+              <dt className={`type-label ${styles.muted}`}>Ended</dt>
+              <dd
+                className={`type-body ${styles.secondary}`}
+                data-testid="session-detail-end"
+              >
                 {formatDateTime(endedAt)}
               </dd>
             </div>
-          )}
-        </dl>
-
-        <dl className="session-details-durations">
-          <div className="session-details-duration-focus">
-            <dt>
-              <Clock3 aria-hidden="true" /> Focused time
-            </dt>
-            <dd
-              className="timer-numerals"
-              data-testid="session-detail-duration"
-            >
-              {formatDetailDuration(session.durationSeconds)}
-            </dd>
-          </div>
-          {session.totalPausedMilliseconds > 0 && (
-            <div>
-              <dt>
-                <Pause aria-hidden="true" /> Break time
-              </dt>
-              <dd>
-                <span
-                  className="timer-numerals"
-                  data-testid="session-detail-break-time"
-                >
-                  {formatDetailDuration(
-                    Math.floor(session.totalPausedMilliseconds / 1000),
-                  )}
-                </span>
-                <span className="session-details-duration-note">
-                  Excluded from focused time
-                </span>
-              </dd>
-            </div>
-          )}
-        </dl>
-
-        <SessionTimeEditor session={session} onSaved={onSessionUpdated} />
-
-        {hasEvidence && (
-          <div className="session-details-evidence">
-            {focus && (
-              <DetailSection
-                label="Focus / intention"
-                testId="session-detail-focus"
-              >
-                {focus}
-              </DetailSection>
-            )}
-            {outcome && (
-              <DetailSection label="Outcome" testId="session-detail-outcome">
-                {outcome}
-              </DetailSection>
-            )}
-            {notes && (
-              <DetailSection label="Notes" testId="session-detail-notes">
-                {notes}
-              </DetailSection>
-            )}
-            {children}
           </div>
         )}
-      </section>
-    </div>
+      </dl>
+
+      {hasEvidence && (
+        <div className={styles.details}>
+          {focus && (
+            <DetailSection
+              label="Focus / intention"
+              testId="session-detail-focus"
+              icon={<Target />}
+              area={session.domain.slug}
+            >
+              {focus}
+            </DetailSection>
+          )}
+          {outcome && (
+            <DetailSection
+              label="Outcome"
+              testId="session-detail-outcome"
+              icon={<BarChart3 />}
+              area={session.domain.slug}
+            >
+              {outcome}
+            </DetailSection>
+          )}
+          {notes && (
+            <DetailSection
+              label="Notes"
+              testId="session-detail-notes"
+              icon={<FileText />}
+              area={session.domain.slug}
+            >
+              {notes}
+            </DetailSection>
+          )}
+          {children ? (
+            <div className={styles.detailExtras}>{children}</div>
+          ) : null}
+        </div>
+      )}
+    </Drawer>
   );
 }
 
 function DetailSection({
   label,
   testId,
+  icon,
+  area,
   children,
 }: {
   label: string;
   testId: string;
+  icon: React.ReactNode;
+  area: string;
   children: React.ReactNode;
 }) {
   return (
-    <section data-testid={testId}>
-      <h3 className="eyebrow mb-sm">{label}</h3>
-      <p className="text-text-secondary text-body whitespace-pre-wrap">
+    <section className={styles.detail} data-testid={testId}>
+      <div className={styles.detailHeading}>
+        <IconFrame area={area} treatment="compact">
+          {icon}
+        </IconFrame>
+        <h3 className="type-widget-title">{label}</h3>
+      </div>
+      <p className={`type-body ${styles.secondary} whitespace-pre-wrap`}>
         {children}
       </p>
     </section>

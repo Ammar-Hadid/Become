@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EngineeringEvidenceForm } from "@/features/engineering/evidence/components/engineering-evidence-form.component";
@@ -24,13 +25,11 @@ export default async function EditEngineeringEvidencePage({
   if (!evidence) notFound();
   return (
     <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow mb-md">Engineering evidence</p>
-          <h1>Edit the record.</h1>
-        </div>
-      </header>
-      <section className="mt-4xl">
+      <WorkspaceHeader
+        eyebrow="Engineering evidence"
+        title={<> Edit the record. </>}
+      />
+      <section className="engineering-route-content">
         <EngineeringEvidenceForm
           evidence={evidence}
           projects={options.projects}

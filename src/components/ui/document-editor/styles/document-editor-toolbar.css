@@ -1,0 +1,112 @@
+.document-editor-toolbar {
+  display: flex;
+  min-height: 3.125rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.document-editor-tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xs);
+  padding: 0 var(--spacing-sm);
+}
+
+.document-editor-tool-group:first-child { padding-left: 0; }
+.document-editor-tool-group + .document-editor-tool-group { border-left: 1px solid var(--color-border); }
+.document-editor-tool-group--document { margin-left: auto; }
+.document-editor-mobile-format { display: none; }
+
+.document-editor-tool {
+  display: grid;
+  width: 2.375rem;
+  height: 2.375rem;
+  flex: 0 0 auto;
+  cursor: pointer;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-control) var(--ease-move), background-color var(--duration-control) var(--ease-move), transform var(--duration-response) var(--ease-move);
+}
+
+.document-editor-tool:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); color: var(--color-text-primary); }
+.document-editor-tool:active:not(:disabled) { transform: translateY(1px); }
+.document-editor-tool:focus-visible,
+.document-editor-style-trigger:focus-visible,
+.document-editor-insert-trigger:focus-visible,
+.document-editor-file-trigger:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.document-editor-tool svg { width: 1.05rem; height: 1.05rem; }
+.document-editor-tool[aria-pressed="true"] { background: var(--color-primary-muted); color: var(--color-primary); }
+.document-editor-tool:disabled,
+.document-editor-style-trigger:disabled,
+.document-editor-insert-trigger:disabled { cursor: default; opacity: 0.32; }
+
+.document-editor-style-trigger,
+.document-editor-insert-trigger,
+.document-editor-file-trigger {
+  display: inline-flex;
+  min-height: 2.375rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  border-radius: 999px;
+  padding: 0 var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-weight: 580;
+  transition: color var(--duration-control) var(--ease-move), background-color var(--duration-control) var(--ease-move);
+}
+
+.document-editor-style-trigger:hover:not(:disabled),
+.document-editor-insert-trigger:hover:not(:disabled),
+.document-editor-file-trigger:hover { background: rgba(255, 255, 255, 0.06); color: var(--color-text-primary); }
+.document-editor-style-trigger > svg,
+.document-editor-insert-trigger > svg,
+.document-editor-file-trigger > svg { width: 0.95rem; height: 0.95rem; }
+.document-editor-style-trigger > svg:last-child,
+.document-editor-insert-trigger > svg:last-child,
+.document-editor-file-trigger > svg:last-child { width: 0.75rem; }
+
+.document-editor-menu { max-height: min(28rem, calc(100vh - 5rem)); overflow-y: auto; }
+.document-editor-menu .menu-item { justify-content: flex-start; }
+.document-editor-menu .menu-item > span:first-of-type { flex: 1; }
+.document-editor-menu-check { margin-left: auto; color: var(--color-primary) !important; }
+.document-editor-menu-danger { color: var(--color-danger); }
+.document-editor-menu-stat {
+  margin: var(--spacing-xs) var(--spacing-md) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .document-editor-tool-group { padding: 0 var(--spacing-xs); }
+  .document-editor-style-trigger span,
+  .document-editor-file-trigger span { display: none; }
+}
+
+@media (max-width: 639px) {
+  .document-editor-toolbar { justify-content: center; padding: var(--spacing-xs) 0; }
+  .document-editor-tool-group { padding: 0 var(--spacing-2xs); }
+  .document-editor-tool-group--style,
+  .document-editor-tool-group--document { margin-left: 0; }
+  .document-editor-tool[data-wide-only="true"],
+  .document-editor-wide-tool { display: none; }
+  .document-editor-mobile-format { display: flex; }
+  .document-editor-tool-group + .document-editor-tool-group { border-left: 0; }
+  .document-editor-tool-group--document { border-top: 1px solid var(--color-border); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .document-editor-tool,
+  .document-editor-style-trigger,
+  .document-editor-insert-trigger,
+  .document-editor-file-trigger { transition: none; }
+}

@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
 import { MoreHorizontal } from "lucide-react";
 import { SubMenu } from "@/components/ui/menus/submenu.component";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
@@ -27,12 +29,13 @@ export function CorrectionMenu({
       placement="bottom-end"
       closeOnSelect={false}
       trigger={(props) => (
-        <button {...props} className="business-icon-button">
+        <Button variant="ghost" size="icon" {...props}>
           <MoreHorizontal aria-hidden="true" />
-        </button>
+        </Button>
       )}
     >
       <RecordDialog
+        treatment="workspace"
         eyebrow="History correction"
         triggerLabel={title}
         triggerRole="menuitem"

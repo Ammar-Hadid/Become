@@ -16,5 +16,5 @@ export type DashboardData = {
     seconds: number;
     previousSeconds: number;
   }>;
-  chart: Array<{ label: string; seconds: number }>;
+  chart: Array<{ label: string; date: string; seconds: number }>;
 };

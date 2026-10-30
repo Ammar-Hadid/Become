@@ -1,20 +1,14 @@
-import { Braces, Compass, Landmark, Play } from "lucide-react";
-import { cn } from "@/lib/styles/utils/class-name.util";
-
-const icons = {
-  engineering: Braces,
-  entrepreneurship: Compass,
-  finance: Landmark,
-  content: Play,
-};
+import { AreaIcon } from "@/components/ui/icons/area-icon.component";
+import type { IconTreatment } from "@/components/ui/icons/icon-frame.component";
 
 export function DomainIcon({
   slug,
   className,
+  treatment = "bare",
 }: {
   slug: string;
   className?: string;
+  treatment?: IconTreatment;
 }) {
-  const Icon = icons[slug as keyof typeof icons] ?? Compass;
-  return <Icon className={cn("size-4", className)} strokeWidth={1.8} />;
+  return <AreaIcon area={slug} treatment={treatment} className={className} />;
 }

@@ -5,6 +5,33 @@ import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
 import { emptyInterviewGuideDocument } from "../src/features/entrepreneurship/interview-guides/utils/interview-guide-document.util";
 
+async function captureWorkspaceErrors(page: Page) {
+  const errors: string[] = [];
+  const protocolErrors: string[] = [];
+  const serverErrors: string[] = [];
+  page.on("pageerror", (error) => protocolErrors.push(error.message));
+  page.on("response", (response) => {
+    if (response.status() >= 500)
+      serverErrors.push(`${response.status()} ${response.url()}`);
+  });
+  await page.exposeFunction("recordWorkspaceRuntimeError", (message: string) =>
+    errors.push(message),
+  );
+  await page.addInitScript(() => {
+    const record = (message: string) => {
+      const bridge = window as typeof window & {
+        recordWorkspaceRuntimeError: (message: string) => Promise<void>;
+      };
+      void bridge.recordWorkspaceRuntimeError(message).catch(() => {});
+    };
+    window.addEventListener("error", (event) => record(event.message));
+    window.addEventListener("unhandledrejection", (event) =>
+      record(String(event.reason)),
+    );
+  });
+  return { errors, protocolErrors, serverErrors };
+}
+
 async function signUp(page: Page) {
   await page.goto("/sign-in");
   await page
@@ -19,11 +46,7 @@ async function signUp(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-entrepreneurship-journey");
   await page.getByTestId("auth-submit").click();
-  await page.waitForURL((url) => url.pathname !== "/sign-in");
-  // Season entry is intentionally suppressible. This domain journey accepts
-  // an available Home surface as well as the optional automatic opening.
-  if (new URL(page.url()).pathname.includes("/opening"))
-    await deferAutomaticSeasonOpening(page);
+  await deferAutomaticSeasonOpening(page);
   return (await prisma.user.findUniqueOrThrow({ where: { email } })).id;
 }
 
@@ -44,6 +67,9 @@ async function startExploration(page: Page) {
   await expect(page).toHaveURL(
     /\/entrepreneurship\/explorations\/[^/]+\/overview$/,
   );
+  await expect(
+    page.getByRole("heading", { name: "Your next move", exact: true }),
+  ).toBeVisible();
   const nicheId = new URL(page.url()).pathname.split("/")[3];
   return { pathname: `/entrepreneurship/explorations/${nicheId}`, nicheId };
 }
@@ -100,8 +126,7 @@ test("seven direct workspaces stay usable at every target width", async ({
   page,
 }, testInfo) => {
   test.setTimeout(240000);
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+  const diagnostics = await captureWorkspaceErrors(page);
   await signUp(page);
   const exploration = await startExploration(page);
   for (const width of viewports) {
@@ -121,13 +146,29 @@ test("seven direct workspaces stay usable at every target width", async ({
       await noOverflow(page);
     }
   }
+  // Management remains reachable on phones without crowding the workspace.
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto(`${exploration.pathname}/overview`);
+  await page.getByText("Manage exploration", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Review direction", exact: true })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "Where is this leading?", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Review direction", exact: true }),
+  ).toBeFocused();
+  await page.getByText("Manage exploration", { exact: true }).click();
+  await noOverflow(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  const nav = page
-    .getByRole("navigation", { name: "Exploration workspaces", exact: true })
-    .first();
+  await page.goto(`${exploration.pathname}/overview`);
+  const nav = page.getByRole("navigation", {
+    name: "Workspace shortcuts",
+    exact: true,
+  });
   for (const label of [
-    "Overview",
-    "So Far We Know",
     "Audience",
     "Outreach",
     "Conversations",
@@ -135,8 +176,11 @@ test("seven direct workspaces stay usable at every target width", async ({
     "Offers",
   ])
     await expect(
-      nav.getByRole("link", { name: label, exact: true }),
+      nav.getByRole("link", { name: new RegExp(`^${label} `) }),
     ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open understanding" }),
+  ).toHaveAttribute("href", `${exploration.pathname}/so-far-we-know`);
   for (const [old, next] of [
     ["snapshot", "so-far-we-know"],
     ["scope", "audience"],
@@ -145,30 +189,47 @@ test("seven direct workspaces stay usable at every target width", async ({
     ["learn/guides", "conversations/guides"],
     ["test", "offers"],
   ]) {
-    await page.goto(`${exploration.pathname}/${old}?q=retained`);
-    await expect(page).toHaveURL(new RegExp(`${next}\\?q=retained$`));
+    await page.goto(`${exploration.pathname}/${old}?q=retained`, {
+      waitUntil: "commit",
+    });
+    await page.waitForURL(new RegExp(`${next}\\?q=retained$`), {
+      waitUntil: "domcontentloaded",
+    });
   }
   for (const [old, destination, filter, expected] of [
     ["scope/businesses", "audience", "kind", "business"],
     ["learn/observations", "evidence", "sourceKind", "OBSERVATION"],
   ]) {
-    await page.goto(`${exploration.pathname}/${old}?q=retained`);
-    await expect(page).toHaveURL(
+    await page.goto(`${exploration.pathname}/${old}?q=retained`, {
+      waitUntil: "commit",
+    });
+    await page.waitForURL(
       (url) =>
         url.pathname === `${exploration.pathname}/${destination}` &&
         url.searchParams.get("q") === "retained" &&
         url.searchParams.get(filter) === expected,
+      { waitUntil: "domcontentloaded" },
     );
   }
-  expect(errors).toEqual([]);
+  await testInfo.attach("browser-diagnostics", {
+    body: JSON.stringify(diagnostics),
+    contentType: "application/json",
+  });
+  expect(diagnostics.errors).toEqual([]);
+  expect(diagnostics.serverErrors).toEqual([]);
+  expect(
+    diagnostics.protocolErrors.filter(
+      (message) =>
+        !/[?&]_rsc=[^ ]+ due to access control checks\.$/.test(message),
+    ),
+  ).toEqual([]);
 });
 
 test("large collections retain old records, panel state, message excerpts and free-form writing", async ({
   page,
 }, testInfo) => {
   test.setTimeout(240000);
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  const diagnostics = await captureWorkspaceErrors(page);
   const userId = await signUp(page);
   const { pathname, nicheId } = await startExploration(page);
   const interactions = Array.from({ length: 400 }, (_, i) => ({
@@ -365,5 +426,270 @@ test("large collections retain old records, panel state, message excerpts and fr
     where: { guideId: guide.id },
   });
   expect(edition.questionIndex).toEqual([]);
-  expect(errors).toEqual([]);
+  await testInfo.attach("browser-diagnostics", {
+    body: JSON.stringify(diagnostics),
+    contentType: "application/json",
+  });
+  expect(diagnostics.errors).toEqual([]);
+  expect(diagnostics.serverErrors).toEqual([]);
+  expect(
+    diagnostics.protocolErrors.filter(
+      (message) =>
+        !/[?&]_rsc=[^ ]+ due to access control checks\.$/.test(message),
+    ),
+  ).toEqual([]);
+});
+
+test("interview guide overlay clears the header and preserves modal controls", async ({
+  page,
+}, testInfo) => {
+  const userId = await signUp(page);
+  const { pathname, nicheId } = await startExploration(page);
+  const title =
+    "Customer discovery guide for independent research and operations teams";
+  const questionId = randomUUID();
+  const question = {
+    questionId,
+    prompt: "Tell me about the last time you prepared an interview.",
+    intent: "Understand the current workflow",
+    probes: ["Where did you keep your notes?"],
+    position: 0,
+  };
+  const guideDocument = {
+    schemaVersion: 1,
+    content: {
+      type: "doc",
+      content: [{ type: "interviewQuestion", attrs: question }],
+    },
+  };
+  const guide = await prisma.interviewGuide.create({
+    data: {
+      userId,
+      nicheId,
+      title,
+      objective: "Understand the current workflow",
+      marketType: "B2B",
+      expectedDurationMinutes: 30,
+      draftDocument: guideDocument,
+      revisions: {
+        create: {
+          version: 1,
+          titleSnapshot: title,
+          objectiveSnapshot: "Understand the current workflow",
+          marketType: "B2B",
+          expectedDurationMinutes: 30,
+          document: guideDocument,
+          questionIndex: [question],
+        },
+      },
+    },
+    include: { revisions: true },
+  });
+  const conversation = await prisma.interaction.create({
+    data: {
+      userId,
+      status: "IN_PROGRESS",
+      revisions: {
+        create: {
+          version: 1,
+          nicheId,
+          kind: "CONVERSATION",
+          occurredAt: new Date(),
+          channel: "VIDEO_CALL",
+          summary: "Guide overlay regression",
+          identityKind: "ANONYMOUS",
+          audienceLabel: "Independent researcher",
+        },
+      },
+      interviewSession: {
+        create: {
+          guideRevisionId: guide.revisions[0].id,
+          status: "IN_PROGRESS",
+          currentQuestionId: questionId,
+        },
+      },
+    },
+  });
+  const route = `${pathname}/conversations/${conversation.id}/conduct`;
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto(route);
+  const pane = page.locator(".conduct-guide-pane");
+  await expect(pane.getByRole("heading", { name: title })).toBeVisible();
+  await expect(pane).not.toHaveAttribute("role", "dialog");
+  await expect(page.locator(".conduct-guide-overlay")).toHaveCount(0);
+  const ask = pane.getByRole("button", { name: "Ask", exact: true });
+  const desktopButtonStyle = await ask.evaluate((button) => {
+    const style = getComputedStyle(button);
+    return [style.fontSize, style.fontWeight, style.boxShadow];
+  });
+  await page.screenshot({
+    path: testInfo.outputPath("guide-inline-1440.png"),
+    fullPage: true,
+    animations: "disabled",
+  });
+
+  for (const width of [320, 390, 900]) {
+    await page.setViewportSize({ width, height: 960 });
+    await page.goto(route);
+    const trigger = page.locator(".conduct-guide-mobile-trigger");
+    await trigger.click();
+    await expect(pane).toHaveAttribute("role", "dialog");
+    await expect(pane).toHaveAttribute("aria-modal", "true");
+    const close = pane.getByRole("button", { name: "Close interview guide" });
+    await expect(close).toBeFocused();
+    await close.click({ trial: true });
+    await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
+    const overlay = page.locator(".workspace.conduct-guide-overlay");
+    await expect(overlay).toHaveAttribute(
+      "data-workspace-area",
+      "entrepreneurship",
+    );
+    await expect(overlay).toHaveCSS("position", "fixed");
+    await expect(ask).toBeVisible();
+    expect(
+      await ask.evaluate((button) => {
+        const style = getComputedStyle(button);
+        return [style.fontSize, style.fontWeight, style.boxShadow];
+      }),
+    ).toEqual(desktopButtonStyle);
+    const heading = pane.getByRole("heading", { name: title });
+    expect(
+      await heading.evaluate((element) => {
+        const r = element.getBoundingClientRect();
+        const topmost = document.elementFromPoint(
+          r.x + r.width / 2,
+          r.y + r.height / 2,
+        );
+        return (
+          r.top >= 0 &&
+          r.right <= innerWidth &&
+          r.bottom < innerHeight &&
+          element.contains(topmost)
+        );
+      }),
+    ).toBe(true);
+    await page.keyboard.press("Shift+Tab");
+    await expect(
+      pane.getByRole("button", { name: "Skip", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(close).toBeFocused();
+    const scrollYBefore = await page.evaluate(() => scrollY);
+    await page.mouse.move(width / 2, 920);
+    await page.mouse.wheel(0, 500);
+    expect(await page.evaluate(() => scrollY)).toBe(scrollYBefore);
+    await page.screenshot({
+      path: testInfo.outputPath(`guide-overlay-${width}.png`),
+      animations: "disabled",
+    });
+    await page.keyboard.press("Escape");
+    await expect(pane).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+    await trigger.click();
+    await close.click();
+    await expect(pane).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    if (width === 900) {
+      await trigger.click();
+      await page.locator(".conduct-guide-scrim").click({
+        position: { x: 20, y: 400 },
+      });
+      await expect(pane).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    }
+    await noOverflow(page);
+  }
+});
+
+test("guide formatting choices remain reachable and selecting saved text enables links", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  page.setDefaultTimeout(10_000);
+  const userId = await signUp(page);
+  const { pathname, nicheId } = await startExploration(page);
+  const guide = await prisma.interviewGuide.create({
+    data: {
+      userId,
+      nicheId,
+      title: "Research notes",
+      objective: "Understand the current workflow",
+      marketType: "B2B",
+      expectedDurationMinutes: 30,
+      draftDocument: {
+        schemaVersion: 1,
+        content: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Saved research notes" }],
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  for (const width of [1280, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${pathname}/conversations/guides/${guide.id}/edit`);
+    const editor = page.getByRole("textbox", {
+      name: "Interview guide document",
+      exact: true,
+    });
+    await expect(editor).toHaveText("Saved research notes");
+    const styleTrigger = page.getByRole("button", {
+      name: "Text style",
+      exact: true,
+    });
+    await styleTrigger.click();
+    const styleMenu = page.getByRole("menu", { name: "Text style" });
+    for (const label of ["Paragraph", "Section heading", "Subheading"]) {
+      const item = styleMenu.getByRole("menuitemradio", {
+        name: label,
+        exact: true,
+      });
+      await expect(item).toBeVisible();
+      expect(
+        await item.evaluate((element) => {
+          const bounds = element.getBoundingClientRect();
+          const visible = document.elementFromPoint(
+            bounds.x + bounds.width / 2,
+            bounds.y + bounds.height / 2,
+          );
+          return element.contains(visible);
+        }),
+        `${label} must be visible outside the toolbar at ${width}px`,
+      ).toBe(true);
+    }
+    await page.screenshot({
+      path: testInfo.outputPath(`guide-formatting-${width}.png`),
+      animations: "disabled",
+    });
+    await page.keyboard.press("Escape");
+    await expect(styleTrigger).toBeFocused();
+
+    await editor.click();
+    await editor.press("ControlOrMeta+a");
+    const addLink = page.getByRole("button", { name: "Add link", exact: true });
+    await expect(addLink).toBeEnabled();
+    await addLink.click();
+    const address = page.getByRole("textbox", { name: "Link address" });
+    await expect(address).toBeFocused();
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(
+      page.locator(".interview-guide-link-editor").getByRole("alert"),
+    ).toHaveText("Enter a web or email address.");
+    await page.screenshot({
+      path: testInfo.outputPath(`guide-link-validation-${width}.png`),
+      animations: "disabled",
+    });
+    await page.getByRole("button", { name: "Close link editor" }).click();
+    await editor.click();
+    await editor.press("ArrowRight");
+    await expect(addLink).toBeDisabled();
+    await noOverflow(page);
+  }
 });

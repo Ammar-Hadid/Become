@@ -198,85 +198,6 @@
   transform: translateX(-50%);
 }
 
-.season-opening-prelude {
-  display: grid;
-  width: min(100%, 76rem);
-  min-height: 100svh;
-  align-content: center;
-  margin: 0 auto;
-  padding: 7rem clamp(var(--spacing-xl), 7vw, 6rem) var(--spacing-4xl);
-}
-
-.season-opening-prelude > .eyebrow {
-  color: rgba(232, 168, 62, 0.72);
-}
-
-.season-opening-prelude-lines {
-  position: relative;
-  min-height: 14rem;
-  margin-top: var(--spacing-2xl);
-}
-
-.season-opening-prelude-lines p {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  max-width: 19ch;
-  opacity: 0;
-  font-size: var(--text-hero);
-  line-height: var(--text-hero--line-height);
-  font-weight: 400;
-  letter-spacing: 0.015em;
-  text-wrap: balance;
-  transform: translateY(calc(-50% + var(--spacing-md)));
-  transition:
-    opacity var(--duration-content) var(--ease-enter),
-    transform var(--duration-content) var(--ease-move);
-}
-
-.season-opening-prelude-lines p[data-state="current"] {
-  opacity: 1;
-  transform: translateY(-50%);
-}
-
-.season-opening-prelude-lines p[data-state="past"] {
-  transform: translateY(calc(-50% - var(--spacing-md)));
-}
-
-.season-opening-prelude-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2xl);
-  margin-top: var(--spacing-4xl);
-}
-
-.season-opening-prelude-actions svg {
-  width: 16px;
-  height: 16px;
-}
-
-.season-opening-prelude-guide {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.season-opening-prelude-guide i {
-  display: block;
-  width: 1.5rem;
-  height: 1px;
-  background: var(--ritual-line-quiet);
-  transition:
-    background var(--duration-content) var(--ease-enter),
-    width var(--duration-content) var(--ease-move);
-}
-
-.season-opening-prelude-guide i[data-current] {
-  width: 3rem;
-  background: var(--color-primary);
-}
-
 .season-opening-ritual > .season-opening {
   width: min(100%, 76rem);
   max-width: none;
@@ -349,226 +270,9 @@
   padding-left: var(--spacing-xl);
 }
 
-.season-opening-mobile-progress {
-  display: none;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-opening-ritual .season-opening-progress {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-xl);
-  margin: 0 0 5rem;
-  border-top: 1px solid var(--ritual-line-quiet);
-}
-
-.season-opening-ritual .season-opening-progress li::after {
-  display: none;
-}
-
-.season-opening-ritual .season-opening-progress button {
-  position: relative;
-  display: grid;
-  width: 100%;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  justify-content: start;
-  gap: var(--spacing-md);
-  border-radius: 0 0 var(--radius-control) var(--radius-control);
-  padding: var(--spacing-md) var(--spacing-sm) var(--spacing-sm);
-  color: var(--color-text-muted);
-  text-align: left;
-}
-
-.season-opening-ritual .season-opening-progress button::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: transparent;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition:
-    background var(--duration-content) var(--ease-enter),
-    transform var(--duration-surface) var(--ease-move);
-}
-
-.season-opening-ritual .season-opening-progress button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.season-opening-ritual .season-opening-progress button > span:first-child {
-  display: block;
-  width: auto;
-  height: auto;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: inherit;
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  box-shadow: none;
-}
-
-.season-opening-ritual .season-opening-progress-label {
-  color: inherit;
-  text-align: left;
-}
-
-.season-opening-ritual .season-opening-progress li[data-complete] button {
-  color: var(--color-text-secondary);
-}
-
-.season-opening-ritual .season-opening-progress li[data-current] button {
-  color: var(--color-text-primary);
-}
-
-.season-opening-ritual
-  .season-opening-progress
-  li[data-current]
-  button::before {
-  background: var(--color-primary);
-  transform: scaleX(1);
-}
-
-.season-opening-ritual
-  .season-opening-progress
-  li[data-current]
-  button
-  > span:first-child {
-  border: 0;
-  background: transparent;
-  color: var(--color-primary);
-  box-shadow: none;
-}
-
 .season-opening-ritual .season-opening-stage {
   animation: season-ritual-stage-reveal var(--duration-surface)
     var(--ease-enter) both;
-}
-
-.season-goal-creator {
-  width: 100%;
-}
-
-.season-goal-creator-context {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--spacing-2xl);
-  margin-bottom: var(--spacing-3xl);
-  border-top: 1px solid var(--ritual-line);
-  border-bottom: 1px solid var(--ritual-line-quiet);
-  background: linear-gradient(
-    90deg,
-    rgba(232, 168, 62, 0.055),
-    transparent 58%
-  );
-  padding: var(--spacing-lg) var(--spacing-xl);
-}
-
-.season-goal-creator-context > div:first-child > p:last-child {
-  margin-top: var(--spacing-xs);
-  color: var(--color-text-muted);
-}
-
-.season-goal-creator-context fieldset {
-  display: grid;
-  gap: var(--spacing-sm);
-}
-
-.season-goal-creator-context fieldset > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.season-goal-creator-context label {
-  cursor: pointer;
-}
-
-.season-goal-creator-context input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.season-goal-creator-context label > span {
-  display: inline-flex;
-  min-height: var(--spacing-input-height-sm);
-  align-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 0 var(--spacing-md);
-  color: var(--color-text-muted);
-  transition:
-    border-color var(--duration-control) var(--ease-enter),
-    background var(--duration-control) var(--ease-enter),
-    color var(--duration-control) var(--ease-enter);
-}
-
-.season-goal-creator-context input:checked + span {
-  border-color: rgba(232, 168, 62, 0.58);
-  background: rgba(232, 168, 62, 0.1);
-  color: var(--color-primary);
-}
-
-.season-goal-creator-context input:focus-visible + span {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.season-goal-creator .direction-editor--ritual {
-  width: 100%;
-  max-width: none;
-}
-
-.season-goal-creator .direction-editor-header--ritual {
-  max-width: 48rem;
-  padding-top: 0;
-}
-
-.season-goal-creator .direction-editor-header--ritual .direction-back-link {
-  display: inline-flex;
-  cursor: pointer;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--color-text-muted);
-}
-
-.season-goal-creator
-  .direction-editor-header--ritual
-  .direction-back-link:hover {
-  color: var(--color-text-primary);
-}
-
-.season-goal-creator .direction-editor-header--ritual h2 {
-  margin-top: var(--spacing-lg);
-  font-size: var(--text-h2);
-  line-height: var(--text-h2--line-height);
-  font-weight: 540;
-  letter-spacing: -0.045em;
-  text-wrap: balance;
-}
-
-.season-goal-creator .direction-editor-header--ritual > p:not(.eyebrow) {
-  max-width: 40rem;
-  margin-top: var(--spacing-md);
-  color: var(--color-text-secondary);
-}
-
-.season-goal-creator .direction-editor-panel {
-  border-color: var(--ritual-line-quiet);
-  background: rgba(17, 19, 24, 0.68);
-}
-
-.season-goal-creator .direction-editor-actions {
-  justify-content: flex-end;
 }
 
 .season-opening-ritual .season-opening-question {
@@ -601,140 +305,6 @@
 
 .season-opening-ritual .season-opening-fields {
   gap: var(--spacing-2xl);
-}
-
-.season-supporting-goal-list {
-  display: grid;
-  gap: var(--spacing-md);
-  margin: var(--spacing-sm) 0 var(--spacing-md);
-}
-
-.season-supporting-goal {
-  min-width: 0;
-}
-
-.season-supporting-goal-chip {
-  display: flex;
-  width: fit-content;
-  max-width: 100%;
-  min-height: var(--spacing-input-height-sm);
-  align-items: stretch;
-  overflow: hidden;
-  border: 1px solid rgba(232, 168, 62, 0.24);
-  border-radius: var(--radius-control);
-  background: rgba(17, 19, 24, 0.78);
-  box-shadow: inset 0 1px rgba(244, 241, 234, 0.025);
-}
-
-.season-supporting-goal-name {
-  min-width: 0;
-  flex: 1 1 auto;
-  align-self: center;
-  overflow: hidden;
-  padding: 0 var(--spacing-md);
-  color: var(--color-text-primary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.season-supporting-goal-context-toggle,
-.season-supporting-goal-remove {
-  flex: 0 0 auto;
-  cursor: pointer;
-  border-left: 1px solid rgba(232, 168, 62, 0.16);
-  transition:
-    background var(--duration-control) var(--ease-enter),
-    color var(--duration-control) var(--ease-enter);
-}
-
-.season-supporting-goal-context-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: 0 var(--spacing-md);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  font-weight: 560;
-  color: var(--color-primary);
-  white-space: nowrap;
-}
-
-.season-supporting-goal-context-toggle:hover,
-.season-supporting-goal-context-toggle[aria-expanded="true"] {
-  background: rgba(232, 168, 62, 0.075);
-  color: var(--color-primary-hover);
-}
-
-.season-supporting-goal-context-toggle svg {
-  width: 14px;
-  height: 14px;
-}
-
-.season-supporting-goal-remove {
-  display: grid;
-  width: var(--spacing-input-height-sm);
-  place-items: center;
-  color: var(--color-text-muted);
-}
-
-.season-supporting-goal-remove:hover {
-  background: rgba(244, 241, 234, 0.045);
-  color: var(--color-text-primary);
-}
-
-.season-supporting-goal-remove svg {
-  width: 15px;
-  height: 15px;
-}
-
-.season-supporting-goal-context-toggle:focus-visible,
-.season-supporting-goal-remove:focus-visible {
-  position: relative;
-  z-index: 1;
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-}
-
-.season-supporting-goal-note {
-  display: grid;
-  grid-template-rows: 1fr;
-  animation: season-supporting-goal-note-in var(--duration-content)
-    var(--ease-enter) both;
-}
-
-.season-supporting-goal-note[data-state="closed"] {
-  pointer-events: none;
-  animation: season-supporting-goal-note-out var(--duration-control)
-    var(--ease-exit) both;
-}
-
-.season-supporting-goal-note-inner {
-  min-height: 0;
-  overflow: hidden;
-}
-
-.season-supporting-goal-note label {
-  display: block;
-  margin-top: var(--spacing-md);
-  margin-left: var(--spacing-md);
-  border-left: 1px solid rgba(232, 168, 62, 0.22);
-  padding: var(--spacing-sm) 0 var(--spacing-xs) var(--spacing-lg);
-}
-
-@keyframes season-supporting-goal-note-in {
-  from {
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transform: translateY(calc(var(--spacing-xs) * -1));
-  }
-}
-
-@keyframes season-supporting-goal-note-out {
-  to {
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transform: translateY(calc(var(--spacing-xs) * -1));
-  }
 }
 
 .season-opening-ritual .text-input,
@@ -775,246 +345,8 @@
   background: rgba(17, 19, 24, 0.36);
 }
 
-.season-opening-ritual .cots-image-card,
-.season-opening-ritual .cots-word-card,
-.season-opening-ritual .cots-load-more-card {
+.season-opening-ritual .cots-word-card {
   background-color: rgba(17, 19, 24, 0.78);
-}
-
-.season-opening-stage--reveal .season-opening-title-fields {
-  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
-  margin-bottom: var(--spacing-4xl);
-}
-
-.season-opening-reveal-poster {
-  position: relative;
-  animation: season-ritual-poster-resolve var(--duration-emphasis)
-    var(--ease-enter) both;
-}
-
-.season-opening-reveal-poster::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 12% 8%;
-  background: rgba(232, 168, 62, 0.08);
-  filter: blur(3rem);
-}
-
-.season-opening-reveal-poster .season-poster {
-  border-color: rgba(232, 168, 62, 0.26);
-  border-radius: var(--radius-panel);
-  box-shadow: 0 3rem 7rem rgba(0, 0, 0, 0.44);
-}
-
-.season-opening-stage--reveal .season-preview-edit-actions {
-  align-items: center;
-  flex-wrap: wrap;
-  padding-right: var(--spacing-sm);
-}
-
-.season-opening-stage--reveal .season-preview-edit-card {
-  display: flex;
-  flex-direction: row;
-  min-height: var(--spacing-input-height-sm);
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  border: 1px solid rgba(232, 168, 62, 0.28);
-  border-radius: 999px;
-  background: rgba(232, 168, 62, 0.08);
-  padding: 0 var(--spacing-md);
-  color: #dfbd83;
-}
-
-.season-opening-stage--reveal .season-preview-edit-card:hover {
-  border-color: rgba(232, 168, 62, 0.5);
-  background: rgba(232, 168, 62, 0.13);
-  color: var(--color-text-primary);
-}
-
-.season-opening-stage--reveal .season-preview-edit-card:disabled {
-  cursor: not-allowed;
-  opacity: 0.48;
-}
-
-.season-opening-stage--reveal .season-preview-edit-card svg {
-  width: 15px;
-  height: 15px;
-}
-
-.season-card-placement-editor {
-  margin-top: var(--spacing-2xl);
-}
-
-.season-card-placement-editor > header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.48fr);
-  align-items: end;
-  gap: var(--spacing-2xl);
-  margin-bottom: var(--spacing-lg);
-}
-
-.season-card-placement-editor > header h3 {
-  margin-top: var(--spacing-xs);
-  font-size: var(--text-h3);
-  line-height: var(--text-h3--line-height);
-  font-weight: 560;
-}
-
-.season-card-placement-editor > header > div > p:last-child {
-  max-width: 42rem;
-  margin-top: var(--spacing-sm);
-  color: var(--color-text-secondary);
-}
-
-.season-card-placement-editor > header aside {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-  border-left: 1px solid rgba(232, 168, 62, 0.3);
-  padding-left: var(--spacing-lg);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-card-placement-editor > header aside svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  margin-top: var(--spacing-2xs);
-  color: var(--color-primary);
-}
-
-.season-card-placement-boundary {
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-card-placement-preview {
-  animation: none;
-}
-
-.season-card-placement-preview .season-poster {
-  border-color: rgba(232, 168, 62, 0.48);
-  box-shadow:
-    0 3rem 7rem rgba(0, 0, 0, 0.44),
-    0 0 0 1px rgba(232, 168, 62, 0.08);
-}
-
-.season-card-placement-fine-tune {
-  max-width: 44rem;
-  margin-top: var(--spacing-md);
-  border: 1px solid var(--ritual-line-quiet);
-  border-radius: var(--radius-control);
-  background: rgba(13, 15, 18, 0.56);
-}
-
-.season-card-placement-fine-tune summary {
-  display: flex;
-  min-height: var(--spacing-input-height-md);
-  cursor: pointer;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0 var(--spacing-lg);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  list-style: none;
-}
-
-.season-card-placement-fine-tune summary::-webkit-details-marker {
-  display: none;
-}
-
-.season-card-placement-fine-tune summary svg {
-  width: 15px;
-  height: 15px;
-  color: var(--color-primary);
-}
-
-.season-card-placement-fine-tune > div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-lg);
-  border-top: 1px solid var(--ritual-line-quiet);
-  padding: var(--spacing-lg);
-}
-
-.season-card-placement-fine-tune label {
-  display: grid;
-  gap: var(--spacing-sm);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-card-placement-fine-tune input {
-  width: 100%;
-  accent-color: var(--color-primary);
-}
-
-.season-card-placement-fine-tune input:disabled {
-  opacity: 0.38;
-}
-
-.season-card-placement-fine-tune > div > p {
-  grid-column: 1 / -1;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-card-placement-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
-  border-top: 1px solid var(--ritual-line-quiet);
-  padding-top: var(--spacing-lg);
-}
-
-.season-card-placement-actions > div {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.season-card-placement-unavailable,
-.season-card-placement-error,
-.season-card-placement-notice {
-  margin-top: var(--spacing-md);
-  border: 1px solid var(--ritual-line-quiet);
-  border-radius: var(--radius-control);
-  background: rgba(17, 19, 24, 0.82);
-  padding: var(--spacing-md) var(--spacing-lg);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-card-placement-unavailable strong {
-  color: var(--color-text-primary);
-  font-weight: 570;
-}
-
-.season-card-placement-unavailable p {
-  margin-top: var(--spacing-xs);
-}
-
-.season-card-placement-error {
-  border-color: rgba(229, 103, 103, 0.38);
-  color: var(--color-danger);
-}
-
-.season-card-placement-notice {
-  width: fit-content;
-  margin-left: auto;
-  border-color: rgba(232, 168, 62, 0.24);
-  color: #dfbd83;
 }
 
 @keyframes season-ritual-stage-reveal {
@@ -1038,7 +370,6 @@
     --ritual-grid-half-width: 54vw;
   }
 
-  .season-opening-prelude,
   .season-opening-ritual > .season-opening {
     padding-right: clamp(var(--spacing-xl), 6vw, var(--spacing-3xl));
     padding-left: clamp(var(--spacing-xl), 6vw, var(--spacing-3xl));
@@ -1051,22 +382,6 @@
 
   .season-opening-ritual .season-save-state {
     border-left: 0;
-    padding-left: 0;
-  }
-
-  .season-opening-stage--reveal .season-opening-title-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .season-card-placement-editor > header {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .season-card-placement-editor > header aside {
-    border-top: 1px solid rgba(232, 168, 62, 0.2);
-    border-left: 0;
-    padding-top: var(--spacing-md);
     padding-left: 0;
   }
 }
@@ -1107,26 +422,6 @@
     right: max(var(--spacing-md), env(safe-area-inset-right));
   }
 
-  .season-opening-prelude {
-    padding-top: 6rem;
-    padding-bottom: 6rem;
-  }
-
-  .season-opening-prelude-lines {
-    min-height: 12rem;
-  }
-
-  .season-opening-prelude-lines p {
-    max-width: 13ch;
-    font-size: var(--text-h1);
-    line-height: var(--text-h1--line-height);
-  }
-
-  .season-opening-prelude-actions {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .season-opening-ritual > .season-opening {
     padding-top: 6rem;
     padding-bottom: var(--spacing-4xl);
@@ -1136,84 +431,12 @@
     padding-bottom: var(--spacing-3xl);
   }
 
-  .season-opening-mobile-progress {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .season-opening-ritual .season-opening-progress {
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-4xl);
-  }
-
-  .season-opening-ritual .season-opening-progress button {
-    display: block;
-    min-height: var(--spacing-input-height-md);
-    padding-right: 0;
-    padding-left: 0;
-  }
-
-  .season-opening-ritual .season-opening-progress-label {
-    display: none;
-  }
-
   .season-opening-ritual .season-opening-question {
     margin-bottom: var(--spacing-3xl);
   }
 
-  .season-goal-creator-context {
-    grid-template-columns: 1fr;
-    align-items: start;
-    padding-right: 0;
-    padding-left: 0;
-  }
-
-  .season-goal-creator-context fieldset > div {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .season-goal-creator-context label > span {
-    justify-content: center;
-  }
-
   .season-opening-ritual .season-opening-fields--two {
     grid-template-columns: 1fr;
-  }
-
-  .season-supporting-goal-chip {
-    width: 100%;
-  }
-
-  .season-opening-reveal-poster {
-    margin-right: calc(var(--spacing-sm) * -1);
-    margin-left: calc(var(--spacing-sm) * -1);
-  }
-
-  .season-card-placement-fine-tune > div {
-    grid-template-columns: 1fr;
-  }
-
-  .season-card-placement-actions {
-    position: static;
-    align-items: stretch;
-    flex-direction: column;
-    border-top: 1px solid var(--ritual-line-quiet);
-    background: transparent;
-    padding-top: var(--spacing-lg);
-  }
-
-  .season-card-placement-actions > button {
-    align-self: flex-start;
-  }
-
-  .season-card-placement-actions > div {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .season-card-placement-actions > div > button {
-    width: 100%;
   }
 
   .season-opening-ritual .season-opening-actions,
@@ -1230,37 +453,109 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .season-opening-prelude-lines {
-    display: grid;
-    min-height: 0;
-    gap: var(--spacing-2xl);
-  }
-
-  .season-opening-prelude-lines p {
-    position: static;
-    opacity: 1;
-    transform: none;
-  }
-
-  .season-opening-prelude-lines p[data-state="past"] {
-    transform: none;
-  }
-
-  .season-opening-prelude-lines p,
-  .season-opening-prelude-guide i {
-    transition: none;
-  }
-
   .season-opening-ambient-glow {
     opacity: 0.24;
     transform: translate3d(-16vw, 12vh, 0) scale(1);
     animation: none;
   }
 
-  .season-opening-ritual .season-opening-stage,
-  .season-opening-reveal-poster,
-  .season-supporting-goal-note,
-  .season-supporting-goal-note[data-state="closed"] {
+  .season-opening-ritual .season-opening-stage {
     animation: none;
+  }
+}
+
+/* Ritual routes share the approved non-dashboard page gutter. */
+.season-opening-ritual > .season-opening {
+  width: 100%;
+  padding-inline: var(--space-app-page-gutter);
+}
+
+@media (max-width: 45rem) {
+  .season-opening-ritual > .season-opening {
+    padding-inline: var(--space-page-edge-mobile);
+  }
+}
+
+/* The approved entry is the page's heading, rather than a card below one. */
+.season-opening-ritual:has(.cots-character-entry) > .season-opening {
+  padding-top: var(--space-season-entry-start);
+  padding-bottom: var(--space-season-entry-content);
+}
+.season-opening-ritual:has(.cots-character-entry) .season-opening-header {
+  align-items: start;
+  gap: var(--spacing-lg);
+  padding-bottom: var(--space-action-section);
+}
+.season-opening-ritual:has(.cots-character-entry) .season-opening-header h1,
+.season-opening-ritual:has(.cots-character-entry)
+  .season-opening-header
+  p:not(.eyebrow) {
+  display: none;
+}
+.cots-character-entry,
+.cots-character-entry-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.cots-character-entry {
+  --input-featured-size: var(--season-entry-field-size);
+  width: var(--season-entry-width);
+  gap: var(--space-season-entry-content);
+}
+.cots-character-entry-heading {
+  display: grid;
+  gap: var(--space-action-panel);
+}
+.cots-character-entry-heading h1 > span {
+  display: block;
+}
+.cots-character-entry-form {
+  gap: var(--space-action-section);
+}
+.cots-character-entry-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--spacing-lg);
+}
+.cots-character-entry-actions > .become-button {
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 80rem) {
+  .cots-character-entry-actions {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 45.001rem) and (max-height: 53.125rem) {
+  .season-opening-ritual:has(.cots-character-entry) > .season-opening {
+    padding-top: calc(var(--spacing-4xl) + var(--space-action-panel));
+  }
+  .season-opening-ritual:has(.cots-character-entry) .season-opening-header {
+    padding-bottom: var(--space-action-panel);
+  }
+  .cots-character-entry {
+    gap: var(--space-action-section);
+  }
+  .cots-character-entry-heading {
+    gap: var(--spacing-lg);
+  }
+}
+@media (max-width: 45rem) {
+  .cots-character-entry {
+    width: 100%;
+  }
+  .season-opening-ritual:has(.cots-character-entry) .season-opening-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .season-opening-ritual:has(.cots-character-entry) .season-save-state {
+    border: 0;
+    padding-left: 0;
+  }
+  .cots-character-entry-actions {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

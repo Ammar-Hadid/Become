@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { CompanyReceipts } from "@/features/finance/business-receipts/components/company-receipts.component";
 import { OfferRevisionComparison } from "@/features/entrepreneurship/offers/components/offer-revision-comparison.component";
 import { ArchiveBusinessRecord } from "@/features/entrepreneurship/shared/components/archive-business-record.component";
@@ -146,7 +147,11 @@ export async function OfferDetail({
         offer.events.some(
           (event) => event.kind === "ACCEPTED" && !event.retractedAt,
         ) && (
-          <section className="business-zone business-continuation-zone">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-zone business-continuation-zone"
+          >
             <h3>Continue into work</h3>
             <p>
               {offer.continuationChoice
@@ -156,7 +161,7 @@ export async function OfferDetail({
             <div className="mt-lg">
               <OfferContinuationForm offerId={id} workSources={workSources} />
             </div>
-          </section>
+          </Card>
         )}
       <div className="business-detail-grid">
         <div className="business-detail-main">
@@ -241,7 +246,11 @@ export async function OfferDetail({
               )}
             />
           )}
-          <section className="business-detail-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <h3>
               {audienceTest ? "Sharing & closure history" : "What happened"}
             </h3>
@@ -287,7 +296,7 @@ export async function OfferDetail({
             {latest?.kind === "PROPOSED" && (
               <p className="business-hint">No response recorded.</p>
             )}
-          </section>
+          </Card>
           {!audienceTest && (
             <CompanyReceipts
               userId={userId}
@@ -301,7 +310,11 @@ export async function OfferDetail({
             />
           )}
           {offer.revisions[0].id !== quote.id && (
-            <section className="business-detail-section">
+            <Card
+              material="glass"
+              spacing="dense"
+              className="business-detail-section"
+            >
               <p className="eyebrow">
                 Newer{" "}
                 {offer.revisions[0].proposedAt ? "quoted revision" : "draft"} ·
@@ -312,7 +325,7 @@ export async function OfferDetail({
               <p className="business-hint">
                 These are separate from the accepted terms above.
               </p>
-            </section>
+            </Card>
           )}
           <OfferRevisionComparison
             revisions={offer.revisions}
@@ -324,14 +337,22 @@ export async function OfferDetail({
           />
         </div>
         <aside className="business-aside">
-          <section className="business-detail-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <h3>Next actions</h3>
             <FollowUpForm target={{ offerId: id }} />
             {offer.followUps.map((followUp) => (
               <FollowUpRecord key={followUp.id} record={followUp} />
             ))}
-          </section>
-          <section className="business-aside-section">
+          </Card>
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-aside-section"
+          >
             <p className="eyebrow">
               {audienceTest ? "Intended audience" : "Specific recipient"}
             </p>
@@ -377,7 +398,7 @@ export async function OfferDetail({
                 <p>No problem linked.</p>
               )}
             </div>
-          </section>
+          </Card>
         </aside>
       </div>
     </>

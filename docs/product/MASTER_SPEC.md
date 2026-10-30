@@ -1,14 +1,10 @@
 # BECOME
 
-## Master Product, Design & Engineering Specification
+Frontend redesign uses the product owner’s supplied designs. Descriptions of existing screens, routes and workflows document functionality; they do not prescribe visual composition, navigation, copy or interaction design. Shared tokens, accessibility, security and domain contracts remain applicable.
 
-You are the lead engineer responsible for creating a brand-new application from scratch called **Become**.
+## Master Product & Engineering Specification
 
-The project directory starts empty. There is no existing codebase, architecture, database, package configuration, or design system to preserve.
-
-Treat this document as the long-term product specification and engineering constitution for Become.
-
-Do not try to implement the entire vision at once. Build it in coherent phases. Start with Phase 1 only, keep the application runnable, test important business logic, and stop after Phase 1 with an engineering handoff.
+This document records long-term product ideas and historical engineering plans. It does not override the current product owner's request, `AGENTS.md`, approved shared treatments, or the implementation. Inspect the repository for current behavior; old screen descriptions and phase instructions are historical context rather than mandates for new work.
 
 ---
 
@@ -84,7 +80,6 @@ Use:
 - Better Auth
 - Tailwind CSS
 - shadcn/ui
-- Geist typography
 - Zod
 - React Hook Form where useful
 - Recharts
@@ -217,110 +212,9 @@ Only send AI the data required for the current task. Do not dump the user's enti
 
 ---
 
-## 7. Visual identity
+## 9. Motion infrastructure
 
-Name:
-
-# Become
-
-Aesthetic:
-
-# Modern · Minimal · Premium · Serious
-
-But not corporate or sterile.
-
-Become should feel like a calm, beautifully designed personal command center.
-
-Approximate personality:
-
-- 70% serious/professional
-- 20% slightly futuristic
-- 10% playful/personal
-
-It should not feel like Jira, HR software, a crypto dashboard, a gamer UI, a generic admin template, or a children's habit app.
-
-### Dark palette
-
-```css
---background: #090a0c;
---surface: #111318;
---surface-elevated: #181b21;
---border: #262a32;
-
---text-primary: #f4f1ea;
---text-secondary: #989ba3;
---text-muted: #666a73;
-
---primary: #e8a83e;
---primary-hover: #f0b64d;
---primary-subtle: #2a2114;
-
---success: #54b88b;
---danger: #e56767;
---warning: #d99b42;
-```
-
-Identity:
-
-> near-black + warm ivory + amber/gold
-
-Gold should be rare and meaningful. Use it for primary actions, active timers, selected states, important progress, current season indicators, and high-value emphasis.
-
-Avoid excessive gradients, glassmorphism, glow, shadows, and decorative borders.
-
-Do not make each domain aggressively own a bright color. The primary Become identity remains black, charcoal, ivory, and amber. Domain colors may be used subtly in charts and comparisons when differentiation is useful.
-
-Use Geist and tabular numerals for money, durations, percentages, and analytics.
-
----
-
-## 8. Layout philosophy
-
-Do not turn every piece of data into a card.
-
-Use hierarchy through:
-
-- typography
-- whitespace
-- alignment
-- section structure
-- subtle surfaces
-- restrained separators
-- carefully chosen cards
-
-The UI should breathe.
-
-Prefer calm over loud, clear over decorative, premium over flashy, evidence over gamification, and typography over endless boxes.
-
----
-
-## 9. Motion and copy
-
-Motion should be subtle and intentional:
-
-- active timer gently becomes visually alive
-- charts transition between timeframes
-- widget movement feels smooth
-- dialogs and navigation feel polished
-
-Avoid:
-
-- confetti
-- XP
-- levels
-- fire emojis
-- bouncing achievements
-- fake dopamine mechanics
-
-Copy should be concise, calm, direct, intelligent, and occasionally personal.
-
-Bad:
-"AMAZING JOB 🔥 YOU CRUSHED FOUR HOURS!"
-
-Better:
-"4h 12m Engineering. Longest focused session this season."
-
-Facts are more valuable than empty encouragement.
+For motion changes, follow the lifecycle, token and accessibility contracts in [MOTION_SYSTEM.md](../design/MOTION_SYSTEM.md).
 
 ---
 
@@ -373,27 +267,25 @@ The timer should be globally accessible.
 
 Start flow:
 
-Start Timer → Domain → Activity → Optional related project/entity → Optional description → Start.
+Starting a timer records a domain and activity, with optional related project/entity and description.
 
-Stop flow should remain lightweight:
+Session completion supports:
 
-Stop → duration → optional outcome/notes/domain-specific details → save.
+Stopping records the duration and optional outcome, notes and domain-specific details.
 
 Running sessions expose Pause and End session; paused sessions expose Resume and
-End session. Home retains a clear paused-session card with context and frozen
+End session. Paused sessions retain their context and frozen
 focused time. Ending while paused opens the same optional wrap-up form without
 resuming. Cancelling leaves it paused; saving excludes the entire break.
 
-Logging must remain fast.
 
 Completed sessions allow correcting focused work duration when a timer was left
-running. Show an hours, minutes, and seconds picker. Keep the original start
+running. Support hours, minutes, and seconds input. Keep the original start
 and break records; resolve a corrected end from the requested focused duration
 so session history and reporting stay aligned. Reject durations longer than the
-available focused time since the session started or 24 hours. The picker supports
+available focused time since the session started or 24 hours. The input supports
 direct entry for each hours, minutes, and seconds value within that range.
 
-Do not make timer usage a giant form.
 
 ---
 
@@ -461,43 +353,6 @@ The Home page should answer quickly:
 - What is my financial state?
 - What important goal or experiment is active?
 - Is there a useful insight in my data?
-
-Conceptual hierarchy:
-
-```text
-BECOME
-
-Season 3 · 2026
-Week 36
-
-Good evening, Ammar.
-
-[ ACTIVE TIMER ]
-
-31h 42m
-Focused time this week
-
-ENGINEERING
-12h 31m
-↑ 8%
-
-ENTREPRENEURSHIP
-4h 18m
-
-FINANCE
-Income
-Spending
-Savings
-
-CONTENT
-1 creative work in progress
-
-GOALS / EXPERIMENTS
-
-RECENT INSIGHT
-```
-
-Do not mechanically reproduce this layout. Design the strongest version consistent with the visual system.
 
 ---
 
@@ -976,7 +831,7 @@ Idea → Create content → Write or plan → Make/edit a version → Publish to
 
 Production stages are optional guidance: Planning, Writing, Recording, Editing, Ready. Work can move backward or skip stages. Publication is a separate deliberate record, never inferred from a stage, a plan or a completed timer. Archival preserves historical output and time.
 
-A workspace supports title, purpose/audience, hook, outline, an optional rich-text script, production notes, next step, planned date and an owned thumbnail. Longer writing needs clear saved/pending/failed/conflicted states and protection against stale tabs. Additional variants, channel management and history use progressive disclosure. A variant without a script offers “Write script”; saved content offers “Open script”. Both navigate to `/content/[contentId]/variants/[variantId]/script`. Become’s script editor supports formatting, headings, lists, links, tables, owned images, find/replace, DOCX/TXT import and export, and printing to PDF. It autosaves and supports explicit Save and Ctrl/Cmd+S. Script revisions are independent of hook/outline/production-note revisions, and legacy plain-text scripts remain intact. DOCX content adopts Become’s typography rather than preserving Word page layout.
+A workspace supports title, purpose/audience, hook, outline, an optional rich-text script, production notes, next step, planned date and an owned thumbnail. Longer writing needs clear saved/pending/failed/conflicted states and protection against stale tabs. Script editing is available for each variant at `/content/[contentId]/variants/[variantId]/script`. Become’s script editor supports formatting, headings, lists, links, tables, owned images, find/replace, DOCX/TXT import and export, and printing to PDF. It autosaves and supports explicit Save and Ctrl/Cmd+S. Script revisions are independent of hook/outline/production-note revisions, and legacy plain-text scripts remain intact. DOCX content adopts Become’s typography rather than preserving Word page layout.
 
 Use the existing single active Session system for ideation, research, scripting, recording, editing, thumbnails, publishing and analytics. Sessions may be linked to a work and consistent version; general Content work remains possible without either. Preserve snapshots and label measured effort “recorded production time.” Completion does not change production stage or publication.
 
@@ -1187,78 +1042,21 @@ Do not implement Gmail during the initial foundation unless explicitly requested
 
 ---
 
-## 28. Fast capture and progressive disclosure
+## 28. Capture capabilities
 
-Become will fail if logging becomes annoying.
+Support capture of timer start/stop, income, expenses, ideas, company interactions, follow-ups, decisions and quick notes. Required fields follow each domain's validation contract; optional details remain optional.
 
-Prioritize very low-friction capture for:
+## 29. Future action search
 
-- timer start/stop
-- income
-- expense
-- idea
-- company interaction
-- follow-up
-- decision
-- quick notes
-
-Avoid giant mandatory forms.
-
-Require the minimum now and allow enrichment later.
-
-The application may become powerful, but the UI should not expose all complexity at once.
-
-Dashboard shows high-level truth.
-
-Dedicated pages provide depth.
-
----
-
-## 29. Navigation
-
-Possible top-level structure:
-
-- Home
-- Engineering
-- Entrepreneurship
-- Finance
-- Content
-- Goals
-- Experiments
-- Ideas
-- Decisions
-- Reviews
-
-Settings may include:
-
-- Domains
-- Activities
-- Dashboard
-- Financial Accounts
-- Integrations
-- AI
-- Appearance
-
-Do not put every database entity in the sidebar.
-
-Eventually consider a command palette for actions such as:
-
-- Start timer
-- Add expense
-- Record income
-- Add idea
-- Add company
-- Record decision
-- Search projects/companies
-- Open current season
-
----
+Future action search may provide timer start, expense/income capture, idea/company capture, decision recording, project/company search and current-Season access. This is deferred functionality, not a navigation layout requirement.
 
 ## 30. Responsive design and accessibility
 
 Desktop is the primary initial environment, but Become must be responsive because fast capture is naturally useful on mobile.
 
 Do not build native apps initially.
+
+Use semantic typography tokens and tabular numerals for money, durations, percentages and analytics.
 
 Maintain semantic HTML, keyboard navigation, visible focus, sufficient contrast, accessible labels/dialogs/dropdowns, and touch-friendly controls.
 
@@ -1370,8 +1168,6 @@ Establish:
 
 Create the visual foundation:
 
-- Become dark palette
-- Geist typography
 - layout shell
 - navigation
 - responsive structure
@@ -1437,6 +1233,8 @@ Add deterministic weekly/monthly/seasonal/yearly reviews with qualified facts, h
 
 Add evidence-backed conversational querying and commentary over structured Become data. One source-grounded COTS persona profile supplies communication tendencies, temperament, values, support/challenge, behavior and anti-caricature boundaries with provenance across Home, reviews, domains, farewell and chatbot. The user's admired/rejected traits, Season standards and adaptation constrain that authentic profile; they do not replace it. No generic Direct/Harsh/Ruthless mode. Personality never changes facts, certainty, qualification or safety. Generated character-inspired farewells bind to saved review/context and persona versions and replay saved output; they remain distinct from verified quotes. Phase 8 owns research/generation, AI-message persistence and orchestration.
 
+The product owner's current Living Season and Nexo/C.O.T.S implementation contract is in [`docs/product/LIVING_SEASONS.md`](LIVING_SEASONS.md). It supersedes historical Season artwork and single-banner treatments for this work. Model choice remains gated by the [Become-specific comparison protocol](../research/COTS_MODEL_COMPARISON.md).
+
 ### Phase 9: Integrations
 
 Only after the core product proves itself, consider Gmail, Google Pub/Sub, AI company research, outreach drafting, GitHub integration, CSV finance import, bank synchronization, and other integrations.
@@ -1464,7 +1262,7 @@ At minimum the user can:
 13. switch Week / Month / Season / Year
 14. see the current fixed calendar season
 15. use the app on desktop and a mobile-sized viewport
-16. see the Become design identity consistently applied
+16. apply the shared design tokens and semantic typography consistently
 
 Important calculations must have tests.
 
@@ -1499,18 +1297,6 @@ Whenever a product decision is ambiguous, ask:
 > Does this help the user understand the relationship between their intentions, behavior, time, outcomes, money, learning, and direction?
 
 If not, question whether the feature belongs.
-
-## Design north star
-
-Choose:
-
-- calm over loud
-- clear over decorative
-- premium over flashy
-- evidence over gamification
-- whitespace over unnecessary containers
-- typography over endless cards
-- subtle motion over spectacle
 
 ## Engineering north star
 

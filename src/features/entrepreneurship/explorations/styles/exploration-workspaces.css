@@ -1,8 +1,7 @@
 .business-shell:has(.exploration-workspace) {
   width: 100%;
   max-width: none;
-  padding: var(--spacing-xl) clamp(var(--spacing-xl), 3vw, var(--spacing-4xl))
-    var(--spacing-4xl);
+  padding-bottom: var(--spacing-4xl);
 }
 
 .exploration-context-bar {
@@ -169,8 +168,6 @@
   color: var(--color-text-muted);
 }
 
-.workspace-search input,
-.workspace-filter select,
 .workspace-filter-button {
   min-height: 2.75rem;
   border: 0;
@@ -179,18 +176,21 @@
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
 }
-
+.workspace-search input {
+  color: var(--color-text-primary);
+}
+.workspace-filter select {
+  color: var(--color-text-primary);
+}
 .workspace-search input {
   width: 100%;
   min-width: 0;
-  outline: none;
 }
 
 .workspace-filter {
   padding-inline: var(--spacing-sm);
   border-left: 1px solid var(--color-border);
 }
-
 .workspace-filter select {
   cursor: pointer;
   color: var(--color-text-secondary);
@@ -260,11 +260,11 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
-.workspace-ledger,
+.workspace-ledger {
+  min-width: 0;
+}
 .workspace-collection {
   min-width: 0;
-  padding-top: var(--spacing-xl);
 }
 
 .workspace-split,
@@ -340,7 +340,6 @@
 .workspace-record-open svg {
   width: 1rem;
 }
-
 .workspace-inspector {
   position: sticky;
   top: var(--spacing-xl);
@@ -348,8 +347,6 @@
   height: fit-content;
   max-height: calc(100dvh - var(--spacing-4xl));
   overflow-y: auto;
-  border-left: 1px solid var(--color-border);
-  background: var(--color-surface);
   animation: workspace-inspector-in var(--duration-surface) var(--ease-enter);
 }
 
@@ -861,7 +858,6 @@
   overflow: hidden;
   border-bottom: 1px solid var(--color-border);
 }
-
 .conversation-index,
 .conversation-thread,
 .conversation-context {
@@ -902,10 +898,6 @@
   width: 0.875rem;
 }
 
-.conversation-thread {
-  border-right: 1px solid var(--color-border);
-}
-
 .conversation-thread-heading {
   position: sticky;
   top: 0;
@@ -938,10 +930,6 @@
   position: sticky;
   bottom: 0;
   z-index: 3;
-}
-
-.conversation-context {
-  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
 }
 
 .conversation-context > header {
@@ -1032,19 +1020,13 @@
 .offers-workspace .business-offer-row {
   grid-template-columns: minmax(0, 1fr) minmax(12rem, 22rem) auto;
 }
-
 .offers-workspace .workspace-inspector {
   margin-top: 0;
 }
-
 /* Nexo synthesis */
 .synthesis-review {
   margin-block: var(--spacing-lg) var(--spacing-3xl);
   overflow: hidden;
-  border: 1px solid
-    color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
-  border-radius: var(--radius-panel);
-  background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
 }
 
 .synthesis-review-heading {
@@ -1194,17 +1176,13 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
-.synthesis-field input,
+.synthesis-field input {
+  width: 100%;
+  color: var(--color-text-primary);
+}
 .synthesis-field textarea {
   width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-input);
-  padding: var(--spacing-md);
   color: var(--color-text-primary);
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
 }
 
 .synthesis-findings {
@@ -1306,16 +1284,9 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
 .synthesis-finding-settings select {
-  min-height: 2.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-input);
-  padding-inline: var(--spacing-md);
   color: var(--color-text-primary);
 }
-
 .synthesis-sources input {
   margin-top: var(--spacing-xs);
   accent-color: var(--color-primary);
@@ -1589,7 +1560,6 @@
   .conversation-workspace {
     grid-template-columns: minmax(19rem, 21rem) minmax(0, 1fr);
   }
-
   .conversation-context {
     display: none;
   }
@@ -1606,10 +1576,6 @@
 }
 
 @media (max-width: 900px) {
-  .business-shell:has(.exploration-workspace) {
-    padding-inline: var(--spacing-xl);
-  }
-
   .exploration-context-bar,
   .workspace-heading,
   .synthesis-proposal-toolbar,
@@ -1642,7 +1608,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .workspace-inspector,
   .outreach-targets,
   .overview-next-actions {
     position: static;
@@ -1650,6 +1615,10 @@
     border-top: 1px solid var(--color-border);
     border-left: 0;
     padding-left: 0;
+  }
+  .workspace-inspector {
+    position: static;
+    max-height: none;
   }
 
   .outreach-queue {
@@ -1694,16 +1663,16 @@
 
 @media (max-width: 760px) {
   .exploration-context-tools {
-    display: none;
+    width: 100%;
+    justify-content: flex-start;
   }
 
-  .exploration-context-tools .exploration-masthead-actions,
   .exploration-question {
     display: none;
   }
 
   .exploration-context-bar {
-    grid-template-columns: minmax(0, 1fr);
+    flex-wrap: wrap;
   }
 
   .overview-command,
@@ -1735,15 +1704,12 @@
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
   }
-
   .conversation-workspace:not([data-empty]) .conversation-index {
     display: none;
   }
-
   .conversation-thread {
     min-height: calc(100dvh - 10rem);
     overflow: visible;
-    border-right: 0;
   }
 
   .conversation-thread-heading {
@@ -1877,10 +1843,6 @@
     justify-content: space-between;
   }
 
-  .audience-workspace .workspace-collection {
-    padding-top: var(--spacing-md);
-  }
-
   .exploration-snapshot-heading {
     gap: var(--spacing-sm);
     padding-bottom: var(--spacing-md);
@@ -1901,7 +1863,6 @@
     justify-content: start;
     gap: var(--spacing-sm);
   }
-
   .synthesis-review {
     margin-block: var(--spacing-md);
   }
@@ -1931,7 +1892,6 @@
   .workspace-filter {
     flex: 1;
   }
-
   .workspace-filter select {
     width: 100%;
   }
@@ -1964,11 +1924,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .direct-workspace,
-  .workspace-inspector,
   .synthesis-proposal,
   .synthesis-pending > span,
   .conversation-message-list > li[data-requested] article,
   .exploration-question p {
+    animation: none;
+  }
+  .workspace-inspector {
     animation: none;
   }
 }

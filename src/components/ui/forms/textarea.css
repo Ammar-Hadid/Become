@@ -1,0 +1,79 @@
+/* Owner-approved underline textarea. All presentation values come from shared tokens. */
+textarea.become-textarea {
+  --textarea-size: var(--input-body-size);
+  --textarea-leading: var(--text-body--line-height);
+  --textarea-padding: var(--input-body-padding-block);
+  --textarea-tracking: var(--text-body--letter-spacing);
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  field-sizing: content;
+  min-height: calc(
+    var(--textarea-rows, 3) * var(--textarea-size) * var(--textarea-leading) +
+      2 * var(--textarea-padding)
+  );
+  max-height: var(--textarea-max-height);
+  overflow-y: auto;
+  resize: none;
+  border: 0;
+  border-bottom: var(--field-border-width) solid var(--field-edge-rest);
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  padding: var(--textarea-padding) 0;
+  background: transparent;
+  color: var(--field-text);
+  caret-color: var(--field-focus-color);
+  font-family: var(--text-body--font-family);
+  font-size: var(--textarea-size);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--textarea-tracking);
+  line-height: var(--textarea-leading);
+  scrollbar-width: thin;
+  scrollbar-color: var(--field-edge-hover) transparent;
+  transition: border-color var(--motion-control-duration)
+    var(--motion-control-ease);
+}
+textarea.become-textarea[data-variant="featured"] {
+  --textarea-size: var(--input-featured-size);
+  --textarea-leading: var(--input-featured-leading);
+  --textarea-padding: var(--input-featured-padding-block);
+  --textarea-tracking: var(--input-featured-tracking);
+}
+textarea.become-textarea::placeholder {
+  color: var(--field-placeholder);
+}
+textarea.become-textarea::selection {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+textarea.become-textarea:where(:not(:disabled):not([readonly])):hover {
+  border-bottom-color: var(--field-edge-hover);
+}
+textarea.become-textarea:focus {
+  border-bottom-color: var(--field-focus-color);
+}
+textarea.become-textarea[aria-invalid="true"] {
+  border-bottom-color: var(--field-error-color);
+}
+textarea.become-textarea[readonly] {
+  color: var(--field-readonly-text);
+  border-bottom-style: dashed;
+}
+textarea.become-textarea:disabled {
+  cursor: not-allowed;
+  opacity: var(--field-disabled-opacity);
+  resize: none;
+}
+
+@media (max-width: 45rem) {
+  textarea.become-textarea[data-variant="body"] {
+    --textarea-size: var(--input-body-mobile-size);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  textarea.become-textarea {
+    transition: none;
+  }
+}

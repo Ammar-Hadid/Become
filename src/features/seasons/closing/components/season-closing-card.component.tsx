@@ -1,5 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
 import { BookCheck, Save } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -48,7 +50,7 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
 
   if (season.closedAt) {
     return (
-      <section className="season-closing-card season-closing-card--closed">
+      <Card className="season-closing-card season-closing-card--closed">
         <BookCheck aria-hidden="true" />
         <div>
           <p className="eyebrow">Season closed</p>
@@ -58,13 +60,13 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
             and evidence may continue to change independently.
           </p>
         </div>
-      </section>
+      </Card>
     );
   }
   if (season.calendar.phase !== "ENDED") return null;
 
   return (
-    <section className="season-closing-card">
+    <Card className="season-closing-card">
       <BookCheck aria-hidden="true" />
       <div>
         <p className="eyebrow">The calendar season has ended</p>
@@ -74,9 +76,13 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
           goal.
         </p>
         {!open && (
-          <button type="button" onClick={() => setOpen(true)}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setOpen(true)}
+          >
             Close this season
-          </button>
+          </Button>
         )}
       </div>
       <form ref={formRef} onSubmit={closeSeason} hidden={!open}>
@@ -84,7 +90,7 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
           <span className="field-label">
             What do you want to remember? <span>— optional</span>
           </span>
-          <textarea
+          <Textarea
             className="text-input text-input--textarea-sm"
             name="note"
             maxLength={6000}
@@ -114,6 +120,6 @@ export function SeasonClosingCard({ season }: { season: SeasonView }) {
           </Button>
         </div>
       </form>
-    </section>
+    </Card>
   );
 }

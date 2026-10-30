@@ -2,20 +2,47 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Plus, Sparkles } from "lucide-react";
+import { CircleCheck, Plus, Sparkles } from "lucide-react";
+import { Card } from "@/components/ui/cards/card.component";
+import {
+  WorkspaceHeader,
+  WorkspaceMetric,
+  WorkspacePanel,
+} from "@/components/ui/workspace/workspace.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
 import { saveNexoSettingsAction } from "@/features/nexo/actions/nexo-settings.action";
-import { SYNTHESIS_TASK } from "@/features/nexo/constants/nexo-task.constants";
+import { ACTIVE_NEXO_TASKS } from "@/features/nexo/constants/nexo-task.constants";
 import { NexoProfileEditor } from "@/features/nexo/components/nexo-profile-editor.component";
-import type {
-  NexoProfile,
-  NexoSettingsConfig,
+import { NexoTaskRouting } from "@/features/nexo/components/nexo-task-routing.component";
+import { Button } from "@/components/ui/buttons/button.component";
+import { Input } from "@/components/ui/forms/input.component";
+import type { AiProvider } from "@/features/nexo/services/ai-credential.service";
+import {
+  nexoProfileSchema,
+  type NexoProfile,
+  type NexoSettingsConfig,
 } from "@/features/nexo/schemas/nexo-settings.schema";
+
+function isCompleteProfile(profile: NexoProfile) {
+  return nexoProfileSchema.safeParse(profile).success;
+}
+
+type NexoSettingsProps = {
+  config: NexoSettingsConfig;
+  credentialAvailable: boolean;
+  credentialStatus: Record<
+    AiProvider,
+    { available: boolean; updatedAt: string | null }
+  >;
+  version: number;
+};
 
 function newProfile(): NexoProfile {
   return {
     id: `profile-${crypto.randomUUID()}`,
-    name: "Synthesis profile",
+    name: "New AI profile",
     provider: "openai",
     model: "",
     reasoning: "default",
@@ -25,62 +52,236 @@ function newProfile(): NexoProfile {
   };
 }
 
+function initialAssignments(config: NexoSettingsConfig) {
+  return Object.fromEntries(
+    config.assignments.map(({ taskId, profileId }) => [taskId, profileId]),
+  );
+}
+
 export function NexoSettings({
   config,
-  credentialAvailable,
+  credentialStatus: initialCredentialStatus,
   version,
-}: {
-  config: NexoSettingsConfig;
-  credentialAvailable: boolean;
-  version: number;
-}) {
+}: NexoSettingsProps) {
   const router = useRouter();
+  const { play } = useInterfaceSound();
+  const [activeProvider, setActiveProvider] = useState<AiProvider>("openai");
+  const [keyError, setKeyError] = useState(false);
   const [profiles, setProfiles] = useState(config.profiles);
-  const [assignedProfileId, setAssignedProfileId] = useState(
-    config.assignments.find(({ taskId }) => taskId === SYNTHESIS_TASK)
-      ?.profileId ?? "",
+  const [assignments, setAssignments] = useState<Record<string, string>>(() =>
+    initialAssignments(config),
   );
   const [dailyRunLimit, setDailyRunLimit] = useState(config.dailyRunLimit);
+  const [credentialStatus, setCredentialStatus] = useState(
+    initialCredentialStatus,
+  );
+  const [keyDrafts, setKeyDrafts] = useState<Record<string, string>>({});
+  const [keyMessage, setKeyMessage] = useState("");
+  const [keyBusy, setKeyBusy] = useState<AiProvider | null>(null);
+  const providers = ["openai", "zai", "moonshot", "google"] as const;
+  const credentialAvailable = providers.some(
+    (provider) => credentialStatus[provider].available,
+  );
+  const assignedProviders = ACTIVE_NEXO_TASKS.flatMap((task) => {
+    const assigned = profiles.find(
+      (profile) => profile.id === assignments[task.id],
+    );
+    return assigned ? [assigned.provider] : [];
+  });
+  const assignedCredentialsReady =
+    assignedProviders.length > 0 &&
+    assignedProviders.every((provider) => credentialStatus[provider].available);
+  const completeProfileIds = new Set(
+    profiles.filter(isCompleteProfile).map(({ id }) => id),
+  );
+  const assignedTaskCount = ACTIVE_NEXO_TASKS.filter((task) =>
+    completeProfileIds.has(assignments[task.id] ?? ""),
+  ).length;
+  const setupReady =
+    assignedCredentialsReady &&
+    profiles.length > 0 &&
+    assignedTaskCount === ACTIVE_NEXO_TASKS.length &&
+    Number.isInteger(dailyRunLimit) &&
+    dailyRunLimit >= 1 &&
+    dailyRunLimit <= 100;
+  const draftFingerprint = JSON.stringify({
+    profiles,
+    assignments: ACTIVE_NEXO_TASKS.flatMap((task) => {
+      const profileId = assignments[task.id];
+      return profileId ? [{ taskId: task.id, profileId }] : [];
+    }),
+    dailyRunLimit,
+  });
 
   function removeProfile(profileId: string) {
     setProfiles((current) =>
       current.filter((profile) => profile.id !== profileId),
     );
-    setAssignedProfileId((current) => (current === profileId ? "" : current));
+    setAssignments((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([, assignedId]) => {
+          return assignedId !== profileId;
+        }),
+      ),
+    );
   }
 
+  async function saveKey(provider: AiProvider) {
+    setKeyBusy(provider);
+    setKeyMessage("");
+    setKeyError(false);
+    try {
+      const response = await fetch("/api/settings/ai-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, key: keyDrafts[provider] ?? "" }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        play("actionBlocked");
+        throw new Error(result.error ?? "Could not save this key.");
+      }
+      play("saveConfirmed");
+      setCredentialStatus(result.status);
+      setKeyDrafts((prior) => ({ ...prior, [provider]: "" }));
+      setKeyMessage(`${provider} key saved on the server.`);
+    } catch (error) {
+      setKeyError(true);
+      setKeyMessage(
+        error instanceof DOMException && error.name === "TimeoutError"
+          ? "Could not confirm the key save. Your entry is preserved; try again."
+          : error instanceof Error ? error.message : "Could not save this key.",
+      );
+    } finally {
+      setKeyBusy(null);
+    }
+  }
+
+  const providerNames: Record<AiProvider, string> = {
+    openai: "OpenAI",
+    zai: "Z.AI",
+    moonshot: "Kimi / Moonshot",
+    google: "Google Gemini",
+  };
   return (
-    <div className="nexo-settings">
-      <header className="nexo-settings-heading settings-page-heading">
-        <p className="eyebrow">Nexo</p>
-        <h2>Configure requested synthesis.</h2>
-        <p>
-          Choose how requested synthesis runs. Every result remains a proposal
-          until you accept it.
-        </p>
-      </header>
-
-      <details
-        className="nexo-credential-status"
-        data-available={credentialAvailable || undefined}
+    <div className="nexo-settings nexo-workspace">
+      <WorkspaceHeader
+        eyebrow="Settings · Nexo"
+        title="AI connections"
+        description="Connect a provider, choose your models, then assign the tasks they handle."
+      />
+      <div className="nexo-setup-summary">
+        <WorkspaceMetric
+          label="Provider connection"
+          value={credentialAvailable ? "Connected" : "Add a key"}
+          detail={`${providers.filter((provider) => credentialStatus[provider].available).length} of ${providers.length} providers connected`}
+        />
+        <WorkspaceMetric
+          label="Model profiles"
+          value={completeProfileIds.size}
+          detail={`${profiles.length} saved in this draft`}
+        />
+        <WorkspaceMetric
+          label="Task assignments"
+          value={`${assignedTaskCount} / ${ACTIVE_NEXO_TASKS.length}`}
+          detail={
+            setupReady
+              ? "Draft complete · save to apply"
+              : "Configure only the tasks you want to use"
+          }
+        />
+      </div>
+      <WorkspacePanel
+        title="1. Connect a provider"
+        description="API keys are stored encrypted. API usage is billed separately from a ChatGPT subscription."
+        spacing="dense"
+        className="nexo-provider-panel"
       >
-        <summary>
-          <span>
-            <KeyRound aria-hidden="true" />
-          </span>
-          <strong>
-            {credentialAvailable
-              ? "Server credential available"
-              : "Server credential required"}
-          </strong>
-        </summary>
-        <p>
-          {credentialAvailable
-            ? "Nexo can run an assigned profile. The credential never reaches this page."
-            : "Add OPENAI_API_KEY on the server to enable requests. You can finish the profile now."}
-        </p>
-      </details>
-
+        <div className="nexo-provider-layout">
+          <div
+            className="nexo-provider-statuses"
+            aria-label="Provider connection status"
+          >
+            {providers.map((provider) => (
+              <div key={provider}>
+                <span>{providerNames[provider]}</span>
+                <span
+                  data-connected={
+                    credentialStatus[provider].available || undefined
+                  }
+                >
+                  {credentialStatus[provider].available ? (
+                    <>
+                      <CircleCheck /> Connected
+                    </>
+                  ) : (
+                    "Not connected"
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="nexo-provider-entry">
+            <label className="nexo-settings-field">
+              <span>Provider connection</span>
+              <NativeSelect
+                value={activeProvider}
+                onChange={(event) => {
+                  setActiveProvider(event.target.value as AiProvider);
+                  setKeyMessage("");
+                  setKeyError(false);
+                }}
+              >
+                {providers.map((provider) => (
+                  <option key={provider} value={provider}>
+                    {providerNames[provider]}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+            <Input
+              type="password"
+              label={
+                credentialStatus[activeProvider].available
+                  ? "Replace API key"
+                  : "API key"
+              }
+              aria-label={`${activeProvider} API key`}
+              autoComplete="off"
+              value={keyDrafts[activeProvider] ?? ""}
+              onChange={(event) =>
+                setKeyDrafts((prior) => ({
+                  ...prior,
+                  [activeProvider]: event.target.value,
+                }))
+              }
+              placeholder="Paste the provider’s API key"
+            />
+            <Button
+              type="button"
+              disabled={
+                keyBusy !== null || !(keyDrafts[activeProvider] ?? "").trim()
+              }
+              onClick={() => saveKey(activeProvider)}
+            >
+              {keyBusy === activeProvider ? "Saving…" : "Save key"}
+            </Button>
+            <p className="nexo-provider-help">
+              Saved keys are never returned to this browser. Saving a key does
+              not run AI.
+            </p>
+          </div>
+        </div>
+        {keyMessage && (
+          <p
+            className={keyError ? "form-error" : "type-body-sm"}
+            role={keyError ? "alert" : "status"}
+          >
+            {keyMessage}
+          </p>
+        )}
+      </WorkspacePanel>
       <RecordForm
         formClassName="nexo-settings-form"
         submitLabel="Save Nexo settings"
@@ -88,47 +289,51 @@ export function NexoSettings({
           saveNexoSettingsAction(version, {
             schemaVersion: 1,
             profiles,
-            assignments: assignedProfileId
-              ? [
-                  {
-                    taskId: SYNTHESIS_TASK,
-                    profileId: assignedProfileId,
-                  },
-                ]
-              : [],
+            assignments: ACTIVE_NEXO_TASKS.flatMap((task) => {
+              const profileId = assignments[task.id];
+              return profileId ? [{ taskId: task.id, profileId }] : [];
+            }),
             dailyRunLimit,
           })
         }
         onSaved={() => router.refresh()}
       >
-        <section
-          className="nexo-settings-section"
-          aria-labelledby="nexo-profiles-title"
-        >
-          <header>
-            <div>
-              <p className="eyebrow">Model profiles</p>
-              <h3 id="nexo-profiles-title">Provider configurations</h3>
-              <p>Choose the model for requested summaries.</p>
+        <input
+          type="hidden"
+          name="nexo-settings-draft"
+          value={draftFingerprint}
+        />
+        <WorkspacePanel
+          title="2. Choose your models"
+          description="A profile saves a provider and model. Reuse it for as many tasks as you like."
+          spacing="dense"
+          actions={
+            <div className="nexo-section-actions">
+              <span>{profiles.length} / 20</span>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={profiles.length >= 20}
+                onClick={() =>
+                  setProfiles((current) => [...current, newProfile()])
+                }
+              >
+                <Plus /> Add profile
+              </Button>
             </div>
-            <button
-              type="button"
-              className="finance-dialog-trigger finance-dialog-trigger--secondary"
-              disabled={profiles.length >= 20}
-              onClick={() =>
-                setProfiles((current) => [...current, newProfile()])
-              }
-            >
-              <Plus aria-hidden="true" /> Add profile
-            </button>
-          </header>
-
-          {profiles.length > 0 ? (
+          }
+        >
+          {profiles.length ? (
             <div className="nexo-profile-list">
               {profiles.map((profile) => (
                 <NexoProfileEditor
                   key={profile.id}
                   profile={profile}
+                  assignedTaskCount={
+                    ACTIVE_NEXO_TASKS.filter(
+                      (task) => assignments[task.id] === profile.id,
+                    ).length
+                  }
                   onChange={(next) =>
                     setProfiles((current) =>
                       current.map((item) =>
@@ -145,71 +350,50 @@ export function NexoSettings({
               <Sparkles aria-hidden="true" />
               <div>
                 <strong>No model profile configured</strong>
-                <p>Add a profile when you want on-request synthesis.</p>
+                <p>Give your first model a name and enter its model ID.</p>
               </div>
-              <button
-                type="button"
-                className="finance-dialog-trigger"
-                onClick={() => setProfiles([newProfile()])}
-              >
+              <Button type="button" onClick={() => setProfiles([newProfile()])}>
                 Add first profile
-              </button>
+              </Button>
             </div>
           )}
-        </section>
-
-        <section
-          className="nexo-settings-section"
-          aria-labelledby="nexo-assignment-title"
+        </WorkspacePanel>
+        <Card spacing="dense" className="nexo-routing-panel">
+          <NexoTaskRouting
+            tasks={ACTIVE_NEXO_TASKS}
+            profiles={profiles}
+            assignments={assignments}
+            completeProfileIds={completeProfileIds}
+            onAssignmentChange={(taskId, profileId) =>
+              setAssignments((current) => ({ ...current, [taskId]: profileId }))
+            }
+          />
+        </Card>
+        <WorkspacePanel
+          title="Daily usage limit"
+          description="A shared ceiling across all active Nexo tasks and profiles."
+          spacing="dense"
         >
-          <header>
+          <div className="nexo-budget-row">
             <div>
-              <p className="eyebrow">Task assignment</p>
-              <h3 id="nexo-assignment-title">So Far We Know summary</h3>
-              <p>Choose which profile creates this proposal.</p>
+              <strong>Maximum runs per day</strong>
+              <p>
+                Set a limit you are comfortable with. Token prices and model
+                choices also affect the amount billed.
+              </p>
             </div>
-          </header>
-          <label className="nexo-settings-field">
-            Model profile
-            <select
-              value={assignedProfileId}
-              disabled={profiles.length === 0}
-              onChange={(event) => setAssignedProfileId(event.target.value)}
-            >
-              <option value="">No profile assigned</option>
-              {profiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name || "Untitled profile"}
-                </option>
-              ))}
-            </select>
-            <small>Manual understanding remains available either way.</small>
-          </label>
-        </section>
-
-        <section
-          className="nexo-settings-section"
-          aria-labelledby="nexo-limits-title"
-        >
-          <header>
-            <div>
-              <p className="eyebrow">Operational limit</p>
-              <h3 id="nexo-limits-title">Daily requested runs</h3>
-              <p>Set a daily ceiling for requested runs.</p>
-            </div>
-          </header>
-          <label className="nexo-settings-field">
-            Maximum runs per day
-            <input
+            <Input
+              label="Daily limit"
               type="number"
               min={1}
               max={100}
               required
               value={dailyRunLimit}
+              help="Choose a value from 1 to 100."
               onChange={(event) => setDailyRunLimit(Number(event.target.value))}
             />
-          </label>
-        </section>
+          </div>
+        </WorkspacePanel>
       </RecordForm>
     </div>
   );

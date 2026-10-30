@@ -1,6 +1,8 @@
 # Become automatic production deployment
 
-The existing `/srv/apps/become/current` symlink, `become.service`, dedicated Node runtime, Neon roles, media root, and Become Caddy site remain in place. No other VPS application or proxy site is changed. The setup below is a one-time administrator task; subsequent pushes to `main` deploy automatically.
+The existing `/srv/apps/become/current` symlink, `become.service`, dedicated Node runtime, self-hosted PostgreSQL roles, media root, and Become Caddy site remain in place. No other VPS application or proxy site is changed. The setup below is a one-time administrator task; subsequent pushes to `main` deploy automatically.
+
+Database provisioning and maintenance are documented in [self-hosted PostgreSQL](SELF_HOSTED_DATABASE.md).
 
 ## One-time setup
 
@@ -46,6 +48,6 @@ If building or backup fails, the old release remains active. If migration fails 
 - Logs: GitHub Actions run; `sudo journalctl -u become.service -u become-backup.service --since today`; local sets in `/srv/backups/become/`. Do not paste environment files into logs.
 - Manual rollback: first verify target compatibility with the **current** schema/media, then on the VPS run `sudo /usr/local/sbin/become-rollback /srv/apps/become/releases/<known-good-release>`. It holds the same maintenance lock, switches only Become, and checks health. It does not restore the database.
 - Emergency manual deployment: run the same validation commands and choose a reviewed full commit. Archive it with `git archive --format=tar <sha>`, then upload that tar file as `ammar` to `/home/ammar/.become-deploy.manual<digits>.tar`. From your existing `ssh nexo-vps` session, run `sudo /usr/local/sbin/become-deploy <sha> 0-<same-digits> /home/ammar/.become-deploy.manual<digits>.tar`. The server still builds, backs up, migrates, and health-checks. Remove that exact uploaded tar after the result is understood. No local copy of the GitHub private deploy key is needed for this path.
-- Before a planned destructive migration, rehearse it against a restored production backup or isolated Neon branch and choose a compatible release/rollback plan. Apply it under a maintenance window following [the production recovery guide](PRODUCTION.md#14-rollback-recovery-and-restore-rehearsal); do not bypass the migration guard blindly.
+- Before a planned destructive migration, rehearse it against a restored production backup or isolated PostgreSQL database and choose a compatible release/rollback plan. Apply it under a maintenance window following [the production recovery guide](PRODUCTION.md#14-rollback-recovery-and-restore-rehearsal); do not bypass the migration guard blindly.
 
 The initial administrator setup and GitHub Environment cannot be completed by a repository commit alone. The deployment workflow is deliberately fail-closed until the server scripts, verified local backup, forced SSH key, pinned host key, and Environment values are installed. Local-only sets do not survive loss of the VPS; adding Restic later requires no deployment workflow change.

@@ -23,6 +23,7 @@ export async function previewDirection(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
+      signal: AbortSignal.timeout(15_000),
     });
     const body = (await response.json().catch(() => null)) as {
       evaluation?: Evaluation;
@@ -50,7 +51,9 @@ export async function previewDirection(
 }
 
 export async function getMetricCatalog(): Promise<MetricCapability[]> {
-  const response = await fetch("/api/direction/catalog");
+  const response = await fetch("/api/direction/catalog", {
+    signal: AbortSignal.timeout(15_000),
+  });
   const body = (await response.json().catch(() => null)) as {
     items?: MetricCapability[];
     error?: string;

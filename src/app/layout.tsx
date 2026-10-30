@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import "geist/font/sans";
-import "geist/font/mono";
+import { geistMono, inter, manrope } from "./fonts/font.config";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +12,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
+    <html
+      lang="en"
+      className={`dark ${manrope.variable} ${inter.variable} ${geistMono.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

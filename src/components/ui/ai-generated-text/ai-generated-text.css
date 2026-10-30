@@ -1,0 +1,84 @@
+.living-ink-copy {
+  display: grid;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+.living-ink-paragraph {
+  margin: 0;
+  max-width: var(--ai-generated-text-copy-width);
+}
+.living-ink-copy[data-armed="true"]
+  .living-ink-paragraph[data-pending="true"]
+  .living-ink-word {
+  opacity: 0;
+}
+.living-ink-paragraph[data-reveal="true"] .living-ink-word {
+  animation: living-ink-arrival var(--ai-generated-text-duration) linear both;
+  animation-delay: min(
+    var(--ink-order) * var(--ai-generated-text-word-step),
+    var(--ai-generated-text-delay-cap)
+  );
+  animation-play-state: paused;
+}
+.living-ink-paragraph[data-reveal="true"][data-running="true"]
+  .living-ink-word {
+  animation-play-state: running;
+}
+@keyframes living-ink-arrival {
+  0% {
+    opacity: 0;
+    color: transparent;
+    text-shadow: 0 0 var(--ai-generated-text-soft-radius) var(--color-primary);
+  }
+  12% {
+    opacity: 0.8;
+    color: transparent;
+    text-shadow:
+      0 0 var(--ai-generated-text-soft-radius) var(--color-primary),
+      0 0 var(--ai-generated-text-light-radius)
+        color-mix(
+          in srgb,
+          var(--color-primary) var(--ai-generated-text-soft-strength),
+          transparent
+        );
+  }
+  32% {
+    opacity: 1;
+    color: var(--color-primary);
+    text-shadow: 0 0 var(--ai-generated-text-light-radius)
+      color-mix(
+        in srgb,
+        var(--color-primary) var(--ai-generated-text-light-strength),
+        transparent
+      );
+  }
+  58% {
+    opacity: 1;
+    color: color-mix(
+      in srgb,
+      var(--color-primary) var(--ai-generated-text-settle-tint),
+      var(--color-text-primary)
+    );
+    text-shadow: 0 0 var(--ai-generated-text-soft-radius)
+      color-mix(
+        in srgb,
+        var(--color-primary) var(--ai-generated-text-trail-strength),
+        transparent
+      );
+  }
+  100% {
+    opacity: 1;
+    color: var(--color-text-primary);
+    text-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .living-ink-copy[data-armed="true"]
+    .living-ink-paragraph[data-pending="true"]
+    .living-ink-word {
+    opacity: 1;
+  }
+  .living-ink-paragraph[data-reveal="true"] .living-ink-word {
+    animation: none;
+  }
+}

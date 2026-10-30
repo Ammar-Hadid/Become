@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Route } from "@playwright/test";
 import { test, expect, type Page } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 async function createDisposableDirectionUser(page: Page) {
   await page.goto("/sign-in");
@@ -14,45 +15,43 @@ async function createDisposableDirectionUser(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-direction-password");
   await page.getByTestId("auth-submit").click();
-  await expect
-    .poll(() => new URL(page.url()).pathname)
-    .toMatch(/^\/$|\/direction\/seasons\/\d+\/[1-4]\/opening$/);
-  if (page.url().includes("/opening")) {
-    await page.getByRole("button", { name: "Not now" }).click();
-  }
-  await expect(page).toHaveURL((url) => url.pathname === "/");
+  await deferAutomaticSeasonOpening(page);
 }
 
 async function expectStyledHomeSeasonCard(page: Page) {
-  const card = page.locator(".season-home");
-  const poster = card.locator(".season-poster--home");
+  const card = page.getByRole("region", {
+    name: "Season Progress",
+    exact: true,
+  });
+  const progress = card.getByRole("progressbar", {
+    name: "Season calendar elapsed",
+  });
 
   await expect(card).toBeVisible();
-  await expect(poster).toBeVisible();
-  await expect(poster).toHaveCSS("display", "grid");
-  await expect(poster).toHaveCSS("border-top-style", "solid");
+  await expect(progress).toBeVisible();
+  await expect(card).toHaveCSS("display", "flex");
+  await expect(card).toHaveCSS("border-top-style", "solid");
+  await expect(progress).toHaveAttribute(
+    "data-progress-variant",
+    "season-ticks",
+  );
 
-  const layout = await poster.evaluate((element) => {
+  const layout = await card.evaluate((element) => {
     const styles = getComputedStyle(element);
     const bounds = element.getBoundingClientRect();
-    const tracks = styles.gridTemplateColumns
-      .split(" ")
-      .filter((track) => track.length > 0);
 
     return {
       backgroundImage: styles.backgroundImage,
       height: bounds.height,
-      tracks: tracks.length,
+      padding: Number.parseFloat(styles.paddingInlineStart),
       width: bounds.width,
     };
   });
 
   expect(layout.backgroundImage).not.toBe("none");
-  expect(layout.height).toBeGreaterThan(290);
+  expect(layout.height).toBeGreaterThan(0);
+  expect(layout.padding).toBeGreaterThan(0);
   expect(layout.width).toBeGreaterThan(250);
-  expect(layout.tracks).toBe(
-    (page.viewportSize()?.width ?? 1280) <= 820 ? 1 : 2,
-  );
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth + 1,
@@ -60,81 +59,54 @@ async function expectStyledHomeSeasonCard(page: Page) {
   ).toBe(true);
 }
 
-async function enterSeasonOpeningStageTwo(page: Page, carryForward = "") {
-  await page.goto("/direction");
-  await page.getByRole("link", { name: "Open your season" }).click();
-  const continueButton = page.getByRole("button", {
-    name: "Continue",
-    exact: true,
-  });
-  await expect(continueButton).toBeEnabled();
-  if (carryForward)
-    await page
-      .getByRole("textbox", { name: "Carry forward" })
-      .fill(carryForward);
-  await continueButton.click();
+async function readDashboardPresentation(page: Page) {
+  await expectStyledHomeSeasonCard(page);
   await expect(
-    page.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
+    page.getByRole("region", { name: "Dashboard lenses", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Create a new goal" }),
-  ).toBeEnabled();
-  return page.url();
-}
-
-function seasonApiFromOpeningUrl(openingUrl: string) {
-  const match = new URL(openingUrl).pathname.match(
-    /\/direction\/seasons\/(\d+)\/([1-4])\/opening/,
-  );
-  if (!match) throw new Error(`Unexpected season opening URL: ${openingUrl}`);
-  return `/api/direction/seasons/${match[1]}/${match[2]}`;
-}
-
-function waitForSeasonDraftSave(page: Page, carryForward?: string) {
-  return page.waitForResponse((response) => {
-    if (
-      new URL(response.url()).pathname !== "/api/direction/commands" ||
-      response.status() < 200 ||
-      response.status() >= 300
-    )
-      return false;
-    const body = response.request().postDataJSON() as {
-      type?: string;
-      draft?: { answers?: { carryForward?: string } };
+  const card = page.locator(".dashboard-v2-card").first();
+  await expect(card).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - innerWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+  return card.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return {
+      background: styles.background,
+      border: styles.border,
+      radius: styles.borderRadius,
+      padding: styles.padding,
+      blur: styles.backdropFilter,
+      font: styles.font,
     };
-    return (
-      body.type === "SAVE_SEASON" &&
-      (carryForward === undefined ||
-        body.draft?.answers?.carryForward === carryForward)
-    );
   });
 }
 
-function waitForSeasonReview(page: Page, seasonApi: string) {
-  return page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname === seasonApi && response.ok(),
-  );
-}
-
-test("the season card keeps its responsive layout on a cold Home load", async ({
+test("protected dashboard retains its presentation after visiting redesigned Direction", async ({
   page,
 }) => {
   test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await createDisposableDirectionUser(page);
-
-  // A document reload drops CSS retained from previously visited App Router
-  // segments and catches route-owned styles leaking into this shared card.
   await page.reload();
-  await expectStyledHomeSeasonCard(page);
-
-  await page.getByRole("link", { name: "Direction", exact: true }).click();
-  await expect(page).toHaveURL(/\/direction$/);
-  await page.getByRole("link", { name: "Home", exact: true }).click();
+  const before = await readDashboardPresentation(page);
+  await page
+    .getByRole("region", { name: "Season Progress", exact: true })
+    .getByRole("link")
+    .click();
+  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/[1-4]$/);
+  await page
+    .getByRole("link", { name: "Become dashboard", exact: true })
+    .click();
   await expect(page).toHaveURL("/");
-  await expectStyledHomeSeasonCard(page);
+  expect(await readDashboardPresentation(page)).toEqual(before);
+
+  await page.goto("/direction");
+  await expect(page.locator(".direction-shell.workspace")).toBeVisible();
+  await page.goto("/?opening=paused");
+  expect(await readDashboardPresentation(page)).toEqual(before);
 });
 
 test("goal library controls and summaries stay readable on narrow mobile screens", async ({
@@ -186,538 +158,41 @@ test("goal library controls and summaries stay readable on narrow mobile screens
   );
 });
 
-test("featured season quotes expand into a readable mobile card", async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await page.setViewportSize({ width: 320, height: 844 });
-  await createDisposableDirectionUser(page);
-  await page.goto("/direction");
-  await page.getByRole("link", { name: "Open your season" }).click();
-
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "Whose qualities belong in this chapter?",
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Begin this season" }).click();
-
-  const quoteText =
-    "The only thing standing between you and outrageous success is continuous progress.";
-  await page.getByRole("button", { name: "Add quote" }).click();
-  await page
-    .getByRole("textbox", { name: "Quote or paraphrase" })
-    .fill(quoteText);
-  await page
-    .getByRole("textbox", { name: "Attribution — optional" })
-    .fill("Dan Waldschmidt");
-  await page.getByRole("button", { name: "Save quote" }).click();
-
-  const quoteCard = page.locator(".season-quote-row").filter({
-    hasText: quoteText,
-  });
-  await expect(quoteCard).toBeVisible();
-  const layout = await quoteCard.evaluate((element) => {
-    const quote = element.querySelector<HTMLElement>("blockquote");
-    const featured = element.querySelector<HTMLElement>(
-      ".season-quote-featured",
-    );
-    const star = featured?.querySelector<SVGElement>("svg");
-    const quoteBounds = quote?.getBoundingClientRect();
-    const featuredBounds = featured?.getBoundingClientRect();
-    const starBounds = star?.getBoundingClientRect();
-
-    return {
-      featuredAlignment:
-        featuredBounds && starBounds
-          ? Math.abs(
-              featuredBounds.top +
-                featuredBounds.height / 2 -
-                (starBounds.top + starBounds.height / 2),
-            )
-          : null,
-      overflows: element.scrollWidth > element.clientWidth,
-      quoteHeight: quoteBounds?.height ?? 0,
-      quoteLineHeight: quote
-        ? Number.parseFloat(getComputedStyle(quote).lineHeight)
-        : 0,
-      quoteWhiteSpace: quote ? getComputedStyle(quote).whiteSpace : null,
-    };
-  });
-
-  expect(layout.quoteWhiteSpace).toBe("normal");
-  expect(layout.quoteHeight).toBeGreaterThan(layout.quoteLineHeight * 2);
-  expect(layout.featuredAlignment).not.toBeNull();
-  expect(layout.featuredAlignment!).toBeLessThanOrEqual(1);
-  expect(layout.overflows).toBe(false);
-});
-
-test("the ritual goal creator stays inside the opening and preserves its version", async ({
-  page,
-}) => {
-  test.setTimeout(120_000);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await createDisposableDirectionUser(page);
-  const carryForward = `Preserve the opening ${randomUUID().slice(0, 6)}`;
-  const openingUrl = await enterSeasonOpeningStageTwo(page, carryForward);
-  const conflicts: number[] = [];
-  page.on("response", (response) => {
-    if (
-      new URL(response.url()).pathname === "/api/direction/commands" &&
-      response.status() === 409
-    )
-      conflicts.push(response.status());
-  });
-  const createGoal = page.getByRole("button", { name: "Create a new goal" });
-
-  await createGoal.click();
-  await expect(
-    page.getByRole("heading", { name: "Name the outcome." }),
-  ).toBeVisible();
-  await expect(page).toHaveURL(openingUrl);
-  await expect(
-    page.getByText(
-      "Your place in the opening is held while you shape this goal.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Leave for now" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Back to choose direction" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Cancel", exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("heading", {
-      name: "Define what the record can establish.",
-    }),
-  ).toBeVisible();
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-      ),
-    )
-    .toBe(true);
-  const creatorWidths = await page.evaluate(() => {
-    const context = document.querySelector<HTMLElement>(
-      ".season-goal-creator-context",
-    );
-    const editor = document.querySelector<HTMLElement>(
-      ".season-goal-creator .direction-editor--ritual",
-    );
-    return {
-      context: context?.getBoundingClientRect().width ?? 0,
-      editor: editor?.getBoundingClientRect().width ?? 0,
-    };
-  });
-  expect(Math.abs(creatorWidths.context - creatorWidths.editor)).toBeLessThan(
-    1,
-  );
-  await page.waitForTimeout(1_600);
-  await page.getByRole("button", { name: "Back to choose direction" }).click();
-  await expect(createGoal).toBeEnabled();
-  await expect(page).toHaveURL(openingUrl);
-  await expect(page.locator(".season-form-error")).toHaveCount(0);
-
-  await createGoal.click();
-  await expect(
-    page.getByRole("heading", { name: "Name the outcome." }),
-  ).toBeVisible();
-  const saved = (await page.evaluate(async (url) => {
-    const response = await fetch(url, { cache: "no-store" });
-    return response.json();
-  }, seasonApiFromOpeningUrl(openingUrl))) as {
-    answers: { carryForward: string };
-  };
-  expect(saved.answers.carryForward).toBe(carryForward);
-  expect(conflicts).toEqual([]);
-});
-
-test("the ritual creates and assigns a full goal without navigating away", async ({
-  page,
-}) => {
+test("a canonical goal keeps failed conclusion edits", async ({ page }) => {
   test.setTimeout(120_000);
   await createDisposableDirectionUser(page);
-  const openingUrl = await enterSeasonOpeningStageTwo(page);
-  await page.getByRole("button", { name: "Create a new goal" }).click();
-
-  const studio = page.getByRole("region", {
-    name: "Create a goal within the opening ritual",
-  });
-  await expect(studio).toBeVisible();
-  await expect(page).toHaveURL(openingUrl);
-  await expect(
-    studio.getByRole("radio", { name: "Main direction" }),
-  ).toBeChecked();
-  await expect(
-    studio.getByRole("combobox", { name: "Life domains" }),
-  ).toBeVisible();
-  await expect(
-    studio.getByRole("button", { name: "Add evidence definition" }),
-  ).toBeEnabled();
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-      ),
-    )
-    .toBe(true);
-
-  const goalTitle = `Ritual-held goal ${randomUUID().slice(0, 6)}`;
-  await studio
-    .getByRole("textbox", { name: "Goal", exact: true })
-    .fill(goalTitle);
-  await studio
-    .getByRole("textbox", { name: "Why this matters — optional" })
-    .fill("The opening gave this outcome a clear place in the season.");
-  await studio.locator('[name="targetOn"]').fill("2026-12-31");
-  const assignmentSaved = page.waitForResponse((response) => {
-    if (
-      new URL(response.url()).pathname !== "/api/direction/commands" ||
-      !response.ok()
-    )
-      return false;
-    const body = response.request().postDataJSON() as { type?: string };
-    return body.type === "ASSIGN_SEASON_GOALS";
-  });
-  await studio.getByRole("button", { name: "Create goal" }).click();
-
-  await expect(studio).toHaveCount(0);
-  await expect(page).toHaveURL(openingUrl);
-  await expect(
-    page.getByRole("combobox", { name: "Main direction" }),
-  ).toHaveValue(goalTitle);
-  await expect(
-    page.getByText(
-      `${goalTitle} was created and added as your main direction.`,
-    ),
-  ).toBeVisible();
-  await assignmentSaved;
-  await page.reload();
-  await expect(
-    page.getByRole("combobox", { name: "Main direction" }),
-  ).toHaveValue(goalTitle);
-});
-
-test("a real season conflict compares values and waits for an explicit retry", async ({
-  page,
-}, info) => {
-  test.skip(
-    info.project.name !== "chromium",
-    "One two-tab conflict is sufficient.",
-  );
-  test.setTimeout(120_000);
-  await createDisposableDirectionUser(page);
-  const openingUrl = await enterSeasonOpeningStageTwo(page);
-  const seasonApi = seasonApiFromOpeningUrl(openingUrl);
-  const backSave = waitForSeasonDraftSave(page);
-  await page.getByRole("button", { name: "Back", exact: true }).click();
-  await backSave;
-  await expect(
-    page.getByRole("textbox", { name: "Carry forward" }),
-  ).toBeVisible();
-  await page.waitForTimeout(1_100);
-  await expect(
-    page.getByRole("button", { name: "Continue", exact: true }),
-  ).toBeEnabled();
-  const other = await page.context().newPage();
-  const firstReview = waitForSeasonReview(other, seasonApi);
-  await other.goto(openingUrl);
-  await firstReview;
-  await expect(other.locator(".season-opening form")).toHaveAttribute(
-    "aria-busy",
-    "false",
-  );
-  const otherCarryForward = other.getByRole("textbox", {
-    name: "Carry forward",
-  });
-  await expect(otherCarryForward).toBeEnabled();
-  const savedElsewhere = `Saved in the other tab ${randomUUID().slice(0, 6)}`;
-  await otherCarryForward.fill(savedElsewhere);
-  await expect(otherCarryForward).toHaveValue(savedElsewhere);
-  const firstExternalSave = waitForSeasonDraftSave(other, savedElsewhere);
-  await other.getByRole("button", { name: "Continue", exact: true }).click();
-  await firstExternalSave;
-  await expect(
-    other.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-
-  const localEntry = `Keep this local entry ${randomUUID().slice(0, 6)}`;
-  await page.getByRole("textbox", { name: "Carry forward" }).fill(localEntry);
-  const conflict = page.locator(".season-form-error");
-  await expect(conflict).toContainText("record changed");
-
-  page.once("dialog", async (dialog) => {
-    expect(dialog.message()).toContain("unsaved changes");
-    await dialog.dismiss();
-  });
-  await page.getByRole("link", { name: "Leave for now" }).click();
-  await expect(page).toHaveURL(openingUrl);
-
-  await conflict
-    .getByRole("button", { name: "Review the current saved version" })
-    .click();
-  const review = page.getByRole("region", {
-    name: "Your entries and the saved season differ.",
-  });
-  await expect(review).toContainText(localEntry);
-  await expect(review).toContainText(savedElsewhere);
-  await expect(
-    review.getByRole("button", { name: "Load saved version" }),
-  ).toBeVisible();
-  await review.getByRole("button", { name: "Keep my entries" }).click();
-
-  await page.waitForTimeout(1_100);
-  const beforeRetry = (await page.evaluate(async (url) => {
-    const response = await fetch(url, { cache: "no-store" });
-    return response.json();
-  }, seasonApi)) as { answers: { carryForward: string } };
-  expect(beforeRetry.answers.carryForward).toBe(savedElsewhere);
-
-  const localRetrySave = waitForSeasonDraftSave(page, localEntry);
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await localRetrySave;
-  await expect(
-    page.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-  const afterRetry = (await page.evaluate(async (url) => {
-    const response = await fetch(url, { cache: "no-store" });
-    return response.json();
-  }, seasonApi)) as { answers: { carryForward: string } };
-  expect(afterRetry.answers.carryForward).toBe(localEntry);
-
-  const secondBackSave = waitForSeasonDraftSave(page);
-  await page.getByRole("button", { name: "Back", exact: true }).click();
-  await secondBackSave;
-  await expect(
-    page.getByRole("textbox", { name: "Carry forward" }),
-  ).toBeVisible();
-  await page.waitForTimeout(1_100);
-  const secondSeasonReview = waitForSeasonReview(other, seasonApi);
-  await other.goto(openingUrl);
-  await secondSeasonReview;
-  await expect(other.locator(".season-opening form")).toHaveAttribute(
-    "aria-busy",
-    "false",
-  );
-  await expect(otherCarryForward).toBeEnabled();
-  const loadedSavedEntry = `Load this saved entry ${randomUUID().slice(0, 6)}`;
-  await otherCarryForward.fill(loadedSavedEntry);
-  await expect(otherCarryForward).toHaveValue(loadedSavedEntry);
-  const secondExternalSave = waitForSeasonDraftSave(other, loadedSavedEntry);
-  await other.getByRole("button", { name: "Continue", exact: true }).click();
-  await secondExternalSave;
-  await expect(
-    other.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-
-  await page
-    .getByRole("textbox", { name: "Carry forward" })
-    .fill("This pending local edit should not overwrite the loaded version.");
-  await page.getByRole("button", { name: /Open the chapter/ }).click();
-  await expect(conflict).toContainText("record changed");
-  await conflict
-    .getByRole("button", { name: "Review the current saved version" })
-    .click();
-  const secondReview = page.getByRole("region", {
-    name: "Your entries and the saved season differ.",
-  });
-  await secondReview
-    .getByRole("button", { name: "Load saved version" })
-    .click();
-  await expect
-    .poll(async () => {
-      const serialized = await page
-        .locator('input[name="seasonOpeningState"]')
-        .inputValue();
-      return (
-        JSON.parse(serialized) as {
-          draft: { answers: { carryForward: string } };
-        }
-      ).draft.answers.carryForward;
-    })
-    .toBe(loadedSavedEntry);
-  await page.waitForTimeout(1_100);
-  const afterLoad = (await page.evaluate(async (url) => {
-    const response = await fetch(url, { cache: "no-store" });
-    return response.json();
-  }, seasonApi)) as { answers: { carryForward: string } };
-  expect(afterLoad.answers.carryForward).toBe(loadedSavedEntry);
-  await other.close();
-});
-
-test("an uncertain season save replays the same operation before continuing", async ({
-  page,
-}, info) => {
-  test.skip(
-    info.project.name !== "chromium",
-    "One transport-level season retry is sufficient.",
-  );
-  test.setTimeout(120_000);
-  await createDisposableDirectionUser(page);
-  await enterSeasonOpeningStageTwo(page, "Keep this through a lost response.");
-
-  const saves: { expectedVersion: number; operationKey: string }[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname !== "/api/direction/commands") return;
-    const body = request.postDataJSON() as {
-      type?: string;
-      expectedVersion?: number;
-      operationKey?: string;
-    };
-    if (
-      body.type === "SAVE_SEASON" &&
-      typeof body.expectedVersion === "number" &&
-      body.operationKey
-    )
-      saves.push({
-        expectedVersion: body.expectedVersion,
-        operationKey: body.operationKey,
-      });
-  });
-
-  let dropped = false;
-  const dropCommittedResponse = async (route: Route) => {
-    const body = route.request().postDataJSON() as { type?: string };
-    if (!dropped && body.type === "SAVE_SEASON") {
-      dropped = true;
-      await route.fetch();
-      await route.abort("failed");
-      return;
-    }
-    await route.continue();
-  };
-  await page.route("**/api/direction/commands", dropCommittedResponse);
-  const createGoal = page.getByRole("button", { name: "Create a new goal" });
-  await createGoal.click();
-  await expect(page.locator(".season-form-error")).toContainText(
-    /could not save/i,
-  );
-
-  await page.unroute("**/api/direction/commands", dropCommittedResponse);
-  await createGoal.click();
-  await expect(
-    page.getByRole("heading", { name: "Name the outcome." }),
-  ).toBeVisible();
-  expect(saves).toHaveLength(2);
-  expect(saves[1]).toEqual(saves[0]);
-});
-
-test("a season opens around a canonical goal and keeps failed conclusion edits", async ({
-  page,
-}) => {
-  test.setTimeout(120_000);
-  await createDisposableDirectionUser(page);
-  await page.goto("/direction");
-  await page.getByRole("link", { name: "Open your season" }).click();
-
-  await page
-    .getByRole("textbox", { name: "Carry forward" })
-    .fill("Protect the quiet work that compounds.");
-  await page
-    .getByRole("textbox", { name: "Leave behind" })
-    .fill("Performative urgency.");
-  await page
-    .getByRole("textbox", { name: "This season would feel meaningful if…" })
-    .fill("I finish one body of work with care.");
-  await page
-    .getByRole("textbox", { name: "Protect" })
-    .fill("Sleep and unhurried mornings.");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(
-    page.getByRole("heading", {
-      name: "What matters most alongside everything else?",
-    }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Create a new goal" }).click();
   const goalTitle = `A deliberate body of work ${randomUUID().slice(0, 6)}`;
-  await page
-    .getByRole("textbox", { name: "Goal", exact: true })
-    .fill(goalTitle);
-  await page
-    .getByRole("textbox", { name: "Why this matters — optional" })
-    .fill("It turns private practice into something I can stand behind.");
-  await page.getByRole("button", { name: "Create goal" }).click();
-
-  const primaryPicker = page.getByRole("combobox", { name: "Main direction" });
-  await expect(primaryPicker).toHaveValue(goalTitle);
+  // Historical evidence remains readable and enforces its original conclusion
+  // rules. New simple goals intentionally no longer author these definitions.
+  const response = await page.request.post("/api/direction/commands", {
+    headers: { origin: new URL(page.url()).origin },
+    data: {
+      type: "SAVE_GOAL",
+      operationKey: randomUUID(),
+      draft: {
+        title: goalTitle,
+        description: "Imported historical goal",
+        startOn: "2026-01-01",
+        domainIds: [],
+        criterionMode: "ALL",
+        criteria: [
+          {
+            key: "conversation",
+            metric: "CONVERSATIONS",
+            label: "One useful conversation",
+            target: "1",
+          },
+        ],
+      },
+    },
+  });
+  expect(response.ok()).toBe(true);
+  const saved = await response.json();
+  expect(saved.error).toBeNull();
+  await page.goto(`/direction/goals/${saved.id}`);
   await expect(
-    page.getByText(
-      `${goalTitle} was created and added as your main direction.`,
-    ),
+    page.getByRole("heading", { name: goalTitle, exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("region", {
-      name: "Create a goal within the opening ritual",
-    }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d+\/[1-4]\/opening$/);
-
-  await page
-    .getByRole("textbox", { name: "Character", exact: true })
-    .fill("Jean-Luc Picard");
-  await page
-    .getByRole("textbox", { name: "Source work" })
-    .fill("Star Trek: The Next Generation");
-  await page
-    .getByRole("textbox", { name: "What you admire" })
-    .fill("Calm decisions under pressure.");
-  await page.getByRole("button", { name: "Add a trait" }).click();
-  await page.getByRole("textbox", { name: "Trait" }).fill("Deliberate");
-  await page
-    .getByRole("textbox", { name: "What it means in your life" })
-    .fill("Pause long enough to choose the next useful move.");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Season title — optional" })
-    .fill("The deliberate chapter");
-  await page.getByRole("button", { name: "Begin this season" }).click();
-
-  await expect(
-    page.getByRole("heading", { name: "Direction for this chapter" }),
-  ).toBeVisible();
-  await expect(page.getByRole("heading", { name: goalTitle })).toBeVisible();
-  await page.goto("/");
-  await page.reload();
-  await expect(
-    page.getByRole("link", {
-      name: /Open The deliberate chapter, Season [1-4] \d{4}/,
-    }),
-  ).toBeVisible();
-  await expectStyledHomeSeasonCard(page);
-
-  await page.goto("/direction/goals");
-  await page.getByRole("link", { name: new RegExp(goalTitle) }).click();
-  await page.getByRole("link", { name: "Edit goal" }).click();
-  await page.getByRole("button", { name: "Add evidence definition" }).click();
-  await page
-    .getByRole("combobox", { name: "Evidence type" })
-    .selectOption("CONVERSATIONS");
-  await page
-    .getByRole("textbox", { name: "Definition label" })
-    .fill("One useful conversation");
-  await page.getByRole("textbox", { name: "Target conversations" }).fill("1");
-  await page
-    .getByRole("textbox", { name: "Reason for this revision" })
-    .fill("Make the next signal explicit.");
-  await page.getByRole("button", { name: "Save changes" }).click();
 
   await page.getByRole("button", { name: "Conclude", exact: true }).click();
   const outcome = page.getByRole("combobox", { name: "Conclusion" });
@@ -770,6 +245,7 @@ test("an outreach-scoped experiment remains explicit and can be repeated", async
     .fill("After the selected cohort has had seven days to respond.");
   await page.locator('[name="startOn"]').fill("2025-01-01");
   await page.locator('[name="targetOn"]').fill("2025-01-31");
+  await page.locator("summary").filter({ hasText: "Links & context" }).click();
   await page
     .locator('[name="expectedEvidence"]')
     .fill("A directly linked conversation from the cohort.");
@@ -779,6 +255,10 @@ test("an outreach-scoped experiment remains explicit and can be repeated", async
     .getByRole("combobox", { name: "Life domains" })
     .fill("Engineering");
   await page.getByRole("option", { name: /Engineering/ }).click();
+  await page
+    .locator("summary")
+    .filter({ hasText: "Optional measurements" })
+    .click();
   await page.getByRole("button", { name: "Add evidence definition" }).click();
   await page
     .getByRole("combobox", { name: "Evidence type" })
@@ -869,6 +349,7 @@ test("an outreach-scoped experiment remains explicit and can be repeated", async
   await expectFreshProtocol();
   // Exercise the selector independently of the detail-page repeat link.
   await page.goto("/direction/experiments/new");
+  await page.locator("summary").filter({ hasText: "Links & context" }).click();
   await page
     .getByRole("combobox", { name: "Repeat a concluded attempt" })
     .fill(title);

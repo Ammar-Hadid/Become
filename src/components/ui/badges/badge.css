@@ -1,0 +1,141 @@
+@layer components {
+  .become-badge {
+    --badge-accent: var(--badge-default-accent);
+    --badge-edge: color-mix(
+      in srgb,
+      var(--badge-accent) var(--badge-edge-strength),
+      var(--color-border)
+    );
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--badge-gap);
+    width: max-content;
+    max-width: 100%;
+    min-height: var(--badge-height);
+    padding: var(--badge-padding-block) var(--badge-padding-inline);
+    border: var(--badge-edge-width) solid var(--badge-edge);
+    border-radius: var(--badge-radius);
+    color: var(--badge-accent);
+    background: color-mix(
+      in srgb,
+      var(--badge-accent) var(--badge-default-fill-strength),
+      var(--color-surface)
+    );
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .become-badge[data-badge-area="engineering"] {
+    --badge-accent: var(--color-domain-engineering-accent);
+  }
+  .become-badge[data-badge-area="finance"] {
+    --badge-accent: var(--color-domain-finance-accent);
+  }
+  .become-badge[data-badge-area="entrepreneurship"] {
+    --badge-accent: var(--color-domain-entrepreneurship-accent);
+  }
+  .become-badge[data-badge-area="content"] {
+    --badge-accent: var(--color-domain-content-accent);
+  }
+
+  .become-badge[data-badge-variant="aurora-fill"] {
+    border-color: color-mix(
+      in srgb,
+      var(--badge-accent) var(--badge-aurora-edge-strength),
+      transparent
+    );
+    background: linear-gradient(
+      var(--badge-aurora-angle),
+      color-mix(
+        in srgb,
+        var(--badge-accent) var(--badge-aurora-start-strength),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--badge-accent) var(--badge-aurora-end-strength),
+        transparent
+      )
+    );
+    box-shadow:
+      inset 0 1px 0
+        color-mix(
+          in srgb,
+          var(--badge-accent) var(--badge-aurora-top-light-strength),
+          transparent
+        ),
+      0 0 var(--badge-aurora-glow-radius)
+        color-mix(
+          in srgb,
+          var(--badge-accent) var(--badge-aurora-glow-strength),
+          transparent
+        );
+  }
+
+  .become-badge[data-badge-variant="live-numeral"] {
+    border-color: var(--badge-live-edge);
+    background: var(--badge-live-background);
+    color: var(--color-text-primary);
+  }
+  .become-badge__live-dot {
+    width: var(--badge-live-dot-size);
+    height: var(--badge-live-dot-size);
+    flex: none;
+    border-radius: 50%;
+    background: var(--badge-accent);
+    box-shadow: 0 0 var(--badge-live-dot-glow-radius) var(--badge-accent);
+  }
+
+  .become-badge[data-badge-variant="specimen-strip"] {
+    border-color: transparent;
+    border-bottom-color: var(--badge-accent);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .become-badge--removable {
+    padding-right: var(--badge-remove-padding-end);
+    cursor: pointer;
+    transition:
+      border-color var(--motion-control-duration) var(--motion-control-ease),
+      background var(--motion-control-duration) var(--motion-control-ease),
+      box-shadow var(--motion-control-duration) var(--motion-control-ease);
+  }
+  .become-badge--removable:hover {
+    border-color: var(--badge-accent);
+    background: color-mix(
+      in srgb,
+      var(--badge-accent) var(--badge-remove-hover-fill-strength),
+      var(--color-surface)
+    );
+    box-shadow: 0 0 var(--badge-remove-hover-glow-radius)
+      color-mix(
+        in srgb,
+        var(--badge-accent) var(--badge-remove-hover-glow-strength),
+        transparent
+      );
+  }
+  .become-badge--removable:focus-visible {
+    outline: var(--badge-focus-width) solid var(--badge-accent);
+    outline-offset: var(--badge-focus-offset);
+  }
+  .become-badge__remove-icon {
+    display: inline-grid;
+    place-items: center;
+    width: var(--badge-remove-icon-slot-size);
+    height: var(--badge-remove-icon-slot-size);
+    border-left: var(--badge-edge-width) solid var(--badge-edge);
+  }
+  .become-badge__remove-icon svg {
+    width: var(--badge-remove-icon-size);
+    height: var(--badge-remove-icon-size);
+    stroke-width: var(--icon-stroke-width);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .become-badge--removable {
+      transition: none;
+    }
+  }
+}

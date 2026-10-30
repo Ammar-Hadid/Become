@@ -9,6 +9,10 @@
   },
   "scripts": {
     "dev": "next dev -p 3010",
+    "dev:seasons": "node --import tsx tools/dev-seasons.ts",
+    "check:seasons": "node --conditions=react-server --import tsx tools/check-season-onboarding.ts",
+    "storybook": "STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6006 --host 127.0.0.1 --no-open",
+    "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=1 storybook build --output-dir storybook-static",
     "build": "next build --webpack",
     "start": "next start -p 3010",
     "lint": "eslint .",
@@ -25,7 +29,8 @@
     "db:sync-tech": "prisma db seed -- --reference-data-only",
     "db:studio": "prisma studio",
     "test:finance:integration": "RUN_FINANCE_INTEGRATION=1 vitest run src/features/finance/services/finance.integration.test.ts",
-    "bank:worker": "tsx src/features/open-banking/sync/services/bank-worker.service.ts"
+    "bank:worker": "tsx src/features/open-banking/sync/services/bank-worker.service.ts",
+    "worker:seasons": "node --conditions=react-server --import tsx tools/season-onboarding-worker.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
@@ -64,6 +69,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@storybook/addon-a11y": "10.6.1",
+    "@storybook/addon-docs": "10.6.1",
+    "@storybook/nextjs-vite": "10.6.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/luxon": "^3.7.1",
     "@types/node": "^24.3.0",
@@ -75,9 +83,11 @@
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "prisma": "7.10.0",
+    "storybook": "10.6.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
+    "vite": "^7.3.7",
     "vitest": "^5.0.0"
   }
 }

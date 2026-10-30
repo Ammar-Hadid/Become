@@ -6,6 +6,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { InterfaceSoundContext } from "@/components/ui/sound/components/interface-sound-provider.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import type { RecordFormState } from "@/components/ui/forms/record-form.types";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
@@ -53,6 +54,10 @@ export function RecordForm({
   const formRef = useRef<HTMLFormElement>(null);
   const markSaved = useRecordFormGuard(formRef);
   const closeDialog = useRecordDialogClose();
+  const sound = useContext(InterfaceSoundContext);
+  const playFeedback = (event: "saveConfirmed" | "actionBlocked") => {
+    if (formRef.current?.closest(".workspace")) sound?.play(event);
+  };
 
   return (
     <form
@@ -69,11 +74,14 @@ export function RecordForm({
           try {
             const result = await action(data);
             setState(result);
-            if (result.error)
+            if (result.error) {
+              playFeedback("actionBlocked");
               formRef.current?.dispatchEvent(
                 new CustomEvent("record-form-error", { detail: result.error }),
               );
+            }
             if (!result.error) {
+              playFeedback("saveConfirmed");
               if (resetOnSuccess) formRef.current?.reset();
               markSaved();
               setSuccessRevision((current) => current + 1);
@@ -86,6 +94,7 @@ export function RecordForm({
               if (onSaved) window.setTimeout(() => onSaved(result), 0);
             }
           } catch {
+            playFeedback("actionBlocked");
             setState({
               error:
                 "Could not save. Please try again; your entries are still here.",

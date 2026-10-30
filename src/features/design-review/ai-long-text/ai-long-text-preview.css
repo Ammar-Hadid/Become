@@ -1,0 +1,52 @@
+.living-ink-review {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--spacing-xl);
+  width: 100%;
+  min-height: 100dvh;
+  padding: var(--spacing-xl) var(--space-app-page-gutter) var(--spacing-2xl);
+}
+.living-ink-review__intro,
+.living-ink-review__copy {
+  display: grid;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+.living-ink-review__intro > p {
+  max-width: 72ch;
+}
+.living-ink-review__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.living-ink-research {
+  max-width: 72ch;
+}
+.living-ink-research summary {
+  cursor: pointer;
+  color: var(--color-text-primary);
+}
+.living-ink-research > div {
+  display: grid;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+}
+.living-ink-research a {
+  color: var(--color-primary);
+  text-underline-offset: 0.2em;
+}
+.living-ink-research :is(a, summary):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+@media (max-width: 720px) {
+  .living-ink-review {
+    padding-inline: var(--space-page-edge-mobile);
+  }
+  .living-ink-review__controls .become-selection-label {
+    flex-basis: 100%;
+  }
+}

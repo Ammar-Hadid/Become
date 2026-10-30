@@ -78,6 +78,8 @@ model User {
   decisions                    Decision[]
   contentMutations             ContentMutation[]
   thinkingMutations            ThinkingMutation[]
+  imageDirectionTemplates ImageDirectionTemplateVersion[]
+  aiCredentials AiCredential[]
 
   seasons                    UserSeason[]
   directionGoals             Goal[]
@@ -1636,6 +1638,7 @@ model UserSeason {
   cotsCandidates     SeasonCotsCandidate[]
   cotsSelections     SeasonCotsSelection[]
   mediaUses          SeasonMediaUse[]
+  livingPack         LivingSeasonPack?
   openingDeferredAt  DateTime?
 
   @@unique([userId, year, quarter])
@@ -1820,6 +1823,304 @@ model SeasonMediaUse {
   @@unique([seasonId, mediaId, identityId])
   @@index([userId, seasonId, identityId, retiredAt])
   @@map("season_media_use")
+}
+
+model LivingSeasonPack {
+  id              String                @id @default(cuid())
+  userId          String
+  seasonId        String                @unique
+  identityId      String?
+  visualBrief     String                @default("")
+  setting         String                @default("")
+  referencePromptOverride String?
+  referencePromptDocument Json?
+  characterBanner Json?
+  activeSnapshot  Json?
+  referenceMode   String                @default("SHEET")
+  briefRevision   Int                   @default(1)
+  activeAt        DateTime?
+  activeSceneAttemptId String?
+  imagePromptMode String @default("TEMPLATE")
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  season          UserSeason            @relation(fields: [seasonId, userId], references: [id, userId], onDelete: Cascade)
+  profiles        LivingSeasonProfile[]
+  artwork         LivingSeasonArtwork[]
+  references      LivingSeasonReference[]
+  imageRuns       LivingSeasonImageRun[]
+  visualIntents   LivingVisualIntent[]
+  sourceImages    LivingSeasonSourceImage[]
+  onboarding      SeasonOnboardingRun?
+  sceneAttempts   LivingSceneAttempt[]
+  promptBatches   LivingImagePromptBatch[]
+  mediaCleanup    LivingMediaCleanup[]
+
+  @@unique([id, userId])
+  @@unique([seasonId, userId])
+  @@index([userId, activeAt])
+  @@map("living_season_pack")
+}
+
+model SeasonOnboardingWorker {
+  id           String   @id
+  heartbeatAt  DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model SeasonOnboardingRun {
+  id            String           @id @default(cuid())
+  userId        String
+  packId        String           @unique
+  identityId    String
+  identityRevision Int
+  revision      Int              @default(0)
+  stage         String           @default("WORLD")
+  status        String           @default("WAITING")
+  chapter       Int              @default(1)
+  bannerMethod  String           @default("AI")
+  portraitMethod String          @default("AI")
+  briefRevision Int
+  profileVersion Int             @default(0)
+  intentVersion Int              @default(0)
+  draft         Json?
+  research      Json?
+  correction    String           @default("")
+  question      String?
+  pendingImages Json             @default("[]")
+  completedTasks Json            @default("[]")
+  preparationProgress Json?
+  error         String?
+  leaseToken    String?
+  leaseUntil    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  pack          LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+  commands      SeasonOnboardingCommand[]
+
+  @@unique([id, userId])
+  @@unique([packId, userId])
+  @@index([status, leaseUntil, updatedAt])
+  @@map("season_onboarding_run")
+}
+
+model SeasonOnboardingCommand {
+  id            String @id @default(cuid())
+  userId        String
+  runId         String
+  operationKey  String
+  payloadHash   String
+  createdAt     DateTime @default(now())
+  run           SeasonOnboardingRun @relation(fields: [runId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([userId, operationKey])
+  @@map("season_onboarding_command")
+}
+
+model LivingSeasonSourceImage {
+  id          String           @id @default(cuid())
+  userId      String
+  packId      String
+  identityId  String
+  adaptation  String
+  label       String
+  sourceUrl   String?
+  provenance  String           @default("UPLOAD")
+  storageKey  String           @unique
+  width       Int
+  height      Int
+  approvedAt  DateTime?
+  retiredAt   DateTime?
+  createdAt   DateTime         @default(now())
+  pack        LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@index([userId, packId, identityId, retiredAt])
+  @@map("living_season_source_image")
+}
+
+model LivingSeasonProfile {
+  id          String           @id @default(cuid())
+  userId      String
+  packId      String
+  identityId  String
+  version     Int
+  content     Json
+  approvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  pack        LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([packId, version])
+  @@index([userId, packId, approvedAt])
+  @@map("living_season_profile")
+}
+
+model LivingSeasonArtwork {
+  id          String           @id @default(cuid())
+  userId      String
+  packId      String
+  identityId  String
+  briefRevision Int
+  chapter     Int
+  state       String
+  format      String
+  revision    Int
+  prompt      String
+  promptPackage Json?
+  manualPromptReceipt String?
+  sceneAttemptId String?
+  uploadOperationKey String?
+  uploadFingerprint String?
+  storageKey  String           @unique
+  width       Int
+  height      Int
+  focalX      Float            @default(0.5)
+  focalY      Float            @default(0.5)
+  approvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  pack        LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([packId, chapter, state, format, revision])
+  @@unique([userId, uploadOperationKey])
+  @@index([userId, packId, approvedAt])
+  @@map("living_season_artwork")
+}
+
+model LivingSeasonReference {
+  id            String           @id @default(cuid())
+  userId        String
+  packId        String
+  identityId    String
+  briefRevision Int
+  profileVersion Int
+  revision      Int
+  prompt        String
+  promptPackage Json?
+  manualPromptReceipt String?
+  storageKey    String           @unique
+  width         Int
+  height        Int
+  approvedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  pack          LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([packId, revision])
+  @@index([userId, packId, approvedAt])
+  @@map("living_season_reference")
+}
+
+model LivingSeasonImageRun {
+  operationKey       String?
+  id                 String           @id @default(cuid())
+  userId             String
+  packId             String
+  chapter            Int
+  state              String
+  format             String
+  resolution         String
+  provider           String
+  model              String
+  prompt             String
+  promptPackage      Json?
+  sceneAttemptId     String?
+  referenceArtworkId String?
+  reservedEurCents   Int
+  status             String           @default("PENDING")
+  artworkId          String?
+  referenceId        String?
+  error              String?
+  createdAt          DateTime         @default(now())
+  completedAt        DateTime?
+  pack               LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@unique([userId, operationKey])
+  @@index([packId, chapter, state, format])
+  @@map("living_season_image_run")
+}
+
+model ImageDirectionTemplateVersion {
+  id          String    @id @default(cuid())
+  userId      String
+  key         String
+  version     Int
+  text        String
+  authoring   Json?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key, version])
+  @@index([userId, key, publishedAt])
+  @@map("image_direction_template_version")
+}
+
+model LivingSceneAttempt {
+  id                String @id @default(cuid())
+  userId            String
+  packId            String
+  method            String
+  status            String @default("ACTIVE")
+  sourceFingerprint String
+  chapter           Int @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  pack              LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([id, userId])
+  @@index([packId, method, status])
+  @@map("living_scene_attempt")
+}
+
+model LivingImagePromptBatch {
+  id                String @id @default(cuid())
+  userId            String
+  packId            String
+  groupKey          String
+  version           Int
+  inputFingerprint  String
+  requestKey        String
+  status            String @default("WRITING")
+  input             Json
+  content           Json?
+  packages          Json @default("{}")
+  nexoRunId         String?
+  error             String?
+  createdAt         DateTime @default(now())
+  completedAt       DateTime?
+  pack              LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+  @@unique([packId, groupKey, version])
+  @@unique([userId, requestKey])
+  @@index([packId, groupKey, inputFingerprint, status], map: "living_prompt_batch_source_idx")
+  @@map("living_image_prompt_batch")
+}
+
+model LivingMediaCleanup {
+  id          String @id @default(cuid())
+  userId      String
+  packId      String
+  storageKey  String @unique
+  attempts    Int @default(0)
+  error       String?
+  availableAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  pack        LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+  @@index([availableAt])
+  @@map("living_media_cleanup")
+}
+
+model LivingVisualIntent {
+  id               String           @id @default(cuid())
+  userId           String
+  packId           String
+  identityId       String
+  profileVersion   Int
+  briefFingerprint String
+  version          Int
+  content          Json
+  approvedAt       DateTime?
+  createdAt        DateTime         @default(now())
+  pack             LivingSeasonPack @relation(fields: [packId, userId], references: [id, userId], onDelete: Cascade)
+
+  @@unique([packId, version])
+  @@index([userId, packId, approvedAt])
+  @@map("living_visual_intent")
 }
 
 model CotsProviderCounter {
@@ -3007,4 +3308,17 @@ model FinanceExpectedIncome {
   @@unique([id, userId])
   @@index([userId, dueOn])
   @@map("finance_expected_income")
+}
+
+model AiCredential {
+  userId      String
+  provider    String
+  ciphertext  Bytes
+  nonce       Bytes
+  tag         Bytes
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, provider])
+  @@map("ai_credential")
 }

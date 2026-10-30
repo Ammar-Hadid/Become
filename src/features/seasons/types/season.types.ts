@@ -111,6 +111,9 @@ export type SeasonClosingCard = {
   outcomes: SeasonCapturedOutcome[];
 };
 export type SeasonView = SeasonDraft & {
+  characterBanner:
+    | import("@/components/ui/character-banner/character-banner.component").CharacterBannerContent
+    | null;
   cotsIdentity:
     | import("@/features/seasons/discovery/types/cots-discovery.types").CotsIdentityView
     | null;

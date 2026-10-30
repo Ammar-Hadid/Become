@@ -1,3 +1,4 @@
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
 import Link from "next/link";
 import { ArrowRight, Compass, Plus } from "lucide-react";
 import { GoalSummary } from "@/features/direction/goals/components/goal-summary.component";
@@ -23,15 +24,15 @@ export function GoalList({
       <header className="direction-section-heading">
         <div>
           <p className="eyebrow">Across every season</p>
-          <h2 id="goal-list-title">Your goals keep their own horizon.</h2>
-          <p>
-            A goal can guide many seasons without being reset or averaged into a
-            season score.
-          </p>
+          <h1 id="goal-list-title">Goals</h1>
+          <p>A clear outcome, connected to one or more domains.</p>
         </div>
-        <Link className="season-primary-action" href="/direction/goals/new">
+        <WorkspaceLink
+          variant="primary"
+          href="/direction/goals/new"
+        >
           <Plus aria-hidden="true" /> New goal
-        </Link>
+        </WorkspaceLink>
       </header>
 
       <DirectionListFilters
@@ -54,12 +55,12 @@ export function GoalList({
           <h3>
             {search || status || archived
               ? "No goal matches those filters."
-              : "Name one direction that deserves a horizon."}
+              : "What would you like to achieve?"}
           </h3>
           <p>
             {search || status || archived
               ? "Clear a filter to widen the view."
-              : "You can begin qualitatively and add evidence when the definition becomes clear."}
+              : "Start with a simple goal and choose where it belongs."}
           </p>
           <Link
             href={

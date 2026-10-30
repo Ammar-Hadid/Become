@@ -1,3 +1,4 @@
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
 import { ArrowRight, FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -25,9 +26,11 @@ export function EngineeringProjectList({
             ["completed", "Completed"],
             ["archived", "Archived"],
           ].map(([value, label]) => (
-            <Link
+            <WorkspaceLink
               key={value}
               href={`/engineering/projects?scope=${value}`}
+              variant={scope === value ? "secondary" : "ghost"}
+              aria-current={scope === value ? "page" : undefined}
               className={cn(
                 "motion-selection-control",
                 scope === value && "active",
@@ -43,15 +46,12 @@ export function EngineeringProjectList({
                 </ViewTransition>
               )}
               <span>{label}</span>
-            </Link>
+            </WorkspaceLink>
           ))}
         </div>
-        <Link
-          href="/engineering/projects/new"
-          className="engineering-primary-link"
-        >
+        <WorkspaceLink href="/engineering/projects/new" variant="primary">
           <Plus className="size-4" /> New project
-        </Link>
+        </WorkspaceLink>
       </div>
 
       <div className="engineering-record-list">
@@ -104,8 +104,11 @@ export function EngineeringProjectList({
         ) : (
           <div className="empty-state">
             <p>No projects in this view.</p>
-            <Link href="/engineering/projects/new" className="text-link">
-              Create a project <ArrowRight />
+            <Link
+              href="/engineering/projects/new"
+              className="text-link engineering-inline-link"
+            >
+              Create a project <ArrowRight aria-hidden="true" />
             </Link>
           </div>
         )}

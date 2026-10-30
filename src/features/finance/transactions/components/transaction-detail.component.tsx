@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/buttons/button.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import { BusinessReceipts } from "@/features/finance/business-receipts/components/business-receipts.component";
 import { isBusinessReceipt } from "@/features/finance/business-receipts/services/business-receipt.service";
@@ -132,7 +135,13 @@ export async function TransactionDetail({
         description={occurred + " · " + record.account.name}
       />
 
-      <section className={"finance-transaction-hero " + presentation.className}>
+      <Card
+        material="elevated-glass"
+        className={
+          "finance-detail-focus finance-detail-focus--transaction " +
+          presentation.className
+        }
+      >
         <span className="finance-transaction-icon">
           <Icon aria-hidden="true" />
         </span>
@@ -194,7 +203,7 @@ export async function TransactionDetail({
         {record.notes && (
           <p className="finance-transaction-note">{record.notes}</p>
         )}
-      </section>
+      </Card>
 
       {candidates && (
         <FinanceSection
@@ -210,7 +219,9 @@ export async function TransactionDetail({
               placeholder="Search by focus, source or opportunity"
               defaultValue={workSearch ?? ""}
             />
-            <button type="submit">Find work</button>
+            <Button type="submit" variant="secondary">
+              Find work
+            </Button>
           </form>
           <PaymentAllocation
             key={workSearch ?? "all"}
@@ -260,8 +271,10 @@ export async function TransactionDetail({
             />
           )}
           {goals.length > 0 && (
-            <details className="finance-details">
-              <summary>Add or correct goal spending</summary>
+            <WorkspaceDisclosure
+              title={<>Add or correct goal spending</>}
+              className="finance-disclosure"
+            >
               <div className="finance-details-body finance-settings-panel">
                 <FinanceForm
                   action={linkGoalExpenseAction}
@@ -285,7 +298,7 @@ export async function TransactionDetail({
                   />
                 </FinanceForm>
               </div>
-            </details>
+            </WorkspaceDisclosure>
           )}
         </FinanceSection>
       )}
@@ -425,8 +438,10 @@ export async function TransactionDetail({
           description="Financial history should reflect what actually happened. Use these controls only to correct the recorded fact."
           action={<ReceiptText className="finance-heading-icon" />}
         >
-          <details className="finance-details">
-            <summary>Edit recorded fact</summary>
+          <WorkspaceDisclosure
+            title={<>Edit recorded fact</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body finance-settings-panel">
               <TransactionForm
                 workOptions={workOptions}
@@ -444,9 +459,11 @@ export async function TransactionDetail({
                 }}
               />
             </div>
-          </details>
-          <details className="finance-details finance-danger-details">
-            <summary>Delete as a correction</summary>
+          </WorkspaceDisclosure>
+          <WorkspaceDisclosure
+            title={<>Delete as a correction</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body">
               <p className="finance-quiet-copy">
                 Deleting changes recorded balances and removes linked financial
@@ -460,7 +477,7 @@ export async function TransactionDetail({
                 <input type="hidden" name="id" value={id} />
               </FinanceForm>
             </div>
-          </details>
+          </WorkspaceDisclosure>
         </FinanceSection>
       )}
     </>

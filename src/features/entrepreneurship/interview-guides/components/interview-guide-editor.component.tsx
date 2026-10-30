@@ -1,5 +1,9 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
+import { Input } from "@/components/ui/forms/input.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import {
   useCallback,
   useEffect,
@@ -92,7 +96,9 @@ function guideHref(nicheId: string, suffix = "") {
 function serializeEditorContent(
   content: InterviewGuideDocument["content"],
 ): InterviewGuideDocument["content"] {
-  return JSON.parse(JSON.stringify(content)) as InterviewGuideDocument["content"];
+  return JSON.parse(
+    JSON.stringify(content),
+  ) as InterviewGuideDocument["content"];
 }
 
 export function InterviewGuideEditor({
@@ -248,7 +254,7 @@ export function InterviewGuideEditor({
         <div className="interview-guide-editor-heading">
           <Link href={guideHref(initial.nicheId)}>← All guides</Link>
           <p className="eyebrow">Interview guide · {metadata.marketType}</p>
-          <input
+          <Input
             aria-label="Guide title"
             value={metadata.title}
             disabled={readOnly}
@@ -268,24 +274,26 @@ export function InterviewGuideEditor({
           >
             {savedLabel}
           </span>
-          <button
+          <Button
+            variant="secondary"
             type="button"
-            className="finance-dialog-trigger finance-dialog-trigger--secondary interview-guide-details-trigger"
+            className="interview-guide-details-trigger"
             aria-expanded={detailsOpen}
             aria-controls="interview-guide-details"
             onClick={() => setDetailsOpen((current) => !current)}
           >
             Guide details
-          </button>
+          </Button>
           <Link
-            className="finance-dialog-trigger finance-dialog-trigger--secondary"
+            className="become-button become-button--secondary become-button--md"
             href={guideHref(initial.nicheId, `/${initial.id}/preview`)}
           >
             <Eye aria-hidden="true" /> Preview
           </Link>
           {!readOnly && (
-            <button
-              className="finance-dialog-trigger"
+            <Button
+              variant="primary"
+
               type="button"
               onClick={() => void autosave.flush()}
               disabled={
@@ -295,15 +303,15 @@ export function InterviewGuideEditor({
               }
             >
               <Save aria-hidden="true" /> Save draft
-            </button>
+            </Button>
           )}
           <SubMenu
             label="Guide actions"
             placement="bottom-end"
             trigger={(props) => (
-              <button {...props} className="business-icon-button">
+              <Button variant="ghost" size="icon" {...props}>
                 <MoreHorizontal aria-hidden="true" />
-              </button>
+              </Button>
             )}
           >
             {!exploration?.archived && (
@@ -390,9 +398,10 @@ export function InterviewGuideEditor({
             </article>
           </div>
           <div className="business-actions">
-            <button
+            <Button
+              variant="secondary"
               type="button"
-              className="finance-dialog-trigger finance-dialog-trigger--secondary"
+
               onClick={() => {
                 const accepted = autosave.acceptLatest();
                 if (!accepted) return;
@@ -402,14 +411,15 @@ export function InterviewGuideEditor({
               }}
             >
               Use latest copy
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
-              className="finance-dialog-trigger"
+
               onClick={() => void autosave.keepLocal()}
             >
               Keep my local draft
-            </button>
+            </Button>
           </div>
         </section>
       )}
@@ -446,7 +456,7 @@ export function InterviewGuideEditor({
           </header>
           <label>
             Objective
-            <textarea
+            <Textarea
               value={metadata.objective}
               disabled={readOnly}
               onChange={(event) =>
@@ -459,7 +469,7 @@ export function InterviewGuideEditor({
           </label>
           <label>
             Market
-            <select
+            <NativeSelect
               value={metadata.marketType}
               disabled={readOnly}
               onChange={(event) =>
@@ -471,7 +481,7 @@ export function InterviewGuideEditor({
             >
               <option value="B2C">Consumers</option>
               <option value="B2B">Businesses</option>
-            </select>
+            </NativeSelect>
           </label>
           <BusinessRecordPicker
             kind="segment"
@@ -497,7 +507,7 @@ export function InterviewGuideEditor({
           />
           <label>
             Expected minutes
-            <input
+            <Input
               type="number"
               min={5}
               max={240}
@@ -548,9 +558,10 @@ export function InterviewGuideEditor({
             <p className="eyebrow">Published edition</p>
             <p>Conversations keep the edition they started with.</p>
           </div>
-          <button
+          <Button
+            variant="primary"
             type="button"
-            className="finance-dialog-trigger"
+
             disabled={autosave.dirty || pending || !meaningful}
             onClick={() =>
               startTransition(async () => {
@@ -565,7 +576,7 @@ export function InterviewGuideEditor({
             }
           >
             <Send aria-hidden="true" /> Publish edition
-          </button>
+          </Button>
         </footer>
       )}
     </section>

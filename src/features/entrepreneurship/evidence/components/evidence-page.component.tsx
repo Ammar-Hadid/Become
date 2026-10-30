@@ -1,3 +1,7 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { Input } from "@/components/ui/forms/input.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { Button } from "@/components/ui/buttons/button.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { EvidenceCapture } from "@/features/entrepreneurship/evidence/components/evidence-capture.component";
 import {
@@ -53,20 +57,20 @@ export function EvidencePage({
   const copy =
     mode === "sources"
       ? {
-          title: "Keep the source before deciding what it means.",
+          title: "Your sources",
           description:
             "Conversations, direct observations and public material stay traceable here. Turn the useful parts into explicit observations.",
           ledger: "Source ledger",
         }
       : mode === "observations"
         ? {
-            title: "Keep only what you deliberately noticed.",
+            title: "Your observations",
             description:
               "Every observation stands apart from its source, with wording and provenance preserved for later decisions.",
             ledger: "Observation ledger",
           }
         : {
-            title: "Keep the detail that matters.",
+            title: "Evidence",
             description:
               "A journal of actual sources. Conversations and their observations stay together.",
             ledger: "Evidence journal",
@@ -97,7 +101,7 @@ export function EvidencePage({
         <div className="business-actions">
           {mode !== "legacy" && nicheId && (
             <Link
-              className="finance-dialog-trigger finance-dialog-trigger--secondary"
+              className="become-button become-button--secondary become-button--md"
               href={explorationWorkspaceHref(nicheId, "conversations")}
             >
               Start a conversation
@@ -115,7 +119,9 @@ export function EvidencePage({
         </div>
       </header>
       {navigation}
-      <section
+      <Card
+        material="glass"
+        spacing="dense"
         className={
           directWorkspace
             ? "workspace-ledger"
@@ -158,7 +164,7 @@ export function EvidencePage({
             <label className="workspace-search">
               <Search aria-hidden="true" />
               <span className="sr-only">Search evidence</span>
-              <input
+              <Input
                 name="q"
                 type="search"
                 defaultValue={query.q}
@@ -168,7 +174,7 @@ export function EvidencePage({
           )}
           <label className="field-label">
             Source
-            <select
+            <NativeSelect
               name="sourceKind"
               className={directWorkspace ? undefined : "text-input mt-sm"}
               defaultValue={query.sourceKind ?? ""}
@@ -184,11 +190,11 @@ export function EvidencePage({
               )}
               <option value="DIRECT_OBSERVATION">Direct observations</option>
               <option value="PUBLIC_SOURCE">Public sources</option>
-            </select>
+            </NativeSelect>
           </label>
           <label className="field-label">
             Buying context
-            <select
+            <NativeSelect
               name="marketType"
               className={directWorkspace ? undefined : "text-input mt-sm"}
               defaultValue={query.marketType ?? ""}
@@ -198,7 +204,7 @@ export function EvidencePage({
               <option value="B2C">Consumers</option>
               <option value="B2B">Businesses</option>
               <option value="BOTH">Consumers & businesses</option>
-            </select>
+            </NativeSelect>
           </label>
           <BusinessRecordPicker
             kind="segment"
@@ -215,16 +221,9 @@ export function EvidencePage({
           {query.companyId && (
             <input type="hidden" name="companyId" value={query.companyId} />
           )}
-          <button
-            className={
-              directWorkspace
-                ? "workspace-filter-button"
-                : "finance-dialog-trigger finance-dialog-trigger--secondary"
-            }
-            type="submit"
-          >
+          <Button variant="secondary" type="submit">
             Apply filters
-          </button>
+          </Button>
         </form>
         <EvidenceJournal
           data={data}
@@ -233,7 +232,7 @@ export function EvidencePage({
           nicheId={nicheId}
           query={query}
         />
-      </section>
+      </Card>
     </div>
   );
 }

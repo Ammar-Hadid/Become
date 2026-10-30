@@ -1,0 +1,118 @@
+.character-quote-study {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: var(--spacing-lg);
+  width: 100%;
+  min-height: 12rem;
+  overflow: hidden;
+}
+
+.character-quote-study-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-primary);
+}
+
+.character-quote-study-mark,
+.character-quote-study-endmark {
+  color: var(--color-primary);
+}
+
+.character-quote-study blockquote,
+.character-quote-study blockquote p {
+  margin: 0;
+}
+
+.character-quote-study blockquote {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.character-quote-study blockquote p {
+  max-width: 24ch;
+  color: var(--color-text-primary);
+  text-wrap: balance;
+}
+
+.character-quote-study blockquote footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.character-quote-study-rule {
+  display: block;
+  width: var(--spacing-xl);
+  height: 2px;
+  background: var(--color-primary);
+}
+
+.character-quote-study cite {
+  color: var(--color-primary);
+  font-style: normal;
+}
+
+.character-quote-study-endmark {
+  display: none;
+}
+
+.character-quote-study[data-variant="editorial"] blockquote {
+  padding-left: var(--spacing-lg);
+  border-left: 2px solid var(--color-primary);
+}
+
+.character-quote-study[data-variant="editorial"] blockquote p {
+  font-style: italic;
+}
+
+.character-quote-study[data-variant="margin"] {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  column-gap: var(--spacing-md);
+}
+
+.character-quote-study[data-variant="margin"] .character-quote-study-heading {
+  align-items: start;
+  grid-row: 1 / 3;
+}
+
+.character-quote-study[data-variant="margin"] .character-quote-study-kicker {
+  display: none;
+}
+
+.character-quote-study[data-variant="margin"] blockquote {
+  grid-column: 2;
+}
+
+.character-quote-study[data-variant="margin"] blockquote p {
+  max-width: 28ch;
+}
+
+.character-quote-study[data-variant="framed"] {
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.character-quote-study[data-variant="framed"] .character-quote-study-heading {
+  flex-direction: column;
+  gap: 0;
+}
+
+.character-quote-study[data-variant="framed"] blockquote {
+  justify-items: center;
+}
+
+.character-quote-study[data-variant="framed"] blockquote p {
+  max-width: 26ch;
+}
+
+.character-quote-study[data-variant="framed"] .character-quote-study-endmark {
+  position: absolute;
+  right: var(--spacing-lg);
+  bottom: var(--spacing-sm);
+  display: block;
+  opacity: 0.35;
+}

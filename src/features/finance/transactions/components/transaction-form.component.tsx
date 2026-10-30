@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { FinanceForm } from "@/features/finance/components/finance-form.component";
@@ -211,8 +212,10 @@ export function TransactionForm({
           required
         />
         {type === "INCOME" && workOptions && (
-          <details className="finance-details">
-            <summary>Link work source or opportunity</summary>
+          <WorkspaceDisclosure
+            title={<>Link work source or opportunity</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body space-y-lg">
               <FinanceSelect
                 label="Work source"
@@ -239,7 +242,7 @@ export function TransactionForm({
                 ))}
               </FinanceSelect>
             </div>
-          </details>
+          </WorkspaceDisclosure>
         )}
         {type !== "TRANSFER" && (
           <CounterpartyCombobox
@@ -249,12 +252,17 @@ export function TransactionForm({
             initialName={initial.counterpartyName}
           />
         )}
-        <FinanceField
-          label="Notes"
-          name="notes"
-          placeholder="Optional context you may want later"
-          defaultValue={initial.notes ?? ""}
-        />
+        <WorkspaceDisclosure
+          title="Add a note"
+          defaultOpen={Boolean(initial.notes)}
+        >
+          <FinanceField
+            label="Notes"
+            name="notes"
+            placeholder="Optional context you may want later"
+            defaultValue={initial.notes ?? ""}
+          />
+        </WorkspaceDisclosure>
         {children}
       </FinanceForm>
       {paymentId && (

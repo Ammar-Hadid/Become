@@ -1,5 +1,12 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { Button } from "@/components/ui/buttons/button.component";
+import { Card } from "@/components/ui/cards/card.component";
+import { AiGeneratedText } from "@/components/ui/ai-generated-text/ai-generated-text.component";
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -56,6 +63,7 @@ export function SynthesisReview({
   archived?: boolean;
 }) {
   const router = useRouter();
+  const sound = useInterfaceSound();
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [acceptedNow, setAcceptedNow] = useState(false);
@@ -105,7 +113,9 @@ export function SynthesisReview({
     startTransition(async () => {
       const result = await acceptSynthesisAction(nicheId, proposal.id, draft);
       setFeedback(result.error ?? result.success ?? null);
+      if (result.error) sound.play("actionBlocked");
       if (!result.error) {
+        sound.play("saveConfirmed");
         if (result.id) {
           try {
             window.sessionStorage.setItem(
@@ -198,7 +208,7 @@ export function SynthesisReview({
   }, [nicheId, workspace.latest?.editionId]);
 
   return (
-    <section className="synthesis-review" aria-labelledby="synthesis-title">
+    <Card className="synthesis-review" aria-labelledby="synthesis-title">
       <header className="synthesis-review-heading">
         <div className="synthesis-review-mark" aria-hidden="true">
           <Bot />
@@ -209,7 +219,7 @@ export function SynthesisReview({
             <span>{reviewing ? "Proposal" : "Synthesis"}</span>
           </div>
           <h3 id="synthesis-title">
-            {reviewing ? "Review synthesis" : "Synthesize the source trail"}
+            {reviewing ? "Review synthesis" : "Let Nexo connect the evidence"}
           </h3>
           <p>
             {reviewing
@@ -218,8 +228,9 @@ export function SynthesisReview({
           </p>
         </div>
         {!proposal && !archived && canGenerate && (
-          <button
-            className="workspace-primary-button"
+          <Button
+            variant="primary"
+
             type="button"
             onClick={() => generate()}
             disabled={pending || !canGenerate}
@@ -230,7 +241,7 @@ export function SynthesisReview({
               <Sparkles aria-hidden="true" />
             )}
             {workspace.latest ? "Refresh proposal" : "Draft synthesis"}
-          </button>
+          </Button>
         )}
       </header>
 
@@ -260,14 +271,15 @@ export function SynthesisReview({
               prepared.
             </p>
           </div>
-          <button
+          <Button
+            variant="secondary"
             type="button"
-            className="workspace-secondary-button"
+
             onClick={refreshStatus}
             disabled={pending}
           >
             <RefreshCw aria-hidden="true" /> Check status
-          </button>
+          </Button>
         </div>
       ) : proposal?.status === "FAILED" ? (
         <div className="synthesis-failed" role="alert">
@@ -278,14 +290,15 @@ export function SynthesisReview({
             </p>
           </div>
           {!archived && (
-            <button
+            <Button
+              variant="secondary"
               type="button"
-              className="workspace-secondary-button"
+
               onClick={() => generate(true)}
               disabled={pending}
             >
               <RefreshCw aria-hidden="true" /> Retry
-            </button>
+            </Button>
           )}
         </div>
       ) : proposal?.status === "READY" && draft ? (
@@ -298,28 +311,30 @@ export function SynthesisReview({
             </span>
             {!archived && (
               <div className="business-actions">
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
-                  className="workspace-secondary-button"
+
                   onClick={discard}
                   disabled={pending}
                 >
                   <Trash2 aria-hidden="true" /> Discard
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   type="button"
-                  className="workspace-primary-button"
+
                   onClick={accept}
                   disabled={pending || !draftValid}
                 >
                   <Check aria-hidden="true" /> Accept edition
-                </button>
+                </Button>
               </div>
             )}
           </div>
           <label className="synthesis-field">
             <span>Title</span>
-            <input
+            <Input
               readOnly={archived || pending}
               value={draft.title}
               onChange={(event) =>
@@ -329,7 +344,7 @@ export function SynthesisReview({
           </label>
           <label className="synthesis-field">
             <span>Summary</span>
-            <textarea
+            <Textarea
               readOnly={archived || pending}
               rows={5}
               value={draft.summary}
@@ -370,7 +385,7 @@ export function SynthesisReview({
                   <div className="synthesis-finding-copy">
                     <label className="synthesis-field">
                       <span className="sr-only">Finding {index + 1}</span>
-                      <textarea
+                      <Textarea
                         readOnly={archived || pending}
                         rows={3}
                         value={finding.statement}
@@ -401,7 +416,7 @@ export function SynthesisReview({
                     <div className="synthesis-finding-settings">
                       <label>
                         <span>Kind</span>
-                        <select
+                        <NativeSelect
                           disabled={archived || pending}
                           value={finding.kind}
                           onChange={(event) => {
@@ -430,11 +445,11 @@ export function SynthesisReview({
                               {kindLabel[kind]}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelect>
                       </label>
                       <label>
                         <span>Audience</span>
-                        <select
+                        <NativeSelect
                           disabled={archived || pending}
                           value={finding.lane}
                           onChange={(event) => {
@@ -453,12 +468,13 @@ export function SynthesisReview({
                               {label}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelect>
                       </label>
                       {!archived && !pending && (
-                        <button
+                        <Button
+                          variant="secondary"
                           type="button"
-                          className="workspace-secondary-button"
+
                           onClick={() => {
                             setDraft({
                               ...draft,
@@ -474,7 +490,7 @@ export function SynthesisReview({
                           }}
                         >
                           <Trash2 aria-hidden="true" /> Remove finding
-                        </button>
+                        </Button>
                       )}
                     </div>
                     <div className="synthesis-source-list">
@@ -532,9 +548,10 @@ export function SynthesisReview({
             <header>
               <p className="eyebrow">Questions left open</p>
               {!archived && !pending && draft.nextQuestions.length < 8 && (
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
-                  className="workspace-secondary-button"
+
                   onClick={() =>
                     setDraft({
                       ...draft,
@@ -543,14 +560,14 @@ export function SynthesisReview({
                   }
                 >
                   <Plus aria-hidden="true" /> Add question
-                </button>
+                </Button>
               )}
             </header>
             {draft.nextQuestions.map((question, index) => (
               <div key={index} className="synthesis-question-row">
                 <label className="synthesis-field">
                   <span className="sr-only">Question {index + 1}</span>
-                  <textarea
+                  <Textarea
                     readOnly={archived || pending}
                     rows={2}
                     value={question}
@@ -566,9 +583,11 @@ export function SynthesisReview({
                   />
                 </label>
                 {!archived && !pending && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     type="button"
-                    className="business-icon-button"
+
                     aria-label={`Remove question ${index + 1}`}
                     onClick={() =>
                       setDraft({
@@ -580,7 +599,7 @@ export function SynthesisReview({
                     }
                   >
                     <X aria-hidden="true" />
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -589,7 +608,7 @@ export function SynthesisReview({
             <summary>Coverage and limitations</summary>
             <label className="synthesis-field">
               <span>Limitations</span>
-              <textarea
+              <Textarea
                 readOnly={archived || pending}
                 rows={3}
                 value={draft.limitations}
@@ -631,7 +650,10 @@ export function SynthesisReview({
               )}
             </div>
             <h4>{workspace.latest.output.title}</h4>
-            <p>{workspace.latest.output.summary}</p>
+            <AiGeneratedText
+              text={workspace.latest.output.summary}
+              staticText={!acceptedNow}
+            />
           </div>
           <div className="synthesis-accepted-findings">
             {workspace.latest.output.findings.map((finding, index) => (
@@ -727,6 +749,6 @@ export function SynthesisReview({
           {feedback}
         </p>
       )}
-    </section>
+    </Card>
   );
 }

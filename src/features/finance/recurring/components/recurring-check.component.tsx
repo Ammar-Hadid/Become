@@ -1,4 +1,6 @@
 "use client";
+
+import { Button } from "@/components/ui/buttons/button.component";
 import { useEffect, useState, useTransition } from "react";
 import { checkRecurringAction } from "@/features/finance/recurring/actions/recurring-expense.action";
 export function RecurringCheck() {
@@ -29,7 +31,9 @@ export function RecurringCheck() {
   }, []);
   return (
     <div className="finance-recurring-check">
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         type="button"
         aria-label="Check due expenses"
         disabled={pending}
@@ -50,7 +54,7 @@ export function RecurringCheck() {
         }
       >
         {pending ? "Checking commitments…" : "Refresh commitments"}
-      </button>
+      </Button>
       {error && (
         <p className="form-error mt-sm" role="alert">
           {error}

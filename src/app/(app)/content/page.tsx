@@ -26,6 +26,11 @@ export default async function ContentPage({
   });
 
   return (
-    <ContentDesk data={data} query={query} includeArchived={includeArchived} />
+    <ContentDesk
+      data={data}
+      query={query}
+      includeArchived={includeArchived}
+      hasPrevious={Boolean(params.cursor)}
+    />
   );
 }

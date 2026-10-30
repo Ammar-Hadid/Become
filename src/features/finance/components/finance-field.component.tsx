@@ -3,47 +3,42 @@ import type {
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/styles/utils/class-name.util";
+import { Input } from "@/components/ui/forms/input.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { EmptyState } from "@/components/ui/empty-states/empty-state.component";
+import {
+  WorkspaceHeader,
+  WorkspacePanel,
+} from "@/components/ui/workspace/workspace.component";
 
 export function FinanceField({
   label,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="flex min-w-0 flex-col items-start">
-      <span className="field-label">{label}</span>
-      <input
-        className="text-input tabular-nums"
-        step={props.type === "datetime-local" ? "any" : undefined}
-        {...props}
-      />
-    </label>
+    <Input
+      label={label}
+      step={props.type === "datetime-local" ? "any" : undefined}
+      {...props}
+    />
   );
 }
 
 export function FinanceSelect({
   label,
   children,
-  className,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
   return (
-    <label className="flex min-w-0 flex-col items-start">
+    <label className="finance-field">
       <span className="field-label">{label}</span>
-      <span className="select-wrap">
-        <select
-          className={cn("finance-select", className)}
-          aria-label={label}
-          {...props}
-        >
-          {children}
-        </select>
-        <ChevronDown aria-hidden="true" size={16} />
-      </span>
+      <NativeSelect aria-label={label} {...props}>
+        {children}
+      </NativeSelect>
     </label>
   );
 }
+
 export function FinanceSection({
   title,
   description,
@@ -55,19 +50,18 @@ export function FinanceSection({
   description?: string;
   action?: ReactNode;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <section className={cn("finance-section", className)}>
-      <div className="finance-section-heading">
-        <div>
-          <h2>{title}</h2>
-          {description && <p>{description}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="finance-section-content">{children}</div>
-    </section>
+    <WorkspacePanel
+      title={title}
+      description={description}
+      actions={action}
+      className={className}
+      spacing="dense"
+    >
+      {children}
+    </WorkspacePanel>
   );
 }
 
@@ -83,19 +77,16 @@ export function FinancePageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="finance-page-heading">
-      <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2>{title}</h2>
-        <p>{description}</p>
-      </div>
-      {actions && <div className="finance-page-actions">{actions}</div>}
-    </header>
+    <WorkspaceHeader
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      actions={actions}
+    />
   );
 }
 
 export function FinanceEmptyState({
-  icon,
   title,
   description,
   action,
@@ -106,13 +97,14 @@ export function FinanceEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="finance-empty-state">
-      {icon && <div className="finance-empty-icon">{icon}</div>}
-      <div>
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </div>
-      {action}
-    </div>
+    <EmptyState
+      pattern="ledger-replacement"
+      context={false}
+      size="compact"
+      area="finance"
+      title={title}
+      description={description}
+      action={action}
+    />
   );
 }

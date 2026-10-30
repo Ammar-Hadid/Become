@@ -1,5 +1,9 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { CheckCircle2, FileCheck2 } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -176,7 +180,7 @@ export function ManualAssessment({
         </fieldset>
         <label>
           <span className="field-label">Assessment date</span>
-          <input
+          <Input
             className="text-input"
             type="date"
             name="assessedOn"
@@ -187,7 +191,7 @@ export function ManualAssessment({
         </label>
         <label>
           <span className="field-label">Rationale</span>
-          <textarea
+          <Textarea
             className="text-input text-input--textarea-sm"
             name="rationale"
             required

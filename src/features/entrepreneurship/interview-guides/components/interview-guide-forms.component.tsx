@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
 import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
@@ -29,6 +30,7 @@ export function InterviewGuideCreateForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="A conversational aid"
       title="Create an interview guide"
       triggerLabel="New guide"
@@ -93,9 +95,10 @@ export function EnsureStarterGuides({ nicheId }: { nicheId: string }) {
   const exploration = useExploration();
   if (exploration?.archived) return null;
   return (
-    <button
+    <Button
+      variant="secondary"
       type="button"
-      className="finance-dialog-trigger finance-dialog-trigger--secondary"
+
       onClick={async () => {
         const result = await ensureStarterInterviewGuidesAction(
           nicheId,
@@ -109,6 +112,6 @@ export function EnsureStarterGuides({ nicheId }: { nicheId: string }) {
       }}
     >
       Create B2C & B2B starters
-    </button>
+    </Button>
   );
 }

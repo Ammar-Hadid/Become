@@ -1,0 +1,404 @@
+/* Settings adopts shared surfaces without changing the protected Season workspace. */
+.settings-workspace .settings-content {
+  min-width: 0;
+}
+.settings-workspace .application-settings,
+.settings-workspace .personal-settings {
+  display: grid;
+  gap: var(--space-overview-grid);
+}
+.settings-workspace
+  :is(.application-settings, .personal-settings)
+  > .workspace-header {
+  margin-bottom: 0;
+}
+.settings-workspace .application-settings-sound-row {
+  width: 100%;
+}
+.settings-workspace .personal-settings-form {
+  border: 0;
+}
+.settings-workspace .personal-settings-row {
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1fr);
+  gap: var(--space-action-section);
+  padding-block: var(--spacing-xl);
+}
+.settings-workspace .personal-settings-row:first-child {
+  padding-top: 0;
+}
+.settings-workspace .personal-settings-field {
+  width: 100%;
+}
+.settings-workspace .personal-settings-row .become-input {
+  max-width: 42rem;
+}
+.settings-workspace .personal-settings-actions {
+  padding-bottom: 0;
+}
+.settings-workspace .nexo-workspace {
+  display: grid;
+  gap: var(--space-overview-grid);
+  padding-bottom: 0;
+}
+.settings-workspace .nexo-workspace > .workspace-header {
+  margin-bottom: 0;
+}
+.settings-workspace .nexo-setup-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-overview-grid);
+}
+.settings-workspace .nexo-setup-summary .workspace-metric-value {
+  font-size: var(--text-h3);
+}
+.settings-workspace .nexo-provider-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.75fr) minmax(0, 1.25fr);
+  gap: var(--space-overview-section);
+}
+.settings-workspace .nexo-provider-statuses {
+  display: grid;
+  align-content: start;
+}
+.settings-workspace .nexo-provider-statuses > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding-block: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-body-sm);
+}
+.settings-workspace .nexo-provider-statuses > div:first-child {
+  padding-top: 0;
+}
+.settings-workspace .nexo-provider-statuses > div:last-child {
+  border: 0;
+}
+.settings-workspace .nexo-provider-statuses > div > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-text-muted);
+}
+.settings-workspace .nexo-provider-statuses [data-connected] {
+  color: var(--color-success) !important;
+}
+.settings-workspace .nexo-provider-statuses svg {
+  width: 1rem;
+  height: 1rem;
+}
+.settings-workspace .nexo-provider-entry {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.settings-workspace .nexo-provider-entry > .become-button {
+  justify-self: start;
+}
+.settings-workspace .nexo-provider-help {
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+.settings-workspace .nexo-provider-panel > [role] {
+  margin-top: var(--spacing-lg);
+}
+.settings-workspace .nexo-settings-form {
+  margin-top: 0;
+  gap: var(--spacing-xl);
+}
+.settings-workspace .nexo-settings-form > fieldset {
+  display: grid;
+  gap: var(--space-overview-grid);
+}
+.settings-workspace .nexo-settings-form > fieldset > * {
+  margin: 0;
+}
+.settings-workspace .nexo-settings-form > .become-button {
+  margin-top: 0;
+  min-width: 13rem;
+}
+.settings-workspace .nexo-profile-list {
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+}
+.settings-workspace .nexo-profile-editor {
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+}
+.settings-workspace .nexo-profile-editor > summary {
+  padding-inline: 0;
+  min-height: 5rem;
+}
+.settings-workspace .nexo-profile-editor-body {
+  padding-inline: 0;
+}
+.settings-workspace .nexo-profile-fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-action-field);
+  align-items: start;
+}
+.settings-workspace .nexo-profile-field {
+  display: grid;
+  min-width: 0;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm--line-height);
+}
+.settings-workspace .nexo-profile-advanced > div {
+  align-items: start;
+}
+.settings-workspace .nexo-profile-advanced > div {
+  gap: var(--space-action-field);
+}
+.settings-workspace .nexo-profile-actions {
+  padding-bottom: 0;
+}
+.settings-workspace .nexo-profile-remove {
+  gap: var(--spacing-sm);
+}
+.settings-workspace .nexo-budget-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 15rem);
+  align-items: start;
+  gap: var(--space-action-section);
+}
+.settings-workspace .nexo-budget-row strong {
+  font-size: var(--text-body);
+  font-weight: 550;
+}
+.settings-workspace .nexo-budget-row p {
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+  max-width: 60ch;
+}
+.settings-workspace .nexo-routing-heading {
+  margin-bottom: var(--spacing-xl);
+}
+.settings-workspace .nexo-routing-coverage {
+  margin-block: var(--spacing-xl);
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.settings-workspace .nexo-routing-coverage .become-progress {
+  min-width: 0;
+}
+.settings-workspace .nexo-routing-workbench {
+  border: 0;
+  background: transparent;
+  gap: var(--space-overview-grid);
+  grid-template-columns: minmax(18rem, 1.1fr) minmax(0, 1fr);
+}
+.settings-workspace .nexo-route-catalog {
+  border-right: 1px solid var(--color-border);
+  padding-right: var(--space-overview-grid);
+}
+.settings-workspace .nexo-route-toolbar {
+  padding-inline: 0;
+}
+.settings-workspace .nexo-route-index {
+  padding-inline: 0;
+  max-height: 32rem;
+}
+.settings-workspace .nexo-route-inspector {
+  padding-inline: 0;
+  background: transparent;
+}
+.settings-workspace .nexo-route-inspector .workspace-disclosure {
+  margin-top: var(--spacing-xl);
+}
+.settings-workspace .nexo-route-inspector .workspace-disclosure-content > * {
+  margin-top: var(--spacing-md);
+}
+.settings-workspace .nexo-route-task {
+  padding-inline: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+.settings-workspace .nexo-route-task-status {
+  flex: none;
+}
+.settings-workspace .nexo-route-path {
+  grid-template-columns: minmax(0, 1fr);
+}
+.settings-workspace .nexo-route-path > div {
+  border-left: 0;
+  padding-block: var(--spacing-sm);
+}
+.settings-workspace .recipe-library-workspace {
+  gap: var(--space-overview-grid);
+}
+.settings-workspace .recipe-library-workspace > .workspace-header {
+  margin-bottom: 0;
+}
+.settings-workspace .image-direction-season-context .imagery-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-action-field);
+  max-width: 50rem;
+}
+.settings-workspace .image-direction-season-context .imagery-muted {
+  margin-top: var(--spacing-lg);
+}
+.settings-workspace .recipe-library-grid {
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 2.6fr) minmax(
+      14rem,
+      0.9fr
+    );
+  gap: var(--space-overview-grid);
+}
+.settings-workspace .recipe-library-navigation {
+  gap: var(--spacing-xl);
+}
+.settings-workspace .recipe-library-navigation .workspace-disclosure {
+  padding: 0;
+}
+.settings-workspace .recipe-library-navigation .workspace-disclosure > summary {
+  padding-inline: 0;
+}
+.settings-workspace .recipe-library-navigation .workspace-disclosure-content {
+  padding-inline: 0;
+}
+.settings-workspace
+  .recipe-library-navigation
+  .workspace-disclosure
+  .become-button {
+  white-space: normal;
+}
+.settings-workspace
+  .recipe-library-navigation
+  .workspace-disclosure
+  .become-button
+  > svg {
+  flex: none;
+}
+.settings-workspace .recipe-library-editor > .imagery-between {
+  align-items: flex-start;
+}
+.settings-workspace .recipe-library-editor > .imagery-between h2 {
+  font-size: var(--text-h3);
+}
+.settings-workspace .recipe-library-brief {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.settings-workspace .image-direction-section-heading {
+  flex-wrap: wrap;
+}
+.settings-workspace .image-direction-heading-actions {
+  flex-wrap: wrap;
+}
+.settings-workspace .image-direction-prompt-field {
+  padding-block: var(--spacing-lg);
+}
+.settings-workspace .image-direction-saved-prompt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.settings-workspace .image-direction-actions {
+  padding-top: var(--spacing-lg);
+}
+@media (max-width: 75rem) {
+  .settings-workspace .recipe-library-grid {
+    grid-template-columns: minmax(11rem, 0.7fr) minmax(0, 2.6fr);
+  }
+  .settings-workspace .recipe-library-brief {
+    grid-column: 2;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-workspace .nexo-routing-workbench {
+    grid-template-columns: minmax(15rem, 1fr) minmax(0, 1fr);
+  }
+  .settings-workspace .nexo-profile-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settings-workspace .nexo-profile-fields > label:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 50rem) {
+  .settings-workspace .nexo-provider-layout,
+  .settings-workspace .nexo-routing-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-workspace .nexo-route-catalog {
+    border: 0;
+    padding: 0;
+  }
+  .settings-workspace .nexo-setup-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-workspace .nexo-setup-summary .workspace-metric {
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-sm);
+  }
+  .settings-workspace .nexo-setup-summary .workspace-metric-detail {
+    grid-column: 1 / -1;
+  }
+  .settings-workspace .personal-settings-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-md);
+  }
+  .settings-workspace .recipe-library-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-workspace .recipe-library-navigation {
+    position: static;
+  }
+  .settings-workspace .recipe-library-navigation nav {
+    display: flex;
+    overflow-x: auto;
+  }
+  .settings-workspace .recipe-library-navigation nav > .become-button {
+    flex: none;
+  }
+  .settings-workspace .recipe-library-brief {
+    grid-column: auto;
+  }
+  .settings-workspace .image-direction-season-context .imagery-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 35rem) {
+  .settings-workspace .nexo-profile-fields,
+  .settings-workspace .nexo-budget-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-workspace .nexo-section-actions {
+    flex-wrap: wrap;
+  }
+  .settings-workspace .personal-settings-actions {
+    flex-wrap: wrap;
+  }
+  .settings-workspace .personal-settings-actions > .become-button {
+    flex: 1 1 auto;
+  }
+  .settings-workspace .application-settings-sound-state {
+    display: none;
+  }
+}
+
+/* Reset the old feature control skin; the shared select wrapper owns its edge and focus. */
+.settings-workspace .nexo-workspace .become-native-select select {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+}
+.settings-workspace .nexo-route-search .become-input {
+  padding-left: var(--spacing-3xl);
+}
+@media (max-width: 35rem) {
+  .settings-workspace .nexo-routing-coverage > .become-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

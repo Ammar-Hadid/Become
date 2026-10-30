@@ -1,5 +1,8 @@
 # Phase 4 — niche-first Entrepreneurship
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Implemented 8–9 September 2026 on the existing working tree. This corrects Phase 4's product hierarchy; it does not begin Phase 5. Existing acceptance corrections are retained. No commit, push or deployment was made.
 
 ## Information architecture
@@ -50,7 +53,7 @@ A future distinct episode can add a dated focus/episode association under the sa
 - New integration scenarios cover initial/paused/stopped/resumed decisions, stale decisions, fresh workspace counts, shared companies, preserved offer context across revisions, global history, batch niche snapshots and atomic rejection of invalid ownership.
 - Browser verification uses disposable local accounts and includes the full Dentists → stop → Barbers journey, all four contextual creation paths, shared-company reuse, original timer completion after switching niches, global offer access, reduced-motion dismissal/focus restoration and no horizontal page overflow.
 - The manual browser journey independently created Dentists, a company, an interaction with an observation, a problem, an offer and a session; paused Dentists; created Barbers; verified all initial counts and time were zero; completed the original Dentists timer from Barbers; and shared the company without bringing its old interactions/offers into Barbers.
-- Desktop, tablet and mobile screenshots were inspected. Tablet actions move below the scope to avoid squeezing the description; mobile tabs use a compact spacing/type scale. Shared dialogs, ellipsis menus and motion recipes are reused. No motion dependency or new timing system was added.
+- Desktop, tablet and mobile screenshots were inspected. Shared dialogs, menus and accessible layer lifecycle were verified. No motion dependency or new timing system was added.
 - The period/scroll regression now targets the relocated global analytics route. The five-row company viewport test waits for visible layout before taking its initial measurement, retaining the original height assertions.
 
 - Final complete browser run: **69 passed**, covering `explorations`, `entrepreneurship`, `phase4-corrections`, `timer-recovery`, and `finance` on all three profiles.

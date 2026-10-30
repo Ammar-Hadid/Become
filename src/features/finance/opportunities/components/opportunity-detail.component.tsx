@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DateTime } from "luxon";
@@ -63,8 +65,8 @@ export async function OpportunityDetail({
   const local = (date?: Date | null) =>
     date
       ? DateTime.fromJSDate(date)
-        .setZone(APP_TIMEZONE)
-        .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
+          .setZone(APP_TIMEZONE)
+          .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
       : "";
   const milestones = [
     ["Discovered", opportunity.discoveredAt],
@@ -91,7 +93,10 @@ export async function OpportunityDetail({
       {opportunity.status === "ACCEPTED" &&
         !opportunity.resultingWorkSourceId &&
         !opportunity.archivedAt && (
-          <section className="finance-accepted-panel">
+          <Card
+            material="elevated-glass"
+            className="finance-accepted-workspace"
+          >
             <span className="finance-accepted-icon">
               <Sparkles aria-hidden="true" />
             </span>
@@ -105,7 +110,7 @@ export async function OpportunityDetail({
             </div>
             <div className="finance-accepted-actions">
               <FinanceDialog
-                triggerLabel="Create WorkSource"
+                triggerLabel="Create work source"
                 title="Create the new work relationship"
                 description="Use the accepted opportunity as a starting point."
                 variant="secondary"
@@ -125,7 +130,7 @@ export async function OpportunityDetail({
               </FinanceDialog>
               {sources.length > 0 && (
                 <FinanceDialog
-                  triggerLabel="Link existing WorkSource"
+                  triggerLabel="Link existing work source"
                   title="Connect an existing relationship"
                   description="Choose the established source this opportunity became."
                   variant="quiet"
@@ -153,7 +158,7 @@ export async function OpportunityDetail({
               )}
               <Link href="/finance/opportunities">Not now</Link>
             </div>
-          </section>
+          </Card>
         )}
 
       {opportunity.resultingWorkSource && (
@@ -169,8 +174,11 @@ export async function OpportunityDetail({
       )}
 
       <section className="finance-opportunity-overview mb-3xl">
-
-        <article className="finance-opportunity-value">
+        <Card
+          as="article"
+          spacing="dense"
+          className="finance-opportunity-metric"
+        >
           <span className="finance-panel-icon">
             <CircleDollarSign aria-hidden="true" />
           </span>
@@ -187,25 +195,28 @@ export async function OpportunityDetail({
           <small>
             Only money explicitly received and connected to this opportunity.
           </small>
-        </article>
+        </Card>
 
-        <article className="finance-opportunity-value">
+        <Card
+          as="article"
+          spacing="dense"
+          className="finance-opportunity-metric"
+        >
           <span className="finance-panel-icon finance-panel-icon--violet">
             <Sparkles aria-hidden="true" />
           </span>
           <p>Prospective value</p>
           <strong className="finance-number">
             {opportunity.expectedAmountMinor !== null &&
-              opportunity.expectedCurrency
+            opportunity.expectedCurrency
               ? formatMoney(
-                opportunity.expectedAmountMinor,
-                opportunity.expectedCurrency,
-              )
+                  opportunity.expectedAmountMinor,
+                  opportunity.expectedCurrency,
+                )
               : "Not estimated"}
           </strong>
           <small>An expectation only. It never counts as actual income.</small>
-        </article>
-
+        </Card>
       </section>
 
       <FinanceSection
@@ -215,7 +226,6 @@ export async function OpportunityDetail({
         <ol className="finance-opportunity-timeline">
           {milestones.map(([label, value], index) => (
             <li key={label} className="flex items-center!">
-
               <span className="border">
                 {index === milestones.length - 1 ? (
                   <CheckCircle2 aria-hidden="true" />
@@ -232,21 +242,20 @@ export async function OpportunityDetail({
                     .toFormat("d LLL yyyy, HH:mm")}
                 </time>
               </div>
-
             </li>
           ))}
         </ol>
       </FinanceSection>
-
-
 
       {!opportunity.archivedAt && (
         <FinanceSection
           title="Opportunity details"
           description="Update the status, milestones or expected compensation as the possibility develops."
         >
-          <details className="finance-details">
-            <summary>Edit opportunity</summary>
+          <WorkspaceDisclosure
+            title={<>Edit opportunity</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body finance-settings-panel">
               <OpportunityForm
                 initial={{
@@ -257,11 +266,11 @@ export async function OpportunityDetail({
                   closedAt: local(opportunity.closedAt),
                   expectedAmount:
                     opportunity.expectedAmountMinor !== null &&
-                      opportunity.expectedCurrency
+                    opportunity.expectedCurrency
                       ? moneyDecimal(
-                        opportunity.expectedAmountMinor,
-                        opportunity.expectedCurrency,
-                      )
+                          opportunity.expectedAmountMinor,
+                          opportunity.expectedCurrency,
+                        )
                       : "",
                 }}
               />
@@ -279,7 +288,7 @@ export async function OpportunityDetail({
                 </FinanceForm>
               </div>
             </div>
-          </details>
+          </WorkspaceDisclosure>
         </FinanceSection>
       )}
 

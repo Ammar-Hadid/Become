@@ -1,6 +1,7 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, ChevronDown, Compass } from "lucide-react";
+import { ArrowLeft, Compass } from "lucide-react";
 import { humanize } from "@/features/entrepreneurship/shared/utils/business.util";
 
 /** The route owns authorization and supplies actions and audience conclusions. */
@@ -36,19 +37,17 @@ export function ExplorationHeader({
         </div>
       </div>
       <div className="exploration-context-tools">
-        {scope ? (
-          <details className="exploration-question">
-            <summary>
-              Exploration question <ChevronDown aria-hidden="true" />
-            </summary>
-            <p>{scope}</p>
-          </details>
-        ) : null}
-        {actions && (
-          <div className="business-actions exploration-masthead-actions">
-            {actions}
-          </div>
-        )}
+        <WorkspaceDisclosure
+          title="Manage exploration"
+          className="business-exploration-tools"
+        >
+          {scope && <p className="business-prose">{scope}</p>}
+          {actions && (
+            <div className="business-actions exploration-masthead-actions">
+              {actions}
+            </div>
+          )}
+        </WorkspaceDisclosure>
       </div>
     </header>
   );

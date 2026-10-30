@@ -95,20 +95,31 @@ export function useDocumentAutosave<
         setMessage(null);
         blockedFingerprintRef.current = null;
         let result: DocumentSaveResult<TView>;
+        let deadline: ReturnType<typeof setTimeout> | undefined;
         try {
-          result = await onSaveRef.current({
-            document: attempt.document,
-            expectedVersion: versionRef.current,
-            operationKey: attempt.operationKey,
-          });
+          result = await Promise.race([
+            onSaveRef.current({
+              document: attempt.document,
+              expectedVersion: versionRef.current,
+              operationKey: attempt.operationKey,
+            }),
+            new Promise<never>((_, reject) => {
+              deadline = setTimeout(
+                () => reject(new Error("Save timed out")),
+                15_000,
+              );
+            }),
+          ]);
         } catch {
           uncertainRef.current = attempt;
-          blockedFingerprintRef.current = attempt.fingerprint;
+          blockedFingerprintRef.current = currentFingerprintRef.current;
           setStatus("error");
           setMessage(
             "The save may not have reached Become. Retry before leaving.",
           );
           return false;
+        } finally {
+          clearTimeout(deadline);
         }
         if (result.kind === "uncertain") {
           uncertainRef.current = attempt;

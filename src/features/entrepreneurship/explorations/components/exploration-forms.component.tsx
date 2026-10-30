@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
@@ -19,10 +20,11 @@ export function StartExplorationForm() {
   const router = useRouter();
   return (
     <RecordDialog
+      treatment="workspace"
       title="Start exploration"
       eyebrow="A new question"
       triggerLabel="Start exploration"
-      description="Begin with a question. You can discover who it serves as you learn."
+      description="Give your question a name. You can choose an audience later."
     >
       <RecordForm
         action={saveMarketAction.bind(null, "niche", undefined)}
@@ -40,9 +42,10 @@ export function StartExplorationForm() {
         >
           <BusinessField
             name="name"
+            featured
             label="Exploration name"
             required
-            hint="For example, Gaming Mousepad Cleaning & Maintenance."
+            hint="For example, simpler Friday handovers."
           />
           <BusinessField
             name="scope"
@@ -70,8 +73,7 @@ export function StartExplorationForm() {
           </div>
         </details>
         <p className="business-form-note">
-          You do not need to choose consumers or businesses yet. Keep the
-          possibilities open until the evidence gives you a reason to decide.
+          Your audience can change as you learn.
         </p>
       </RecordForm>
     </RecordDialog>
@@ -100,6 +102,7 @@ export function ExplorationDirectionForm({
   const [conclusion, setConclusion] = useState(marketConclusion ?? "UNDECIDED");
   return (
     <RecordDialog
+      treatment="workspace"
       icon={false}
       title="Where is this leading?"
       triggerLabel={active ? "Review direction" : "Resume exploration"}
@@ -133,9 +136,9 @@ export function ExplorationDirectionForm({
         >
           <label className="field-label">
             What does the evidence suggest?
-            <select
+            <NativeSelect
               name="marketConclusion"
-              className="text-input mt-sm"
+              className="mt-sm"
               value={conclusion}
               onChange={(event) => setConclusion(event.target.value)}
             >
@@ -146,7 +149,7 @@ export function ExplorationDirectionForm({
               <option value="B2B">A business path</option>
               <option value="BOTH">Both paths</option>
               <option value="NEITHER">Neither path for this scope</option>
-            </select>
+            </NativeSelect>
           </label>
           <BusinessField
             label="Scope of this conclusion"

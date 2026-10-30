@@ -1,13 +1,28 @@
 "use client";
 
-import { formatReviewDate } from "@/features/reviews/reading/utils/review-date.util";
-
 import Link from "next/link";
 import { ArrowRight, Check, PenLine } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { Button } from "@/components/ui/buttons/button.component";
+import { EmptyState } from "@/components/ui/empty-states/empty-state.component";
+import {
+  Workspace,
+  WorkspaceHeader,
+  WorkspacePanel,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
+import { InterfaceSoundContext } from "@/components/ui/sound/components/interface-sound-provider.component";
+import { formatReviewDate } from "@/features/reviews/reading/utils/review-date.util";
 import type { ReviewHistory } from "@/features/reviews/contracts/types/review.types";
 import { TIMEFRAMES, type Timeframe } from "@/lib/dates/utils/period.util";
 import styles from "../styles/review-history.module.css";
+
+const descriptions = {
+  week: "Your recent rhythm",
+  month: "Patterns across the days",
+  season: "A chapter of your life",
+  year: "The longer view",
+};
 
 export function ReviewHistoryReading({
   history,
@@ -17,70 +32,72 @@ export function ReviewHistoryReading({
   entries: { label: string; href: string; timeframe: Timeframe }[];
 }) {
   const [timeframe, setTimeframe] = useState<Timeframe | null>(null);
+  const sound = useContext(InterfaceSoundContext);
   const items = history.items.filter(
     (item) => !timeframe || item.timeframe === timeframe,
   );
+  function choose(value: Timeframe | null) {
+    if (value !== timeframe) sound?.play("controlConfirmed");
+    setTimeframe(value);
+  }
   return (
-    <div className={`page-shell ${styles.history}`}>
-      <header className={styles.masthead}>
-        <p className="eyebrow">Reviews</p>
-        <h1>The days, understood.</h1>
-        <p>
-          Return to what you intended, what happened, and what you want to keep
-          from it.
-        </p>
-      </header>
-      <section className={styles.enter} aria-labelledby="review-choose-period">
-        <header>
-          <p className="eyebrow">Open a reading</p>
-          <h2 id="review-choose-period">Choose the distance.</h2>
-          <p>
-            A week offers a rhythm. A month reveals a pattern. A season holds a
-            chapter. A year gives the longer view.
-          </p>
-        </header>
-        <div className={styles.periods}>
-          {TIMEFRAMES.map((period) => (
-            <div key={period}>
-              <h3>{period[0].toUpperCase() + period.slice(1)}</h3>
+    <Workspace area="direction" className={`page-shell ${styles.history}`}>
+      <WorkspaceHeader
+        eyebrow="Reviews"
+        title="See what the days added up to."
+        description="Choose a period, read the recorded facts, and keep what matters to you."
+      />
+      <div className={styles.periodCards} aria-label="Choose a review period">
+        {TIMEFRAMES.map((period) => (
+          <WorkspacePanel
+            key={period}
+            title={period[0].toUpperCase() + period.slice(1)}
+            description={descriptions[period]}
+          >
+            <div className={styles.periodLinks}>
               {entries
                 .filter((entry) => entry.timeframe === period)
                 .map((entry) => (
                   <Link key={entry.href} href={entry.href}>
-                    {entry.label}
-                    <ArrowRight aria-hidden="true" />
+                    <span>{entry.label}</span>
+                    <ArrowRight aria-hidden />
                   </Link>
                 ))}
             </div>
-          ))}
-        </div>
-      </section>
-      <section className={styles.saved} aria-labelledby="review-saved-readings">
-        <header>
-          <div>
-            <p className="eyebrow">Your saved readings</p>
-            <h2 id="review-saved-readings">A record you can return to.</h2>
-          </div>
-          <div className={styles.filters} aria-label="Filter saved reviews">
-            <button
-              type="button"
+          </WorkspacePanel>
+        ))}
+      </div>
+      <WorkspacePanel
+        title="Your saved reviews"
+        description="Drafts and preserved editions, ready to return to."
+        className={styles.savedPanel}
+        actions={
+          <div
+            className={styles.filterButtons}
+            aria-label="Filter saved reviews"
+          >
+            <Button
+              variant={!timeframe ? "secondary" : "ghost"}
+              size="sm"
               aria-pressed={!timeframe}
-              onClick={() => setTimeframe(null)}
+              onClick={() => choose(null)}
             >
               All
-            </button>
+            </Button>
             {TIMEFRAMES.map((period) => (
-              <button
+              <Button
                 key={period}
-                type="button"
+                variant={timeframe === period ? "secondary" : "ghost"}
+                size="sm"
                 aria-pressed={timeframe === period}
-                onClick={() => setTimeframe(period)}
+                onClick={() => choose(period)}
               >
                 {period[0].toUpperCase() + period.slice(1)}
-              </button>
+              </Button>
             ))}
           </div>
-        </header>
+        }
+      >
         {items.length ? (
           <ol className={styles.readings}>
             {items.map((item) => (
@@ -98,40 +115,45 @@ export function ReviewHistoryReading({
                   </div>
                   <span className={styles.status}>
                     {item.status === "FINALIZED" ? (
-                      <Check aria-hidden="true" />
+                      <Check aria-hidden />
                     ) : (
-                      <PenLine aria-hidden="true" />
+                      <PenLine aria-hidden />
                     )}
                     {item.status === "FINALIZED" ? "Finalized" : "Draft"}
                   </span>
-                  <ArrowRight aria-hidden="true" />
+                  <ArrowRight aria-hidden />
                 </Link>
               </li>
             ))}
           </ol>
         ) : (
-          <div className={styles.empty}>
-            <p>
-              {history.items.length
-                ? "No saved readings at this distance on this page."
-                : "Your first saved reading starts here."}
-            </p>
-            <p>
-              {history.items.length
-                ? "Choose another distance, or open a period above."
-                : "Choose a period above. The record is ready to inspect; additional writing is optional."}
-            </p>
-          </div>
+          <EmptyState
+            pattern={
+              history.items.length ? "active-filter" : "editorial-canvas"
+            }
+            area="direction"
+            size="compact"
+            title={
+              history.items.length
+                ? "No saved reviews in this view"
+                : "Your first review starts with a period"
+            }
+            description={
+              history.items.length
+                ? "Choose another period type or open a reading above."
+                : "The recorded facts are already there. Your reflection is optional."
+            }
+          />
         )}
         {history.nextCursor && (
-          <Link
-            className={styles.older}
+          <WorkspaceLink
+            className={styles.olderAction}
             href={`/reviews?cursor=${encodeURIComponent(history.nextCursor)}`}
           >
-            Older readings <ArrowRight aria-hidden="true" />
-          </Link>
+            Older readings <ArrowRight />
+          </WorkspaceLink>
         )}
-      </section>
-    </div>
+      </WorkspacePanel>
+    </Workspace>
   );
 }

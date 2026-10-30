@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { useState } from "react";
 import { useBusinessRouter as useRouter } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
@@ -45,6 +46,7 @@ export function ProblemForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="A belief to examine"
       triggerLabel="Frame a problem"
       title="Frame a problem"
@@ -142,6 +144,7 @@ export function ReceiptEvidenceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="An actual financial fact"
       title="Use receipt evidence"
       triggerLabel="Link a receipt"
@@ -184,6 +187,7 @@ export function LinkEvidenceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Trace the belief"
       triggerLabel="Link an observation"
       title="Link an observation"
@@ -306,8 +310,8 @@ export function ObservationFields({
         ) : (
           <label className="field-label">
             Source
-            <select
-              className="text-input mt-sm"
+            <NativeSelect
+              className="mt-sm"
               name="sourceKind"
               value={source}
               onChange={(event) => setSource(event.target.value)}
@@ -317,7 +321,7 @@ export function ObservationFields({
               </option>
               <option value="INTERACTION">A recorded interaction</option>
               <option value="PUBLIC_SOURCE">A public source</option>
-            </select>
+            </NativeSelect>
           </label>
         )}
         {source === "PUBLIC_SOURCE" && (
@@ -406,6 +410,7 @@ export function ProblemAudienceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="A clearer boundary"
       title="Refine the problem audience"
       triggerLabel="Refine audience"
@@ -440,6 +445,7 @@ export function ObservationForm(
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Market voice"
       triggerLabel="Keep an observation"
       title="Keep an observation"
@@ -475,6 +481,7 @@ export function AssessmentForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Your judgment, with a boundary"
       triggerLabel="Record assessment"
       title="What does the evidence suggest?"
@@ -572,6 +579,7 @@ export function ReconfirmEvidenceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Changed source meaning"
       triggerLabel="Review changed sources"
       title="Confirm the interpretation still holds"

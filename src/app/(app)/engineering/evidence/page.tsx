@@ -1,6 +1,10 @@
+import {
+  WorkspaceHeader,
+  WorkspacePanel,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
 import type { Metadata } from "next";
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import { EngineeringEvidenceList } from "@/features/engineering/evidence/components/engineering-evidence-list.component";
 import { getEngineeringEvidenceList } from "@/features/engineering/queries/engineering.query";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
@@ -26,26 +30,17 @@ export default async function EngineeringEvidencePage({
     : undefined;
   return (
     <div className="page-shell engineering-evidence-page">
-      <header className="page-header engineering-evidence-page-header">
-        <div>
-          <p className="eyebrow mb-md">Engineering</p>
-          <h1>Evidence</h1>
-          <p className="page-description text-text-secondary mt-sm max-w-copy">
-            A durable record of what was built, solved, learned, deployed,
-            decided, and discovered.
-          </p>
-        </div>
-        <Link
-          href="/engineering/evidence/new"
-          className="engineering-primary-link"
-        >
-          <Plus className="size-4" /> Add evidence
-        </Link>
-      </header>
-      <section
-        className="engineering-evidence-ledger"
-        aria-labelledby="engineering-evidence-history-heading"
-      >
+      <WorkspaceHeader
+        eyebrow="Engineering"
+        title={<> Evidence </>}
+        description="The things you built, solved, and learned, ready to revisit."
+        actions={
+          <WorkspaceLink href="/engineering/evidence/new" variant="primary">
+            <Plus /> Add evidence
+          </WorkspaceLink>
+        }
+      />
+      <WorkspacePanel className="engineering-evidence-ledger">
         <header className="engineering-evidence-ledger-heading">
           <div>
             <p className="eyebrow mb-sm">Chronology</p>
@@ -67,7 +62,7 @@ export default async function EngineeringEvidencePage({
           journal
           arrivalId={arrivalId}
         />
-      </section>
+      </WorkspacePanel>
     </div>
   );
 }

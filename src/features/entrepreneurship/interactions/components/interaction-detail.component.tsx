@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { CorrectionMenu } from "@/features/entrepreneurship/shared/components/correction-menu.component";
 import { voidInteractionAction } from "@/features/entrepreneurship/interactions/actions/interaction.action";
 import {
@@ -97,7 +98,11 @@ export async function InteractionDetail({
       </header>
       <div className="business-detail-grid">
         <div className="business-detail-main">
-          <section className="business-detail-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <div className="business-row-heading">
               <h3>What happened</h3>{" "}
               <CorrectionMenu
@@ -127,8 +132,12 @@ export async function InteractionDetail({
                 ↳ Reply to an earlier interaction
               </Link>
             )}
-          </section>
-          <section className="business-detail-section">
+          </Card>
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <h3>Observations · {keptObservations.length}</h3>
             {keptObservations.length ? (
               keptObservations.map((observation) => (
@@ -179,8 +188,12 @@ export async function InteractionDetail({
                 No observation was added. An interaction stands on its own.
               </p>
             )}
-          </section>
-          <section className="business-detail-section">
+          </Card>
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <div className="business-row-heading">
               <h3>Linked replies</h3>
               <InteractionForm
@@ -209,7 +222,7 @@ export async function InteractionDetail({
             ) : (
               <p className="business-inline-empty">No linked reply recorded.</p>
             )}
-          </section>
+          </Card>
           {record.revisions.length > 1 && (
             <details className="business-disclosure">
               <summary>
@@ -233,7 +246,11 @@ export async function InteractionDetail({
           )}
         </div>
         <aside className="business-aside">
-          <section className="business-aside-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-aside-section"
+          >
             <p className="eyebrow">Context at the time</p>
             <p className="mt-lg text-body text-text-secondary">
               <AudienceSummary {...revision} />
@@ -267,8 +284,12 @@ export async function InteractionDetail({
                     .join(", ")
                 : "No participants recorded"}
             </p>
-          </section>
-          <section className="business-detail-section mt-xl">
+          </Card>
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section mt-xl"
+          >
             <h3>Next actions</h3>
             <FollowUpForm target={{ interactionId: id }} />
             {record.followUps.length ? (
@@ -278,7 +299,7 @@ export async function InteractionDetail({
             ) : (
               <p>No follow-up chosen.</p>
             )}
-          </section>
+          </Card>
         </aside>
       </div>
     </>

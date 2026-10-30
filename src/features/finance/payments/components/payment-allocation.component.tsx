@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+
 import { useState } from "react";
 import { DateTime } from "luxon";
 import { CheckCircle2, Clock3, Split } from "lucide-react";
@@ -100,9 +103,9 @@ export function PaymentAllocation({
         </p>
       )}
 
-      <button
+      <Button
+        variant="secondary"
         type="button"
-        className="finance-allocation-draft"
         disabled={!selected.length}
         onClick={() => {
           try {
@@ -130,7 +133,7 @@ export function PaymentAllocation({
       >
         <Split aria-hidden="true" />
         Divide by time spent
-      </button>
+      </Button>
       {draftError && <p className="form-error">{draftError}</p>}
 
       <div className="finance-payment-candidates">
@@ -195,10 +198,12 @@ export function PaymentAllocation({
             )}
 
             {candidate.reasons.length > 0 && (
-              <details className="finance-candidate-reasons">
-                <summary>Why this work was suggested</summary>
+              <WorkspaceDisclosure
+                title={<>Why this work was suggested</>}
+                className="finance-disclosure"
+              >
                 <p>{candidate.reasons.join(" · ")}</p>
-              </details>
+              </WorkspaceDisclosure>
             )}
           </article>
         ))}

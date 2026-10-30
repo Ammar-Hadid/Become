@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { ViewTransition } from "react";
 import { DateTime } from "luxon";
@@ -49,16 +50,19 @@ export async function BusinessOverview({
       <header className="business-section-heading business-page-heading">
         <div>
           <p className="eyebrow">Direction, grounded</p>
-          <h2>What are you learning across explorations?</h2>
+          <h2>Your learning at a glance</h2>
           <p>
-            A working picture of what you’re exploring, hearing and choosing
-            next.
+            Explorations, real conversations and the next actions you chose.
           </p>
         </div>
         <EvidenceCapture {...options} />
       </header>
       <div className="business-overview-grid business-dashboard-grid">
-        <section className="business-zone business-zone--primary">
+        <Card
+          material="glass"
+          spacing="dense"
+          className="business-zone business-zone--primary"
+        >
           <div className="business-row-heading">
             <h3>
               <Compass aria-hidden="true" />
@@ -103,8 +107,12 @@ export async function BusinessOverview({
               </Link>
             </div>
           )}
-        </section>
-        <aside className="business-next-actions">
+        </Card>
+        <Card
+          material="glass"
+          spacing="dense"
+          className="business-next-actions"
+        >
           <p className="eyebrow">The next chosen step</p>
           {data.nextActions.length ? (
             data.nextActions.map((followUp) => (
@@ -135,9 +143,13 @@ export async function BusinessOverview({
               </div>
             </details>
           )}
-        </aside>
+        </Card>
       </div>
-      <section className="business-market-voice business-zone">
+      <Card
+        material="glass"
+        spacing="dense"
+        className="business-market-voice business-zone"
+      >
         <div className="business-row-heading">
           <h3>
             <Quote aria-hidden="true" />
@@ -177,8 +189,12 @@ export async function BusinessOverview({
             something worth keeping.
           </p>
         )}
-      </section>
-      <section className="business-zone business-period-zone">
+      </Card>
+      <Card
+        material="glass"
+        spacing="dense"
+        className="business-zone business-period-zone"
+      >
         <div className="business-row-heading">
           <div>
             <h3>
@@ -353,7 +369,7 @@ export async function BusinessOverview({
             </details>
           </div>
         </ViewTransition>
-      </section>
+      </Card>
     </>
   );
 }

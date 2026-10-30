@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import { FieldError } from "@/components/ui/forms/field.component";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
 import {
   SubMenu,
@@ -111,15 +112,21 @@ export function CurrencySelect({
         placement="bottom-end"
         className="w-full"
         trigger={(props) => (
+          // aria-invalid exposes native validation state on the custom trigger.
+          // eslint-disable-next-line jsx-a11y/role-supports-aria-props
           <button
             {...props}
             id={id}
             aria-describedby={`${id}-value${invalid ? ` ${id}-error` : ""}`}
+            aria-invalid={invalid || undefined}
             disabled={disabled}
-            className="text-input text-left"
+            className="select-trigger text-left"
           >
-            <span className="gap-sm flex items-center justify-between">
-              <span id={`${id}-value`}>
+            <span className="gap-sm flex min-w-0 items-center justify-between">
+              <span
+                id={`${id}-value`}
+                className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+              >
                 {currency
                   ? `${currency.code} · ${currency.name}`
                   : selected
@@ -152,13 +159,7 @@ export function CurrencySelect({
         ))}
       </SubMenu>
       {invalid && (
-        <p
-          id={`${id}-error`}
-          role="alert"
-          className="text-body text-text-secondary"
-        >
-          Choose a supported currency.
-        </p>
+        <FieldError id={`${id}-error`}>Choose a supported currency.</FieldError>
       )}
     </div>
   );

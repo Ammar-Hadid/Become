@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createRequestDeadline } from "@/lib/http/utils/request-deadline.util";
 
 type ThinkingHistoryKind = "idea" | "ideaOutputs" | "decision" | "reflections";
 
@@ -42,10 +43,14 @@ export function ThinkingPagination<Item extends { id: string }>({
     setPending(true);
     setError(null);
     const params = new URLSearchParams({ kind, id: recordId, cursor });
+    const deadline = createRequestDeadline(15_000, controller.signal);
     try {
       const response = await fetch(
         `/api/direction/thinking/history?${params.toString()}`,
-        { cache: "no-store", signal: controller.signal },
+        {
+          cache: "no-store",
+          signal: deadline.signal,
+        },
       );
       if (!response.ok) throw new Error();
       const page = (await response.json()) as {
@@ -61,14 +66,15 @@ export function ThinkingPagination<Item extends { id: string }>({
         ];
       });
       setCursor(page.nextCursor);
-    } catch (loadError) {
+    } catch {
       if (
         request === requestRef.current &&
-        !(loadError instanceof DOMException && loadError.name === "AbortError")
+        !controller.signal.aborted
       ) {
         setError("More history could not be loaded. Try again.");
       }
     } finally {
+      deadline.dispose();
       if (request === requestRef.current) setPending(false);
     }
   }

@@ -38,7 +38,9 @@ export async function searchDirectionOptions(
   if (search.trim()) params.set("search", search.trim());
   if (scope.companyId) params.set("companyId", scope.companyId);
   if (scope.domainId) params.set("domainId", scope.domainId);
-  const response = await fetch(`/api/direction/options?${params}`);
+  const response = await fetch(`/api/direction/options?${params}`, {
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!response.ok) throw new Error("Direction options could not be loaded.");
   const result = (await response.json()) as PageResult<OwnedOption>;
   return result.items;

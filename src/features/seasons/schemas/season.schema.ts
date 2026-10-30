@@ -47,3 +47,16 @@ export const seasonDraftSchema = z
       .strict(),
   })
   .strict();
+
+export const seasonIdentityDraftSchema = z
+  .object({
+    character: seasonDraftSchema.shape.character
+      .pick({
+        name: true,
+        sourceCategory: true,
+        sourceWork: true,
+        adaptation: true,
+      })
+      .strict(),
+  })
+  .strict();

@@ -1,417 +1,288 @@
 "use client";
 
-import { useState, useTransition, ViewTransition } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ArrowRight,
-  ArrowUpRight,
-  CalendarDays,
-  Clock3,
-  Play,
-  Sparkles,
+  CalendarDays, ChartNoAxesColumnIncreasing, Check, Clock3,
+  Send, Sprout,
 } from "lucide-react";
-import { TimeBarChart } from "@/components/ui/charts/time-bar-chart.component";
+import { Badge } from "@/components/ui/badges/badge.component";
+import { Button } from "@/components/ui/buttons/button.component";
+import { Dialog } from "@/components/ui/dialogs/dialog.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
+import { ProgressIndicator } from "@/components/ui/progress/progress-indicator.component";
+import { Tooltip } from "@/components/ui/tooltips/tooltip.component";
+import { AiTypingText } from "@/components/ui/typing/ai-typing-text.component";
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import type { DashboardData } from "@/features/dashboard/analytics/types/dashboard.types";
-import { DomainIcon } from "@/features/domains/components/domain-icon.component";
-import { getDomainHref } from "@/features/domains/identity/utils/domain.util";
-import { SessionRow } from "@/features/sessions/components/session-row.component";
-import type { SessionListItem } from "@/features/sessions/types/session.types";
-import { SeasonHomeCard } from "@/features/seasons/home/components/season-home-card.component";
+import { currentWeekStreakDays } from "@/features/dashboard/analytics/utils/current-week-streak.util";
+import { DashboardActiveSession } from "@/features/dashboard/components/dashboard-active-session.component";
+import { CotsDailyMessage } from "@/features/dashboard/components/cots-daily-message.component";
+import { DashboardAttentionWidget } from "@/features/dashboard/attention/components/dashboard-attention-widget.component";
+import type { DashboardAttentionItem } from "@/features/dashboard/attention/types/dashboard-attention.types";
+import { DashboardGoalWidget } from "@/features/dashboard/goals/components/dashboard-goal-widget.component";
+import { DashboardLenses } from "@/features/dashboard/lenses/components/dashboard-lenses.component";
+import { NexoSeasonInsight } from "@/features/nexo/components/nexo-season-insight.component";
+import { NEXO_INTERACTIVE_REQUEST_TIMEOUT_MS } from "@/features/nexo/constants/nexo-task.constants";
+import { cotsDailyPreviewMessages } from "@/features/dashboard/lenses/constants/cots-daily-preview.constants";
 import { SeasonOpeningArrival } from "@/features/seasons/home/components/season-opening-arrival.component";
-import { SeasonTransitionEntry } from "@/features/seasons/transition/components/season-transition-entry.component";
+import { useSeasonAttention } from "@/features/seasons/home/hooks/use-season-attention.hook";
+import { formatDuration } from "@/lib/dates/utils/period.util";
 import type { SeasonTransitionView } from "@/features/reviews/contracts/types/review.types";
 import type { SeasonView } from "@/features/seasons/types/season.types";
-import { DashboardActiveSession } from "@/features/dashboard/components/dashboard-active-session.component";
-import { useActiveTimer } from "@/features/sessions/timer/hooks/use-active-timer.hook";
-import { cn } from "@/lib/styles/utils/class-name.util";
-import {
-  formatDuration,
-  TIMEFRAMES,
-  type Timeframe,
-} from "@/lib/dates/utils/period.util";
+import type { LivingSeasonFacts } from "@/features/seasons/living/types/living-season.types";
+import type { getLivingSeasonScene } from "@/features/seasons/living/queries/living-season.query";
+import { desktopArtworkFocusStyle } from "@/features/seasons/living/utils/living-artwork-focus.util";
+
+function formatSeasonDate(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+    .format(new Date(`${value}T12:00:00Z`));
+}
+
+function durationHours(seconds: number) {
+  return Math.round((seconds / 3600) * 10) / 10;
+}
+
+function chartDayLabel(date: string) {
+  return new Intl.DateTimeFormat("en", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T12:00:00Z`));
+}
 
 export function Dashboard({
-  userName,
-  season,
-  weekNumber,
-  seasonProgress,
-  initialData,
-  recentSessions,
-  businessAttention = [],
-  seasonDirection,
-  transition,
-  transitionUnavailable = false,
-  seasonRecoveryScope,
+  userName, currentWeekday, initialData, seasonDirection, seasonProgress, attention,
+  livingFacts, livingScene,
+  transition, transitionUnavailable = false, seasonRecoveryScope,
 }: {
   userName: string;
-  season: string;
-  weekNumber: number;
-  seasonProgress: number;
+  currentWeekday: number;
   initialData: DashboardData;
-  recentSessions: SessionListItem[];
-  businessAttention?: { id: string; text: string; href: string }[];
-  seasonDirection?: SeasonView;
+  seasonDirection: SeasonView;
+  seasonProgress: number;
+  livingFacts: LivingSeasonFacts;
+  livingScene: Awaited<ReturnType<typeof getLivingSeasonScene>>;
+  attention: DashboardAttentionItem[];
   transition?: SeasonTransitionView | null;
   transitionUnavailable?: boolean;
   seasonRecoveryScope?: string;
 }) {
-  const [data, setData] = useState(initialData);
-  const [pending, startTransition] = useTransition();
-  const [requestedTimeframe, setRequestedTimeframe] =
-    useState<Timeframe | null>(null);
-  const { activeSession } = useActiveTimer();
+  const { play } = useInterfaceSound();
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [conversationTurns, setConversationTurns] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [conversationBusy, setConversationBusy] = useState(false);
+  const [conversationError, setConversationError] = useState("");
+  const [failedMobileHref, setFailedMobileHref] = useState<string | null>(null);
+  const [failedDesktopHref, setFailedDesktopHref] = useState<string | null>(null);
+  const mobileArtFailed = failedMobileHref === livingScene?.mobileHref;
+  const desktopArtFailed = failedDesktopHref === livingScene?.desktopHref;
+  const heroTriggerRef = useRef<HTMLButtonElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const seasonAttention = useSeasonAttention({
+    season: seasonDirection,
+    transition,
+    transitionUnavailable,
+    recoveryScope: seasonRecoveryScope,
+  });
+  const allAttention = useMemo(() => [...seasonAttention, ...attention], [seasonAttention, attention]);
+  const previousAttentionIds = useRef(new Set(allAttention.map((item) => item.id)));
+  const firstName = userName.trim().split(/\s+/)[0] || "friend";
+  const calendar = seasonDirection.calendar;
+  const goals = seasonDirection.goals.map(({ goal }) => ({
+    id: goal.id,
+    title: goal.title,
+    reached: goal.evaluation.criteria.filter((criterion) => criterion.reached === true).length,
+    total: goal.evaluation.criteria.length,
+    domainIds: goal.domainIds,
+  }));
+  const maxChartSeconds = Math.max(1, ...initialData.chart.map((day) => day.seconds));
+  const streakDays = currentWeekStreakDays(initialData.chart, currentWeekday);
+  const streakActiveDays = streakDays.filter((day) => day.seconds > 0).length;
+  const chartScaleHours = Math.max(4, Math.ceil(maxChartSeconds / 3600 / 4) * 4);
 
-  function selectTimeframe(timeframe: Timeframe) {
-    if (timeframe === data.timeframe) return;
-    setRequestedTimeframe(timeframe);
-    startTransition(async () => {
-      try {
-        const response = await fetch(`/api/dashboard?timeframe=${timeframe}`);
-        if (response.ok) setData((await response.json()) as DashboardData);
-      } finally {
-        setRequestedTimeframe(null);
-      }
-    });
+  useEffect(() => {
+    const nextIds = new Set(allAttention.map((item) => item.id));
+    if (allAttention.some((item) => !previousAttentionIds.current.has(item.id))) {
+      play("attentionArrived");
+    }
+    previousAttentionIds.current = nextIds;
+  }, [allAttention, play]);
+
+  function changeComposerOpen(next: boolean) {
+    if (next === composerOpen) return;
+    play(next ? "layerOpened" : "returned");
+    setComposerOpen(next);
   }
 
-  const highestDomain = [...data.domains].sort(
-    (a, b) => b.seconds - a.seconds,
-  )[0];
-  const greeting = getGreeting();
+  async function submitQuestion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed = question.trim();
+    if (!trimmed || conversationBusy) return;
+    setConversationError("");
+    setConversationBusy(true);
+    const history = conversationTurns.slice(-12);
+    setConversationTurns((prior) => [...prior, { role: "user", content: trimmed }]);
+    setQuestion("");
+    const signal = AbortSignal.timeout(NEXO_INTERACTIVE_REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch("/api/cots/conversation", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: trimmed, history }),
+        signal,
+      });
+      const result = await response.json() as { status?: string; reply?: string; reason?: string; error?: string };
+      if (!response.ok || result.status !== "READY" || !result.reply)
+        throw new Error(result.reason ?? result.error ?? "C.O.T.S could not answer yet.");
+      setConversationTurns((prior) => [...prior, { role: "assistant", content: result.reply! }]);
+    } catch (error) {
+      setConversationTurns((prior) => prior.slice(0, -1));
+      setQuestion((current) => current || trimmed);
+      setConversationError(signal.aborted
+        ? "The answer took too long. Please try again."
+        : error instanceof Error ? error.message : "C.O.T.S could not answer yet.");
+    } finally { setConversationBusy(false); }
+  }
 
   return (
-    <div className="page-shell">
+    <div className="dashboard-v2">
       <SeasonOpeningArrival
         season={seasonDirection}
         transition={transition}
         transitionUnavailable={transitionUnavailable}
         recoveryScope={seasonRecoveryScope}
       />
-      <section className="dashboard-hero" aria-labelledby="dashboard-greeting">
-        <div className="dashboard-hero-meta">
-          <div className="dashboard-season-context">
-            <span className="dashboard-hero-kicker">
-              <span className="dashboard-status-dot" aria-hidden="true" />
-              <span className="dashboard-hero-kicker-label">
-                Current season
-              </span>
-            </span>
-            <strong>{season}</strong>
-          </div>
-          <div className="dashboard-week-context">
-            <span>Week</span>
-            <strong className="timer-numerals">
-              {String(weekNumber).padStart(2, "0")}
-            </strong>
-          </div>
+
+      <section className="dashboard-v2-hero" data-living-art={Boolean(livingScene)} aria-labelledby="dashboard-v2-hero-title">
+        <div className="dashboard-v2-hero-art-frame">
+          {livingScene ? <>
+            <Image src={desktopArtFailed ? livingScene.fallbackDesktopHref : livingScene.desktopHref} alt="" fill priority unoptimized sizes="100vw" className="dashboard-v2-hero-art dashboard-v2-hero-art-desktop" style={desktopArtworkFocusStyle(livingScene.desktopFocalX, livingScene.desktopFocalY)} onError={() => setFailedDesktopHref(livingScene.desktopHref)} />
+            <Image src={mobileArtFailed ? livingScene.fallbackMobileHref : livingScene.mobileHref} alt="" fill priority unoptimized sizes="100vw" className="dashboard-v2-hero-art dashboard-v2-hero-art-mobile" onError={() => setFailedMobileHref(livingScene.mobileHref)} />
+          </> : <Image src="/images/dashboard-season-hero.png" alt="" fill priority sizes="100vw" className="dashboard-v2-hero-art" />}
         </div>
-
-        <header className="dashboard-hero-heading">
-          <h1 id="dashboard-greeting">
-            <span>{greeting},</span>{" "}
-            <span className="dashboard-hero-name">
-              {userName.split(" ")[0]}.
-            </span>
-          </h1>
-          <p className="page-description">
-            See where your attention is going—and what it is producing.
-          </p>
-        </header>
-
-        <div
-          className={cn(
-            "dashboard-hero-workspace",
-            businessAttention.length === 0 &&
-              "dashboard-hero-workspace--focus-only",
-          )}
-        >
-          {businessAttention.length > 0 && (
-            <div className="dashboard-priority">
-              <div className="dashboard-priority-heading">
-                <div>
-                  <p className="eyebrow">Next move</p>
-                  <h2>Entrepreneurship</h2>
-                </div>
-                <Link
-                  href="/entrepreneurship"
-                  className="dashboard-domain-link"
-                  aria-label="Open Entrepreneurship"
-                >
-                  <span className="dashboard-domain-link-label">
-                    Open domain
-                  </span>
-                  <ArrowUpRight aria-hidden="true" />
-                </Link>
-              </div>
-              <p className="dashboard-priority-scope">
-                Chosen actions & source review
-              </p>
-              <ul className="dashboard-priority-list">
-                {businessAttention.slice(0, 3).map((item, index) => (
-                  <li key={item.id}>
-                    <Link href={item.href}>
-                      <span className="dashboard-priority-index timer-numerals">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span>{item.text}</span>
-                      <ArrowRight aria-hidden="true" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {activeSession ? (
-            <DashboardActiveSession />
-          ) : (
-            <button
-              className="dashboard-focus-action"
-              onClick={() =>
-                window.dispatchEvent(new Event("become:start-timer"))
-              }
-            >
-              <span className="dashboard-focus-marker" aria-hidden="true">
-                <Play />
-              </span>
-              <span className="dashboard-focus-copy">
-                <span className="eyebrow">Focus session</span>
-                <strong>Ready when you are.</strong>
-                <small>Clear the noise and begin a focused block.</small>
-              </span>
-              <span className="dashboard-focus-end">
-                <span>
-                  Begin <ArrowRight aria-hidden="true" />
-                </span>
-              </span>
-            </button>
-          )}
+        <div className="dashboard-v2-hero-shade" aria-hidden="true" />
+        {livingScene && <span className="sr-only">{livingScene.characterName}, Season chapter {livingScene.chapter}. Season status: {livingScene.state.toLowerCase().replaceAll("_", " ")}.</span>}
+        <div className="dashboard-v2-hero-copy">
+          <p className="type-hero-kicker">Talk to your <strong>C.O.T.S</strong></p>
+          <Button
+            ref={heroTriggerRef}
+            type="button"
+            variant="ghost"
+            className="dashboard-v2-ask type-hero"
+            onClick={() => changeComposerOpen(true)}
+            aria-label="Ask C.O.T.S anything"
+          >
+            <span id="dashboard-v2-hero-title">ASK ME ANYTHING</span><span className="dashboard-v2-caret" aria-hidden="true" />
+          </Button>
         </div>
+        <p className="dashboard-v2-hero-aside type-overline">Same you.<br />A higher version.</p>
       </section>
 
-      {transitionUnavailable ? (
-        <p className="border-border text-text-muted text-body-sm gap-lg py-lg mt-xl flex flex-wrap items-center border-b">
-          <span>The Season transition could not be loaded.</span>
-          <Link
-            href="/reviews"
-            className="text-primary gap-sm min-h-input-height-sm inline-flex items-center"
-          >
-            Open reviews <ArrowRight className="size-lg" aria-hidden="true" />
-          </Link>
-        </p>
-      ) : (
-        <SeasonTransitionEntry
-          view={transition}
-          season={seasonDirection}
-          recoveryScope={seasonRecoveryScope}
-        />
-      )}
-      {seasonDirection && <SeasonHomeCard season={seasonDirection} />}
+      <div className="dashboard-v2-content">
+        <DashboardLenses firstName={firstName} goals={goals} domains={initialData.domains}>
+        <div className="dashboard-v2-grid dashboard-v2-grid-top">
+          <section className="dashboard-v2-card material-glass dashboard-v2-streak" aria-labelledby="dashboard-v2-streak-title">
+            <div className="dashboard-v2-card-heading">
+              <div className="dashboard-v2-title-group"><IconFrame treatment="compact" area="dashboard"><CalendarDays /></IconFrame><h2 className="type-widget-title" id="dashboard-v2-streak-title">Weekly Streak</h2></div>
+              <span className="type-caption dashboard-v2-muted">Keep going.</span>
+            </div>
+            <div className="dashboard-v2-days">
+              {streakDays.map((day) => (
+                <div className="dashboard-v2-day" key={day.label}>
+                  <span className="dashboard-v2-day-box" data-active={day.seconds > 0}>{day.seconds > 0 && <Check aria-hidden="true" />}</span>
+                  <span className="type-caption">{day.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="type-caption dashboard-v2-card-footnote">{streakActiveDays} of 7 days with recorded focus this week</p>
+          </section>
 
-      <div className="border-border mt-4xl gap-lg pb-2xl flex flex-col border-b sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="eyebrow mb-sm">Focused time</p>
-          <p className="timer-numerals text-h1 font-semibold tracking-[-0.06em]">
-            {formatDuration(data.totalSeconds, true)}
-          </p>
-          <p className="text-text-secondary mt-md text-body">
-            {data.comparisonPercent === null ? (
-              "First recorded time in this period"
-            ) : data.comparisonPercent === 0 ? (
-              "Level with the previous period"
-            ) : (
-              <>
-                <span
-                  className={
-                    data.comparisonPercent > 0
-                      ? "text-success"
-                      : "text-text-secondary"
-                  }
-                >
-                  {data.comparisonPercent > 0 ? "+" : ""}
-                  {data.comparisonPercent}%
-                </span>{" "}
-                from the previous {data.timeframe}
-              </>
-            )}
-          </p>
+          <section className="dashboard-v2-card material-glass dashboard-v2-season" aria-labelledby="dashboard-v2-season-title">
+            <div className="dashboard-v2-card-heading">
+              <div className="dashboard-v2-title-group"><IconFrame treatment="compact" area="dashboard"><Sprout /></IconFrame><h2 className="type-widget-title" id="dashboard-v2-season-title">Season Progress</h2></div>
+              <Badge variant="live-numeral">{Math.round(seasonProgress)}%</Badge>
+            </div>
+            <div className="dashboard-v2-season-meta">
+              <Link className="type-label" href={`/direction/seasons/${calendar.year}/${calendar.quarter}`}>{seasonDirection.title || calendar.label}</Link>
+              <span className="type-caption dashboard-v2-muted">{formatSeasonDate(calendar.startOn)} – {formatSeasonDate(calendar.endOn)}</span>
+            </div>
+            <ProgressIndicator variant="season-ticks" value={seasonProgress} label="Season calendar elapsed" area="dashboard" />
+            <div className="dashboard-v2-season-bottom type-caption"><span>0%</span><span>{calendar.daysAfterToday} {calendar.daysAfterToday === 1 ? "day" : "days"} left</span></div>
+            <div className="dashboard-v2-season-insight"><p className="type-caption dashboard-v2-card-footnote">{livingFacts.state === "INSUFFICIENT_EVIDENCE" ? "Goal pace needs recorded evidence" : `${Math.round(livingFacts.actualPercent!)}% recorded · ${Math.round(livingFacts.expectedPercent!)}% planned · ${livingFacts.state.toLowerCase().replaceAll("_", " ")}`}</p><NexoSeasonInsight /></div>
+          </section>
+
+          <CotsDailyMessage area="dashboard" message={cotsDailyPreviewMessages.dashboard.replace("{name}", firstName)} />
         </div>
-        <div className="timeframe-switcher" aria-label="Analytics timeframe">
-          {TIMEFRAMES.map((timeframe) => (
-            <button
-              key={timeframe}
-              className={cn(
-                "motion-selection-control",
-                (requestedTimeframe ?? data.timeframe) === timeframe &&
-                  "active",
-              )}
-              onClick={() => selectTimeframe(timeframe)}
-              disabled={pending}
-              aria-pressed={
-                (requestedTimeframe ?? data.timeframe) === timeframe
-              }
-            >
-              {(requestedTimeframe ?? data.timeframe) === timeframe && (
-                <ViewTransition
-                  name="dashboard-timeframe-indicator"
-                  share="motion-guide"
-                  default="none"
-                >
-                  <span className="motion-selection-guide" aria-hidden />
-                </ViewTransition>
-              )}
-              <span>{timeframe[0].toUpperCase() + timeframe.slice(1)}</span>
-            </button>
-          ))}
+
+        <div className="dashboard-v2-grid dashboard-v2-grid-bottom">
+          <section className="dashboard-v2-card material-glass dashboard-v2-time" aria-labelledby="dashboard-v2-time-title">
+            <div className="dashboard-v2-card-heading">
+              <div className="dashboard-v2-title-group"><IconFrame treatment="compact" area="dashboard"><ChartNoAxesColumnIncreasing /></IconFrame><h2 className="type-widget-title" id="dashboard-v2-time-title">Time Invested</h2></div>
+              <span className="type-caption dashboard-v2-muted">Last 7 days</span>
+            </div>
+            <div className="dashboard-v2-time-main">
+              <div className="dashboard-v2-chart" role="group" aria-label="Recorded focused time by day over the last 7 days">
+                <div className="dashboard-v2-chart-grid" aria-hidden="true">{[4, 3, 2, 1, 0].map((step) => <span key={step}>{chartScaleHours * step / 4}</span>)}</div>
+                <div className="dashboard-v2-chart-bars">
+                  {initialData.chart.map((day) => {
+                    const detail = `${chartDayLabel(day.date)} · ${formatDuration(day.seconds, true)} focused`;
+                    return (
+                      <div className="dashboard-v2-chart-day" key={day.date}>
+                        <Tooltip content={detail} area="dashboard" side="right">
+                          <button className="dashboard-v2-bar-track" type="button" aria-label={detail}>
+                            <span aria-hidden="true" style={{ height: `${(day.seconds / (chartScaleHours * 3600)) * 100}%` }} />
+                          </button>
+                        </Tooltip>
+                        <span className="type-caption" aria-hidden="true">{day.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="dashboard-v2-time-total"><strong className="type-metric-lg">{durationHours(initialData.totalSeconds)}</strong><span className="type-body">hours</span></div>
+            </div>
+            <div className="dashboard-v2-time-footer type-caption">
+              <span><Clock3 aria-hidden="true" />{initialData.comparisonPercent === null ? "First recorded period" : `${initialData.comparisonPercent > 0 ? "+" : ""}${initialData.comparisonPercent}% from prior 7 days`}</span>
+              <span>Time compounds.</span>
+            </div>
+          </section>
+
+          <DashboardAttentionWidget area="dashboard" items={allAttention} />
+
+          <DashboardGoalWidget area="dashboard" goals={goals} />
         </div>
+        </DashboardLenses>
+
+        <DashboardActiveSession />
+        <footer className="dashboard-v2-footer type-system">
+          {calendar.label}
+        </footer>
       </div>
 
-      <ViewTransition
-        key={data.timeframe}
-        name="dashboard-analytics"
-        share="motion-data-recompose"
-        default="none"
+      <Dialog
+        open={composerOpen}
+        onOpenChange={changeComposerOpen}
+        eyebrow="Talk to your C.O.T.S"
+        title="Ask me anything"
+        description="Ask your Season’s character about your current progress. Replies use the approved profile and recorded Become facts."
+        initialFocusRef={composerRef}
+        returnFocusRef={heroTriggerRef}
+        className="dashboard-v2-composer"
       >
-        <section
-          className={cn("dashboard-analytics", pending && "is-pending")}
-          aria-busy={pending}
-        >
-          <div className="border-border py-3xl lg:pr-4xl min-w-0 border-b lg:border-r lg:border-b-0">
-            <div className="mb-lg flex items-center justify-between">
-              <div>
-                <h2 className="section-title">Rhythm</h2>
-                <p className="section-description">
-                  {data.periodLabel} · {data.activeDays} active{" "}
-                  {data.activeDays === 1 ? "day" : "days"}
-                </p>
-              </div>
-              <Clock3 className="text-text-muted size-4" />
-            </div>
-            <TimeBarChart data={data.chart} />
-          </div>
-
-          <div className="py-3xl lg:pl-4xl">
-            <div className="mb-7 flex items-center justify-between">
-              <div>
-                <h2 className="section-title">Direction</h2>
-                <p className="section-description">
-                  Allocation across your domains
-                </p>
-              </div>
-              <span className="dashboard-context text-text-muted">
-                {formatDuration(data.todaySeconds, true)} today
-              </span>
-            </div>
-            <div className="space-y-xl">
-              {data.domains.map((domain) => {
-                const share = data.totalSeconds
-                  ? (domain.seconds / data.totalSeconds) * 100
-                  : 0;
-                return (
-                  <Link
-                    href={getDomainHref(domain.slug)}
-                    className="domain-metric group"
-                    key={domain.id}
-                  >
-                    <span
-                      className="domain-metric-icon"
-                      style={{ color: domain.color }}
-                    >
-                      <DomainIcon slug={domain.slug} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="gap-lg flex items-center justify-between">
-                        <span className="text-body font-medium">
-                          {domain.name}
-                        </span>
-                        <span className="timer-numerals text-body">
-                          {formatDuration(domain.seconds, true)}
-                        </span>
-                      </span>
-                      <span className="metric-track">
-                        <span
-                          style={{
-                            width: `${Math.max(share, domain.seconds ? 2 : 0)}%`,
-                            backgroundColor: domain.color,
-                          }}
-                        />
-                      </span>
-                    </span>
-                    <ArrowUpRight className="text-text-muted size-4 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      </ViewTransition>
-
-      <section className="border-border bg-border mt-lg grid gap-px overflow-hidden rounded-2xl border sm:grid-cols-3">
-        <div className="signal-cell">
-          <CalendarDays />
-          <p className="signal-value">{Math.round(seasonProgress)}%</p>
-          <p className="signal-label">Season elapsed</p>
-          <span className="signal-line">
-            <span style={{ width: `${seasonProgress}%` }} />
-          </span>
-        </div>
-        <div className="signal-cell">
-          <Clock3 />
-          <p className="signal-value">{data.activeDays}</p>
-          <p className="signal-label">Active days · {data.periodLabel}</p>
-        </div>
-        <div className="signal-cell">
-          <Sparkles />
-          <p className="signal-copy">
-            {highestDomain?.seconds
-              ? `${highestDomain.name} holds the largest share of your recorded focus this ${data.timeframe}.`
-              : "Your direction becomes visible as you record focused time."}
-          </p>
-          <p className="signal-label">Recent signal</p>
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <div className="mb-lg flex items-end justify-between">
-          <div>
-            <p className="eyebrow mb-sm">Evidence</p>
-            <h2 className="section-title">Recent sessions</h2>
-          </div>
-          <Link href="/sessions" className="text-link">
-            View history <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-        <div className="divide-border border-border divide-y border-y">
-          {recentSessions.length ? (
-            recentSessions
-              .slice(0, 5)
-              .map((session) => (
-                <SessionRow key={session.id} session={session} />
-              ))
-          ) : (
-            <div className="empty-state">
-              <p>No sessions yet.</p>
-              <button
-                onClick={() =>
-                  window.dispatchEvent(new Event("become:start-timer"))
-                }
-              >
-                {activeSession
-                  ? "View current session"
-                  : "Record your first focus block"}{" "}
-                <ArrowRight />
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
+        {conversationTurns.length > 0 && <div className="dashboard-v2-composer-history" role="log" aria-label="C.O.T.S conversation">{conversationTurns.map((turn, index) => <div className="dashboard-v2-composer-turn" key={index}>
+          <p className="type-overline">{turn.role === "user" ? "You" : "C.O.T.S"}</p>
+          {turn.role === "assistant" && index === conversationTurns.length - 1 ? <AiTypingText text={turn.content} /> : <p className="type-body">{turn.content}</p>}
+        </div>)}</div>}
+        {conversationError && <p className="type-body-sm dashboard-v2-composer-error" role="alert">{conversationError}</p>}
+        <form onSubmit={submitQuestion} className="dashboard-v2-composer-form">
+          <Textarea label="Your question" size="md" ref={composerRef} id="dashboard-cots-question" value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={1000} placeholder="What would you like to ask?" />
+          <div className="dashboard-v2-composer-actions"><span className="type-caption">{conversationBusy ? "C.O.T.S is thinking…" : `${question.length}/1000`}</span><Button type="submit" disabled={!question.trim() || conversationBusy}><Send aria-hidden="true" /> Send question</Button></div>
+        </form>
+      </Dialog>
     </div>
   );
-}
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
 }

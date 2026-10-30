@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getInterviewGuide } from "@/features/entrepreneurship/interview-guides/queries/interview-guide.query";
@@ -31,7 +32,7 @@ export async function InterviewGuideWorkspace({
   const questions = interviewGuideQuestionIndex(document);
   if (preview) {
     return (
-      <article className="interview-guide-preview">
+      <Card className="interview-guide-preview">
         <header>
           <div>
             <Link href={explorationHref(nicheId, "/conversations/guides")}>
@@ -42,7 +43,7 @@ export async function InterviewGuideWorkspace({
             <p>{guide.objective}</p>
           </div>
           <Link
-            className="finance-dialog-trigger finance-dialog-trigger--secondary"
+            className="become-button become-button--secondary become-button--md"
             href={explorationHref(
               nicheId,
               `/conversations/guides/${guide.id}/edit`,
@@ -70,12 +71,12 @@ export async function InterviewGuideWorkspace({
           </div>
         </dl>
         <InterviewGuideDocumentView document={document} />
-      </article>
+      </Card>
     );
   }
   return (
     <InterviewGuideEditor
-      key={guide.version}
+      key={guide.id}
       initial={{
         id: guide.id,
         nicheId: guide.nicheId,

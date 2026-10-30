@@ -1,0 +1,41 @@
+/* Opt-in material treatments. Consumers own layout, border width, and shape. */
+.material-solid {
+  border-color: var(--material-solid-edge);
+  background: var(--material-solid-background);
+  box-shadow: var(--material-solid-top-light), var(--material-solid-depth);
+}
+
+.material-glass {
+  border-color: var(--material-glass-edge);
+  background: var(--color-surface);
+  box-shadow: var(--material-glass-top-light), var(--material-glass-depth);
+}
+
+.material-elevated-glass {
+  border-color: var(--material-elevated-glass-edge);
+  background: var(--color-surface-elevated);
+  box-shadow:
+    var(--material-elevated-glass-top-light),
+    var(--material-elevated-glass-depth);
+}
+
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .material-solid {
+    -webkit-backdrop-filter: blur(var(--material-solid-blur));
+    backdrop-filter: blur(var(--material-solid-blur));
+  }
+
+  .material-glass {
+    background: var(--material-glass-background);
+    -webkit-backdrop-filter: blur(var(--material-glass-blur));
+    backdrop-filter: blur(var(--material-glass-blur));
+  }
+
+  .material-elevated-glass {
+    background: var(--material-elevated-glass-background);
+    -webkit-backdrop-filter: blur(var(--material-elevated-glass-blur));
+    backdrop-filter: blur(var(--material-elevated-glass-blur));
+  }
+}

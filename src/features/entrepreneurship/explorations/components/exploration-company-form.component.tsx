@@ -9,6 +9,7 @@ export function ExplorationCompanyForm() {
   if (!exploration || exploration.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Company context"
       title="Attach an existing business"
       triggerLabel="Attach existing business"

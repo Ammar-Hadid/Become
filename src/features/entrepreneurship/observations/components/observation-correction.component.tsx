@@ -37,6 +37,7 @@ export function ObservationCorrection({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="A source correction"
       triggerLabel="Correct observation"
       title="Correct the observation"

@@ -1,3 +1,4 @@
+import { Workspace } from "@/components/ui/workspace/workspace.component";
 import { BusinessHeader } from "@/features/entrepreneurship/shared/components/business-header.component";
 import "@/features/entrepreneurship/styles/entrepreneurship.css";
 export default function EntrepreneurshipLayout({
@@ -6,9 +7,9 @@ export default function EntrepreneurshipLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="page-shell business-shell">
+    <Workspace area="entrepreneurship" className="page-shell business-shell">
       <BusinessHeader />
       {children}
-    </div>
+    </Workspace>
   );
 }

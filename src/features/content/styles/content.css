@@ -321,7 +321,7 @@
   flex: 1;
 }
 
-.content-search input {
+.content-search input:not(.become-input) {
   width: 100%;
   border: 0;
   background: transparent;
@@ -329,7 +329,7 @@
   outline: 0;
 }
 
-.content-search input::placeholder {
+.content-search input:not(.become-input)::placeholder {
   color: var(--color-text-muted);
 }
 
@@ -449,8 +449,8 @@
   font-weight: 600;
 }
 
-.content-form-field input,
-.content-form-field textarea,
+.content-form-field input:not(.become-input),
+.content-form-field textarea:not(.become-textarea),
 .content-form-field select {
   width: 100%;
   min-height: var(--spacing-input-height-md);
@@ -462,20 +462,20 @@
   outline: none;
 }
 
-.content-form-field textarea {
+.content-form-field textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-sm);
   resize: vertical;
 }
 
-.content-form-field input:focus,
-.content-form-field textarea:focus,
+.content-form-field input:not(.become-input):focus,
+.content-form-field textarea:not(.become-textarea):focus,
 .content-form-field select:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-muted);
 }
 
-.content-form-field input::placeholder,
-.content-form-field textarea::placeholder {
+.content-form-field input:not(.become-input)::placeholder,
+.content-form-field textarea:not(.become-textarea)::placeholder {
   color: var(--color-text-muted);
 }
 
@@ -705,7 +705,7 @@
   flex: 1;
 }
 
-.content-intent-title-row input {
+.content-intent-title-row input:not(.become-input) {
   width: 100%;
   border: 0;
   background: transparent;
@@ -717,11 +717,11 @@
   outline: 0;
 }
 
-.content-intent-title-row input::placeholder {
+.content-intent-title-row input:not(.become-input)::placeholder {
   color: var(--color-text-muted);
 }
 
-.content-intent-title-row input:focus-visible {
+.content-intent-title-row input:not(.become-input):focus-visible {
   text-decoration: underline;
   text-decoration-color: var(--content-rule);
   text-decoration-thickness: 1px;
@@ -749,8 +749,8 @@
   font-weight: 550;
 }
 
-.content-intent textarea,
-.content-writing textarea {
+.content-intent textarea:not(.become-textarea),
+.content-writing textarea:not(.become-textarea) {
   width: 100%;
   border: 0;
   background: transparent;
@@ -759,18 +759,18 @@
   resize: vertical;
 }
 
-.content-intent textarea::placeholder,
-.content-writing textarea::placeholder {
+.content-intent textarea:not(.become-textarea)::placeholder,
+.content-writing textarea:not(.become-textarea)::placeholder {
   color: var(--color-text-muted);
 }
 
-.content-intent-fields textarea {
+.content-intent-fields textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-md);
   padding: var(--spacing-md) 0 var(--spacing-xl);
 }
 
-.content-intent textarea:focus,
-.content-writing textarea:focus {
+.content-intent textarea:not(.become-textarea):focus,
+.content-writing textarea:not(.become-textarea):focus {
   border-color: var(--color-primary);
 }
 
@@ -830,8 +830,8 @@
   font-weight: 400;
 }
 
-.content-intent-notes textarea,
-.content-writing-disclosure textarea {
+.content-intent-notes textarea:not(.become-textarea),
+.content-writing-disclosure textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-md);
   padding: var(--spacing-md) 0 var(--spacing-xl);
 }
@@ -1103,7 +1103,7 @@
   font-weight: 600;
 }
 
-.content-writing-field textarea {
+.content-writing-field textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-lg);
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-md) 0 var(--spacing-xl);
@@ -1111,7 +1111,7 @@
   line-height: var(--text-body-lg--line-height);
 }
 
-.content-writing-field--hook textarea {
+.content-writing-field--hook textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-sm);
   font-size: var(--text-h4);
   line-height: var(--text-h4--line-height);
@@ -1289,7 +1289,7 @@
   line-height: var(--text-body-sm--line-height);
 }
 
-.content-progress-form input,
+.content-progress-form input:not(.become-input),
 .content-progress-form select,
 .content-time select {
   min-height: var(--spacing-input-height-sm);
@@ -1300,7 +1300,7 @@
   outline: 0;
 }
 
-.content-progress-form input:focus,
+.content-progress-form input:not(.become-input):focus,
 .content-progress-form select:focus,
 .content-time select:focus {
   border-color: var(--color-primary);

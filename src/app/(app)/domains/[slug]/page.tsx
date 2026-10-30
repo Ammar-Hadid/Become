@@ -1,3 +1,12 @@
+import {
+  Workspace,
+  WorkspaceHeader,
+  WorkspacePanel,
+  WorkspaceMetric,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
+import { EmptyState } from "@/components/ui/empty-states/empty-state.component";
+import "@/features/sessions/history/styles/session-history.css";
 import { notFound, redirect } from "next/navigation";
 import { DomainIcon } from "@/features/domains/components/domain-icon.component";
 import { getDomainBySlug } from "@/features/domains/queries/domain.query";
@@ -43,46 +52,69 @@ export default async function DomainPage({
     .filter((session) => session.endedAt)
     .reduce((total, session) => total + session.durationSeconds, 0);
   return (
-    <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <div
-            className="mb-lg gap-sm text-body flex items-center"
-            style={{ color: domain.analyticsColor ?? undefined }}
-          >
-            <DomainIcon slug={domain.slug} />
-            <span>{domain.name}</span>
-          </div>
-          <h1>{formatDuration(completedSeconds, true)} recorded</h1>
-          <p className="page-description text-text-secondary mt-sm">
-            Activity and session evidence for this domain.
-          </p>
-        </div>
-      </header>
-      <section className="border-border mt-4xl border-y py-7">
-        <p className="eyebrow mb-lg">Available activities</p>
-        <div className="gap-sm flex flex-wrap">
-          {domain.activityTypes.map((activity) => (
-            <span className="activity-chip" key={activity.id}>
-              {activity.name}
-            </span>
-          ))}
-        </div>
-      </section>
-      <section className="mt-4xl">
-        <p className="eyebrow mb-lg">Recent evidence</p>
-        <div className="divide-border border-border divide-y border-y">
+    <Workspace
+      area="direction"
+      className="page-shell session-history-workspace"
+    >
+      <WorkspaceHeader
+        eyebrow="Your domain"
+        title={domain.name}
+        description="Your time, activities, and the work you have recorded."
+        actions={
+          <WorkspaceLink href="/sessions" variant="secondary">
+            All session history
+          </WorkspaceLink>
+        }
+      />
+      <div className="session-history-metrics">
+        <WorkspaceMetric
+          label="Focused time"
+          value={formatDuration(completedSeconds, true)}
+          detail="Completed sessions among the latest 50"
+          icon={<DomainIcon slug={domain.slug} />}
+        />
+        <WorkspaceMetric
+          label="Sessions"
+          value={sessions.length}
+          detail="Latest recorded sessions"
+        />
+        <WorkspaceMetric
+          label="Activities"
+          value={domain.activityTypes.length}
+          detail="Ways to spend time here"
+        />
+      </div>
+      <div className="domain-workspace-grid">
+        <WorkspacePanel
+          title="Recent sessions"
+          description="Open a completed session for its outcome and full record."
+        >
           {sessions.length ? (
             sessions.map((session) => (
               <SessionRow key={session.id} session={session} />
             ))
           ) : (
-            <div className="empty-state">
-              <p>No {domain.name.toLowerCase()} sessions yet.</p>
-            </div>
+            <EmptyState
+              pattern="first-focus"
+              size="compact"
+              title={`No ${domain.name.toLowerCase()} sessions yet`}
+              description="Choose this domain when starting a timer. Your completed work will appear here."
+            />
           )}
-        </div>
-      </section>
-    </div>
+        </WorkspacePanel>
+        <WorkspacePanel
+          title="Your activities"
+          description="Choose an activity when you start a session."
+        >
+          <div className="domain-activity-list">
+            {domain.activityTypes.map((activity) => (
+              <span className="activity-chip" key={activity.id}>
+                {activity.name}
+              </span>
+            ))}
+          </div>
+        </WorkspacePanel>
+      </div>
+    </Workspace>
   );
 }

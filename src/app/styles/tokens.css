@@ -2,61 +2,288 @@
   /* ===== Colors ===== */
 
   /* Brand */
-  --color-primary: #e8a83e;
-  --color-primary-muted: rgba(232, 168, 62, 0.25);
-  --color-primary-hover: #f0b64d;
-  --color-primary-subtle: #2a2114;
-  --color-on-primary: #17110a;
+  --color-primary: #e9b133;
+  --color-primary-muted: rgba(233, 177, 51, 0.25);
+  --color-primary-hover: #f4c455;
+  --color-primary-subtle: #292515;
+  --color-on-primary: #11170e;
 
   /* Backgrounds and surfaces */
-  --color-background: #090a0c;
-  --color-surface: #111318;
-  --color-surface-elevated: #181b21;
-  --color-surface-sidebar: #0c0d10;
-  --color-surface-input: #0d0f12;
+  --color-background: #090d13;
+  --color-surface: #15191f;
+  --color-surface-elevated: #20252d;
+  --color-surface-sidebar: #0b0e14;
+  --color-surface-input: #10151c;
 
   /* Borders and text */
-  --color-border: #262a32;
-  --color-text-primary: #f4f1ea;
-  --color-text-secondary: #989ba3;
-  --color-text-muted: #666a73;
+  --color-border: #303740;
+  --color-text-primary: #f4f2ed;
+  --color-text-secondary: #a8b0b4;
+  --color-text-muted: #859198;
 
   /* States */
   --color-success: #54b88b;
-  --color-danger: #e56767;
+  --color-danger: #ff3b30;
   --color-warning: #d99b42;
   --color-revision-previous: #c86568;
   --color-revision-revised: #6686ad;
 
+  /* Domain palettes */
+  --color-domain-engineering: #4d3b68;
+  --color-domain-engineering-hover: #604b7f;
+  --color-domain-engineering-accent: #b79adb;
+  --color-domain-engineering-subtle: #1c1825;
+  --color-domain-engineering-border: #463754;
+
+  --color-domain-finance: #0d6353;
+  --color-domain-finance-hover: #117863;
+  --color-domain-finance-accent: #18deb0;
+  --color-domain-finance-subtle: #0b211c;
+  --color-domain-finance-border: #1a5b4e;
+
+  --color-domain-entrepreneurship: #293b56;
+  --color-domain-entrepreneurship-hover: #364e70;
+  --color-domain-entrepreneurship-accent: #98b0ce;
+  --color-domain-entrepreneurship-subtle: #151c27;
+  --color-domain-entrepreneurship-border: #35445a;
+
+  --color-domain-content: #613449;
+  --color-domain-content-hover: #79415c;
+  --color-domain-content-accent: #d997b2;
+  --color-domain-content-subtle: #24191f;
+  --color-domain-content-border: #503644;
+
+  /* ===== Icons ===== */
+  /* Shared glyph language and the three approved presentation treatments. */
+  --icon-stroke-width: 1.75;
+  --icon-optical-shift-x: 0px;
+  --icon-optical-shift-y: 0px;
+  --icon-bare-size: var(--spacing-lg);
+  --icon-action-size: var(--button-icon-size);
+  --icon-compact-size: var(--icon-action-size);
+  --icon-compact-glyph-size: var(--spacing-lg);
+  --icon-featured-size: 3rem;
+  --icon-featured-glyph-size: var(--spacing-xl);
+  --icon-frame-radius: var(--field-radius);
+  --icon-frame-edge-width: var(--field-border-width);
+  --icon-compact-fill-strength: 76%;
+  --icon-compact-edge-strength: 82%;
+  --icon-featured-fill-strength: 100%;
+  --icon-featured-edge-strength: 100%;
+  --icon-hover-fill-strength: 28%;
+  --icon-top-light-strength: 18%;
+  --icon-depth-strength: 24%;
+
   /* ===== Typography ===== */
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 
-  --text-hero: clamp(3rem, 5.5vw, 5.8rem);
-  --text-hero--line-height: 0.98;
+  /* Font groups: edit these aliases to change a role family globally. */
+  --font-display: var(--font-manrope), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 
-  --text-h1: clamp(2rem, 4vw, 3.35rem);
-  --text-h1--line-height: 1.02;
+  /* Semantic roles: each role owns family, size, weight, tracking, and leading. */
+  --text-hero--font-family: var(--font-display);
+  --text-hero: clamp(1.75rem, 4vw, 3.5rem);
+  --text-hero--font-weight: 300;
+  --text-hero--letter-spacing: 0.16em;
+  --text-hero--line-height: 1.05;
 
-  --text-h2: clamp(1.5rem, 2.5vw, 2.1rem);
-  --text-h2--line-height: 1.2;
+  --text-hero-kicker--font-family: var(--font-display);
+  --text-hero-kicker: 0.9375rem;
+  --text-hero-kicker--font-weight: 300;
+  --text-hero-kicker--letter-spacing: 0.14em;
+  --text-hero-kicker--line-height: 1.4;
 
-  --text-h3: clamp(1.35rem, 2vw, 1.65rem);
-  --text-h3--line-height: 1.2;
+  --text-overline--font-family: var(--font-sans);
+  --text-overline: 0.6875rem;
+  --text-overline--font-weight: 600;
+  --text-overline--letter-spacing: 0.24em;
+  --text-overline--line-height: 1.4;
 
-  --text-h4: clamp(1.15rem, 1.5vw, 1.35rem);
-  --text-h4--line-height: 1.25;
+  --text-page-title--font-family: var(--font-sans);
+  --text-page-title: clamp(1.75rem, 2.5vw, 2.25rem);
+  --text-page-title--font-weight: 600;
+  --text-page-title--letter-spacing: -0.035em;
+  --text-page-title--line-height: 1.1;
 
-  --text-h5: clamp(1rem, 1.2vw, 1.15rem);
-  --text-h5--line-height: 1.35;
+  /* Approved compact, card-free Season character entry. */
+  --text-season-entry-title--font-family: var(--font-display);
+  --text-season-entry-title: clamp(2.25rem, min(6.5vw, 10.5vh), 6.5rem);
+  --text-season-entry-title--font-weight: 700;
+  --text-season-entry-title--letter-spacing: -0.045em;
+  --text-season-entry-title--line-height: 1.08;
+  --text-season-entry-description: clamp(1rem, 1.2vw, 1.125rem);
+  --text-season-entry-description--line-height: 1.4;
+  --space-season-entry-start: clamp(5rem, 8vh, 6rem);
+  --space-season-entry-content: var(--spacing-4xl);
+  --season-entry-width: 60%;
+  --season-entry-field-size: clamp(1.25rem, 1.6vw, 1.75rem);
 
-  --text-body-sm: clamp(0.75rem, 0.9vw, 0.8rem);
-  --text-body-sm--line-height: 1.4;
+  /* Approved cinematic Character of the Season banner. */
+  --text-banner-title--font-family: var(--font-sans);
+  --text-banner-title: clamp(2.5rem, 3.3vw, 4rem);
+  --text-banner-title--font-weight: 700;
+  --text-banner-title--letter-spacing: -0.035em;
+  --text-banner-title--line-height: 1.04;
 
-  --text-body: clamp(0.875rem, 1vw, 0.9375rem);
-  --text-body--line-height: 1.5;
+  --character-banner-height: clamp(19rem, 26vw, 25rem);
+  --character-banner-padding: clamp(1.5rem, 3vw, 3rem);
+  --character-banner-copy-width: min(52%, 33rem);
+  --character-banner-overlay-left: 82%;
+  --character-banner-overlay-mid: 48%;
+  --character-banner-overlay-center: 8%;
+  --character-banner-overlay-right: 17%;
+  --character-banner-overlay-bottom: 33%;
+  --character-banner-copy-shadow: 55%;
+  --character-banner-quote-width: 32rem;
+  --character-banner-quote-rule: 0.2rem;
+  --character-banner-quote-size: 1.25rem;
+  --character-banner-quote-leading: 1.35;
+  --character-banner-quote-font-family: Georgia, serif;
+  --character-banner-quote-font-weight: 500;
+  --character-banner-quote-font-style: italic;
+  --character-banner-line-width: 10rem;
+  --character-banner-line-tracking: 0.3em;
+  --character-banner-line-leading: 1.9;
+  --character-banner-badge-fill: 18%;
+  --character-banner-badge-edge: 62%;
+  --character-banner-badge-glow: 24%;
+  --character-banner-badge-radius: 999px;
+  --character-banner-badge-blur: 8px;
+  --character-banner-badge-padding-block: 0.35rem;
+  --character-banner-badge-padding-inline: 0.8rem;
+  --character-banner-badge-icon-size: 1rem;
+  --character-banner-phone-height: 34rem;
+  --character-banner-phone-title: clamp(2rem, 9vw, 2.8rem);
+  --character-banner-phone-quote-size: 1rem;
+  --character-banner-phone-copy-clearance: 2.8rem;
+  --character-banner-phone-line-tracking: 0.16em;
+  --character-banner-phone-line-leading: 1.2;
+  --character-banner-phone-overlay-bottom: 86%;
+  --character-banner-phone-overlay-mid: 36%;
+  --character-banner-phone-overlay-side: 14%;
+  --character-banner-phone-image-position: center 24%;
 
-  --text-body-lg: clamp(0.9375rem, 1.5vw, 1.125rem);
-  --text-body-lg--line-height: 1.55;
+  /* Approved character workspace: layout and saved-record treatment. */
+  --character-workspace-max-width: 108rem;
+  --character-workspace-sidebar-width: 21rem;
+  --character-workspace-step-height: 5.25rem;
+  --character-workspace-record-height: 4.75rem;
+  --character-workspace-detail-height: 22rem;
+  --character-workspace-list-hover-fill: 7%;
+  --character-workspace-list-accent-width: 2px;
+  --character-workspace-list-top: 2.2rem;
+
+  /* Approved portrait adjustment dialog. */
+  --character-avatar-dialog-width: 38rem;
+  --character-avatar-preview-width: 14rem;
+  --character-avatar-phone-preview-width: 10rem;
+  --character-avatar-ring-width: 2px;
+  --character-avatar-ring-glow-width: 0.45rem;
+  --character-avatar-hint-inset: 12%;
+
+  --text-section-title--font-family: var(--font-sans);
+  --text-section-title: 1.25rem;
+  --text-section-title--font-weight: 600;
+  --text-section-title--letter-spacing: -0.015em;
+  --text-section-title--line-height: 1.25;
+
+  --text-widget-title--font-family: var(--font-sans);
+  --text-widget-title: 1rem;
+  --text-widget-title--font-weight: 600;
+  --text-widget-title--letter-spacing: -0.01em;
+  --text-widget-title--line-height: 1.3;
+
+  --text-metric-lg--font-family: var(--font-sans);
+  --text-metric-lg: 2.5rem;
+  --text-metric-lg--font-weight: 700;
+  --text-metric-lg--letter-spacing: -0.04em;
+  --text-metric-lg--line-height: 1;
+
+  --text-metric-md--font-family: var(--font-sans);
+  --text-metric-md: 1.75rem;
+  --text-metric-md--font-weight: 600;
+  --text-metric-md--letter-spacing: -0.03em;
+  --text-metric-md--line-height: 1.1;
+
+  --text-metric-sm--font-family: var(--font-sans);
+  --text-metric-sm: 1rem;
+  --text-metric-sm--font-weight: 700;
+  --text-metric-sm--letter-spacing: -0.01em;
+  --text-metric-sm--line-height: 1.2;
+
+  --text-label--font-family: var(--font-sans);
+  --text-label: 0.75rem;
+  --text-label--font-weight: 600;
+  --text-label--letter-spacing: 0.02em;
+  --text-label--line-height: 1.3;
+
+  --text-quote--font-family: var(--font-mono);
+  --text-quote: 0.875rem;
+  --text-quote--font-weight: 500;
+  --text-quote--letter-spacing: 0em;
+  --text-quote--line-height: 1.55;
+
+  --text-caption--font-family: var(--font-sans);
+  --text-caption: 0.75rem;
+  --text-caption--font-weight: 400;
+  --text-caption--letter-spacing: 0em;
+  --text-caption--line-height: 1.4;
+
+  --text-body-sm--font-family: var(--font-sans);
+  --text-body-sm: 0.75rem;
+  --text-body-sm--font-weight: 400;
+  --text-body-sm--letter-spacing: 0em;
+  --text-body-sm--line-height: 1.5;
+
+  --text-body--font-family: var(--font-sans);
+  --text-body: 0.875rem;
+  --text-body--font-weight: 400;
+  --text-body--letter-spacing: 0em;
+  --text-body--line-height: 1.55;
+
+  --text-body-lg--font-family: var(--font-sans);
+  --text-body-lg: 1rem;
+  --text-body-lg--font-weight: 400;
+  --text-body-lg--letter-spacing: 0em;
+  --text-body-lg--line-height: 1.6;
+
+  --text-system--font-family: var(--font-mono);
+  --text-system: 0.6875rem;
+  --text-system--font-weight: 500;
+  --text-system--letter-spacing: 0.04em;
+  --text-system--line-height: 1.4;
+
+  /* Compatibility aliases while existing screens migrate to semantic roles. */
+  --text-h1--font-family: var(--text-page-title--font-family);
+  --text-h1: var(--text-page-title);
+  --text-h1--font-weight: var(--text-page-title--font-weight);
+  --text-h1--letter-spacing: var(--text-page-title--letter-spacing);
+  --text-h1--line-height: var(--text-page-title--line-height);
+
+  --text-h2--font-family: var(--text-section-title--font-family);
+  --text-h2: var(--text-section-title);
+  --text-h2--font-weight: var(--text-section-title--font-weight);
+  --text-h2--letter-spacing: var(--text-section-title--letter-spacing);
+  --text-h2--line-height: var(--text-section-title--line-height);
+
+  --text-h3--font-family: var(--text-section-title--font-family);
+  --text-h3: var(--text-section-title);
+  --text-h3--font-weight: var(--text-section-title--font-weight);
+  --text-h3--letter-spacing: var(--text-section-title--letter-spacing);
+  --text-h3--line-height: var(--text-section-title--line-height);
+
+  --text-h4--font-family: var(--text-widget-title--font-family);
+  --text-h4: var(--text-widget-title);
+  --text-h4--font-weight: var(--text-widget-title--font-weight);
+  --text-h4--letter-spacing: var(--text-widget-title--letter-spacing);
+  --text-h4--line-height: var(--text-widget-title--line-height);
+
+  --text-h5--font-family: var(--text-widget-title--font-family);
+  --text-h5: var(--text-widget-title);
+  --text-h5--font-weight: var(--text-widget-title--font-weight);
+  --text-h5--letter-spacing: var(--text-widget-title--letter-spacing);
+  --text-h5--line-height: var(--text-widget-title--line-height);
 
   /* ===== Spacing ===== */
   --spacing-2xs: 0.125rem;
@@ -69,12 +296,195 @@
   --spacing-3xl: 2rem;
   --spacing-4xl: 2.5rem;
 
+  /* ===== Approved page spacing contexts ===== */
+  --space-page-edge: var(--spacing-2xl);
+  --space-page-edge-mobile: var(--spacing-lg);
+  --space-app-page-gutter: var(--nav-rail-launcher-size);
+  --space-overview-section: var(--spacing-2xl);
+  --space-overview-grid: var(--spacing-md);
+  --space-overview-panel: var(--spacing-xl);
+  --space-dense-section: var(--spacing-lg);
+  --space-dense-grid: var(--spacing-sm);
+  --space-dense-panel: var(--spacing-lg);
+  --space-dense-row: var(--spacing-sm);
+  --space-action-section: var(--spacing-3xl);
+  --space-action-panel: var(--spacing-2xl);
+  --space-action-field: var(--spacing-xl);
+  --space-action-label: var(--spacing-sm);
+  --space-action-actions: var(--spacing-2xl);
+
+  /* ===== Dashboard composition ===== */
+  /* The artwork is an interim image asset; the foreground is live UI. */
+  --dashboard-backdrop-start: #06101a;
+  --dashboard-backdrop-end: #07111b;
+  --dashboard-hero-hover-foreground: #fff;
+  --dashboard-hero-height: clamp(24rem, 27vw, 28rem);
+  --dashboard-hero-min-height: 24rem;
+  --dashboard-hero-height-mobile: 25rem;
+  --dashboard-hero-min-height-mobile: 25rem;
+  --dashboard-hero-copy-top: var(--spacing-xl);
+  --dashboard-hero-copy-top-mobile: var(--spacing-2xl);
+  --dashboard-overlap: var(--spacing-lg);
+  --dashboard-lens-card-background: color-mix(
+    in srgb,
+    var(--color-surface-elevated) 78%,
+    transparent
+  );
+  --dashboard-lens-card-edge: color-mix(
+    in srgb,
+    var(--color-border) 75%,
+    transparent
+  );
+  --dashboard-lens-card-hover-mix: 8%;
+  --dashboard-lens-card-active-mix: 15%;
+  --dashboard-lens-card-active-hover-mix: 20%;
+  --dashboard-lens-card-active-edge-mix: 55%;
+  --dashboard-card-radius: var(--radius-panel);
+  --dashboard-card-top-height: 11rem;
+  --dashboard-card-bottom-height: 13.5rem;
+  --dashboard-cots-card-height: 13rem;
+  --dashboard-balance-max-width: 50vw;
+  --dashboard-card-warmth: 6%;
+  --dashboard-cots-edge-mix: 38%;
+  --dashboard-cots-halo-mix: 9%;
+  --dashboard-cots-glow-mix: 7%;
+  --dashboard-day-box: 2.5rem;
+  --dashboard-chart-height: 8rem;
+  --dashboard-chart-height-mobile: 9rem;
+  --dashboard-bar-width: 1.5rem;
+  --dashboard-chart-hover-brightness: 1.1;
+  --dashboard-chart-hover-glow-radius: var(--spacing-lg);
+  --dashboard-chart-hover-glow-strength: 18%;
+  --dashboard-arrow-size: 2.25rem;
+  --dashboard-alert-radius: var(--button-radius);
+  --dashboard-footer-height: var(--spacing-4xl);
+  --dashboard-ask-glow: 1rem;
+  --dashboard-caret-duration: 1.15s;
+
+  /* ===== Approved short-form operating mode ===== */
+  --form-mode-stage-min-height: 47rem;
+  --form-mode-workspace-width: 43rem;
+  --form-mode-context-width: 20rem;
+  --form-mode-stage-gap: var(--spacing-3xl);
+  --form-mode-panel-inset: var(--spacing-2xl);
+  --form-mode-panel-padding: var(--space-action-panel);
+  --form-mode-panel-blur: var(--material-elevated-glass-blur);
+  --form-mode-section-gap: var(--space-action-section);
+  --form-mode-field-gap: var(--space-action-field);
+  --form-mode-accent-fill: 7%;
+  --form-mode-accent-edge: 49%;
+  --form-mode-accent-glow: 17%;
+  --form-mode-spine-width: 3px;
+  --form-mode-observation-opacity: 36%;
+  --form-mode-observation-blur: 3px;
+  --form-mode-mobile-inset: var(--spacing-lg);
+  --form-mode-entrance-distance: var(--distance-surface);
+
+  /* ===== Approved long-form dedicated page ===== */
+  --form-long-page-width: 76rem;
+  --form-long-side-rail-width: 16rem;
+  --form-long-section-gap: var(--space-action-section);
+  --form-long-field-grid-gap: var(--space-action-field);
+  --form-long-page-inset: var(--spacing-3xl);
+  --form-long-mobile-inset: var(--spacing-lg);
+  --form-long-progress-height: var(--spacing-xs);
+  --form-long-progress-gap: var(--spacing-xs);
+  --form-long-backdrop-accent-strength: 7%;
+  --form-long-header-accent-strength: 5%;
+  --form-long-section-edge-strength: 49%;
+  --form-long-nav-fill-strength: 7%;
+
   /* ===== Layout ===== */
   --container-page: 1180px;
   --container-copy: 42rem;
   --spacing-shell-sidebar: 15.5rem;
 
-  /* ===== Form Controls ===== */
+  /* ===== Brand and approved application header ===== */
+  --brand-symbol-color: #f5be36;
+  --brand-symbol-weight: 10;
+  --brand-symbol-size: 3rem;
+  --brand-symbol-size-mobile: 2rem;
+  --brand-wordmark-color: var(--color-text-primary);
+  --brand-wordmark-gap: var(--spacing-md);
+
+  --header-height: 5rem;
+  --header-height-tablet: 6.75rem;
+  --header-height-mobile: 8rem;
+  --header-padding-inline: var(--spacing-2xl);
+  --header-padding-inline-mobile: var(--spacing-md);
+  --header-group-gap: var(--spacing-xl);
+  --header-account-gap: var(--spacing-sm);
+  --header-account-chevron-size: 0.875rem;
+  --header-account-chevron-gap: var(--spacing-xs);
+  --header-action-gap: var(--spacing-xs);
+  --header-separator-height: 2rem;
+  --header-edge-width: 1px;
+  --header-glass-opacity: 86%;
+  --header-glass-blur: 18px;
+  --header-focus-fill-strength: 52%;
+  --header-focus-dot-size: var(--spacing-sm);
+  --header-mobile-focus-padding-block: var(--spacing-sm);
+
+  --mobile-nav-blur: 24px;
+  --mobile-nav-background-opacity: 96%;
+  --mobile-nav-gloss-strength: 13%;
+  --mobile-nav-accent-glow-strength: 12%;
+  --mobile-nav-account-opacity: 84%;
+  --header-notification-width: 20rem;
+  --header-notification-gap: var(--spacing-xs);
+  --header-notification-dot-size: 0.4rem;
+  --mobile-nav-item-height: 3.375rem;
+  --mobile-nav-item-active-tint: 11%;
+  --mobile-nav-item-edge-tint: 33%;
+  --mobile-nav-account-height: 5.75rem;
+
+  /* ===== Approved desktop area navigation ===== */
+  --nav-rail-layer: 20;
+  --nav-rail-offset-inline: var(--spacing-2xl);
+  --nav-rail-offset-block: var(--spacing-xl);
+  --nav-rail-inset: var(--spacing-sm);
+  --nav-rail-item-size: var(--icon-featured-size);
+  --nav-rail-expanded-width: 11.5rem;
+  --nav-rail-launcher-size: var(--nav-rail-item-size);
+  --nav-rail-launcher-gap: var(--spacing-sm);
+  --nav-rail-launcher-fill-opacity: 84%;
+  --nav-rail-launcher-border-opacity: 48%;
+  --nav-rail-launcher-top-light: 22%;
+  --nav-rail-launcher-hover-fill: 18%;
+  --nav-rail-launcher-glow-size: var(--spacing-md);
+  --nav-rail-launcher-glow-opacity: 14%;
+  --nav-rail-launcher-hover-glow-size: var(--spacing-xl);
+  --nav-rail-launcher-hover-glow-opacity: 25%;
+  --nav-rail-reveal-distance: var(--spacing-lg);
+  --nav-rail-reveal-blur: 6px;
+  --nav-rail-panel-radius: var(--button-radius);
+  --nav-rail-panel-opacity: 70%;
+  --nav-rail-panel-blur: var(--material-glass-blur);
+  --nav-rail-panel-edge-strength: 28%;
+  --nav-rail-panel-sheen-strength: 9%;
+  --nav-rail-panel-glow-size: var(--spacing-xl);
+  --nav-rail-panel-glow-strength: 12%;
+  --nav-rail-gap: var(--spacing-sm);
+  --nav-rail-item-gap: var(--spacing-sm);
+  --nav-rail-item-padding-inline: var(--spacing-xs);
+  --nav-rail-idle-opacity: 68%;
+  --nav-rail-active-fill: 15%;
+  --nav-rail-active-border: 60%;
+  --nav-rail-active-edge-width: 2px;
+  --nav-rail-hover-fill: 10%;
+  --nav-rail-hover-border: 54%;
+  --nav-rail-hover-glow-opacity: 20%;
+  --nav-rail-hover-glow-size: var(--spacing-sm);
+  --nav-rail-blur: var(--material-glass-blur);
+  --nav-rail-edge-width: 1px;
+  --nav-rail-line-width: 1px;
+  --nav-rail-line-inset: var(--spacing-xs);
+  --nav-rail-indicator-width: var(--spacing-xs);
+  --nav-rail-indicator-glow-size: var(--spacing-sm);
+  --nav-rail-indicator-glow-opacity: 65%;
+  --nav-rail-pagination-padding-block: var(--spacing-sm);
+  --nav-rail-pagination-padding-inline: var(--spacing-xs);
+  /* ===== Fields ===== */
 
   /* Input */
   --spacing-input-height-sm: 2.25rem;
@@ -86,10 +496,544 @@
   --spacing-textarea-height-md: 8rem;
   --spacing-textarea-height-lg: 10rem;
 
+  /* Shared text fields and textareas */
+  --field-height: var(--spacing-4xl);
+  --field-textarea-min-height: var(--spacing-textarea-height-sm);
+  --field-radius: var(--button-radius);
+  --field-padding-inline: var(--spacing-md);
+  --field-padding-block: var(--spacing-sm);
+  --field-textarea-padding-block: var(--spacing-md);
+  --field-border-width: var(--button-border-width);
+  --field-background: var(--color-surface-input);
+  --field-background-readonly: var(--color-surface);
+  --field-edge-rest: var(--color-border);
+  --field-edge-hover: var(--button-secondary-edge-hover);
+  --field-focus-color: var(--button-focus-color);
+  --field-error-color: var(--color-danger);
+  --field-error-background: color-mix(
+    in srgb,
+    var(--color-danger) 8%,
+    var(--color-surface-input)
+  );
+  --field-disabled-opacity: var(--button-disabled-opacity);
+  --field-text: var(--color-text-primary);
+  --field-placeholder: var(--color-text-muted);
+  --field-help: var(--color-text-secondary);
+  --field-message-icon-size: var(--spacing-md);
+
+  /* Edit shared field spacing, extended textarea sizes, and state text here. */
+  --field-label-gap: var(--spacing-xs);
+  --field-helper-gap: var(--spacing-xs);
+  --field-textarea-min-height-md: var(--spacing-textarea-height-md);
+  --field-textarea-min-height-lg: var(--spacing-textarea-height-lg);
+  --field-label-text: var(--color-text-primary);
+  --field-readonly-text: var(--color-text-secondary);
+
+  /* Approved underline Input: Body for forms, Featured for defining entries. */
+  --input-label-gap: var(--spacing-sm);
+  --input-body-size: var(--text-body);
+  --input-body-mobile-size: max(1rem, var(--text-body));
+  --input-body-height: var(--field-height);
+  --input-body-padding-block: var(--spacing-sm);
+  --input-featured-size: clamp(1.75rem, 3vw, 2.5rem);
+  --input-featured-height: 3rem;
+  --input-featured-padding-block: var(--spacing-md);
+  --input-featured-tracking: -0.025em;
+  --input-featured-leading: 1.35;
+
+  /* Approved underline Textarea: native content growth, internal scroll, no resize grip. */
+  --textarea-max-height: 28rem;
+
+  /* ===== Selects ===== */
+
+  /* Edit select geometry, palette, icon, and interaction treatment here. */
+  --select-height: var(--field-height);
+  --select-radius: var(--field-radius);
+  --select-padding-block: var(--field-padding-block);
+  --select-padding-inline: var(--field-padding-inline);
+  --select-gap: var(--spacing-md);
+  --select-edge-width: var(--field-border-width);
+  --select-edge: var(--field-edge-rest);
+  --select-edge-hover: var(--field-edge-hover);
+  --select-background: var(--field-background);
+  --select-text: var(--field-text);
+  --select-icon-size: var(--spacing-lg);
+  --select-icon-color: var(--color-text-muted);
+  --select-focus-color: var(--field-focus-color);
+  --select-disabled-opacity: var(--field-disabled-opacity);
+
+  /* ===== Selection controls ===== */
+
+  /* Edit shared checkbox, radio, and switch geometry and states here. */
+  --selection-size: var(--spacing-xl);
+  --selection-row-height: var(--field-height);
+  --selection-gap: var(--spacing-md);
+  --selection-copy-gap: var(--spacing-2xs);
+  --selection-checkbox-radius: var(--field-radius);
+  --selection-radio-radius: 50%;
+  --selection-edge-width: var(--field-border-width);
+  --selection-edge: var(--field-edge-rest);
+  --selection-edge-hover: var(--field-edge-hover);
+  --selection-background: var(--field-background);
+  --selection-accent: var(--color-primary);
+  --selection-accent-hover: var(--color-primary-hover);
+  --selection-mark-color: var(--color-on-primary);
+  --selection-focus-color: var(--color-primary);
+  --selection-focus-checked-color: var(--color-text-primary);
+  --selection-error-color: var(--color-danger);
+  --selection-error-background: var(--field-error-background);
+  --selection-disabled-opacity: var(--field-disabled-opacity);
+
+  --selection-check-width: var(--spacing-xs);
+  --selection-check-height: var(--spacing-sm);
+  --selection-mark-stroke: var(--spacing-2xs);
+  --selection-check-offset: calc(var(--spacing-2xs) * -0.5);
+  --selection-check-rotation: 45deg;
+  --selection-radio-mark-size: var(--spacing-sm);
+  --selection-mixed-mark-width: var(--spacing-sm);
+  --selection-mixed-mark-height: var(--spacing-2xs);
+
+  --selection-switch-width: var(--button-height-default);
+  --selection-switch-height: var(--spacing-xl);
+  --selection-switch-radius: var(--field-radius);
+  --selection-switch-thumb-size: var(--spacing-lg);
+  --selection-switch-thumb-radius: var(--spacing-2xs);
+  --selection-switch-inset: var(--spacing-2xs);
+  --selection-switch-thumb-block-offset: calc(
+    (
+        var(--selection-switch-height) - var(--selection-edge-width) -
+          var(--selection-edge-width) - var(--selection-switch-thumb-size)
+      ) /
+      2
+  );
+  --selection-switch-thumb-inline-offset: calc(
+    var(--selection-switch-inset) - var(--selection-edge-width)
+  );
+  --selection-switch-thumb-travel: calc(
+    var(--selection-switch-width) - var(--selection-edge-width) -
+      var(--selection-edge-width) - var(--selection-switch-thumb-size) -
+      var(--selection-switch-thumb-inline-offset) -
+      var(--selection-switch-thumb-inline-offset)
+  );
+  --selection-switch-background: var(--color-surface-elevated);
+  --selection-switch-thumb: var(--color-text-muted);
+  --selection-domain-hover-strength: 88%;
+  --selection-feedback-duration: var(--motion-control-duration);
+  --selection-switch-duration: var(--motion-control-duration);
+  --selection-easing: var(--motion-control-ease);
+
+  /* ===== Menus ===== */
+
+  /* Edit shared menu geometry, surface, rows, icons, and states here. */
+  --menu-background: var(--material-solid-background);
+  --menu-radius: var(--field-radius);
+  --menu-edge-width: var(--field-border-width);
+  --menu-edge: var(--material-solid-edge);
+  --menu-inset: var(--spacing-xs);
+  --menu-offset: var(--spacing-sm);
+  --menu-shadow: var(--material-solid-top-light), var(--material-solid-depth);
+  --menu-min-width: 13.5rem;
+  --menu-z-index: 40;
+  --menu-viewport-gutter: var(--spacing-sm);
+  --menu-max-width: calc(
+    100vw - var(--menu-viewport-gutter) - var(--menu-viewport-gutter)
+  );
+
+  --menu-item-height: var(--field-height);
+  --menu-item-padding-block: var(--spacing-sm);
+  --menu-item-padding-inline: var(--spacing-md);
+  --menu-item-gap: var(--spacing-sm);
+  --menu-item-radius: var(--field-radius);
+  --menu-item-edge-width: var(--field-border-width);
+  --menu-item-edge: transparent;
+  --menu-item-text: var(--color-text-secondary);
+  --menu-icon-size: var(--spacing-lg);
+  --menu-icon-color: var(--color-text-muted);
+
+  --menu-item-hover: var(--button-ghost-hover);
+  --menu-hover-text: var(--color-text-primary);
+  --menu-focus-color: var(--field-focus-color);
+  --menu-selected-fill: var(--color-primary-subtle);
+  --menu-selected-text: var(--color-primary);
+  --menu-danger: var(--color-danger);
+  --menu-danger-hover: color-mix(
+    in srgb,
+    var(--color-danger) 14%,
+    var(--color-surface)
+  );
+  --menu-disabled-opacity: var(--field-disabled-opacity);
+  --menu-feedback-duration: var(--motion-control-duration);
+  --menu-feedback-ease: var(--motion-control-ease);
+  --menu-arrival-distance: var(--motion-surface-travel);
+
+  /* ===== Dialogs ===== */
+
+  /* Edit shared modal geometry, glass, backdrop, and depth here. */
+  --dialog-backdrop-opacity: 62%;
+  --dialog-backdrop-blur: var(--spacing-xs);
+  --dialog-backdrop-color: color-mix(
+    in srgb,
+    var(--color-background) var(--dialog-backdrop-opacity),
+    transparent
+  );
+  --dialog-width: 28rem;
+  --dialog-viewport-gutter: var(--spacing-lg);
+  --dialog-max-width: calc(
+    100vw - var(--dialog-viewport-gutter) - var(--dialog-viewport-gutter)
+  );
+  --dialog-max-height: calc(
+    100dvh - var(--dialog-viewport-gutter) - var(--dialog-viewport-gutter)
+  );
+  --dialog-padding: var(--spacing-2xl);
+  --dialog-radius: var(--spacing-sm);
+  --dialog-edge-width: var(--field-border-width);
+  --dialog-edge: var(--material-elevated-glass-edge);
+  --dialog-background: var(--color-surface-elevated);
+  --dialog-opacity: var(--material-elevated-glass-opacity);
+  --dialog-glass-background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--color-surface-elevated) var(--dialog-opacity),
+        transparent
+      )
+      0%,
+    color-mix(in srgb, var(--color-surface) var(--dialog-opacity), transparent)
+      100%
+  );
+  --dialog-blur: var(--material-elevated-glass-blur);
+  --dialog-gloss: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-text-primary) 9%, transparent) 0%,
+    transparent 32%
+  );
+  --dialog-top-light: var(--material-elevated-glass-top-light);
+  --dialog-depth: var(--material-elevated-glass-depth);
+  --dialog-header-gap: var(--spacing-xl);
+  --dialog-copy-gap: var(--spacing-sm);
+  --dialog-content-gap: var(--spacing-lg);
+  --dialog-action-gap: var(--spacing-sm);
+  --dialog-description-color: var(--color-text-secondary);
+  --dialog-enter-ease: var(--ease-enter);
+  --dialog-exit-ease: var(--ease-exit);
+  --dialog-distance: var(--distance-dialog);
+  --dialog-scale: var(--scale-pressed);
+  --dialog-z-index: 120;
+
+  /* ===== Drawers ===== */
+
+  /* Edit shared drawer geometry, glass, backdrop, and movement here. */
+  --drawer-backdrop-opacity: 52%;
+  --drawer-backdrop-blur: var(--spacing-xs);
+  --drawer-backdrop-color: color-mix(
+    in srgb,
+    var(--color-background) var(--drawer-backdrop-opacity),
+    transparent
+  );
+  --drawer-width: 26rem;
+  --drawer-height: 100dvh;
+  --drawer-padding: var(--spacing-2xl);
+  --drawer-radius: var(--spacing-sm);
+  --drawer-edge-width: var(--field-border-width);
+  --drawer-edge: var(--material-elevated-glass-edge);
+  --drawer-background: var(--color-surface-elevated);
+  --drawer-opacity: var(--material-elevated-glass-opacity);
+  --drawer-glass-background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--color-surface-elevated) var(--drawer-opacity),
+        transparent
+      )
+      0%,
+    color-mix(in srgb, var(--color-surface) var(--drawer-opacity), transparent)
+      100%
+  );
+  --drawer-blur: var(--material-elevated-glass-blur);
+  --drawer-gloss: var(--dialog-gloss);
+  --drawer-top-light: var(--material-elevated-glass-top-light);
+  --drawer-depth:
+    -12px 0 28px color-mix(in srgb, var(--color-background) 72%, transparent),
+    -2px 0 8px color-mix(in srgb, var(--color-background) 58%, transparent);
+  --drawer-header-gap: var(--spacing-xl);
+  --drawer-section-gap: var(--spacing-2xl);
+  --drawer-copy-gap: var(--spacing-sm);
+  --drawer-card-gap: var(--spacing-md);
+  --drawer-card-padding: var(--spacing-lg);
+  --drawer-card-radius: var(--spacing-sm);
+  --drawer-card-domain-strength: 18%;
+  --drawer-card-edge-strength: 68%;
+  --drawer-card-depth: 0 8px 24px
+    color-mix(in srgb, var(--color-background) 28%, transparent);
+  --drawer-focus-card-strength: 78%;
+  --drawer-focus-fill-strength: 38%;
+  --drawer-identity-fill-strength: 58%;
+  --drawer-default-identity-fill-strength: 20%;
+  --drawer-identity-edge-strength: 82%;
+  --drawer-accent-rail-width: var(--spacing-xs);
+  --drawer-divider: var(--color-border);
+  --drawer-divider-accent-strength: 42%;
+  --drawer-chevron-size: var(--icon-compact-glyph-size);
+  --drawer-close-icon-fill-strength: var(--icon-compact-fill-strength);
+  --drawer-close-icon-edge-strength: var(--icon-compact-edge-strength);
+  --drawer-metric-min-height: 8.5rem;
+  --drawer-metric-min-height-narrow: 6rem;
+  --drawer-edge-glow-strength: 54%;
+  --drawer-edge-glow-size: var(--spacing-md);
+  --drawer-duration-row-height: var(--field-height);
+  --drawer-duration-column-gap: var(--spacing-sm);
+  --drawer-duration-padding: var(--spacing-sm);
+  --drawer-duration-radius: var(--field-radius);
+  --drawer-duration-selection-fill-strength: 32%;
+  --drawer-time-picker-gap: var(--spacing-lg);
+  --drawer-time-status-gap: var(--spacing-md);
+  --drawer-enter-ease: var(--ease-enter);
+  --drawer-exit-ease: var(--ease-exit);
+  --drawer-duration: var(--motion-surface-duration);
+  --drawer-distance: var(--distance-surface);
+  --drawer-z-index: var(--dialog-z-index);
+
   /* ===== Radius ===== */
   --radius-control: 0.6875rem;
   --radius-panel: 1.125rem;
   --radius-dialog: 1.25rem;
+
+  /* ===== Buttons ===== */
+
+  /* Edit shared geometry and interaction treatment here. */
+  --button-height-default: var(--spacing-input-height-sm);
+  --button-icon-size: var(--spacing-input-height-sm);
+  --button-icon-glyph-size: var(--spacing-lg);
+  --button-padding-inline: var(--spacing-lg);
+  --button-gap: var(--spacing-sm);
+  --button-radius: 0.1875rem;
+  --button-border-width: 1px;
+  --button-focus-width: 2px;
+  --button-focus-offset: 2px;
+  --button-disabled-opacity: 45%;
+  --button-focus-color: var(--color-primary);
+
+  /* Existing size API aliases share the approved compact geometry. */
+  --button-height-sm: var(--button-height-default);
+  --button-height-md: var(--button-height-default);
+  --button-height-lg: var(--button-height-default);
+  --button-padding-inline-sm: var(--button-padding-inline);
+  --button-padding-inline-md: var(--button-padding-inline);
+  --button-padding-inline-lg: var(--button-padding-inline);
+
+  /* Edit each button palette without changing component CSS. */
+  --button-primary-rest: var(--color-primary);
+  --button-primary-hover: var(--color-primary-hover);
+  --button-primary-pressed: color-mix(
+    in srgb,
+    var(--color-primary) 84%,
+    var(--color-on-primary)
+  );
+  --button-primary-edge: transparent;
+  --button-primary-edge-hover: transparent;
+  --button-primary-foreground: var(--color-on-primary);
+  /* Owner-approved primary-button confirmation palette. */
+  --button-success-rest: var(--color-success);
+  --button-success-hover: color-mix(in srgb, var(--color-success) 90%, white);
+  --button-success-pressed: color-mix(in srgb, var(--color-success) 90%, black);
+  --button-success-foreground: var(--color-on-primary);
+  --button-feedback-travel: var(--motion-control-hover-lift);
+  /* Approved artwork upload preview geometry. */
+  --artwork-upload-preview-ratio: 2 / 1;
+  --artwork-upload-preview-min-height: 200px;
+  --artwork-upload-preview-mobile-height: 180px;
+
+  --button-secondary-rest: var(--color-surface-elevated);
+  --button-secondary-hover: color-mix(
+    in srgb,
+    var(--color-surface-elevated) 90%,
+    var(--color-text-primary)
+  );
+  --button-secondary-pressed: color-mix(
+    in srgb,
+    var(--color-surface-elevated) 88%,
+    var(--color-background)
+  );
+  --button-secondary-edge: var(--color-border);
+  --button-secondary-edge-hover: color-mix(
+    in srgb,
+    var(--color-border) 76%,
+    var(--color-text-primary)
+  );
+  --button-secondary-foreground: var(--color-text-primary);
+
+  --button-ghost-rest: transparent;
+  --button-ghost-hover: color-mix(
+    in srgb,
+    var(--color-text-primary) 6%,
+    transparent
+  );
+  --button-ghost-pressed: color-mix(
+    in srgb,
+    var(--color-text-primary) 10%,
+    transparent
+  );
+  --button-ghost-edge: transparent;
+  --button-ghost-edge-hover: transparent;
+  --button-ghost-foreground: var(--color-text-secondary);
+  --button-ghost-foreground-hover: var(--color-text-primary);
+
+  --button-danger-rest: color-mix(
+    in srgb,
+    var(--color-danger) 14%,
+    var(--color-surface)
+  );
+  --button-danger-hover: color-mix(
+    in srgb,
+    var(--color-danger) 20%,
+    var(--color-surface)
+  );
+  --button-danger-pressed: color-mix(
+    in srgb,
+    var(--color-danger) 26%,
+    var(--color-surface)
+  );
+  --button-danger-edge: color-mix(
+    in srgb,
+    var(--color-danger) 42%,
+    var(--color-border)
+  );
+  --button-danger-edge-hover: color-mix(
+    in srgb,
+    var(--color-danger) 62%,
+    var(--color-border)
+  );
+  --button-danger-foreground: color-mix(
+    in srgb,
+    var(--color-danger) 70%,
+    var(--color-text-primary)
+  );
+
+  /* ===== Approved resizable artwork viewport ===== */
+
+  /* Geometry and visual tuning for the shared phone/viewport resize control. */
+  --viewport-preview-accent: var(--color-primary);
+  --viewport-preview-section-gap: var(--spacing-xl);
+  --viewport-preview-readout-padding: var(--spacing-md);
+  --viewport-preview-lane-max-width: 520px;
+  --viewport-preview-edge-clearance: 48px;
+  --viewport-preview-handle-size: 44px;
+  --viewport-preview-handle-overhang: 22px;
+  --viewport-preview-line-offset: 21px;
+  --viewport-preview-line-size: 2px;
+  --viewport-preview-grip-width: 28px;
+  --viewport-preview-grip-height: 40px;
+  --viewport-preview-grip-gap: 3px;
+  --viewport-preview-grip-mark-width: 2px;
+  --viewport-preview-grip-mark-height: 12px;
+  --viewport-preview-stage-padding-top: var(--spacing-3xl);
+  --viewport-preview-stage-padding-inline: var(--spacing-xl);
+  --viewport-preview-stage-padding-bottom: var(--spacing-4xl);
+  --viewport-preview-stage-padding-top-mobile: var(--spacing-xl);
+  --viewport-preview-stage-padding-inline-mobile: var(--spacing-md);
+  --viewport-preview-stage-padding-bottom-mobile: var(--spacing-3xl);
+  --viewport-preview-stage-grid-strength: 7%;
+  --viewport-preview-stage-fill-strength: 72%;
+  --viewport-preview-frame-edge-strength: 48%;
+  --viewport-preview-frame-glow-strength: 14%;
+  --viewport-preview-copy-fade-start: 65%;
+  --viewport-preview-copy-fade-strength: 73%;
+  --viewport-preview-line-strength: 62%;
+  --viewport-preview-line-glow-radius: 10px;
+  --viewport-preview-line-glow-strength: 18%;
+  --viewport-preview-grip-glow-radius: 14px;
+  --viewport-preview-grip-glow-strength: 18%;
+  --viewport-preview-active-line-glow-radius: 18px;
+  --viewport-preview-active-line-glow-strength: 75%;
+  --viewport-preview-active-grip-fill-strength: 22%;
+  --viewport-preview-active-grip-glow-radius: 22px;
+  --viewport-preview-active-grip-glow-strength: 45%;
+  --viewport-preview-corner-glow-radius: 18px;
+  --viewport-preview-corner-glow-strength: 25%;
+  --viewport-preview-active-corner-fill-strength: 24%;
+  --viewport-preview-active-corner-glow-radius: 24px;
+  --viewport-preview-active-corner-glow-strength: 55%;
+
+  /* ===== Surface Materials ===== */
+
+  /* Edit transparency, blur, edge, highlight, and depth per material. */
+  --material-solid-opacity: 100%;
+  --material-solid-blur: 0px;
+  --material-solid-edge: var(--color-border);
+  --material-solid-top-light: inset 0 1px 0
+    color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  --material-solid-depth:
+    0 12px 28px rgb(0 0 0 / 24%), 0 2px 8px rgb(0 0 0 / 16%);
+  --material-solid-background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        color-mix(
+            in srgb,
+            var(--color-surface-elevated) 32%,
+            var(--color-surface)
+          )
+          var(--material-solid-opacity),
+        transparent
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--color-surface) var(--material-solid-opacity),
+        transparent
+      )
+      38%,
+    color-mix(
+        in srgb,
+        color-mix(in srgb, var(--color-surface) 92%, var(--color-background))
+          var(--material-solid-opacity),
+        transparent
+      )
+      100%
+  );
+
+  --material-glass-opacity: 78%;
+  --material-glass-blur: 16px;
+  --material-glass-edge: color-mix(
+    in srgb,
+    var(--color-border) 82%,
+    transparent
+  );
+  --material-glass-top-light: inset 0 1px 0
+    color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  --material-glass-depth: 0 0 0 transparent;
+  --material-glass-background: color-mix(
+    in srgb,
+    var(--color-surface) var(--material-glass-opacity),
+    transparent
+  );
+
+  --material-elevated-glass-opacity: 88%;
+  --material-elevated-glass-blur: 24px;
+  --material-elevated-glass-edge: color-mix(
+    in srgb,
+    var(--color-border) 84%,
+    var(--color-text-primary) 16%
+  );
+  --material-elevated-glass-top-light: inset 0 1px 0
+    color-mix(in srgb, var(--color-text-primary) 9%, transparent);
+  --material-elevated-glass-depth:
+    0 12px 28px rgb(0 0 0 / 24%), 0 2px 8px rgb(0 0 0 / 16%);
+  --material-elevated-glass-background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--color-surface-elevated) var(--material-elevated-glass-opacity),
+        transparent
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--color-surface) var(--material-elevated-glass-opacity),
+        transparent
+      )
+      100%
+  );
 
   /* ===== Motion ===== */
   --ease-enter: cubic-bezier(0, 0, 0.38, 0.9);
@@ -108,4 +1052,376 @@
   --distance-surface: 24px;
   --distance-dialog: 12px;
   --scale-pressed: 0.985;
+
+  /* Approved motion treatment: Precision Light, with Living Light progress. */
+  /* Change these semantic knobs without editing shared component CSS. */
+  --motion-control-duration: var(--duration-control);
+  --motion-surface-duration: var(--duration-surface);
+  --motion-control-ease: var(--ease-move);
+  --motion-surface-ease: var(--ease-enter);
+  --motion-surface-travel: var(--distance-content);
+  --motion-control-hover-lift: 2px;
+  --motion-control-pressed-scale: var(--scale-pressed);
+  --motion-control-glow-strength: 15%;
+  --motion-control-glow-radius: 12px;
+  --motion-live-cycle: 2.2s;
+  --motion-live-dim-opacity: 55%;
+  --motion-live-glow-strength: 44%;
+  --motion-live-glow-radius: var(--spacing-sm);
+  --motion-progress-duration: var(--duration-emphasis);
+  --motion-progress-ease: var(--ease-emphasis);
+  --motion-progress-glow-strength: 62%;
+  --motion-progress-glow-radius: 32px;
+  --motion-progress-glint-width: 27%;
+  --motion-progress-glint-strength: 54%;
+  --motion-progress-glint-blur: var(--spacing-xs);
+  --motion-progress-height: var(--spacing-sm);
+  --motion-progress-track-color: var(--color-surface-elevated);
+
+  /* Approved AI typing: Terminal Prompt. */
+  --ai-typing-step-duration: 34ms;
+  --ai-typing-punctuation-pause: var(--duration-content);
+  --ai-typing-caret-cycle: calc(var(--duration-emphasis) * 2);
+  --ai-typing-caret-width: 0.6em;
+  --ai-typing-caret-glow: var(--spacing-sm);
+  --ai-typing-prompt-gap: var(--spacing-sm);
+  --motion-progress-default-accent: var(--color-primary);
+
+  /* Approved progress variants: Plasma Core, Season Ticks, Segmented Halo. */
+  --progress-plasma-height: 0.875rem;
+  --progress-plasma-inset: 2px;
+  --progress-plasma-radius: var(--button-radius);
+  --progress-plasma-border-width: 1px;
+  --progress-plasma-edge-strength: 16%;
+  --progress-plasma-track-background-strength: 75%;
+  --progress-plasma-fill-start-strength: 72%;
+  --progress-plasma-static-glow-strength: 36%;
+  --progress-plasma-static-glow-radius: 0.6rem;
+  --progress-plasma-top-light-strength: 46%;
+
+  --progress-season-height: 1.25rem;
+  --progress-season-gap: 2px;
+  --progress-season-radius: 2px;
+  --progress-season-inactive: var(--color-border);
+  --progress-season-top-light-strength: 31%;
+  --progress-season-fill-glow-strength: 26%;
+  --progress-season-fill-glow-radius: 0.45rem;
+
+  --progress-halo-size: 6.25rem;
+  --progress-halo-tick-width: 2px;
+  --progress-halo-tick-height: 0.625rem;
+  --progress-halo-tick-radius: 2px;
+  --progress-halo-ring-radius: 2.8rem;
+  --progress-halo-inactive: var(--color-border);
+  --progress-halo-glow-strength: 42%;
+  --progress-halo-glow-radius: 0.4rem;
+  --progress-halo-content-gap: var(--spacing-xl);
+  --progress-segment-stagger: 7ms;
+  --progress-segment-color-duration: 180ms;
+
+  /* Approved indeterminate loading: Orbit Arc, Edge Trace, Eclipse. */
+  --loading-default-accent: var(--color-primary);
+  --loading-track-color: var(--color-border);
+  --loading-glow-strength: 38%;
+  --loading-glow-radius: 0.75rem;
+  --loading-orbit-size: 3.6rem;
+  --loading-orbit-stroke: 3px;
+  --loading-orbit-highlight-strength: 42%;
+  --loading-orbit-cycle: 1.5s;
+
+  --loading-edge-width: 18rem;
+  --loading-edge-padding: 1.15rem;
+  --loading-edge-line-gap: 0.7rem;
+  --loading-edge-line-height: 0.45rem;
+  --loading-edge-line-radius: 2px;
+  --loading-edge-first-line-width: 45%;
+  --loading-edge-second-line-width: 78%;
+  --loading-edge-radius: var(--button-radius);
+  --loading-edge-border-strength: 27%;
+  --loading-edge-trace-height: 2px;
+  --loading-edge-trace-glow-radius: 1rem;
+  --loading-edge-cycle: 2.1s;
+
+  --loading-eclipse-size: 5.25rem;
+  --loading-eclipse-ring-stroke: 2px;
+  --loading-eclipse-ring-strength: 38%;
+  --loading-eclipse-arc-strength: 35%;
+  --loading-eclipse-core-strength: 12%;
+  --loading-eclipse-dot-size: 0.55rem;
+  --loading-eclipse-cycle: 2.4s;
+
+  /* Approved empty states: edit these visual decisions in one place. */
+  --empty-default-accent: var(--color-primary);
+  --empty-panel-background: var(--color-background);
+  --empty-panel-edge: var(--color-border);
+  --empty-panel-radius: var(--radius-panel);
+  --empty-panel-padding: var(--spacing-3xl);
+  --empty-context-height: 2.75rem;
+  --empty-compact-min-height: 12rem;
+  --empty-compact-panel-padding: var(--spacing-sm);
+  --empty-compact-panel-gap: var(--spacing-md);
+  --empty-data-min-height: 11rem;
+  --empty-illustrated-min-height: 18rem;
+  --empty-copy-max-width: 26rem;
+  --empty-action-gap: var(--spacing-sm);
+  --empty-artwork-gap: var(--spacing-3xl);
+  --empty-artwork-width: 40%;
+  --empty-artwork-height: 13rem;
+  --empty-mobile-artwork-height: 10rem;
+  --empty-edge-strength: 42%;
+  --empty-backdrop-glow-strength: 8%;
+  --empty-top-light-height: 1px;
+  --empty-top-light-opacity: 45%;
+  --empty-wire-width: 1px;
+  --empty-wire-glow-radius: 5px;
+  --empty-wire-glow-strength: 22%;
+  --empty-core-fill-strength: 13%;
+  --empty-core-glow-strength: 16%;
+  --empty-core-glow-radius: 35px;
+  --empty-diagram-node-width: 7rem;
+  --empty-person-size: 2.8rem;
+  --empty-person-center-size: 3.4rem;
+  --empty-person-glow-radius: 25px;
+  --empty-person-glow-strength: 16%;
+  --empty-gateway-orb-size: 6rem;
+  --empty-orb-icon-size: 2.5rem;
+  --empty-orb-fill-strength: 20%;
+  --empty-orb-glow-strength: 20%;
+  --empty-orb-glow-radius: 3rem;
+  --empty-editorial-glow-radius: 25px;
+  --empty-editorial-glow-strength: 10%;
+  --empty-orbit-width: 11rem;
+  --empty-orbit-height: 7rem;
+  --empty-origin-size: 0.7rem;
+  --empty-origin-glow-radius: 18px;
+  --empty-target-size: 3rem;
+  --empty-focus-size: 10rem;
+  --empty-focus-icon-size: 3rem;
+  --empty-resolved-size: 5.5rem;
+  --empty-resolved-ring-gap: 0.7rem;
+  --empty-resolved-glow-radius: 40px;
+  --empty-resolved-glow-strength: 16%;
+  --empty-anatomy-glow-strength: 16%;
+  --empty-grid-strength: 5%;
+  --empty-grid-step: 32px;
+  --empty-pause-rule-width: 2px;
+  --empty-pause-icon-opacity: 45%;
+  --empty-chart-copy-opacity: 88%;
+  --empty-review-dot-size: 0.55rem;
+  --empty-review-dot-glow-radius: 12px;
+
+  /* Approved badges: Aurora Fill, Live Numeral, Specimen Strip, Removable. */
+  --badge-default-accent: var(--color-primary);
+  --badge-radius: var(--button-radius);
+  --badge-edge-width: 1px;
+  --badge-edge-strength: 42%;
+  --badge-height: 1.65rem;
+  --badge-padding-block: 0.28rem;
+  --badge-padding-inline: 0.65rem;
+  --badge-gap: 0.45rem;
+  --badge-default-fill-strength: 11%;
+  --badge-aurora-angle: 115deg;
+  --badge-aurora-edge-strength: 45%;
+  --badge-aurora-start-strength: 25%;
+  --badge-aurora-end-strength: 7%;
+  --badge-aurora-top-light-strength: 28%;
+  --badge-aurora-glow-strength: 11%;
+  --badge-aurora-glow-radius: 15px;
+  --badge-live-edge: var(--color-border);
+  --badge-live-background: var(--color-surface);
+  --badge-live-dot-size: 0.38rem;
+  --badge-live-dot-glow-radius: 0.55rem;
+  --badge-remove-padding-end: 0.24rem;
+  --badge-remove-icon-slot-size: 1.25rem;
+  --badge-remove-icon-size: var(--icon-bare-size);
+  --badge-remove-hover-fill-strength: 15%;
+  --badge-remove-hover-glow-strength: 14%;
+  --badge-remove-hover-glow-radius: 12px;
+  --badge-focus-width: 1px;
+  --badge-focus-offset: 2px;
+
+  /* Approved tooltip: Corner Frame. Edit these to retune every tooltip. */
+  --tooltip-default-accent: var(--color-primary);
+  --tooltip-z-index: calc(var(--dialog-z-index) + 1);
+  --tooltip-max-width: 14rem;
+  --tooltip-min-height: 2rem;
+  --tooltip-padding-block: var(--spacing-sm);
+  --tooltip-padding-inline: var(--spacing-md);
+  --tooltip-radius: var(--button-radius);
+  --tooltip-edge-width: 1px;
+  --tooltip-edge-strength: 19%;
+  --tooltip-glass-opacity: 91%;
+  --tooltip-blur: var(--material-glass-blur);
+  --tooltip-top-light-width: 1px;
+  --tooltip-top-light-strength: 11%;
+  --tooltip-shadow-y: 12px;
+  --tooltip-shadow-blur: 28px;
+  --tooltip-shadow-opacity: 38%;
+  --tooltip-glow-radius: 24px;
+  --tooltip-glow-strength: 12%;
+  --tooltip-corner-size: 9px;
+  --tooltip-corner-width: 1px;
+  --tooltip-corner-glow-radius: 5px;
+  --tooltip-offset: 0.6875rem;
+  --tooltip-viewport-inset: var(--spacing-sm);
+  --tooltip-hover-delay: var(--duration-control);
+  --tooltip-close-delay: var(--duration-content);
+  --tooltip-arrival-duration: var(--motion-control-duration);
+  --tooltip-arrival-ease: var(--motion-control-ease);
+  --tooltip-entry-brightness: 75%;
+}
+
+/* Character confirmation carousel — owner approved 10 October 2026. */
+:root {
+  --character-confirmation-image-height: clamp(18rem, 35vw, 26rem);
+}
+
+/* AI text frame — owner approved 11 October 2026, including text-sized width. */
+:root {
+  /* Approved Living Ink: longer AI-generated prose, separate from C.O.T.S speech. */
+  --ai-generated-text-copy-width: 68ch;
+  --ai-generated-text-duration: 720ms;
+  --ai-generated-text-word-step: 24ms;
+  --ai-generated-text-delay-cap: 1600ms;
+  --ai-generated-text-light-radius: 10px;
+  --ai-generated-text-soft-radius: 4px;
+  --ai-generated-text-soft-strength: 45%;
+  --ai-generated-text-light-strength: 55%;
+  --ai-generated-text-settle-tint: 30%;
+  --ai-generated-text-trail-strength: 25%;
+
+  /* Approved Gold Drift backdrop across Season preparation, imagery and activation. */
+  --ambient-light-cycle: 16s;
+  --ambient-light-secondary-cycle: 22.4s;
+  --ambient-light-secondary-offset: -4s;
+  --ambient-light-ease: cubic-bezier(0.45, 0, 0.55, 1);
+  --ambient-light-base-strength: 3%;
+  --ambient-light-flow-strength: 16%;
+  --ambient-light-flow-tail-strength: 5%;
+  --ambient-light-horizon-strength: 10%;
+  --ambient-light-horizon-tail-strength: 3%;
+  --ambient-light-dim-opacity: 0.75;
+  --ambient-light-bright-opacity: 0.85;
+  --ambient-light-flow-start: translate3d(-15%, -20%, 0) rotate(-8deg) scale(1);
+  --ambient-light-flow-end: translate3d(65%, 45%, 0) rotate(6deg) scale(1.12);
+  --ambient-light-horizon-start: translate3d(50%, -10%, 0) rotate(4deg)
+    scaleX(1);
+  --ambient-light-horizon-end: translate3d(-10%, 45%, 0) rotate(-5deg)
+    scaleX(1.2);
+
+  /* Approved Season ritual shell and preparation workspace. */
+  --opening-header-height: 88px;
+  --opening-footer-height: 80px;
+  --opening-content-inset: clamp(2rem, 4.5vw, 5rem);
+  --opening-intro-size: clamp(3rem, 4.9vw, 5.5rem);
+
+  /* Owner-approved AI/featured floating card, both facings (15 October 2026). */
+  --featured-card-accent: var(--color-primary);
+  --featured-card-cycle: 12s;
+  --featured-card-perspective: 1600px;
+  --featured-card-tilt: 7deg;
+  --featured-card-rim-width: 1.3px;
+  --featured-card-glass-blur: 16px;
+  --featured-card-contact-offset: -30px;
+  --featured-card-contact-height: 36px;
+  --featured-card-contact-blur: 18px;
+  --featured-card-contact-color: rgb(0 0 0 / 65%);
+  --featured-card-face-start: rgb(29 34 33 / 96%);
+  --featured-card-face-end: rgb(12 19 22 / 97%);
+  --featured-card-highlight: #fff0bf;
+  --featured-card-highlight-secondary: #fff1c9;
+  --featured-card-reflection-strength: 9%;
+  --featured-card-border-strength: 26%;
+  --featured-card-shadow: 0 28px 64px -18px rgb(0 0 0 / 80%);
+  --ai-text-frame-cycle: 8s;
+  --ai-text-frame-copy-width: 72ch;
+  --ai-text-frame-border-strength: 48%;
+  --ai-text-frame-fill-strength: 4%;
+  --ai-text-frame-glow-radius: 28px;
+  --ai-text-frame-glow-strength: 9%;
+  --ai-text-frame-inset-radius: 24px;
+  --ai-text-frame-inset-strength: 3%;
+  --ai-text-frame-highlight-width: 2px;
+  --ai-text-frame-highlight-strength: 55%;
+}
+
+:root {
+  --recognition-picture-width: 112px;
+  --recognition-picture-height: 84px;
+  --recognition-picture-width-mobile: 96px;
+  --recognition-picture-height-mobile: 72px;
+}
+
+/* Season preparation — Focus approved 26 October 2026. */
+:root {
+  --season-preparation-height: min(700px, calc(100svh - 210px));
+  --season-preparation-height-mobile: calc(100svh - 190px);
+  --season-preparation-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  --season-preparation-columns-wide: minmax(0, 1fr) minmax(0, 1.25fr)
+    minmax(0, 0.25fr);
+  --season-preparation-gap: clamp(48px, 7vw, 140px);
+  --season-preparation-padding: clamp(40px, 7vh, 88px);
+  --season-preparation-portrait: clamp(128px, 17vw, 240px);
+  --season-preparation-portrait-mobile: 80px;
+  --season-preparation-prose-height: 160px;
+  --season-preparation-error-width: min(320px, 75vw);
+}
+
+/* 27 October 2026 — owner-authorized redesign, opt-in workspace values.
+   Dashboard and approved Season opening keep their existing values. */
+.workspace {
+  --workspace-accent: var(--color-primary);
+  --workspace-panel-gap: var(--space-overview-grid);
+  --workspace-section-gap: var(--space-overview-section);
+  --workspace-control-radius: 0.75rem;
+  --button-radius: var(--workspace-control-radius);
+  --button-gap: 0.625rem;
+  --button-padding-inline-md: 1.25rem;
+  --button-padding-inline-sm: 1rem;
+  --button-height-md: 2.75rem;
+  --button-height-sm: 2.375rem;
+  --button-height-lg: 3rem;
+  --button-height-icon: 2.75rem;
+  --button-primary-rest: color-mix(in srgb, var(--workspace-accent) 85%, white);
+  --button-primary-hover: color-mix(
+    in srgb,
+    var(--workspace-accent) 70%,
+    white
+  );
+  --button-primary-pressed: var(--workspace-accent);
+  --button-primary-edge: color-mix(in srgb, var(--workspace-accent) 70%, white);
+  --button-primary-edge-hover: var(--workspace-accent);
+  --button-primary-foreground: #09110f;
+  --button-secondary-rest: color-mix(
+    in srgb,
+    var(--workspace-accent) 7%,
+    transparent
+  );
+  --button-secondary-hover: color-mix(
+    in srgb,
+    var(--workspace-accent) 13%,
+    transparent
+  );
+  --button-secondary-pressed: color-mix(
+    in srgb,
+    var(--workspace-accent) 18%,
+    transparent
+  );
+  --button-secondary-edge: color-mix(
+    in srgb,
+    var(--workspace-accent) 24%,
+    transparent
+  );
+  --button-secondary-edge-hover: color-mix(
+    in srgb,
+    var(--workspace-accent) 55%,
+    transparent
+  );
+  --button-secondary-foreground: var(--color-text-primary);
+  --button-motion-glow-color: var(--workspace-accent);
+  --select-padding-inline: 1rem;
+  --select-gap: 1rem;
+  --select-focus-color: var(--workspace-accent);
+  --field-focus-color: var(--workspace-accent);
+  --button-focus-color: var(--workspace-accent);
 }

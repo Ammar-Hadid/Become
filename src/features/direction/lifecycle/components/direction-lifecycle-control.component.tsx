@@ -1,5 +1,9 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+
 import {
   Archive,
   ArchiveRestore,
@@ -70,7 +74,9 @@ const actionCopy: Record<
 export function DirectionLifecycleControl({
   kind,
   view,
+  compact = false,
 }: {
+  compact?: boolean;
   kind: "GOAL" | "EXPERIMENT";
   view: GoalView | ExperimentView;
 }) {
@@ -156,31 +162,39 @@ export function DirectionLifecycleControl({
   return (
     <section
       className="direction-lifecycle"
-      aria-labelledby="direction-lifecycle-title"
+      aria-labelledby={compact ? undefined : "direction-lifecycle-title"}
+      aria-label={compact ? "Goal actions" : undefined}
     >
       <header>
-        <div>
-          <p className="eyebrow">State and conclusion</p>
-          <h2 id="direction-lifecycle-title">Choose what happens next.</h2>
-        </div>
+        {!compact && (
+          <div>
+            <p className="eyebrow">State and conclusion</p>
+            <h2 id="direction-lifecycle-title">Choose what happens next.</h2>
+          </div>
+        )}
         <div className="direction-lifecycle-actions">
           {primaryActions.map((item) => (
-            <button type="button" key={item} onClick={() => chooseAction(item)}>
+            <Button
+              variant="secondary"
+              type="button"
+              key={item}
+              onClick={() => chooseAction(item)}
+            >
               {item === "PAUSE" && <Pause aria-hidden="true" />}
               {item === "RESUME" && <Play aria-hidden="true" />}
               {item === "CONCLUDE" && <CheckCircle2 aria-hidden="true" />}
               {item === "REOPEN" && <RotateCcw aria-hidden="true" />}
               {item[0] + item.slice(1).toLowerCase()}
-            </button>
+            </Button>
           ))}
           {managementAction && (
             <SubMenu
               label="Manage record"
               placement="bottom-end"
               trigger={(props) => (
-                <button {...props} className="direction-manage-trigger">
+                <Button variant="ghost" {...props}>
                   <MoreHorizontal aria-hidden="true" /> Manage
-                </button>
+                </Button>
               )}
             >
               <MenuItem
@@ -225,30 +239,26 @@ export function DirectionLifecycleControl({
               <>
                 <label>
                   <span className="field-label">Conclusion</span>
-                  <span className="select-wrap">
-                    <select
-                      name="outcome"
-                      required
-                      aria-invalid={Boolean(fieldErrors.outcome) || undefined}
-                    >
-                      <option value="">Choose an outcome</option>
-                      {kind === "GOAL" ? (
-                        <>
-                          <option value="ACHIEVED">Achieved</option>
-                          <option value="PARTIAL">Partially achieved</option>
-                          <option value="STOPPED">Stopped</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="SUPPORTED">
-                            Hypothesis supported
-                          </option>
-                          <option value="NOT_SUPPORTED">Not supported</option>
-                          <option value="INCONCLUSIVE">Inconclusive</option>
-                        </>
-                      )}
-                    </select>
-                  </span>
+                  <NativeSelect
+                    name="outcome"
+                    required
+                    aria-invalid={Boolean(fieldErrors.outcome) || undefined}
+                  >
+                    <option value="">Choose an outcome</option>
+                    {kind === "GOAL" ? (
+                      <>
+                        <option value="ACHIEVED">Achieved</option>
+                        <option value="PARTIAL">Partially achieved</option>
+                        <option value="STOPPED">Stopped</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="SUPPORTED">Hypothesis supported</option>
+                        <option value="NOT_SUPPORTED">Not supported</option>
+                        <option value="INCONCLUSIVE">Inconclusive</option>
+                      </>
+                    )}
+                  </NativeSelect>
                   {fieldErrors.outcome && (
                     <span className="direction-field-error">
                       {fieldErrors.outcome}
@@ -259,7 +269,7 @@ export function DirectionLifecycleControl({
                   <>
                     <label>
                       <span className="field-label">Result</span>
-                      <textarea
+                      <Textarea
                         className="text-input text-input--textarea-sm"
                         name="result"
                         required
@@ -269,7 +279,7 @@ export function DirectionLifecycleControl({
                     </label>
                     <label>
                       <span className="field-label">What you learned</span>
-                      <textarea
+                      <Textarea
                         className="text-input text-input--textarea-sm"
                         name="learning"
                         required
@@ -285,7 +295,7 @@ export function DirectionLifecycleControl({
             )}
             <label>
               <span className="field-label">{actionCopy[action].reason}</span>
-              <textarea
+              <Textarea
                 className="text-input text-input--textarea-sm"
                 name="reason"
                 required

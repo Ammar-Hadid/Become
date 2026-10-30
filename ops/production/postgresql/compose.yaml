@@ -1,0 +1,52 @@
+name: become-postgresql
+services:
+  postgres:
+    # Match the PostgreSQL 17 image already used by Nexo School; upgrade deliberately.
+    image: postgres:17.11@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
+    container_name: become-postgres
+    restart: unless-stopped
+    env_file: /etc/become/postgres.env
+    environment:
+      POSTGRES_DB: become
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "127.0.0.1:15433:5432"
+    volumes:
+      # Root-only parent prevents host UID collisions from exposing raw data to the app.
+      - /srv/data/become/postgresql/data:/var/lib/postgresql/data
+      - ./init-roles.sh:/docker-entrypoint-initdb.d/10-become-roles.sh:ro
+    command:
+      - postgres
+      - -c
+      - max_connections=40
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - password_encryption=scram-sha-256
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d become"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 0.5
+    shm_size: 128m
+    pids_limit: 100
+    stop_grace_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks: [database]
+networks:
+  database:
+    name: become-db

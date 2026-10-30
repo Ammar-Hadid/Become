@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
 import {
   useCallback,
   useEffect,
@@ -15,7 +16,7 @@ import {
   SubMenu,
   useSubMenuClose,
 } from "@/components/ui/menus/submenu.component";
-import { searchBusinessRecordsAction } from "@/features/entrepreneurship/shared/actions/business-record-search.action";
+import { searchBusinessRecordsForPicker } from "@/features/entrepreneurship/shared/adapters/business-record-search-client.adapter";
 import type {
   BusinessRecordOption,
   BusinessRecordSearch,
@@ -143,7 +144,7 @@ export function BusinessRecordPicker({
       const request = ++requestRef.current;
       setPending(true);
       setError(null);
-      const result = await searchBusinessRecordsAction({
+      const result = await searchBusinessRecordsForPicker({
         kind,
         ...(nicheId ? { nicheId } : {}),
         ...(query.trim() ? { q: query.trim() } : {}),
@@ -233,7 +234,7 @@ export function BusinessRecordPicker({
       >
         <div className="business-record-picker-search" role="none">
           <Search aria-hidden="true" />
-          <input
+          <Input
             ref={searchRef}
             type="search"
             value={query}
@@ -321,7 +322,17 @@ export function BusinessRecordPicker({
         {error && (
           <div className="business-record-picker-status" role="alert">
             {error}
-            <button type="button" onClick={() => void load()}>
+            <button
+              type="button"
+              onMouseDown={(event) => {
+                if (event.button === 0) {
+                  // Keep Safari focus inside the menu until Retry receives its click.
+                  event.preventDefault();
+                  event.currentTarget.focus({ preventScroll: true });
+                }
+              }}
+              onClick={() => void load()}
+            >
               Retry
             </button>
           </div>

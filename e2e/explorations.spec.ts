@@ -3,6 +3,7 @@ import {
   chooseBusinessSource,
   chooseSpecificBusinessOffer,
   openExplorationBusinesses,
+  openExplorationWorkspace,
   expectExplorationCounts,
 } from "./utils/entrepreneurship-ui.util";
 import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
@@ -59,7 +60,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await page.getByTestId("auth-submit").click();
   await deferAutomaticSeasonOpening(page);
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
-  const screenshots = "docs/development/niche-first-qa";
+  const screenshots = info.outputPath("niche-first-qa");
   await mkdir(screenshots, { recursive: true });
   await page.goto("/entrepreneurship");
   await expect(
@@ -86,10 +87,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .getByRole("button", { name: "Add business", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Evidence", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Evidence");
   await page
     .getByRole("button", { name: "Keep evidence", exact: true })
     .click();
@@ -114,10 +112,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     .click();
   await expect(page).toHaveURL(new RegExp(`${dentists}/conversations/[^/]+$`));
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "So Far We Know", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "So Far We Know");
   await expect(
     page.getByRole("heading", { name: "So Far We Know", exact: true }),
   ).toBeVisible();
@@ -139,10 +134,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     new RegExp(`${dentists}/so-far-we-know/problems/[^/]+$`),
   );
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Offers", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Offers");
   await page
     .getByRole("button", { name: "Shape an offer", exact: true })
     .click();
@@ -162,10 +154,12 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     prisma.offerNiche.count({ where: { userId: user.id, nicheId } }),
   ).resolves.toBe(1);
   await page
-    .getByRole("button", { name: "Start session", exact: true })
+    .getByRole("button", { name: "Start focus", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Entrepreneurship", exact: true }),
+    page
+      .getByRole("dialog", { name: "What are you working on?" })
+      .getByRole("button", { name: "Entrepreneurship", exact: true }),
   ).toHaveClass(/selected/);
   await page
     .getByText("Exploration & business · optional", { exact: true })
@@ -175,7 +169,7 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   ).toHaveValue(nicheId);
   await page.getByTestId("confirm-start-timer").click();
   await expect(
-    page.locator('[data-testid="active-timer-trigger"]:visible'),
+    page.getByRole("button", { name: "End focus session", exact: true }),
   ).toBeVisible();
   const session = await prisma.session.findFirstOrThrow({
     where: { userId: user.id, endedAt: null },
@@ -213,8 +207,9 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     fullPage: true,
   });
   // Opening a running timer from another exploration must keep its original context.
-  await page.locator('[data-testid="active-timer-trigger"]:visible').click();
-  await page.getByRole("dialog").getByTestId("end-session").click();
+  await page
+    .getByRole("button", { name: "End focus session", exact: true })
+    .click();
   await page
     .getByText("Exploration & business · optional", { exact: true })
     .click();
@@ -241,15 +236,9 @@ test("explorations keep a fresh workspace, relational history and contextual cap
   await expect(
     page.getByRole("heading", { name: "Businesses 1", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Evidence", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Evidence");
   await expect(page.getByText("No evidence in this view yet.")).toBeVisible();
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Offers", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Offers");
   await expect(
     page.getByText("Confirmation pilot", { exact: true }),
   ).toHaveCount(0);
@@ -281,19 +270,16 @@ test("explorations keep a fresh workspace, relational history and contextual cap
     ),
   ).toBe(true);
 
-  // Expanding the seven workspaces must never displace account or timer
-  // controls on shorter screens. Only the navigation region should scroll.
+  // Workspace navigation must leave account and timer controls accessible on
+  // shorter screens through the approved shared header.
   await page.setViewportSize({ width: 1280, height: 600 });
   await expect(
     page.locator('[data-testid="start-timer-trigger"]:visible'),
   ).toBeInViewport({ ratio: 1 });
   await expect(
-    page.locator('[data-testid="user-identity"]:visible'),
+    page.getByRole("button", { name: "Account", exact: true }),
   ).toBeInViewport({ ratio: 1 });
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Offers", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Offers");
   await expect(page).toHaveURL(`${dentists}/offers`);
   await expect(
     page.getByRole("heading", { name: "Confirmation pilot", exact: true }),
@@ -316,16 +302,13 @@ test("explorations keep a fresh workspace, relational history and contextual cap
 
   await page.setViewportSize({ width: 390, height: 600 });
   await page.getByRole("button", { name: "Open navigation" }).click();
-  const account = page.locator('[data-testid="user-identity"]:visible');
+  const account = page.getByRole("button", { name: "Account", exact: true });
   await expect(account).toBeInViewport({ ratio: 1 });
   await account.click();
   await expect(page.getByRole("menu", { name: "Account" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(account).toBeFocused();
-  await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Overview", exact: true })
-    .click();
+  await openExplorationWorkspace(page, "Overview");
   await expect(page).toHaveURL(`${dentists}/overview`);
   await expect(
     page.locator('[data-testid="start-timer-trigger"]:visible'),

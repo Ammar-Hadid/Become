@@ -135,35 +135,15 @@ export function useSeasonDraftSave(season: SeasonView) {
         type: "SAVE_SEASON" as const,
         year: season.year,
         quarter: season.quarter,
-        draft,
+        draft: {
+          character: {
+            name: draft.character.name,
+            sourceCategory: draft.character.sourceCategory,
+            sourceWork: draft.character.sourceWork,
+            adaptation: draft.character.adaptation,
+          },
+        },
         complete,
-      };
-      return enqueue(
-        JSON.stringify(identity),
-        (expectedVersion, operationKey) =>
-          sendDirectionCommand({
-            ...identity,
-            expectedVersion,
-            operationKey,
-          }),
-      );
-    },
-    [enqueue, season.quarter, season.year],
-  );
-
-  const assignGoals = useCallback(
-    (
-      goals: {
-        goalId: string;
-        role: "PRIMARY" | "SUPPORTING";
-        note: string;
-      }[],
-    ) => {
-      const identity = {
-        type: "ASSIGN_SEASON_GOALS" as const,
-        year: season.year,
-        quarter: season.quarter,
-        goals,
       };
       return enqueue(
         JSON.stringify(identity),
@@ -180,7 +160,6 @@ export function useSeasonDraftSave(season: SeasonView) {
 
   return {
     acceptReviewedVersion,
-    assignGoals,
     fieldErrors: result.fieldErrors ?? {},
     requireReview,
     result,

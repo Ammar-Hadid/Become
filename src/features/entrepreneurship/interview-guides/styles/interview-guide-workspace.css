@@ -137,22 +137,12 @@
 .interview-guide-preview > header .eyebrow {
   margin-top: var(--spacing-lg);
 }
-
 .interview-guide-editor-heading input {
   width: 100%;
   margin-top: var(--spacing-xs);
-  border: 0;
-  background: transparent;
   color: var(--color-text-primary);
-  font-size: var(--text-h2);
-  line-height: var(--text-h2--line-height);
   font-weight: 570;
   letter-spacing: -0.035em;
-  outline: none;
-}
-
-.interview-guide-editor-heading input:focus-visible {
-  box-shadow: 0 2px 0 var(--color-primary);
 }
 
 .interview-guide-editor-actions {
@@ -315,38 +305,40 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
-.interview-guide-metadata input,
-.interview-guide-metadata select,
-.interview-guide-metadata textarea,
-.interview-question-node textarea,
-.interview-guide-link-editor input {
+.interview-guide-metadata input {
   width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-input);
-  padding: var(--spacing-md);
   color: var(--color-text-primary);
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
   transition:
     border-color var(--duration-control) var(--ease-move),
     box-shadow var(--duration-control) var(--ease-move);
 }
-
-.interview-guide-metadata input:focus-visible,
-.interview-guide-metadata select:focus-visible,
-.interview-guide-metadata textarea:focus-visible,
-.interview-question-node textarea:focus-visible,
-.interview-guide-link-editor input:focus-visible {
-  border-color: var(--color-primary);
-  outline: 0;
-  box-shadow: 0 0 0 2px var(--color-primary-muted);
+.interview-guide-metadata select {
+  width: 100%;
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    box-shadow var(--duration-control) var(--ease-move);
 }
-
 .interview-guide-metadata textarea {
-  min-height: var(--spacing-textarea-height-sm);
-  resize: vertical;
+  width: 100%;
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    box-shadow var(--duration-control) var(--ease-move);
+}
+.interview-question-node textarea {
+  width: 100%;
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    box-shadow var(--duration-control) var(--ease-move);
+}
+.interview-guide-link-editor input {
+  width: 100%;
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-control) var(--ease-move),
+    box-shadow var(--duration-control) var(--ease-move);
 }
 
 .interview-guide-revision-summary {
@@ -374,11 +366,11 @@
 
 .interview-guide-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-xs);
   min-height: 3.25rem;
   padding: var(--spacing-sm) var(--spacing-lg);
-  overflow-x: auto;
 }
 
 .interview-guide-tool-group {
@@ -468,11 +460,6 @@
 
 .interview-guide-link-editor label {
   color: var(--color-text-secondary);
-}
-
-.interview-guide-link-editor input {
-  min-height: var(--spacing-input-height-sm);
-  padding-block: var(--spacing-xs);
 }
 
 .interview-guide-link-apply {
@@ -663,20 +650,6 @@
   font-weight: 400;
 }
 
-.interview-question-node textarea {
-  resize: vertical;
-}
-
-.interview-question-node-fields label:first-child textarea {
-  border-color: color-mix(
-    in srgb,
-    var(--color-primary) 35%,
-    var(--color-border)
-  );
-  font-size: var(--text-body-lg);
-  line-height: var(--text-body-lg--line-height);
-}
-
 .interview-guide-publish {
   display: flex;
   align-items: center;
@@ -696,11 +669,9 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
 .interview-guide-preview {
   width: min(100%, calc(var(--container-copy) + 8rem));
   margin-inline: auto;
-  padding-bottom: var(--spacing-4xl);
 }
 
 .interview-guide-preview > header {

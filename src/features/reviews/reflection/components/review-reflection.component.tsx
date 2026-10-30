@@ -1,5 +1,7 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import { formatReviewDate } from "@/features/reviews/reading/utils/review-date.util";
 
 import Link from "next/link";
@@ -374,7 +376,7 @@ function ReviewReflectionContents({
       <fieldset disabled={pending || Boolean(conflicting)}>
         <label>
           <span>What deserves to stay with you?</span>
-          <textarea
+          <Textarea
             name="reflection"
             value={writing.reflection}
             maxLength={6000}
@@ -389,7 +391,7 @@ function ReviewReflectionContents({
           <div>
             <label>
               <span>Carry forward</span>
-              <textarea
+              <Textarea
                 name="carryForward"
                 value={writing.carryForward}
                 maxLength={6000}
@@ -401,7 +403,7 @@ function ReviewReflectionContents({
             </label>
             <label>
               <span>Leave behind</span>
-              <textarea
+              <Textarea
                 name="leaveBehind"
                 value={writing.leaveBehind}
                 maxLength={6000}

@@ -1,3 +1,4 @@
+import { ExplorationNavigation } from "@/features/entrepreneurship/explorations/components/exploration-navigation.component";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/queries/current-user.query";
@@ -6,9 +7,7 @@ import {
   getExplorationShell,
 } from "@/features/entrepreneurship/explorations/queries/exploration.query";
 import { ExplorationProvider } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
-import {
-  ExplorationDirectionForm,
-} from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
+import { ExplorationDirectionForm } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import { MarketForm } from "@/features/entrepreneurship/market/components/market-form.component";
 import { MarketMenu } from "@/features/entrepreneurship/market/components/market-menu.component";
 import { ExplorationHeader } from "@/features/entrepreneurship/explorations/components/exploration-header.component";
@@ -85,6 +84,7 @@ export default async function Layout({
           </>
         }
       />
+      <ExplorationNavigation nicheId={nicheId} />
       {niche.archivedAt && (
         <p className="exploration-archived-note" role="note">
           This exploration is archived. Its journey and historical records are

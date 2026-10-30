@@ -1,3 +1,5 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+import { Card } from "@/components/ui/cards/card.component";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DateTime } from "luxon";
@@ -212,19 +214,22 @@ export async function AccountDetail({
         }
       />
 
-      <section className="finance-account-hero">
-        <AccountArtwork
-          name={account.name}
-          type={account.type}
-          institutionName={
-            banking?.externalAccounts[0]?.connection.institutionName ??
-            account.bankName
-          }
-          maskedIdentifier={
-            banking?.externalAccounts[0]?.maskedIdentifier ?? null
-          }
-        />
+      <Card
+        material="elevated-glass"
+        className="finance-detail-focus finance-detail-focus--account"
+      >
         <div>
+          <AccountArtwork
+            name={account.name}
+            type={account.type}
+            institutionName={
+              banking?.externalAccounts[0]?.connection.institutionName ??
+              account.bankName
+            }
+            maskedIdentifier={
+              banking?.externalAccounts[0]?.maskedIdentifier ?? null
+            }
+          />
           <p className="eyebrow">{balanceTitle}</p>
           <strong className="finance-number">
             {current?.balanceMinor === null ||
@@ -275,7 +280,7 @@ export async function AccountDetail({
             <dd>{account.dataSource.replaceAll("_", " ").toLowerCase()}</dd>
           </div>
         </dl>
-      </section>
+      </Card>
 
       {account.type === "CREDIT_CARD" && (
         <FinanceSection
@@ -692,8 +697,10 @@ export async function AccountDetail({
                   </time>
                   {snapshot.notes && <span>{snapshot.notes}</span>}
                 </div>
-                <details className="finance-details">
-                  <summary>Correction options</summary>
+                <WorkspaceDisclosure
+                  title={<>Correction options</>}
+                  className="finance-disclosure"
+                >
                   <div className="finance-details-body">
                     <div className="finance-callout">
                       <AlertTriangle aria-hidden="true" />
@@ -747,7 +754,7 @@ export async function AccountDetail({
                       </FinanceForm>
                     </div>
                   </div>
-                </details>
+                </WorkspaceDisclosure>
               </article>
             ))}
           </div>
@@ -769,8 +776,10 @@ export async function AccountDetail({
           <Settings2 aria-hidden="true" className="finance-heading-icon" />
         }
       >
-        <details className="finance-details">
-          <summary>Edit account role and lifecycle</summary>
+        <WorkspaceDisclosure
+          title={<>Edit account role and lifecycle</>}
+          className="finance-disclosure"
+        >
           <div className="finance-details-body finance-settings-panel">
             <FinanceForm
               action={updateAccountAction}
@@ -835,7 +844,7 @@ export async function AccountDetail({
               </FinanceForm>
             </div>
           </div>
-        </details>
+        </WorkspaceDisclosure>
       </FinanceSection>
     </>
   );

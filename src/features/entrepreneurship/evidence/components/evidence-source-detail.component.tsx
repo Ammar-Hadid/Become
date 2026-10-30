@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import {
   ArrowUpRight,
   CalendarDays,
@@ -110,7 +111,11 @@ export function EvidenceSourceDetail({
 
       <div className="business-detail-grid">
         <div className="business-detail-main">
-          <section className="business-detail-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-detail-section"
+          >
             <div className="business-row-heading">
               <div>
                 <p className="eyebrow">Source record</p>
@@ -151,7 +156,7 @@ export function EvidenceSourceDetail({
                 <dt>Observations kept</dt>
               </div>
             </dl>
-          </section>
+          </Card>
 
           <EvidenceSourceObservations
             key={source.id}
@@ -163,7 +168,11 @@ export function EvidenceSourceDetail({
         </div>
 
         <aside className="business-aside" aria-label="Source context">
-          <section className="business-aside-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-aside-section"
+          >
             <div className="gap-sm flex items-center">
               <CalendarDays
                 aria-hidden="true"
@@ -210,9 +219,13 @@ export function EvidenceSourceDetail({
                 </dd>
               </div>
             </dl>
-          </section>
+          </Card>
 
-          <section className="business-aside-section">
+          <Card
+            material="glass"
+            spacing="dense"
+            className="business-aside-section"
+          >
             <div className="gap-sm flex items-center">
               <UsersRound
                 aria-hidden="true"
@@ -278,7 +291,7 @@ export function EvidenceSourceDetail({
                 <p>No additional participants recorded.</p>
               )}
             </div>
-          </section>
+          </Card>
         </aside>
       </div>
     </>

@@ -1,0 +1,200 @@
+[
+  {
+    "characterId": 45627,
+    "workId": 16498,
+    "label": "Levi Ackerman",
+    "pages": [
+      {
+        "url": "https://shingeki.tv/season1/character/",
+        "contains": ["リヴァイ"],
+        "kind": "html"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/episode_14.php",
+        "contains": ["第14話"],
+        "kind": "html"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/episode_15.php",
+        "contains": ["第15話"],
+        "kind": "html"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/episode_22.php",
+        "contains": ["第22話"],
+        "kind": "html"
+      }
+    ],
+    "references": [
+      {
+        "url": "https://shingeki.tv/season1/character/img/chara_detail_rivai.png",
+        "sourceUrl": "https://shingeki.tv/season1/character/",
+        "group": "Official character art",
+        "sha256": "d1081fcc97e35f1421ec91e9cabe078278067970585ec06d4e8723ecd13e8e5c",
+        "width": 836,
+        "height": 842,
+        "label": "levi-art"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/img/15/15_cut_01.jpg",
+        "sourceUrl": "https://shingeki.tv/season1/story/episode_15.php",
+        "group": "From the show",
+        "sha256": "10af6867ac6ac6d86b826c98e475deacc73f77348117e224b15bbfae3c6b65f7",
+        "width": 560,
+        "height": 315,
+        "label": "levi-15-1"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/img/14/14_cut_04.jpg",
+        "sourceUrl": "https://shingeki.tv/season1/story/episode_14.php",
+        "group": "From the show",
+        "sha256": "3fd55c8300ce2c7ecdcc36ca8b5c9bad79d57122af268c96719d2b31a0083cd9",
+        "width": 560,
+        "height": 315,
+        "label": "levi-14-3"
+      },
+      {
+        "url": "https://shingeki.tv/season1/story/img/22/22_cut_02.jpg",
+        "sourceUrl": "https://shingeki.tv/season1/story/episode_22.php",
+        "group": "From the show",
+        "sha256": "4e4769d73ee2433387bb5094d66ad37e8810bc1049a9ae562fa33d81be8fcd8a",
+        "width": 560,
+        "height": 315,
+        "label": "levi-22-1"
+      }
+    ]
+  },
+  {
+    "characterId": 268676,
+    "workId": 181444,
+    "label": "Kaoruko Waguri",
+    "pages": [
+      {
+        "url": "https://kaoruhana-anime.com/character/",
+        "contains": ["Kaoruko Waguri", "和栗薫子"],
+        "kind": "html"
+      },
+      {
+        "url": "https://kaoruhana-anime.com/story/?id=1",
+        "contains": ["第1話", "薫子"],
+        "kind": "html"
+      }
+    ],
+    "references": [
+      {
+        "url": "https://kaoruhana-anime.com/assets/img/chara/img_main_chara_2.png",
+        "sourceUrl": "https://kaoruhana-anime.com/character/",
+        "group": "Official character art",
+        "sha256": "f3f18819e4415b846b2f0dcccfe58b7e968cf933200cdf15e7d2dc400331617b",
+        "width": 400,
+        "height": 1150,
+        "label": "kaoruko-art"
+      },
+      {
+        "url": "https://kaoruhana-anime.com/assets/img/chara/img_sub_chara_2.png",
+        "sourceUrl": "https://kaoruhana-anime.com/character/",
+        "group": "Official character art",
+        "sha256": "8c4fdf07b4e4c34fc6d862d2089cbf0b529916e203b73f8620f68e260149933f",
+        "width": 360,
+        "height": 1150,
+        "label": "kaoruko-face"
+      },
+      {
+        "url": "https://kaoruhana-anime.com/story/SYS/CONTENTS/story_4079_photo_1751276525484413907",
+        "sourceUrl": "https://kaoruhana-anime.com/story/?id=1",
+        "group": "From the show",
+        "sha256": "eb87b592d1410b422f21603ff2e331419662258739fef79aa1ebaa5dd94ff52b",
+        "width": 1200,
+        "height": 675,
+        "label": "kaoruko-1-15"
+      },
+      {
+        "url": "https://kaoruhana-anime.com/story/SYS/CONTENTS/story_4079_photo_1751276526133735614",
+        "sourceUrl": "https://kaoruhana-anime.com/story/?id=1",
+        "group": "From the show",
+        "sha256": "b5db9171e6a327531839f5ad5ca08ac6c3b15272b80d2d488c096a656fc11cd1",
+        "width": 1200,
+        "height": 675,
+        "label": "kaoruko-1-18"
+      }
+    ]
+  },
+  {
+    "characterId": 35252,
+    "workId": 9253,
+    "label": "Rintarou Okabe",
+    "pages": [
+      {
+        "url": "https://kadokawa-animation.jp/lineup/steinsgate",
+        "contains": [
+          "©2011",
+          "STEINS;GATE",
+          "https://www.b-ch.com/titles/2985/"
+        ],
+        "kind": "html"
+      },
+      {
+        "url": "https://www.b-ch.com/titles/2985/",
+        "contains": [
+          "STEINS;GATE",
+          "岡部倫太郎",
+          "thumnail1file_txt",
+          "(C)2011"
+        ],
+        "kind": "html"
+      },
+      {
+        "url": "https://www.b-ch.com/json/titles/2985.json",
+        "contains": [],
+        "kind": "bandai-episodes"
+      }
+    ],
+    "references": [
+      {
+        "url": "https://kadokawa-animation.jp/wp-content/uploads/2026/04/4007601.jpg",
+        "sourceUrl": "https://kadokawa-animation.jp/lineup/steinsgate",
+        "group": "Official character art",
+        "sha256": "afb8f4a5c95305bbd450d32506d724ce6db32c48fc4524241bccfaeac61e77ae",
+        "width": 684,
+        "height": 1000,
+        "label": "okabe-publisher-art"
+      },
+      {
+        "url": "https://image2.b-ch.com/ttl2/2985/2985001a.jpg",
+        "sourceUrl": "https://www.b-ch.com/titles/2985/001",
+        "group": "From the show",
+        "sha256": "b2d5a19bf3cab342ba6b6593ccfcc103ad888de1d1b8c88ad17eb20c748ddb40",
+        "width": 1920,
+        "height": 1080,
+        "label": "okabe-episode-1"
+      },
+      {
+        "url": "https://image2.b-ch.com/ttl2/2985/2985002a.jpg",
+        "sourceUrl": "https://www.b-ch.com/titles/2985/002",
+        "group": "From the show",
+        "sha256": "f4d6ce2a5dd196f2fc90ff43a830585b4f1376175627598bdcd0ad8d2dff4824",
+        "width": 1920,
+        "height": 1080,
+        "label": "okabe-episode-2"
+      },
+      {
+        "url": "https://image2.b-ch.com/ttl2/2985/2985003a.jpg",
+        "sourceUrl": "https://www.b-ch.com/titles/2985/003",
+        "group": "From the show",
+        "sha256": "082dd71f8702c1b2d5c7175d2dd087262e805d752e4e7ee42773669271bbbbe5",
+        "width": 1920,
+        "height": 1080,
+        "label": "okabe-episode-3"
+      },
+      {
+        "url": "https://image2.b-ch.com/ttl2/2985/2985005a.jpg",
+        "sourceUrl": "https://www.b-ch.com/titles/2985/005",
+        "group": "From the show",
+        "sha256": "2b65e9cf909d40864102fbd753c313eb9abafe91f3c0417396c83e4551e06db4",
+        "width": 1920,
+        "height": 1080,
+        "label": "okabe-episode-5"
+      }
+    ]
+  }
+]

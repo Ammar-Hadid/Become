@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Lightbulb, Plus, X } from "lucide-react";
 import {
@@ -102,7 +108,7 @@ function IdeaCaptureComposer({
       </header>
       <label className="thinking-writing-field">
         <span>Idea</span>
-        <input
+        <Input
           name="title"
           value={draft.title}
           onChange={(event) =>
@@ -120,7 +126,7 @@ function IdeaCaptureComposer({
         <span>
           Note <small>Optional</small>
         </span>
-        <textarea
+        <Textarea
           name="notes"
           value={draft.notes}
           onChange={(event) =>
@@ -156,13 +162,13 @@ function IdeaCaptureComposer({
       )}
       <footer>
         <span>⌘/Ctrl + Enter</span>
-        <button
+        <Button
+          variant="primary"
           type="submit"
-          className="thinking-primary-action"
           disabled={pending}
         >
           {pending ? "Parking…" : "Park idea"}
-        </button>
+        </Button>
       </footer>
     </form>
   );

@@ -4,22 +4,26 @@ import { evidenceDay } from "@/features/finance/evidence/utils/financial-evidenc
 import { DateTime } from "luxon";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  ledgerDateRange,
+  type LedgerFilters,
+} from "@/features/finance/transactions/utils/ledger-filter.util";
+
+export type ReviewLedgerFilters = LedgerFilters & {
+  day?: string;
+  review?: string;
+  category?: string;
+  selected?: string;
+};
+
 export async function getFinancialLedger(
   userId: string,
-  filters: {
-    cursor?: string;
-    type?: string;
-    currency?: string;
-    account?: string;
-    day?: string;
-    review?: string;
-    category?: string;
-    counterparty?: string;
-  } = {},
+  filters: ReviewLedgerFilters = {},
 ) {
   const today = financeToday();
   const day =
     filters.day ||
+    filters.date ||
     (filters.review === "today" ? today.toISODate()! : undefined);
   const dayRange = day
     ? {
@@ -30,15 +34,15 @@ export async function getFinancialLedger(
           .toJSDate(),
       }
     : undefined;
+  const periodRange = day ? undefined : ledgerDateRange(filters);
   const cursor = filters.cursor
     ? await prisma.financialTransaction.findFirst({
         where: { id: filters.cursor, userId },
         select: { id: true, occurredAt: true },
       })
     : null;
-  const where: Prisma.FinancialTransactionWhereInput = {
+  const baseWhere: Prisma.FinancialTransactionWhereInput = {
     userId,
-
     ...(filters.review === "previous" ? { reviewedAt: null } : {}),
     ...(["unreviewed", "unknown"].includes(filters.review ?? "")
       ? { reviewedAt: null }
@@ -76,7 +80,9 @@ export async function getFinancialLedger(
               ],
             },
           ]
-        : []),
+        : periodRange
+          ? [{ occurredAt: periodRange }]
+          : []),
       ...(filters.review === "previous"
         ? [
             {
@@ -90,35 +96,49 @@ export async function getFinancialLedger(
             },
           ]
         : []),
-      ...(cursor
-        ? [
-            {
-              OR: [
-                { occurredAt: { lt: cursor.occurredAt } },
-                { occurredAt: cursor.occurredAt, id: { lt: cursor.id } },
-              ],
-            },
-          ]
-        : []),
     ],
   };
-  const rows = await prisma.financialTransaction.findMany({
-    where,
-    include: {
-      evidenceLinks: {
-        where: { status: "PROJECTED" },
-        include: { observation: true },
+  const [rows, summary] = await Promise.all([
+    prisma.financialTransaction.findMany({
+      where: {
+        ...baseWhere,
+        ...(cursor
+          ? {
+              AND: [
+                ...(Array.isArray(baseWhere.AND) ? baseWhere.AND : []),
+                {
+                  OR: [
+                    { occurredAt: { lt: cursor.occurredAt } },
+                    { occurredAt: cursor.occurredAt, id: { lt: cursor.id } },
+                  ],
+                },
+              ],
+            }
+          : {}),
       },
-      account: true,
-      destinationAccount: true,
-      expenseCategory: true,
-      counterparty: true,
-    },
-    orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
-    take: 26,
-  });
+      include: {
+        evidenceLinks: {
+          where: { status: "PROJECTED" },
+          include: { observation: true },
+        },
+        account: true,
+        destinationAccount: true,
+        expenseCategory: true,
+        counterparty: true,
+      },
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+      take: 26,
+    }),
+    prisma.financialTransaction.groupBy({
+      by: ["currency", "type"],
+      where: baseWhere,
+      _sum: { amountMinor: true },
+      _count: { _all: true },
+    }),
+  ]);
   return {
     rows: rows.slice(0, 25),
     nextCursor: rows.length > 25 ? rows[24].id : null,
+    summary,
   };
 }

@@ -1,0 +1,384 @@
+/* New compositions are deliberately opt-in. Protected screens retain their existing tokens. */
+.workspace {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  width: 100%;
+  color: var(--color-text-primary);
+}
+.workspace[data-workspace-area="finance"] {
+  --workspace-accent: var(--color-domain-finance-accent);
+}
+.workspace[data-workspace-area="engineering"] {
+  --workspace-accent: var(--color-domain-engineering-accent);
+}
+.workspace[data-workspace-area="entrepreneurship"] {
+  --workspace-accent: var(--color-domain-entrepreneurship-accent);
+}
+.workspace[data-workspace-area="content"] {
+  --workspace-accent: var(--color-domain-content-accent);
+}
+.workspace::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -2rem 0 0;
+  max-height: 55rem;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 90% 0%,
+    color-mix(in srgb, var(--workspace-accent) 6%, transparent),
+    transparent 55%
+  );
+}
+.workspace-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--space-overview-section);
+}
+.workspace-header-copy {
+  min-width: 0;
+}
+.workspace-header h1 {
+  margin: 0;
+  font-family: var(--text-page-title--font-family);
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title--font-weight);
+  letter-spacing: var(--text-page-title--letter-spacing);
+  line-height: var(--text-page-title--line-height);
+  text-wrap: balance;
+}
+.workspace-eyebrow {
+  margin-bottom: var(--spacing-sm);
+  color: var(--workspace-accent);
+  font-size: var(--text-overline);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.workspace-description {
+  max-width: 65ch;
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+.workspace-actions,
+.workspace-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* A decorative heading icon is part of its heading, not a second action row. */
+.workspace-panel-heading:has(> .workspace-panel-actions > svg:only-child) {
+  flex-wrap: nowrap;
+}
+.workspace-panel-heading:has(> .workspace-panel-actions > svg:only-child)
+  > div:first-child {
+  flex: 1;
+}
+.workspace-panel-actions > svg {
+  flex: none;
+}
+.workspace-actions {
+  flex: 0 0 auto;
+}
+.workspace-panel {
+  min-width: 0;
+}
+.workspace-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+.workspace-panel-heading > div:first-child {
+  min-width: 0;
+}
+.workspace-panel-heading h2 {
+  font-size: var(--text-h3);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+}
+.workspace-panel-heading p {
+  max-width: 65ch;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+.workspace-metric {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-md);
+}
+.workspace-metric-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+.workspace-metric-label > span:first-child:has(svg) {
+  display: grid;
+  place-items: center;
+  color: var(--workspace-accent);
+}
+.workspace-metric-label svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.workspace-metric-value {
+  font-size: clamp(1.7rem, 2.7vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.workspace-metric[data-tone="positive"] .workspace-metric-value {
+  color: var(--color-success);
+}
+.workspace-metric[data-tone="negative"] .workspace-metric-value {
+  color: var(--color-danger);
+}
+.workspace-metric-detail {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+.workspace-navigation {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-xs);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--material-glass-edge);
+  border-radius: var(--radius-panel);
+  background: var(--material-glass-background);
+  backdrop-filter: blur(var(--material-glass-blur));
+  margin-bottom: var(--space-overview-section);
+}
+.workspace-navigation > a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 1.125rem;
+  border: 1px solid transparent;
+  border-radius: var(--workspace-control-radius, 0.75rem);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-size: var(--text-body-sm);
+  transition:
+    color var(--motion-control-duration) var(--motion-control-ease),
+    background-color var(--motion-control-duration) var(--motion-control-ease),
+    border-color var(--motion-control-duration) var(--motion-control-ease);
+}
+.workspace-navigation > a > span {
+  display: flex;
+}
+.workspace-navigation svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+.workspace-navigation > a:hover {
+  color: var(--color-text-primary);
+  background: color-mix(
+    in srgb,
+    var(--workspace-accent, var(--color-primary)) 7%,
+    transparent
+  );
+}
+.workspace-navigation > a[aria-current="page"] {
+  color: var(--workspace-accent, var(--color-primary));
+  border-color: color-mix(
+    in srgb,
+    var(--workspace-accent, var(--color-primary)) 32%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--workspace-accent, var(--color-primary)) 11%,
+    transparent
+  );
+  box-shadow: inset 0 1px 0
+    color-mix(
+      in srgb,
+      var(--workspace-accent, var(--color-primary)) 14%,
+      transparent
+    );
+}
+.workspace-navigation > a:focus-visible,
+.workspace-disclosure > summary:focus-visible {
+  outline: 2px solid var(--workspace-accent, var(--color-primary));
+  outline-offset: 2px;
+}
+.workspace-disclosure {
+  min-width: 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.workspace-disclosure + .workspace-disclosure {
+  border-top: 0;
+}
+.workspace-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-xl);
+  min-height: 3.5rem;
+  padding: var(--spacing-lg) var(--spacing-sm);
+  cursor: pointer;
+  list-style: none;
+}
+.workspace-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.workspace-disclosure > summary strong {
+  display: block;
+  font-size: var(--text-body);
+  font-weight: 550;
+}
+.workspace-disclosure > summary small {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+.workspace-disclosure > summary > svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--color-text-muted);
+  transition: transform var(--motion-control-duration)
+    var(--motion-control-ease);
+}
+.workspace-disclosure[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.workspace-disclosure-content {
+  padding: 0 var(--spacing-sm) var(--spacing-xl);
+}
+.workspace .become-button {
+  font-size: 0.875rem;
+  text-decoration: none;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+}
+.workspace .become-button--primary {
+  box-shadow:
+    inset 0 1px 0 #ffffff35,
+    0 4px 14px #00000018;
+}
+.workspace .become-button--secondary {
+  backdrop-filter: blur(var(--material-glass-blur));
+  box-shadow: inset 0 1px 0 #ffffff08;
+}
+.workspace .become-button > svg {
+  flex: none;
+}
+.workspace-link {
+  max-width: 100%;
+}
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--workspace-panel-gap);
+}
+.workspace-stack {
+  display: grid;
+  gap: var(--workspace-section-gap);
+}
+.workspace-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--workspace-panel-gap);
+}
+.workspace .become-native-select {
+  width: 100%;
+}
+.workspace .become-native-select select {
+  width: 100%;
+}
+@media (max-width: 45rem) {
+  .workspace-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .workspace-header h1 {
+    font-size: clamp(1.8rem, 7.5vw, 2.5rem);
+  }
+  .workspace-actions {
+    width: 100%;
+  }
+  .workspace-actions > .become-button {
+    flex: 1 1 auto;
+  }
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-navigation > a {
+    padding-inline: 0.875rem;
+  }
+  .workspace-panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .workspace-navigation {
+    margin-bottom: var(--spacing-xl);
+  }
+  .workspace .become-native-select select {
+    font-size: max(16px, 1em);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-navigation > a,
+  .workspace-disclosure > summary > svg {
+    transition: none;
+  }
+}
+
+/* Card presentation wins over retired feature skins only inside new workspaces. */
+.workspace .become-card {
+  border: 1px solid var(--material-glass-edge);
+  border-radius: var(--radius-panel);
+}
+.workspace .become-card--overview {
+  padding: var(--space-overview-panel);
+}
+.workspace .become-card--dense {
+  padding: var(--space-dense-panel);
+}
+.workspace .become-card--action {
+  padding: var(--space-action-panel);
+}
+.workspace .become-card.material-glass {
+  background: var(--material-glass-background);
+  border-color: var(--material-glass-edge);
+  box-shadow: var(--material-glass-top-light), var(--material-glass-depth);
+  backdrop-filter: blur(var(--material-glass-blur));
+}
+.workspace .become-card.material-elevated-glass {
+  background: var(--material-elevated-glass-background);
+  border-color: var(--material-elevated-glass-edge);
+  box-shadow:
+    var(--material-elevated-glass-top-light),
+    var(--material-elevated-glass-depth);
+  backdrop-filter: blur(var(--material-elevated-glass-blur));
+}
+.workspace .become-card.material-solid {
+  background: var(--material-solid-background);
+  border-color: var(--material-solid-edge);
+  box-shadow: var(--material-solid-top-light), var(--material-solid-depth);
+}

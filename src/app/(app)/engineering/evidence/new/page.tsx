@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
 import type { Metadata } from "next";
 import { EngineeringEvidenceForm } from "@/features/engineering/evidence/components/engineering-evidence-form.component";
 import { getEngineeringEvidenceFormOptions } from "@/features/engineering/queries/engineering.query";
@@ -18,16 +19,12 @@ export default async function NewEngineeringEvidencePage({
   ]);
   return (
     <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow mb-md">Engineering evidence</p>
-          <h1>Preserve what changed.</h1>
-          <p className="page-description text-text-secondary mt-sm max-w-copy">
-            Evidence can stand alone or link to a session, a project, or both.
-          </p>
-        </div>
-      </header>
-      <section className="mt-4xl">
+      <WorkspaceHeader
+        eyebrow="Engineering evidence"
+        title={<> Preserve what changed. </>}
+        description="Evidence can stand alone or link to a session, a project, or both."
+      />
+      <section className="engineering-route-content">
         <EngineeringEvidenceForm
           projects={options.projects}
           sessions={options.sessions}

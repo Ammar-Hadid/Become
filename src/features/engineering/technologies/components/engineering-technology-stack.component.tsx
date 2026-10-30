@@ -16,7 +16,7 @@ export function EngineeringTechnologyStack({
       {visible.map((technology) => (
         <span key={technology.id} title={technology.name}>
           <EngineeringTechnologyIcon iconKey={technology.iconKey} />
-          {technology.name}
+          <span className="engineering-technology-name">{technology.name}</span>
         </span>
       ))}
       {remaining > 0 && <span>+{remaining}</span>}

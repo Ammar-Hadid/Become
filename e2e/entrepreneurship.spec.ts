@@ -206,6 +206,7 @@ test("entrepreneurship timer completion is authoritative and capture remains opt
   await page.goto("/entrepreneurship");
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
   await page
+    .getByRole("dialog", { name: "What are you working on?" })
     .getByRole("button", { name: "Entrepreneurship", exact: true })
     .click();
   await page
@@ -216,8 +217,9 @@ test("entrepreneurship timer completion is authoritative and capture remains opt
     .fill("Prepare outreach questions");
   await page.getByTestId("confirm-start-timer").click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.locator('[data-testid="active-timer-trigger"]:visible').click();
-  await page.getByRole("dialog").getByTestId("end-session").click();
+  await page
+    .getByRole("button", { name: "End focus session", exact: true })
+    .click();
   await page.getByTestId("session-outcome").fill("A clearer introduction");
   await page.getByTestId("confirm-stop-timer").click();
   await expect(page.getByRole("dialog")).toHaveCount(0);

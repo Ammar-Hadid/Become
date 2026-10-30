@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useContext, useRef } from "react";
+import { InterfaceSoundContext } from "@/components/ui/sound/components/interface-sound-provider.component";
 import type { ContentCommandResult } from "@/features/content/types/content.types";
 
 type Retry = {
@@ -10,6 +11,7 @@ type Retry = {
 };
 
 export function useContentOperation() {
+  const sound = useContext(InterfaceSoundContext);
   const retryRef = useRef<Retry | null>(null);
   const inFlightRef = useRef<Promise<ContentCommandResult> | null>(null);
 
@@ -42,6 +44,9 @@ export function useContentOperation() {
               "Your earlier save was recovered. Your newer changes are still here; review and save them again.",
           };
         }
+        if (response.delivery === "confirmed") {
+          sound?.play(response.error ? "actionBlocked" : "saveConfirmed");
+        }
         return response;
       });
       inFlightRef.current = request;
@@ -51,6 +56,6 @@ export function useContentOperation() {
         inFlightRef.current = null;
       }
     },
-    [],
+    [sound],
   );
 }

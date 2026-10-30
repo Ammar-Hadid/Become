@@ -20,65 +20,17 @@ import { lockSeason } from "@/features/seasons/services/season.service";
 import { getCotsCollection } from "@/features/seasons/discovery/queries/cots-collection.query";
 import { saveCotsIdentity } from "@/features/seasons/discovery/services/cots-identity.service";
 import { suggestCotsIdentity } from "@/features/seasons/discovery/services/cots-suggestion.service";
-import { discoverCots } from "@/features/seasons/discovery/services/cots-discovery.service";
-import {
-  selectCotsCandidate,
-  confirmCotsSelection,
-  cotsPreflight,
-} from "@/features/seasons/discovery/services/cots-curation.service";
-import { importCotsSelection } from "@/features/seasons/discovery/services/cots-import.service";
-import { saveSeasonQuote } from "@/features/seasons/media/services/season-media.service";
-import {
-  seasonMediaCommand,
-  quoteDraftSchema,
-} from "@/features/seasons/media/schemas/season-media.schema";
-import {
-  getCotsLibrary,
-  changeCotsMediaUse,
-  changeCotsQuoteUse,
-} from "@/features/seasons/discovery/services/cots-library.service";
+import { lookupCharacter, getCharacterCandidate, getCharacterWithImages } from "@/features/seasons/discovery/services/character-lookup.service";
+import { importCharacterReference } from "@/features/seasons/living/services/living-source-image.service";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
     const user = await directionUser(request),
       query = new URL(request.url).searchParams;
-    if (query.get("pending") === "1") {
-      const jobs = await prisma.seasonCotsSelection.findMany({
-        where: {
-          userId: user.id,
-          OR: [
-            { status: "PENDING" },
-            { status: "IMPORTING", leaseUntil: { lt: new Date() } },
-          ],
-          season: { closedAt: null },
-        },
-        include: { season: { select: { year: true, quarter: true } } },
-        orderBy: { createdAt: "asc" },
-        take: 20,
-      });
-      const lease = await prisma.seasonCotsSelection.findFirst({
-        where: {
-          userId: user.id,
-          status: "IMPORTING",
-          leaseUntil: { gt: new Date() },
-          season: { closedAt: null },
-        },
-        select: { leaseUntil: true },
-        orderBy: { leaseUntil: "asc" },
-      });
-      return directionResponse({
-        jobs: jobs.map((v) => ({ ...v.season, selectionId: v.id })),
-        nextWakeAt: lease?.leaseUntil?.toISOString() ?? null,
-      });
-    }
     const c = seasonIdentitySchema.parse({
       year: Number(query.get("year")),
       quarter: Number(query.get("quarter")),
     });
-    if (query.get("library") === "1")
-      return directionResponse(
-        await getCotsLibrary(user.id, c.year, c.quarter),
-      );
     return directionResponse(
       await getCotsCollection(user.id, c.year, c.quarter),
     );
@@ -95,54 +47,32 @@ export async function POST(request: Request) {
       .parse(await directionJson(request));
     let result: unknown;
     switch (input.action) {
+      case "LOOKUP_CHARACTER":
+        result = await lookupCharacter(input);
+        break;
+      case "CHARACTER_RECORD":
+        result = await getCharacterCandidate(z.object({ candidateId: z.string() }).parse(input).candidateId);
+        break;
+      case "CHARACTER_IMAGES":
+        result = await getCharacterWithImages(z.object({ candidateId: z.string() }).parse(input).candidateId);
+        break;
+      case "CONFIRM_CHARACTER": {
+        const selected = seasonIdentitySchema.extend({ candidateId: z.string(), workId: z.number().int(), expectedIdentityRevision: z.number().int().min(0), association: z.enum(["SAME", "NEW"]).optional() }).parse(input);
+        const candidate = await getCharacterCandidate(selected.candidateId);
+        const work = candidate.works.find((item) => item.id === selected.workId);
+        if (!work) throw new DirectionError("Choose a retrieved character adaptation.");
+        const collection = await saveCotsIdentity(user.id, { ...selected, displayName: candidate.name, sourceCategory: work.adaptation === "Manga" ? "comic" : "anime", sourceWork: work.title, adaptation: work.adaptation, externalId: candidate.id });
+        let referenceNotice: string | null = null;
+        try { await importCharacterReference(user.id, selected); } catch (cause) { referenceNotice = cause instanceof Error ? cause.message : "The reference could not be imported. Upload it in References."; }
+        result = { collection, referenceNotice };
+        break;
+      }
       case "IDENTITY":
         result = await saveCotsIdentity(user.id, input);
         break;
       case "SUGGEST_IDENTITY":
         result = await suggestCotsIdentity(input);
         break;
-      case "DISCOVER":
-        result = await discoverCots(user.id, input);
-        break;
-      case "SELECT":
-        result = await selectCotsCandidate(user.id, input);
-        break;
-      case "CONFIRM":
-        result = await confirmCotsSelection(user.id, input);
-        break;
-      case "IMPORT":
-        result = await importCotsSelection(user.id, input);
-        break;
-      case "RETRY":
-        result = await importCotsSelection(user.id, input, true);
-        break;
-      case "PREFLIGHT":
-        result = await cotsPreflight(user.id, input);
-        break;
-      case "REUSE_IMAGE":
-      case "MEDIA_PREFERENCES":
-        result = await changeCotsMediaUse(user.id, input);
-        break;
-      case "QUOTE_PREFERENCES":
-        result = await changeCotsQuoteUse(user.id, input);
-        break;
-      case "MANUAL_TEXT": {
-        const c = seasonMediaCommand
-          .omit({ expectedVersion: true })
-          .extend({
-            expectedSelectionRevision: z.number().int().min(0),
-            quoteId: z.string().max(100).optional(),
-            draft: quoteDraftSchema,
-          })
-          .parse(input);
-        await saveSeasonQuote(
-          user.id,
-          { ...c, expectedVersion: 0 },
-          c.expectedSelectionRevision,
-        );
-        result = await getCotsCollection(user.id, c.year, c.quarter);
-        break;
-      }
       case "DEFER_OPENING": {
         const c = seasonIdentitySchema.parse(input);
         const calendar = seasonCalendar(c.year, c.quarter);
@@ -175,7 +105,7 @@ export async function POST(request: Request) {
       default:
         throw new DirectionError("This curation action is not available.");
     }
-    if (!["DISCOVER", "SUGGEST_IDENTITY", "SELECT"].includes(input.action)) {
+    if (!["SUGGEST_IDENTITY", "LOOKUP_CHARACTER", "CHARACTER_IMAGES", "CHARACTER_RECORD"].includes(input.action)) {
       revalidatePath("/direction", "layout");
       revalidatePath("/");
     }

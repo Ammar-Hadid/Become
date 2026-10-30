@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { CotsImportController } from "@/features/seasons/discovery/components/cots-import-controller.component";
 import { CotsPresentationProvider } from "@/features/seasons/presentation/components/cots-presentation-provider.component";
 import { getSeasonLoadingSnapshot } from "@/features/seasons/presentation/queries/season-loading.query";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
@@ -23,7 +22,6 @@ export default async function RitualLayout({
       quarter={seasonLoading.quarter}
       initialMedia={seasonLoading.media}
     >
-      <CotsImportController />
       {children}
     </CotsPresentationProvider>
   );

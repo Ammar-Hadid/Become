@@ -1,161 +1,167 @@
 import Link from "next/link";
-import { ArrowUpRight, Compass } from "lucide-react";
+import {
+  ArrowUpRight,
+  Compass,
+  MessageSquareText,
+  ScanSearch,
+  FileCheck2,
+  Tags,
+} from "lucide-react";
+import { Card } from "@/components/ui/cards/card.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
+import {
+  WorkspaceLink,
+  WorkspaceMetric,
+  WorkspacePanel,
+} from "@/components/ui/workspace/workspace.component";
 import { PastExplorations } from "@/features/entrepreneurship/explorations/components/past-explorations.component";
 import { getExplorations } from "@/features/entrepreneurship/explorations/queries/exploration.query";
 import {
   currentExplorations,
   explorationWorkspaceHref,
 } from "@/features/entrepreneurship/explorations/utils/exploration.util";
-import { StartExplorationForm } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
-import { ExplorationDirectionSummary } from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
+import {
+  StartExplorationForm,
+  ExplorationDirectionSummary,
+} from "@/features/entrepreneurship/explorations/components/exploration-forms.component";
 import {
   businessDate,
   humanize,
 } from "@/features/entrepreneurship/shared/utils/business.util";
+
 export async function ExplorationHome({ userId }: { userId: string }) {
   const { current, alsoActive, past } = currentExplorations(
     await getExplorations(userId),
   );
   return (
-    <>
-      <div className="business-row-heading exploration-home-heading">
-        <p className="eyebrow">Your explorations</p>
-        <Link className="business-text-link" href="/entrepreneurship/history">
-          Global history ↗
-        </Link>
-      </div>
-      <section className="exploration-current" aria-label="Current exploration">
-        <div className="exploration-current-copy">
-          <p className="business-kicker">
-            <Compass aria-hidden="true" /> Current exploration
+    <div className="business-home">
+      <div className="business-home-primary">
+        <Card
+          className="business-focus"
+          material="elevated-glass"
+          aria-label="Current exploration"
+        >
+          <div className="business-focus-heading">
+            <IconFrame treatment="featured" area="entrepreneurship">
+              <Compass />
+            </IconFrame>
+            <p className="eyebrow">
+              {current ? "Your current exploration" : "A place to begin"}
+            </p>
+          </div>
+          <h2>{current?.name ?? "What are you curious about?"}</h2>
+          <p className="business-focus-question">
+            {current?.scope ||
+              (current
+                ? "Learn who needs this and whether it is worth pursuing."
+                : "An idea, a frustration, or a question. You do not need all the answers to start.")}
           </p>
           {current ? (
             <>
-              <h2>
-                <Link href={explorationWorkspaceHref(current.id, "overview")}>
-                  {current.name}
-                  <ArrowUpRight aria-hidden="true" />
-                </Link>
-              </h2>
-              <p className="exploration-scope">
-                {current.scope ||
-                  "Learn who needs this and whether there is a path worth pursuing."}
-              </p>
-              <p className="text-body-sm text-text-muted">
+              <p className="business-focus-context">
                 <ExplorationDirectionSummary
                   marketFocus={current.marketFocus}
                   marketConclusion={current.marketConclusion}
                 />
               </p>
-              <Link
+              <WorkspaceLink
                 href={explorationWorkspaceHref(current.id, "overview")}
-                className="exploration-continue"
               >
                 Continue exploring <ArrowUpRight aria-hidden="true" />
-              </Link>
+              </WorkspaceLink>
             </>
           ) : (
-            <>
-              <h2>What are you curious about?</h2>
-              <p className="exploration-scope">
-                Begin with a question. Learn from people and businesses. Let
-                their experience shape what comes next.
-              </p>
-            </>
+            <StartExplorationForm />
           )}
-        </div>
-        {current ? (
-          <aside
-            className="exploration-current-pulse"
-            aria-label="Recorded activity"
-          >
-            <p className="eyebrow">What you’ve recorded</p>
-            <dl className="exploration-current-facts">
-              <div>
-                <dd>{current.summary.evidenceEntries}</dd>
-                <dt>Evidence entries</dt>
-              </div>
-              <div>
-                <dd>{current.summary.conversations}</dd>
-                <dt>Conversations</dt>
-              </div>
-              <div>
-                <dd>{current.summary.problems}</dd>
-                <dt>Problems</dt>
-              </div>
-              <div>
-                <dd>{current.summary.offers}</dd>
-                <dt>Offers</dt>
-              </div>
-            </dl>
-          </aside>
-        ) : (
-          <aside className="exploration-current-guide">
-            <p className="eyebrow">A useful starting point</p>
-            <p>
-              You can begin without choosing a customer. Explore consumers,
-              businesses, or both in the same workspace.
-            </p>
-          </aside>
-        )}
-      </section>
-      <section className="exploration-start" aria-label="Start an exploration">
-        <div>
-          <p className="eyebrow">Open a new path</p>
-          <h2>Begin somewhere specific.</h2>
-          <p>
-            A fresh workspace for a different market or question. Everything you
-            have already learned stays with you.
-          </p>
-        </div>
-        <StartExplorationForm />
-      </section>
-      {alsoActive.length > 0 && (
-        <section
-          className="exploration-active"
-          aria-labelledby="also-active-title"
+        </Card>
+        <WorkspacePanel
+          className="business-home-start"
+          title={current ? "Explore another idea" : "A simple rhythm"}
+          description={
+            current
+              ? "Give a new question its own space. Your existing work stays here."
+              : "Keep what you learn and let the evidence guide your next step."
+          }
         >
-          <header className="exploration-section-heading">
-            <div>
-              <p className="eyebrow">Still in motion</p>
-              <h2 id="also-active-title">
-                Also active{" "}
-                <span className="business-count">{alsoActive.length}</span>
-              </h2>
-              <p>
-                The exploration above is your current focus. These paths stay
-                open until you choose to pause or stop them.
-              </p>
-            </div>
-          </header>
-          <div className="exploration-active-grid">
+          {current ? (
+            <StartExplorationForm />
+          ) : (
+            <ol className="business-start-rhythm">
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Ask a question</strong>
+                  <p>Choose something specific to understand.</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Listen and learn</strong>
+                  <p>Keep conversations and useful evidence together.</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>Decide what is worth pursuing</strong>
+                  <p>Test an offer when you have a reason to.</p>
+                </div>
+              </li>
+            </ol>
+          )}
+          <Link className="business-text-link" href="/entrepreneurship/history">
+            Across every exploration <ArrowUpRight aria-hidden="true" />
+          </Link>
+        </WorkspacePanel>
+      </div>
+      {current && (
+        <div className="business-home-metrics" aria-label="Recorded activity">
+          <WorkspaceMetric
+            label="Evidence entries"
+            value={current.summary.evidenceEntries}
+            icon={<FileCheck2 />}
+          />
+          <WorkspaceMetric
+            label="Conversations"
+            value={current.summary.conversations}
+            icon={<MessageSquareText />}
+          />
+          <WorkspaceMetric
+            label="Problems explored"
+            value={current.summary.problems}
+            icon={<ScanSearch />}
+          />
+          <WorkspaceMetric
+            label="Offers"
+            value={current.summary.offers}
+            icon={<Tags />}
+          />
+        </div>
+      )}
+      {alsoActive.length > 0 && (
+        <WorkspacePanel
+          title="Other active explorations"
+          description="Return to any question when you are ready."
+        >
+          <div className="business-active-grid">
             {alsoActive.map((n) => (
               <Link
                 key={n.id}
                 href={explorationWorkspaceHref(n.id, "overview")}
-                className="exploration-active-card"
+                className="business-active-record"
               >
-                <div className="exploration-active-title">
-                  <span className="exploration-direction-badge">
-                    {humanize(n.direction)}
-                  </span>
-                  <ArrowUpRight aria-hidden="true" />
-                </div>
+                <span className="business-kicker">{humanize(n.direction)}</span>
                 <h3>{n.name}</h3>
-                <p>{n.scope || "No scope was recorded."}</p>
-                <span className="exploration-active-meta">
-                  {n.summary.problems}{" "}
-                  {n.summary.problems === 1 ? "problem" : "problems"}
-                  <span aria-hidden="true">·</span>
-                  {n.summary.conversations}{" "}
-                  {n.summary.conversations === 1
-                    ? "conversation"
-                    : "conversations"}
+                <p>{n.scope || "No question recorded yet."}</p>
+                <span className="business-meta">
+                  {n.summary.conversations} conversations · {n.summary.problems}{" "}
+                  problems <ArrowUpRight aria-hidden="true" />
                 </span>
               </Link>
             ))}
           </div>
-        </section>
+        </WorkspacePanel>
       )}
       <PastExplorations
         explorations={past.map((exploration) => {
@@ -177,6 +183,6 @@ export async function ExplorationHome({ userId }: { userId: string }) {
           };
         })}
       />
-    </>
+    </div>
   );
 }

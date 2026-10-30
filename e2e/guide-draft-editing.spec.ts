@@ -2,6 +2,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { expect, test, type Page } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 async function signUp(page: Page) {
   await page.goto("/sign-in");
@@ -15,9 +16,7 @@ async function signUp(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-guide-draft-audit");
   await page.getByTestId("auth-submit").click();
-  await page.waitForURL((url) => url.pathname !== "/sign-in", {
-    timeout: 30_000,
-  });
+  await deferAutomaticSeasonOpening(page);
   return (await prisma.user.findUniqueOrThrow({ where: { email } })).id;
 }
 

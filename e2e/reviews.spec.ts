@@ -8,6 +8,7 @@ import {
 import { addReviewArtworkFixture } from "../src/features/reviews/testing/services/review-artwork-fixture.service";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { deleteDisposableBrowserUser } from "./utils/disposable-user.util";
+import { isCurrentBecomeSeason } from "../src/features/seasons/presentation/utils/current-season.util";
 
 test.skip(
   process.env.RUN_REVIEW_INTEGRATION !== "1",
@@ -109,6 +110,11 @@ test("saved review unfolds into a sparse preserved finale and the existing openi
     errors: string[] = [];
   const errorDetails: { name: string; message: string; stack?: string }[] = [];
   const runtimeErrors: { kind: string; message: string; url: string }[] = [];
+  const serverErrors: string[] = [];
+  page.on("response", (response) => {
+    if (response.status() >= 500)
+      serverErrors.push(`${response.status()} ${response.url()}`);
+  });
   await page.exposeFunction(
     "recordReviewRuntimeError",
     (error: { kind: string; message: string; url: string }) =>
@@ -318,6 +324,24 @@ test("saved review unfolds into a sparse preserved finale and the existing openi
   );
   expect(originalBars).toHaveLength(3);
   const geometryPromise = timeLandscape.evaluate(async (figure) => {
+    // Start sampling at the actual filter click, after Playwright has scrolled
+    // and waited for the control to settle.
+    await new Promise<void>((resolve) => {
+      const clicked = (event: MouseEvent) => {
+        const target =
+          event.target instanceof Element
+            ? event.target.closest("button")
+            : null;
+        if (
+          target?.textContent?.trim() !== "Content" ||
+          !target.closest('[aria-label="Filter recorded focus by domain"]')
+        )
+          return;
+        document.removeEventListener("click", clicked, true);
+        resolve();
+      };
+      document.addEventListener("click", clicked, true);
+    });
     const frames: { x: number; height: number }[][] = [];
     for (let i = 0; i < 48; i++) {
       await new Promise(requestAnimationFrame);
@@ -572,68 +596,57 @@ test("saved review unfolds into a sparse preserved finale and the existing openi
     .getByRole("button", { name: "Open the next Season", exact: true })
     .click();
   await expect(page).toHaveURL(
-    /\/direction\/seasons\/2026\/3\/opening\?fromFinale=1/,
+    (url) =>
+      /\/direction\/seasons\/\d{4}\/[1-4]\/opening$/.test(url.pathname) &&
+      url.searchParams.get("fromFinale") === "1",
   );
+  const openingPath = new URL(page.url()).pathname;
+  const [, , , year, quarter] = openingPath.split("/");
+  expect(isCurrentBecomeSeason(Number(year), Number(quarter))).toBe(true);
   await expect(
-    page.getByText("Choose what comes with you.", { exact: true }),
+    page.getByRole("heading", { name: "Who will inspire this Season?" }),
   ).toBeVisible();
-  const carry = page.locator('textarea[name="carryForward"]');
-  await expect(carry).toHaveValue("");
+  const characterName = page.getByRole("textbox", {
+    name: "Character name",
+    exact: true,
+  });
+  await characterName.fill("Levi Ackerman");
   await page
-    .getByRole("button", { name: "Use selected words", exact: true })
-    .click();
-  await expect(carry).toHaveValue("Finish one small promise.");
+    .getByRole("textbox", { name: "Source work · optional", exact: true })
+    .fill("Attack on Titan");
+  await page.reload();
+  await expect(characterName).toHaveValue("Levi Ackerman");
   await page.screenshot({
     path: info.outputPath("opening.png"),
     fullPage: true,
   });
+  const paused = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/direction/cots" &&
+      response.request().method() === "POST" &&
+      response.request().postDataJSON()?.action === "DEFER_OPENING",
+  );
   await page.getByRole("button", { name: "Not now", exact: true }).click();
+  expect((await paused).ok()).toBe(true);
   await page.waitForURL(/opening=paused/, { waitUntil: "networkidle" });
   await visit(page, "/");
   await expect(page).toHaveURL("/");
   const saved = await prisma.userSeason.findUniqueOrThrow({
     where: {
-      userId_year_quarter: { userId: f.userId, year: 2026, quarter: 3 },
+      userId_year_quarter: {
+        userId: f.userId,
+        year: Number(year),
+        quarter: Number(quarter),
+      },
     },
   });
-  expect(saved.answers).toMatchObject({
-    carryForward: "Finish one small promise.",
-  });
+  expect(saved.openingCompletedAt).toBeNull();
   expect(await prisma.goal.count({ where: { userId: f.userId } })).toBe(1);
-  await page
-    .getByRole("link", { name: "Begin the opening", exact: true })
-    .click();
-  await expect(page.locator('textarea[name="carryForward"]')).toHaveValue(
-    "Finish one small promise.",
-  );
-  await page
-    .getByRole("button", { name: "4 See the season", exact: true })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Let the direction feel like yours." }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Begin this season", exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/2026\/3$/);
-  const opened = await prisma.userSeason.findUniqueOrThrow({
-    where: { id: saved.id },
-  });
-  expect(opened.openingCompletedAt).not.toBeNull();
-  expect(opened.answers).toMatchObject({
-    carryForward: "Finish one small promise.",
-  });
-  expect(await prisma.goal.count({ where: { userId: f.userId } })).toBe(1);
-  await page.getByRole("link", { name: "Home", exact: true }).first().click();
-  await expect(page).toHaveURL("/");
-  await page
-    .getByRole("region", { name: "Reviews and Season transition" })
-    .getByRole("link", { name: "Reviews", exact: true })
-    .click();
-  await page
-    .getByRole("region", { name: "A record you can return to." })
-    .locator(`a[href="${period}"]`)
-    .click();
+  await page.getByRole("link", { name: /Resume the opening/ }).click();
+  await expect(page).toHaveURL(openingPath);
+  await expect(characterName).toHaveValue("Levi Ackerman");
+  // A resumed Character draft must not activate a Season or rewrite its finale.
+  await visit(page, period);
   await page
     .getByRole("link", { name: "Close the chapter", exact: true })
     .click();
@@ -665,7 +678,7 @@ test("saved review unfolds into a sparse preserved finale and the existing openi
   await writeFile(
     info.outputPath("browser-diagnostics.json"),
     JSON.stringify(
-      { errors, errorDetails, runtimeErrors, failedRequests },
+      { errors, errorDetails, runtimeErrors, serverErrors, failedRequests },
       null,
       2,
     ),
@@ -674,6 +687,13 @@ test("saved review unfolds into a sparse preserved finale and the existing openi
   // fetch diagnostics to pageerror, including caught requests during unload.
   // Keep every protocol diagnostic above; assert actual browser runtime events.
   expect(runtimeErrors).toEqual([]);
+  expect(serverErrors).toEqual([]);
+  expect(
+    errors.filter(
+      (message) =>
+        !/[?&]_rsc=[^ ]+ due to access control checks\.$/.test(message),
+    ),
+  ).toEqual([]);
 });
 
 test("first-time opening and active/deep-link guards preserve access", async ({

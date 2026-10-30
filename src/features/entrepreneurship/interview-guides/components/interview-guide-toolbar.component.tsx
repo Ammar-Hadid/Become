@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
 import { useState, type ReactNode } from "react";
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
@@ -82,6 +83,7 @@ export function InterviewGuideToolbar({
       italic: current.isActive("italic"),
       link: current.isActive("link"),
       orderedList: current.isActive("orderedList"),
+      selectionEmpty: current.state.selection.empty,
       strike: current.isActive("strike"),
     }),
   });
@@ -110,8 +112,7 @@ export function InterviewGuideToolbar({
   }
 
   function handleToolbarKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
-      return;
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     const controls = Array.from(
       event.currentTarget.querySelectorAll<HTMLButtonElement>(
         "[data-editor-tool]:not(:disabled)",
@@ -230,7 +231,7 @@ export function InterviewGuideToolbar({
           <ToolButton
             label={state.link ? "Edit link" : "Add link"}
             active={state.link}
-            disabled={readOnly || editor.state.selection.empty}
+            disabled={readOnly || state.selectionEmpty}
             onClick={openLinkEditor}
           >
             <Link2 aria-hidden="true" />
@@ -301,14 +302,16 @@ export function InterviewGuideToolbar({
           }}
         >
           <label htmlFor="interview-guide-link">Link address</label>
-          <input
+          <Input
             id="interview-guide-link"
             type="text"
             inputMode="url"
             value={link}
             autoFocus
             placeholder="https://example.com"
-            aria-describedby={linkError ? "interview-guide-link-error" : undefined}
+            aria-describedby={
+              linkError ? "interview-guide-link-error" : undefined
+            }
             onChange={(event) => setLink(event.target.value)}
           />
           <button type="submit" className="interview-guide-link-apply">

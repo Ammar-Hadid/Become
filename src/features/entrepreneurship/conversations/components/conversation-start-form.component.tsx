@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
@@ -34,6 +35,7 @@ export function ConversationStartForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Learn from a real exchange"
       title="Start a conversation"
       triggerLabel="Start conversation"
@@ -95,41 +97,47 @@ export function ConversationStartForm({
           </>
         )}
         <ChannelPlatformFields initialChannel="CALL" />
-        <div className="business-form-field gap-sm grid">
-          <BusinessRecordPicker
-            kind="interaction"
-            label="Continue from a reply · optional"
-            name="linkedInteractionId"
-            nicheId={nicheId}
-            options={reachRecords}
-            value={linkedInteractionId}
-            placeholder="No linked reach record"
-            interactionKinds={["OUTREACH_SENT", "REPLY_RECEIVED"]}
-            onValueChange={setLinkedInteractionId}
-          />
-          {linkedInteractionId && (
-            <p className="business-hint text-body-sm text-text-muted">
-              Participant and market context will be inherited from the Reach
-              record.
-            </p>
-          )}
-        </div>
-        <BusinessSelect
-          label="Interview guide · optional"
-          name="guideRevisionId"
+        <WorkspaceDisclosure
+          title="Guide, linked reply & context"
+          description="Optional details to prepare the conversation."
+          defaultOpen={Boolean(linkedInteractionId)}
         >
-          <option value="">Free-form conversation</option>
-          {guides.map((guide) => (
-            <option key={guide.revisionId} value={guide.revisionId}>
-              {guide.title} · revision {guide.version}
-            </option>
-          ))}
-        </BusinessSelect>
-        <BusinessField
-          label="Opening context · optional"
-          name="summary"
-          multiline
-        />
+          <div className="business-form-field gap-sm grid">
+            <BusinessRecordPicker
+              kind="interaction"
+              label="Continue from a reply · optional"
+              name="linkedInteractionId"
+              nicheId={nicheId}
+              options={reachRecords}
+              value={linkedInteractionId}
+              placeholder="No linked reach record"
+              interactionKinds={["OUTREACH_SENT", "REPLY_RECEIVED"]}
+              onValueChange={setLinkedInteractionId}
+            />
+            {linkedInteractionId && (
+              <p className="business-hint text-body-sm text-text-muted">
+                Participant and market context will be inherited from the Reach
+                record.
+              </p>
+            )}
+          </div>
+          <BusinessSelect
+            label="Interview guide · optional"
+            name="guideRevisionId"
+          >
+            <option value="">Free-form conversation</option>
+            {guides.map((guide) => (
+              <option key={guide.revisionId} value={guide.revisionId}>
+                {guide.title} · revision {guide.version}
+              </option>
+            ))}
+          </BusinessSelect>
+          <BusinessField
+            label="Opening context · optional"
+            name="summary"
+            multiline
+          />
+        </WorkspaceDisclosure>
       </RecordForm>
     </RecordDialog>
   );

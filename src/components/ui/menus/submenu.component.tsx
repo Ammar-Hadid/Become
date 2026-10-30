@@ -66,29 +66,74 @@ export function SubMenu({
       const menu = menuRef.current;
       const trigger = triggerRef.current;
       if (!menu || !trigger) return;
+      const scrollTop = menu.scrollTop;
       menu.style.translate = "";
-      const bounds = menu.getBoundingClientRect();
+      menu.style.maxHeight = "";
       const anchor = trigger.getBoundingClientRect();
-      const margin = 8;
+      const initialBounds = menu.getBoundingClientRect();
+      const style = getComputedStyle(menu);
+      const rootFont = parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
+      const length = (name: string, fallback: number) => {
+        const value = style.getPropertyValue(name).trim();
+        const amount = parseFloat(value);
+        return Number.isFinite(amount)
+          ? amount * (value.endsWith("rem") ? rootFont : 1)
+          : fallback;
+      };
+      const margin = length("--menu-viewport-gutter", 8);
+      // Page menus stay below sticky chrome; modal layers already cover it.
+      const top =
+        margin +
+        (menu.closest('dialog[open], [aria-modal="true"]')
+          ? 0
+          : length("--menu-viewport-top", 0));
+      // Ignore the entrance translation when measuring the settled surface.
+      const arrivalY =
+        style.transform === "none"
+          ? 0
+          : new DOMMatrixReadOnly(style.transform).m42;
+      const gap = Math.max(0, initialBounds.top - arrivalY - anchor.bottom);
+      const below = Math.max(0, innerHeight - margin - anchor.bottom - gap);
+      const above = Math.max(0, anchor.top - gap - top);
+      const flip = initialBounds.height > below && above > below;
+      const available = Math.max(
+        0,
+        Math.min(flip ? above : below, innerHeight - top - margin),
+      );
+      menu.style.maxHeight = `${Math.min(initialBounds.height, available)}px`;
+      const bounds = menu.getBoundingClientRect();
       const dx =
         bounds.left < margin
           ? margin - bounds.left
           : bounds.right > innerWidth - margin
             ? innerWidth - margin - bounds.right
             : 0;
-      const dy =
-        bounds.bottom > innerHeight - margin &&
-        anchor.top >= bounds.height + margin
-          ? anchor.top - bounds.bottom - margin
-          : 0;
-      menu.style.translate = `${dx}px ${dy}px`;
+      const naturalTop = bounds.top - arrivalY;
+      const preferredTop = flip ? anchor.top - gap - bounds.height : naturalTop;
+      const placedTop = Math.max(
+        top,
+        Math.min(preferredTop, innerHeight - margin - bounds.height),
+      );
+      menu.style.translate = `${dx}px ${placedTop - naturalTop}px`;
+      menu.scrollTop = scrollTop;
     };
     place();
     window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    const onScroll = (event: Event) => {
+      // Scrolling the choices must not reset their viewport or scroll position.
+      if (
+        event.target instanceof Node &&
+        menuRef.current?.contains(event.target)
+      )
+        return;
+      place();
+    };
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, placement]);
 
@@ -104,12 +149,21 @@ export function SubMenu({
 
   const close = useCallback(
     (restoreFocus = false) => {
+      const focusWhenClosing = document.activeElement;
       setOpen(false);
       onOpenChange?.(false);
       if (restoreFocus) {
-        window.requestAnimationFrame(() =>
-          triggerRef.current?.focus({ preventScroll: true }),
-        );
+        window.requestAnimationFrame(() => {
+          const active = document.activeElement;
+          // Restore the closing menu's focus without stealing a deliberate
+          // move to another field or a newly opened layer in this frame.
+          if (
+            active === focusWhenClosing ||
+            active === document.body ||
+            menuRef.current?.contains(active)
+          )
+            triggerRef.current?.focus({ preventScroll: true });
+        });
       }
     },
     [onOpenChange],

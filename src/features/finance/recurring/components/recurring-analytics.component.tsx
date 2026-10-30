@@ -1,3 +1,4 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import { Bot, CalendarDays, PauseCircle, Sparkles } from "lucide-react";
 import { getRecurringAnalytics } from "@/features/finance/recurring/queries/recurring-analytics.query";
 import { formatMoney } from "@/lib/money/utils/money.util";
@@ -82,8 +83,10 @@ export async function RecurringAnalytics({ userId }: { userId: string }) {
       {(analytics.actualByCurrency.size > 0 ||
         analytics.categoryAnnualized.length > 0 ||
         analytics.largest.length > 0) && (
-        <details className="finance-details finance-methodology">
-          <summary>Commitment insights</summary>
+        <WorkspaceDisclosure
+          title={<>Commitment insights</>}
+          className="finance-disclosure"
+        >
           <div className="finance-details-body finance-insight-grid">
             {analytics.actualByCurrency.size > 0 && (
               <div>
@@ -124,7 +127,7 @@ export async function RecurringAnalytics({ userId }: { userId: string }) {
               </div>
             )}
           </div>
-        </details>
+        </WorkspaceDisclosure>
       )}
     </FinanceSection>
   );

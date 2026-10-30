@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { ExplorationCompanyForm } from "@/features/entrepreneurship/explorations/components/exploration-company-form.component";
 import {
   MarketFilters,
@@ -89,7 +90,9 @@ export async function MarketPage({
         {!nicheId && (
           <details className="business-disclosure mb-2xl">
             <summary>Browse explorations</summary>
-            <section
+            <Card
+              material="glass"
+              spacing="dense"
               className={`business-niches business-zone business-zone--primary${nicheArchived ? "business-zone--archived" : ""}`}
               aria-label="Explorations"
             >
@@ -140,14 +143,16 @@ export async function MarketPage({
                   market you’re curious about.
                 </p>
               )}
-            </section>
+            </Card>
           </details>
         )}
         <div
           className="workspace-split"
           data-detail={selected ? "open" : undefined}
         >
-          <section
+          <Card
+            material="glass"
+            spacing="dense"
             className={`business-zone business-zone--ledger business-market-companies${archived ? "business-zone--archived" : ""}`}
           >
             <div className="business-row-heading business-market-heading">
@@ -257,9 +262,11 @@ export async function MarketPage({
                 )}
               </div>
             </div>
-          </section>
+          </Card>
           {selected && nicheId && (
-            <aside
+            <Card
+              material="glass"
+              spacing="dense"
               className="workspace-inspector"
               aria-label="Selected business"
             >
@@ -305,7 +312,7 @@ export async function MarketPage({
                 </dl>
               </div>
               <Link
-                className="workspace-inspector-primary"
+                className="become-button become-button--secondary become-button--md workspace-inspector-action"
                 href={withExplorationReturn(
                   explorationWorkspaceHref(
                     nicheId,
@@ -317,7 +324,7 @@ export async function MarketPage({
               >
                 Open full record <ArrowRight aria-hidden="true" />
               </Link>
-            </aside>
+            </Card>
           )}
         </div>
       </div>

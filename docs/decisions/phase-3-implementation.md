@@ -1,5 +1,8 @@
 # Phase 3 implementation plan
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 The authoritative Finance contract is [PHASE_3_FINANCE.md](../product/PHASE_3_FINANCE.md).
 Its SPEC.md reference resolves to MASTER_SPEC.md. Existing Phase 1/2 behavior remains authoritative outside Finance.
 

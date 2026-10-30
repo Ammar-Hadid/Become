@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { DateTime } from "luxon";
 import {
   addCompanyToExploration,
   changeNicheDirection,
@@ -52,7 +53,10 @@ import {
   evidenceCondition,
 } from "@/features/entrepreneurship/problems/queries/problem.query";
 import { getConfirmedBusinessReceipts } from "@/features/finance/business-receipts/queries/business-receipt.query";
-import { getBusinessAttention } from "@/features/entrepreneurship/analytics/queries/business-overview.query";
+import {
+  getBusinessAttention,
+  getBusinessOverview,
+} from "@/features/entrepreneurship/analytics/queries/business-overview.query";
 import { getInteractionJournal } from "@/features/entrepreneurship/interactions/queries/interaction.query";
 import { ensureDefaultDomains } from "@/features/domains/defaults/services/ensure-default-domains.service";
 import { replacePaymentAllocations } from "@/features/finance/payments/services/payment-allocation.service";
@@ -114,6 +118,66 @@ describe.skipIf(!enabled)("Phase 4 local PostgreSQL integrity", () => {
     occurredAt: "2026-09-01",
     summary: "Discussed their weekly handover.",
   };
+  it("aggregates focus time without pauses or another exploration leaking into the summary", async () => {
+    await ensureDefaultDomains(userId);
+    const niche = await saveMarketRecord(userId, "niche", {
+      name: "Focused research",
+    });
+    const otherNiche = await saveMarketRecord(userId, "niche", {
+      name: "Other research",
+    });
+    expect(await getExplorationSummary(userId, niche.id)).toMatchObject({
+      seconds: 0,
+      sessions: 0,
+    });
+    const activity = await prisma.activityType.findFirstOrThrow({
+      where: { domain: { userId, slug: "entrepreneurship" } },
+    });
+    await prisma.session.create({
+      data: {
+        userId,
+        domainId: activity.domainId,
+        activityTypeId: activity.id,
+        businessNicheId: niche.id,
+        entrepreneurshipActivityKind: "PREPARATION",
+        startedAt: new Date("2026-09-01T09:00:00Z"),
+        endedAt: new Date("2026-09-01T10:00:00Z"),
+        pauses: {
+          create: {
+            startedAt: new Date("2026-09-01T09:20:00Z"),
+            endedAt: new Date("2026-09-01T09:30:00Z"),
+          },
+        },
+      },
+    });
+    await prisma.session.create({
+      data: {
+        userId,
+        domainId: activity.domainId,
+        activityTypeId: activity.id,
+        businessNicheId: otherNiche.id,
+        entrepreneurshipActivityKind: "PREPARATION",
+        startedAt: new Date("2026-09-01T11:00:00Z"),
+        endedAt: new Date("2026-09-01T12:00:00Z"),
+      },
+    });
+    expect(await getExplorationSummary(userId, niche.id)).toMatchObject({
+      seconds: 3000,
+      sessions: 1,
+    });
+    expect(await getExplorationSummary(randomUUID(), niche.id)).toMatchObject({
+      seconds: 0,
+      sessions: 0,
+    });
+    const overview = await getBusinessOverview(
+      userId,
+      "month",
+      DateTime.fromISO("2026-09-02", { zone: "Europe/Amsterdam" }),
+    );
+    expect(overview.facts.time).toEqual([
+      { kind: "PREPARATION", seconds: 6600 },
+    ]);
+  });
   it("keeps canonical names and rejects duplicate market records", async () => {
     await saveMarketRecord(userId, "company", { name: "Acme" });
     await expect(

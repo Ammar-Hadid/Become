@@ -13,18 +13,34 @@ export type NexoTaskRequest<T> = {
   input: unknown;
   outputSchema: z.ZodType<T>;
   validateOutput: (value: T) => T;
+  defaultProfile?: NexoProfile;
+  /** Revalidate a retained rejected result with identical input before paying again. */
+  recoverRejectedOutput?: boolean;
+  webResearch?: boolean;
+  /** Unvalidated cumulative JSON, for a separately labeled preview only. */
+  onTextSnapshot?: (text: string) => Promise<void>;
 };
 export type NexoProviderRequest = {
   profile: NexoProfile;
+  apiKey: string;
   instructions: string;
   input: string;
   schema: Record<string, unknown>;
   operationKey: string;
+  webResearch?: boolean;
+  /** Unvalidated cumulative JSON, for a separately labeled preview only. */
+  onTextSnapshot?: (text: string) => Promise<void>;
 };
 export type NexoProviderResult = {
   output: unknown;
-  usage: { inputTokens: number | null; outputTokens: number | null };
+  usage: {
+    inputTokens: number | null;
+    outputTokens: number | null;
+    reasoningTokens: number | null;
+  };
   providerRequestId: string | null;
+  sources?: { url: string; title: string }[];
+  searchCalls?: number;
 };
 export class NexoError extends Error {
   constructor(message: string) {

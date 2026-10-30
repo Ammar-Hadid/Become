@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { DateTime } from "luxon";
-import { ViewTransition } from "react";
 import {
   AlertCircle,
+  ArrowDownLeft,
   ArrowRight,
+  ArrowUpRight,
   BriefcaseBusiness,
   CalendarClock,
   CheckCircle2,
-  CircleGauge,
   Landmark,
   PiggyBank,
   ReceiptText,
   ShieldCheck,
-  Sparkles,
+  Target,
 } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import { APP_TIMEZONE } from "@/lib/config/environment.config";
@@ -39,19 +39,24 @@ import { FinancePeriodControl } from "@/features/finance/analytics/components/fi
 import { getSavings } from "@/features/finance/savings/queries/savings.query";
 import { FinanceActivity } from "@/features/finance/review/components/finance-activity.component";
 import { getFinanceActivity } from "@/features/finance/review/queries/finance-activity.query";
-import {
-  FinanceEmptyState,
-  FinancePageHeader,
-  FinanceSection,
-} from "@/features/finance/components/finance-field.component";
+import { FinanceEmptyState } from "@/features/finance/components/finance-field.component";
 import {
   financeToday,
   recurringDueDates,
 } from "@/features/finance/recurring/utils/recurring-calendar.util";
+import { Card } from "@/components/ui/cards/card.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
+import { ProgressIndicator } from "@/components/ui/progress/progress-indicator.component";
+import {
+  WorkspaceHeader,
+  WorkspaceLink,
+  WorkspaceMetric,
+  WorkspacePanel,
+} from "@/components/ui/workspace/workspace.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 
 const percent = (part: bigint, whole: bigint) =>
   whole > 0n ? Math.min(100, Number((part * 1000n) / whole) / 10) : 0;
-
 const humanize = (value: string) =>
   value
     .toLowerCase()
@@ -91,6 +96,7 @@ export async function FinanceOverview({
     startPosition,
     endPosition,
     cashTimeline,
+    recent,
   ] = await Promise.all([
     getFinancialPosition(userId),
     getFinanceActivity(userId),
@@ -120,8 +126,13 @@ export async function FinanceOverview({
         }),
       ),
     ),
+    prisma.financialTransaction.findMany({
+      where: { userId },
+      include: { account: true, counterparty: true, expenseCategory: true },
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+      take: 4,
+    }),
   ]);
-
   const totals = sumPosition(position);
   const startSavings = sumPosition(
     startPosition.filter((account) => account.includeInLiquidSavings),
@@ -143,10 +154,18 @@ export async function FinanceOverview({
         a.due.toMillis() - b.due.toMillis() ||
         a.definition.id.localeCompare(b.definition.id),
     )
-    .slice(0, 5);
+    .slice(0, 4);
   const currencies = [
     ...new Set([...cash.totals.keys(), ...priorCash.totals.keys()]),
   ].sort();
+  const goal = savings.goals.find(
+    (item) => !item.archivedAt && item.status === "ACTIVE",
+  );
+  const goalPercent = goal
+    ? goal.funding.remaining === 0n
+      ? 100
+      : percent(goal.funding.funded, goal.funding.remaining)
+    : 0;
   const reconciled = position.filter(
     (account) => account.balanceMinor !== null,
   ).length;
@@ -154,543 +173,612 @@ export async function FinanceOverview({
 
   return (
     <>
-      <FinancePageHeader
-        eyebrow="Overview"
-        title="Your money, in focus."
-        description="A calm view of where you stand, what is moving and what deserves your attention next."
+      <WorkspaceHeader
+        eyebrow="Finance"
+        title="Your money, in focus"
+        description="See where you stand. Choose what needs your attention."
         actions={
-          <Link
-            className="finance-link-action finance-link-action--primary"
-            href="/finance/transactions"
-          >
-            <ReceiptText aria-hidden="true" />
-            Record movement
-          </Link>
+          <WorkspaceLink href="/finance/transactions" variant="primary">
+            <ReceiptText aria-hidden="true" /> Add a transaction
+          </WorkspaceLink>
         }
       />
 
       <FinanceActivity activity={activity} />
 
-      <section className="finance-cockpit" aria-label="Current position">
-        <div className="finance-position-hero">
-          <div className="finance-hero-label">
-            <span>Current recorded position</span>
-            {position.length > 0 && (
-              <span
-                className={
-                  "finance-status-pill " +
-                  (reconciled === position.length
-                    ? "finance-status-pill--positive"
-                    : "finance-status-pill--warning")
-                }
-              >
-                {reconciled === position.length ? (
+      {goal ? (
+        <Card material="elevated-glass" className="finance-goal-focus">
+          <div className="finance-goal-focus__copy">
+            <p className="workspace-eyebrow">
+              <Target aria-hidden="true" /> Savings goal
+            </p>
+            <h2>{goal.name}</h2>
+            <div className="finance-goal-focus__value">
+              <strong>{goalPercent}%</strong>
+              <span>
+                of the remaining cost funded
+                <br />
+                <b>{formatMoney(goal.funding.funded, goal.currency)}</b> /{" "}
+                {formatMoney(goal.funding.remaining, goal.currency)}
+              </span>
+            </div>
+            <ProgressIndicator
+              value={goalPercent}
+              label={`${goal.name}: remaining cost funded`}
+              area="finance"
+            />
+          </div>
+          <div className="finance-goal-focus__aside">
+            <span>
+              Target {formatMoney(goal.targetAmountMinor, goal.currency)}
+            </span>
+            <WorkspaceLink href={`/finance/savings/${goal.id}`}>
+              View goal <ArrowRight aria-hidden="true" />
+            </WorkspaceLink>
+          </div>
+        </Card>
+      ) : (
+        <Card
+          material="elevated-glass"
+          className="finance-goal-focus finance-goal-focus--start"
+        >
+          <IconFrame treatment="featured" area="finance">
+            <PiggyBank />
+          </IconFrame>
+          <div>
+            <p className="workspace-eyebrow">Make room for what matters</p>
+            <h2>A clear purpose for your savings.</h2>
+            <p>
+              Choose a goal when you are ready. Your accounts and transactions
+              work independently.
+            </p>
+          </div>
+          <WorkspaceLink href="/finance/savings">
+            Explore savings <ArrowRight aria-hidden="true" />
+          </WorkspaceLink>
+        </Card>
+      )}
+
+      <div className="finance-overview-period">
+        <span>{period.label}</span>
+        <FinancePeriodControl
+          key={`${period.timeframe}-${reference.toISODate()}`}
+          timeframe={period.timeframe}
+          date={reference.toISODate()!}
+          maxDate={now.toISODate()!}
+        />
+      </div>
+      <div className="finance-overview-layout">
+        <div className="finance-overview-main">
+          <div className="finance-overview-metrics">
+            <WorkspaceMetric
+              label="Current recorded position"
+              icon={<Landmark />}
+              value={
+                totals.size ? (
+                  <>
+                    {[...totals].map(([currency, amount]) => (
+                      <span className="finance-metric-currency" key={currency}>
+                        {amount === null
+                          ? `${currency} unavailable`
+                          : formatMoney(amount, currency)}
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  "Not set yet"
+                )
+              }
+              detail={
+                <Link href="/finance/accounts">
+                  {position.length
+                    ? `${reconciled} of ${position.length} accounts reconciled`
+                    : "Add your first account"}{" "}
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              }
+            />
+            <WorkspaceMetric
+              label="Money in"
+              tone="positive"
+              icon={<ArrowDownLeft />}
+              value={
+                currencies.length ? (
+                  <>
+                    {currencies.map((currency) => (
+                      <span className="finance-metric-currency" key={currency}>
+                        {formatMoney(
+                          cash.totals.get(currency)?.income ?? 0n,
+                          currency,
+                        )}
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  "No movement"
+                )
+              }
+              detail="Income recorded in this period"
+            />
+            <WorkspaceMetric
+              label="Money out"
+              tone="negative"
+              icon={<ArrowUpRight />}
+              value={
+                currencies.length ? (
+                  <>
+                    {currencies.map((currency) => (
+                      <span className="finance-metric-currency" key={currency}>
+                        {formatMoney(
+                          cash.totals.get(currency)?.expense ?? 0n,
+                          currency,
+                        )}
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  "No movement"
+                )
+              }
+              detail="Expenses recorded in this period"
+            />
+          </div>
+
+          <div className="finance-overview-middle">
+            <WorkspacePanel
+              title="Cash movement"
+              description={`${period.label} · transfers shown separately`}
+              className="finance-overview-chart"
+              spacing="dense"
+            >
+              <p className="finance-coverage-note">
+                {cash.coverage.complete ? (
                   <CheckCircle2 aria-hidden="true" />
                 ) : (
                   <AlertCircle aria-hidden="true" />
                 )}
-                {reconciled} of {position.length} current
-              </span>
-            )}
-          </div>
-          {totals.size ? (
-            <div className="finance-position-values">
-              {[...totals].map(([currency, amount]) => (
-                <div key={currency}>
-                  <span>{currency}</span>
-                  <strong className="finance-number">
-                    {amount === null
-                      ? "Unavailable"
-                      : formatMoney(amount, currency)}
-                  </strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="finance-position-empty">
-              <Landmark aria-hidden="true" />
-              <div>
-                <strong>No position recorded yet</strong>
-                <p>
-                  Add an account and tell Become what it contains to establish
-                  your starting point.
-                </p>
-              </div>
-            </div>
-          )}
-          <div className="finance-hero-footer">
-            <p>Built from your reconciliations and recorded movement.</p>
-            <Link href="/finance/accounts">
-              {position.length ? "Review accounts" : "Set up accounts"}
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-
-        <aside className="finance-attention" aria-labelledby="attention-title">
-          <div className="finance-attention-heading">
-            <span className="finance-attention-icon">
-              {attention.length ? (
-                <CircleGauge aria-hidden="true" />
+                <span>{cash.coverage.detail}</span>
+              </p>
+              {!currencies.length ? (
+                <FinanceEmptyState
+                  title="No money moved in this period"
+                  description="Your income and expenses will form the picture here."
+                  action={
+                    <WorkspaceLink href="/finance/transactions">
+                      Open transactions <ArrowRight />
+                    </WorkspaceLink>
+                  }
+                />
               ) : (
-                <CheckCircle2 aria-hidden="true" />
-              )}
-            </span>
-            <div>
-              <p className="eyebrow">Needs attention</p>
-              <h2 id="attention-title">
-                {attention.length
-                  ? attention.length +
-                    " " +
-                    (attention.length === 1 ? "item" : "items") +
-                    " to review"
-                  : "Everything looks settled"}
-              </h2>
-            </div>
-          </div>
-          {attention.length ? (
-            <ul>
-              {attention.slice(0, 4).map((item) => (
-                <li key={item.id}>
-                  <Link href={item.href}>
-                    <span>{item.text}</span>
-                    <ArrowRight aria-hidden="true" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="finance-attention-clear">
-              No incomplete positions, savings conflicts or commitments need a
-              decision right now.
-            </p>
-          )}
-          {attention.length > 4 && (
-            <p className="finance-attention-more">
-              And {attention.length - 4} more across Finance.
-            </p>
-          )}
-        </aside>
-      </section>
-
-      <section className="finance-direction-grid">
-        <article className="finance-direction-panel">
-          <div className="finance-panel-heading">
-            <span className="finance-panel-icon">
-              <PiggyBank aria-hidden="true" />
-            </span>
-            <div>
-              <p className="eyebrow">Savings</p>
-              <h2>What your savings are holding space for</h2>
-            </div>
-          </div>
-          {savings.pools.length ? (
-            <div className="finance-savings-snapshots">
-              {savings.pools.map((pool) => {
-                const reserveCovered = pool.reserveCovered ?? 0n;
-                const reserveCoverage =
-                  pool.reserve === null
-                    ? 0
-                    : pool.reserve === 0n
-                      ? 100
-                      : percent(reserveCovered, pool.reserve);
-                const hasReserveShortfall = (pool.reserveShortfall ?? 0n) > 0n;
-                return (
-                  <div key={pool.currency} className="finance-savings-snapshot">
-                    <div>
-                      <span>{pool.currency} recorded liquid savings</span>
-                      <strong className="finance-number">
-                        {pool.liquid === null
-                          ? "Unavailable"
-                          : formatMoney(pool.liquid, pool.currency)}
-                      </strong>
-                    </div>
-                    <div className="finance-overview-reserve-visual">
-                      <div
-                        className="finance-overview-reserve-track"
-                        role="img"
-                        aria-label={
-                          pool.reserve === null
-                            ? "Protected reserve not configured"
-                            : `${reserveCoverage}% of the ${formatMoney(pool.reserve, pool.currency)} protected reserve is covered`
-                        }
-                      >
-                        <span style={{ width: reserveCoverage + "%" }} />
-                        {pool.reserve !== null && <i aria-hidden="true" />}
-                      </div>
-                      <div className="finance-overview-reserve-caption">
-                        <span>
-                          {pool.reserve === null
-                            ? "Reserve not set"
-                            : `${reserveCoverage}% of reserve covered`}
-                        </span>
-                        {pool.reserve !== null && (
-                          <span>
-                            Target {formatMoney(pool.reserve, pool.currency)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {pool.reserve !== null && hasReserveShortfall && (
-                      <p
-                        className="finance-overview-reserve-warning"
-                        role="status"
-                      >
-                        <AlertCircle aria-hidden="true" />
-                        <span>
-                          <strong>Reserve not yet covered</strong>
-                          {" · "}
-                          {formatMoney(
-                            pool.reserveShortfall ?? 0n,
-                            pool.currency,
-                          )}{" "}
-                          still needed to reach the protected reserve.
-                        </span>
-                      </p>
-                    )}
-                    <dl>
-                      <div>
-                        <dt>
-                          <ShieldCheck aria-hidden="true" /> Protected
-                        </dt>
-                        <dd className="finance-number">
-                          {pool.reserve === null
-                            ? "Not set"
-                            : formatMoney(pool.reserve, pool.currency)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>
-                          <Sparkles aria-hidden="true" /> For goals
-                        </dt>
-                        <dd className="finance-number">
-                          {formatMoney(pool.allocated, pool.currency)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Free to direct</dt>
-                        <dd className="finance-number">
-                          {pool.unallocated === null
-                            ? "Unavailable"
-                            : formatMoney(pool.unallocated, pool.currency)}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="finance-panel-empty">
-              Your savings story starts once a savings account or goal is in
-              place.
-            </p>
-          )}
-          <Link className="finance-panel-link" href="/finance/savings">
-            Shape your savings
-            <ArrowRight aria-hidden="true" />
-          </Link>
-        </article>
-
-        <article className="finance-direction-panel">
-          <div className="finance-panel-heading">
-            <span className="finance-panel-icon finance-panel-icon--blue">
-              <CalendarClock aria-hidden="true" />
-            </span>
-            <div>
-              <p className="eyebrow">Next 30 days</p>
-              <h2>Commitments on the horizon</h2>
-            </div>
-          </div>
-          {upcoming.length ? (
-            <ol className="finance-upcoming-list">
-              {upcoming.map(({ definition, due }) => (
-                <li key={definition.id + "-" + due.toISODate()}>
-                  <time dateTime={due.toISODate()!}>
-                    <strong>{due.toFormat("dd")}</strong>
-                    <span>{due.toFormat("LLL")}</span>
-                  </time>
-                  <div>
-                    <strong>{definition.name}</strong>
-                    <span>
-                      {definition.postingBehavior === "AUTOMATIC"
-                        ? "Records automatically"
-                        : "You’ll confirm it"}
-                    </span>
-                  </div>
-                  <span className="finance-number">
-                    {formatMoney(definition.amountMinor, definition.currency)}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="finance-panel-empty">
-              Nothing waiting for the next 30 days.
-            </p>
-          )}
-          <Link className="finance-panel-link" href="/finance/recurring">
-            See all commitments
-            <ArrowRight aria-hidden="true" />
-          </Link>
-        </article>
-      </section>
-
-      <FinanceSection
-        title="Cash movement"
-        description="Money entering and leaving your accounts. Transfers stay visible but never masquerade as income or spending."
-        className="finance-cash-movement-section"
-        action={
-          <FinancePeriodControl
-            key={`${period.timeframe}-${reference.toISODate()}`}
-            timeframe={period.timeframe}
-            date={reference.toISODate()!}
-            maxDate={now.toISODate()!}
-          />
-        }
-      >
-        <ViewTransition
-          key={`${period.timeframe}-${reference.toISODate()}`}
-          name="finance-cash-movement"
-          share="motion-data-recompose"
-          default="none"
-        >
-          <div className="finance-cash-movement-data">
-            <p className="finance-period-caption">
-              {period.label} <span>compared with {previous.label}</span>
-            </p>
-            <p className="finance-coverage-note">
-              {cash.coverage.complete ? (
-                <CheckCircle2 aria-hidden="true" />
-              ) : (
-                <AlertCircle aria-hidden="true" />
-              )}
-              <span>{cash.coverage.detail}</span>
-            </p>
-            {!currencies.length ? (
-              <FinanceEmptyState
-                icon={<ReceiptText aria-hidden="true" />}
-                title="No money moved in this period"
-                description="When you record income, an expense or a transfer, the pattern will take shape here."
-                action={
-                  <Link
-                    className="finance-panel-link"
-                    href="/finance/transactions"
-                  >
-                    Open transactions <ArrowRight aria-hidden="true" />
-                  </Link>
-                }
-              />
-            ) : (
-              <div className="finance-cash-list">
-                {currencies.map((currency) => {
+                currencies.map((currency) => {
                   const current = cash.totals.get(currency) ?? {
                     income: 0n,
                     expense: 0n,
                     transfer: 0n,
                     earnedWork: 0n,
                     businessRevenue: 0n,
-                    refunds: 0n,
-                    netSpending: 0n,
                   };
-                  const prior = priorCash.totals.get(currency);
                   const before = startSavings.get(currency);
                   const after = endSavings.get(currency);
-                  const net = current.income - current.expense;
                   const chartData = cashBuckets.map((bucket, index) => {
                     const bucketTotal =
                       cashTimeline[index].totals.get(currency);
-                    const moneyInMinor = bucketTotal?.income ?? 0n;
-                    const moneyOutMinor = bucketTotal?.expense ?? 0n;
-
+                    const moneyIn = bucketTotal?.income ?? 0n;
+                    const moneyOut = bucketTotal?.expense ?? 0n;
                     return {
                       label: bucket.label,
                       dateLabel: formatCashMovementBucketDate(
                         bucket,
                         period.timeframe,
                       ),
-                      moneyIn: Number(moneyDecimal(moneyInMinor, currency)),
-                      moneyOut: -Number(moneyDecimal(moneyOutMinor, currency)),
-                      moneyInMinor: moneyInMinor.toString(),
-                      moneyOutMinor: moneyOutMinor.toString(),
+                      moneyIn: Number(moneyDecimal(moneyIn, currency)),
+                      moneyOut: -Number(moneyDecimal(moneyOut, currency)),
+                      moneyInMinor: moneyIn.toString(),
+                      moneyOutMinor: moneyOut.toString(),
                     };
                   });
                   return (
-                    <article className="finance-cash-card" key={currency}>
-                      <header>
-                        <div>
-                          <span>{currency}</span>
-                          <p>Net external cash flow</p>
-                        </div>
-                        <strong
-                          className={
-                            "finance-number " +
-                            (net >= 0n ? "is-positive" : "is-negative")
-                          }
-                        >
-                          {net > 0n && "+"}
-                          {formatMoney(net, currency)}
-                        </strong>
-                      </header>
+                    <div className="finance-overview-currency" key={currency}>
+                      {currencies.length > 1 && <h3>{currency}</h3>}
                       <CashMovementChart
                         currency={currency}
                         data={chartData}
                         moneyInTotal={current.income.toString()}
                         moneyOutTotal={current.expense.toString()}
                       />
-                      <div className="finance-cash-context">
-                        <p>
-                          Internal transfers{" "}
-                          <strong className="finance-number">
-                            {formatMoney(current.transfer, currency)}
-                          </strong>
-                        </p>
-                        <p>
-                          Gross expenses{" "}
-                          <strong className="finance-number">
-                            {formatMoney(current.expense, currency)}
-                          </strong>
-                        </p>
-                        <p>
-                          Refunds{" "}
-                          <strong className="finance-number">
-                            {formatMoney(current.refunds, currency)}
-                          </strong>
-                        </p>
-                        <p>
-                          Net spending{" "}
-                          <strong className="finance-number">
-                            {formatMoney(current.netSpending, currency)}
-                          </strong>
-                        </p>
-                        <p>
-                          Savings changed{" "}
-                          <strong className="finance-number">
-                            {before === undefined ||
-                            after === undefined ||
-                            before === null ||
-                            after === null
-                              ? "Unavailable"
-                              : formatMoney(after - before, currency)}
-                          </strong>
-                        </p>
-                        <p>
-                          Inflow vs prior{" "}
-                          <strong className="finance-number">
-                            {formatMoney(
-                              current.income - (prior?.income ?? 0n),
-                              currency,
-                            )}
-                          </strong>
-                        </p>
+                      <div className="finance-overview-net">
+                        <span>Net cash flow</span>
+                        <strong
+                          className={
+                            current.income >= current.expense
+                              ? "is-positive"
+                              : "is-negative"
+                          }
+                        >
+                          {formatMoney(
+                            current.income - current.expense,
+                            currency,
+                          )}
+                        </strong>
                       </div>
-                      <details className="finance-details">
-                        <summary>Where it came from and went</summary>
-                        <div className="finance-details-body finance-breakdown-grid">
+                      <WorkspaceDisclosure title="See the breakdown">
+                        <dl className="finance-fact-list">
                           <div>
-                            <h3>Money in</h3>
-                            {cash.groups
-                              .filter(
-                                (group) =>
-                                  group.currency === currency &&
-                                  group.type === "INCOME",
-                              )
-                              .map((group) => (
-                                <p key={group.inflowKind}>
-                                  <span>
-                                    {humanize(group.inflowKind ?? "Other")}
-                                  </span>
-                                  <strong className="finance-number">
-                                    {formatMoney(
-                                      group._sum.amountMinor ?? 0n,
-                                      currency,
-                                    )}
-                                  </strong>
-                                </p>
-                              ))}
+                            <dt>Internal transfers</dt>
+                            <dd>{formatMoney(current.transfer, currency)}</dd>
                           </div>
                           <div>
-                            <h3>Money out</h3>
-                            {cash.groups
-                              .filter(
-                                (group) =>
-                                  group.currency === currency &&
-                                  group.type === "EXPENSE",
-                              )
-                              .map((group) => (
-                                <p key={group.expenseCategoryId ?? "none"}>
-                                  <span>
-                                    {categories.find(
-                                      (category) =>
-                                        category.id === group.expenseCategoryId,
-                                    )?.name ?? "Uncategorized"}
-                                  </span>
-                                  <strong className="finance-number">
-                                    {formatMoney(
-                                      group._sum.amountMinor ?? 0n,
-                                      currency,
-                                    )}
-                                  </strong>
-                                </p>
-                              ))}
+                            <dt>Gross expenses</dt>
+                            <dd>{formatMoney(current.expense, currency)}</dd>
                           </div>
+                          <div>
+                            <dt>Refunds</dt>
+                            <dd>
+                              {formatMoney(
+                                cash.totals.get(currency)?.refunds ?? 0n,
+                                currency,
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Net spending</dt>
+                            <dd>
+                              {formatMoney(
+                                cash.totals.get(currency)?.netSpending ?? 0n,
+                                currency,
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Savings changed</dt>
+                            <dd>
+                              {before === undefined ||
+                              after === undefined ||
+                              before === null ||
+                              after === null
+                                ? "Unavailable"
+                                : formatMoney(after - before, currency)}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Inflow vs {previous.label}</dt>
+                            <dd>
+                              {formatMoney(
+                                current.income -
+                                  (priorCash.totals.get(currency)?.income ??
+                                    0n),
+                                currency,
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                        <div className="finance-breakdown-grid">
+                          {(["INCOME", "EXPENSE"] as const).map((type) => (
+                            <div key={type}>
+                              <h3>
+                                {type === "INCOME" ? "Money in" : "Money out"}
+                              </h3>
+                              {cash.groups
+                                .filter(
+                                  (group) =>
+                                    group.currency === currency &&
+                                    group.type === type,
+                                )
+                                .map((group) => (
+                                  <p
+                                    key={`${group.inflowKind}-${group.expenseCategoryId}`}
+                                  >
+                                    <span>
+                                      {type === "INCOME"
+                                        ? humanize(group.inflowKind ?? "Other")
+                                        : (categories.find(
+                                            (category) =>
+                                              category.id ===
+                                              group.expenseCategoryId,
+                                          )?.name ?? "Uncategorized")}
+                                    </span>
+                                    <strong>
+                                      {formatMoney(
+                                        group._sum.amountMinor ?? 0n,
+                                        currency,
+                                      )}
+                                    </strong>
+                                  </p>
+                                ))}
+                            </div>
+                          ))}
                         </div>
-                      </details>
-                    </article>
+                      </WorkspaceDisclosure>
+                    </div>
                   );
-                })}
+                })
+              )}
+            </WorkspacePanel>
+            <WorkspacePanel
+              title="Recent transactions"
+              actions={
+                <WorkspaceLink href="/finance/transactions" variant="ghost">
+                  View all <ArrowRight />
+                </WorkspaceLink>
+              }
+              spacing="dense"
+              className="finance-recent-panel"
+            >
+              {recent.length ? (
+                <div className="finance-compact-records">
+                  {recent.map((row) => (
+                    <Link key={row.id} href={`/finance/transactions/${row.id}`}>
+                      <IconFrame treatment="compact" area="finance">
+                        {row.type === "INCOME" ? (
+                          <ArrowDownLeft />
+                        ) : row.type === "EXPENSE" ? (
+                          <ArrowUpRight />
+                        ) : (
+                          <ReceiptText />
+                        )}
+                      </IconFrame>
+                      <span>
+                        <strong>
+                          {row.counterparty?.name ??
+                            row.expenseCategory?.name ??
+                            humanize(row.type)}
+                        </strong>
+                        <small>
+                          {row.account.name} ·{" "}
+                          {DateTime.fromJSDate(row.occurredAt)
+                            .setZone(APP_TIMEZONE)
+                            .toFormat("d LLL")}
+                        </small>
+                      </span>
+                      <b
+                        className={
+                          row.type === "INCOME"
+                            ? "is-positive"
+                            : row.type === "EXPENSE"
+                              ? "is-negative"
+                              : ""
+                        }
+                      >
+                        {row.type === "EXPENSE"
+                          ? "−"
+                          : row.type === "INCOME"
+                            ? "+"
+                            : ""}
+                        {formatMoney(row.amountMinor, row.currency)}
+                      </b>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <FinanceEmptyState
+                  title="Your ledger starts here"
+                  description="Record money when it arrives, leaves or moves between your accounts."
+                />
+              )}
+              {position.length > 0 && (
+                <div className="finance-account-peek">
+                  <Landmark aria-hidden="true" />
+                  <span>
+                    {position.length}{" "}
+                    {position.length === 1 ? "account" : "accounts"}
+                    <small>Balances and bank sources</small>
+                  </span>
+                  <WorkspaceLink href="/finance/accounts" variant="ghost">
+                    View <ArrowRight />
+                  </WorkspaceLink>
+                </div>
+              )}
+            </WorkspacePanel>
+          </div>
+        </div>
+        <aside className="finance-overview-sidebar">
+          <WorkspacePanel
+            title="Needs attention"
+            description={
+              attention.length
+                ? `${attention.length} ${attention.length === 1 ? "item" : "items"} to review`
+                : "No actions waiting"
+            }
+            spacing="dense"
+          >
+            {attention.length ? (
+              <div className="finance-attention-records">
+                {attention.map((item) => (
+                  <Link key={item.id} href={item.href}>
+                    <AlertCircle aria-hidden="true" />
+                    <span>{item.text}</span>
+                    <ArrowRight aria-hidden="true" />
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="finance-quiet-state">
+                <CheckCircle2 />
+                <p>
+                  Your recorded accounts and commitments have no outstanding
+                  checks.
+                </p>
               </div>
             )}
-          </div>
-        </ViewTransition>
-      </FinanceSection>
-
-      <FinanceSection
-        title="Earning & exploration"
-        description="Time spent earning now, alongside the effort invested in creating future income."
-        action={
-          <Link
-            className="finance-link-action finance-link-action--secondary"
-            href="/finance/opportunities"
+          </WorkspacePanel>
+          <WorkspacePanel
+            title="Upcoming expenses"
+            description="Next 30 days"
+            actions={
+              <WorkspaceLink href="/finance/recurring" variant="ghost">
+                View all <ArrowRight />
+              </WorkspaceLink>
+            }
+            spacing="dense"
           >
-            Work & opportunities
-            <ArrowRight aria-hidden="true" />
-          </Link>
+            {upcoming.length ? (
+              <div className="finance-compact-records">
+                {upcoming.map(({ definition, due }) => (
+                  <Link
+                    key={`${definition.id}-${due.toISODate()}`}
+                    href="/finance/recurring"
+                  >
+                    <IconFrame treatment="compact" area="finance">
+                      <CalendarClock />
+                    </IconFrame>
+                    <span>
+                      <strong>{definition.name}</strong>
+                      <small>
+                        {due.toFormat("d LLL")} ·{" "}
+                        {definition.postingBehavior === "AUTOMATIC"
+                          ? "Records automatically"
+                          : "Confirm when due"}
+                      </small>
+                    </span>
+                    <b>
+                      {formatMoney(definition.amountMinor, definition.currency)}
+                    </b>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="finance-quiet-state">
+                <CalendarClock />
+                <p>No scheduled expenses in the next 30 days.</p>
+              </div>
+            )}
+          </WorkspacePanel>
+        </aside>
+      </div>
+
+      <WorkspacePanel
+        title="Savings reserve"
+        description="Your safety buffer, before money is set aside for goals."
+        actions={
+          <WorkspaceLink href="/finance/savings" variant="ghost">
+            Manage savings <ArrowRight />
+          </WorkspaceLink>
         }
+        spacing="dense"
       >
-        <div className="finance-work-summary">
-          <article>
-            <span className="finance-panel-icon">
-              <BriefcaseBusiness aria-hidden="true" />
+        {savings.pools.length ? (
+          <div className="finance-reserve-grid">
+            {savings.pools.map((pool) => {
+              const coverage =
+                pool.reserve === null || pool.liquid === null
+                  ? null
+                  : pool.reserve === 0n
+                    ? 100
+                    : percent(pool.reserveCovered ?? 0n, pool.reserve);
+              return (
+                <div className="finance-reserve-summary" key={pool.currency}>
+                  <div className="finance-reserve-summary__heading">
+                    <IconFrame treatment="bare" area="finance">
+                      <ShieldCheck />
+                    </IconFrame>
+                    <div>
+                      <span>{pool.currency} liquid savings</span>
+                      <strong>
+                        {pool.liquid === null
+                          ? "Unavailable"
+                          : formatMoney(pool.liquid, pool.currency)}
+                      </strong>
+                    </div>
+                    <b>{coverage === null ? "—" : `${coverage}%`}</b>
+                  </div>
+                  {coverage !== null ? (
+                    <ProgressIndicator
+                      variant="season-ticks"
+                      value={coverage}
+                      label={`${pool.currency} protected reserve coverage`}
+                      area="finance"
+                    />
+                  ) : (
+                    <p className="finance-muted">
+                      {pool.reserve === null
+                        ? "Reserve not configured"
+                        : "Reconcile your accounts to see reserve coverage"}
+                    </p>
+                  )}
+                  <dl className="finance-fact-list">
+                    <div>
+                      <dt>Protected reserve</dt>
+                      <dd>
+                        {pool.reserve === null
+                          ? "Not set"
+                          : formatMoney(pool.reserve, pool.currency)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Allocated to goals</dt>
+                      <dd>{formatMoney(pool.allocated, pool.currency)}</dd>
+                    </div>
+                    <div>
+                      <dt>Free to direct</dt>
+                      <dd>
+                        {pool.unallocated === null
+                          ? "Unavailable"
+                          : formatMoney(pool.unallocated, pool.currency)}
+                      </dd>
+                    </div>
+                  </dl>
+                  {(pool.reserveShortfall ?? 0n) > 0n && (
+                    <p className="finance-callout">
+                      <AlertCircle />
+                      <span>
+                        <strong>Reserve not yet covered</strong> ·{" "}
+                        {formatMoney(
+                          pool.reserveShortfall ?? 0n,
+                          pool.currency,
+                        )}{" "}
+                        still needed.
+                      </span>
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <FinanceEmptyState
+            title="No savings reserve yet"
+            description="Include an account in savings, then choose the amount you want to protect."
+            action={
+              <WorkspaceLink href="/finance/accounts">
+                View accounts <ArrowRight />
+              </WorkspaceLink>
+            }
+          />
+        )}
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        title="Work & opportunities"
+        description={period.label}
+        actions={
+          <WorkspaceLink href="/finance/opportunities" variant="ghost">
+            Open workspace <ArrowRight />
+          </WorkspaceLink>
+        }
+        spacing="dense"
+      >
+        <div className="finance-work-metrics">
+          <div>
+            <BriefcaseBusiness />
+            <span>
+              Paid work
+              <strong>{formatDuration(work.seconds.PAID_WORK, true)}</strong>
             </span>
-            <div>
-              <span>Paid work</span>
-              <strong className="finance-number">
-                {formatDuration(work.seconds.PAID_WORK, true)}
-              </strong>
-            </div>
-          </article>
-          <article>
-            <span className="finance-panel-icon finance-panel-icon--violet">
-              <Sparkles aria-hidden="true" />
+          </div>
+          <div>
+            <Target />
+            <span>
+              Income development
+              <strong>{formatDuration(work.incomeDevelopment, true)}</strong>
             </span>
-            <div>
-              <span>Income development</span>
-              <strong className="finance-number">
-                {formatDuration(work.incomeDevelopment, true)}
-              </strong>
-            </div>
-          </article>
-          <article>
-            <span className="finance-panel-icon finance-panel-icon--blue">
-              <CircleGauge aria-hidden="true" />
-            </span>
-            <div>
-              <span>Effective linked rate</span>
-              <strong className="finance-number">
+          </div>
+          <div>
+            <Landmark />
+            <span>
+              Effective linked rate
+              <strong>
                 {work.rate.state === "AVAILABLE"
-                  ? formatMoney(work.rate.displayMinor, work.rate.currency) +
-                    " / h"
+                  ? `${formatMoney(work.rate.displayMinor, work.rate.currency)} / h`
                   : {
                       NO_PAID_WORK: "No paid work yet",
                       INCOMPLETE_ATTRIBUTION: "Needs attribution",
@@ -698,44 +786,43 @@ export async function FinanceOverview({
                       MIXED_CURRENCY: "Multiple currencies",
                     }[work.rate.state]}
               </strong>
-            </div>
-          </article>
+            </span>
+          </div>
         </div>
-        {workSeconds > 0 || work.cohort.discovered > 0 ? (
-          <div className="finance-work-detail">
-            <div>
-              <h3>How the time was used</h3>
-              <p>
-                Search {formatDuration(work.seconds.OPPORTUNITY_SEARCH, true)} ·
-                Applications {formatDuration(work.seconds.APPLICATION, true)} ·
-                Assessments {formatDuration(work.seconds.ASSESSMENT, true)} ·
-                Money admin {formatDuration(work.seconds.FINANCE_ADMIN, true)}
-              </p>
+        <WorkspaceDisclosure title="Work breakdown and measurement">
+          {workSeconds > 0 || work.cohort.discovered > 0 ? (
+            <div className="finance-work-detail">
+              <div>
+                <h3>How the time was used</h3>
+                <p>
+                  Search {formatDuration(work.seconds.OPPORTUNITY_SEARCH, true)}{" "}
+                  · Applications{" "}
+                  {formatDuration(work.seconds.APPLICATION, true)} · Assessments{" "}
+                  {formatDuration(work.seconds.ASSESSMENT, true)} · Money admin{" "}
+                  {formatDuration(work.seconds.FINANCE_ADMIN, true)}
+                </p>
+              </div>
+              <div>
+                <h3>Opportunities started in {period.label}</h3>
+                <p>
+                  {work.cohort.discovered} discovered · {work.cohort.accepted}{" "}
+                  accepted · {work.cohort.paid} connected to received income
+                </p>
+              </div>
             </div>
-            <div>
-              <h3>Opportunities started in {period.label}</h3>
-              <p>
-                {work.cohort.discovered} discovered · {work.cohort.accepted}{" "}
-                accepted · {work.cohort.paid} connected to received income
-              </p>
-            </div>
-          </div>
-        ) : (
-          <p className="finance-work-empty">
-            No earning or opportunity-building time recorded in {period.label}.
-          </p>
-        )}
-        <details className="finance-details finance-methodology">
-          <summary>How these numbers work</summary>
-          <div className="finance-details-body">
-            <p className="text-text-secondary text-body">
-              Work time is counted where a session overlaps {period.label}.
-              Effective rate uses income explicitly attributed to paid-work
-              sessions. Cash movement follows the date money was received.
+          ) : (
+            <p>
+              No earning or opportunity-building time recorded in {period.label}
+              .
             </p>
-          </div>
-        </details>
-      </FinanceSection>
+          )}
+          <p className="finance-muted">
+            Work time counts the part of a session inside this period. Effective
+            rate uses income explicitly linked to paid work. Cash movement
+            follows the date money was received.
+          </p>
+        </WorkspaceDisclosure>
+      </WorkspacePanel>
     </>
   );
 }

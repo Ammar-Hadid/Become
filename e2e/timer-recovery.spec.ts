@@ -1,3 +1,4 @@
+import { openSessionHistory } from "./utils/session-history.util";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "./utils/browser-test.util";
@@ -22,6 +23,7 @@ test.describe("recovered timer completion", () => {
     await page.goto("/?timer=recovery");
     await page.locator('[data-testid="start-timer-trigger"]:visible').click();
     await page
+      .getByRole("dialog", { name: "What are you working on?" })
       .getByRole("button", { name: "Engineering", exact: true })
       .click();
     await page
@@ -87,16 +89,17 @@ test.describe("recovered timer completion", () => {
       });
       expect(saved.endedAt).not.toBeNull();
       await expect(timer).toHaveCount(0);
-      await expect(reopened.getByTestId("active-timer-trigger")).toHaveCount(0);
+      await expect(
+        reopened.getByRole("button", {
+          name: "End focus session",
+          exact: true,
+        }),
+      ).toHaveCount(0);
       await expect(reopened.getByRole("dialog")).toHaveCount(0);
       await expect(reopened.locator("body")).not.toHaveCSS(
         "overflow",
         "hidden",
       );
-      const row = reopened
-        .getByTestId("session-row-trigger")
-        .filter({ hasText: "Recovered work" });
-      await expect(row).toContainText("Recovered session saved");
       await expect(reopened.getByText("Running", { exact: true })).toHaveCount(
         0,
       );
@@ -105,16 +108,24 @@ test.describe("recovered timer completion", () => {
           new URL(request.url()).pathname === "/sessions" &&
           request.headers().rsc === "1",
       );
-      await reopened.locator('a[href="/sessions"]:visible').first().click();
-      await navigationRequest;
-      releaseRefresh();
+      await Promise.all([
+        openSessionHistory(reopened),
+        navigationRequest.then(() => releaseRefresh()),
+      ]);
       await expect(reopened).toHaveURL(/\/sessions$/);
+      await expect(
+        reopened
+          .getByTestId("session-row-trigger")
+          .filter({ hasText: "Recovered work" }),
+      ).toContainText("Recovered session saved");
     } finally {
       releaseRefresh();
       await reopened.unrouteAll({ behavior: "wait" });
     }
     await reopened.reload();
-    await expect(reopened.getByTestId("active-timer-trigger")).toHaveCount(0);
+    await expect(
+      reopened.getByRole("button", { name: "End focus session", exact: true }),
+    ).toHaveCount(0);
     await reopened
       .locator('[data-testid="start-timer-trigger"]:visible')
       .click();
@@ -187,6 +198,7 @@ test.describe("recovered timer completion", () => {
       .getAttribute("data-session-id"))!;
     const complete = (outcome: string) =>
       page.request.post(`/api/sessions/${sessionId}/complete`, {
+        headers: { origin: new URL(page.url()).origin },
         data: {
           outcome,
           engineeringContext: "PERSONAL",
@@ -197,7 +209,8 @@ test.describe("recovered timer completion", () => {
       complete("First request"),
       complete("Second request"),
     ]);
-    for (const response of responses) expect(response.ok()).toBe(true);
+    for (const response of responses)
+      expect(response.ok(), await response.text()).toBe(true);
     const bodies = await Promise.all(
       responses.map((response) => response.json()),
     );

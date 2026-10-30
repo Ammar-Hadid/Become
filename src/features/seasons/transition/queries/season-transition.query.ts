@@ -18,12 +18,7 @@ import {
   storedDate,
   DirectionError,
 } from "@/features/direction/services/direction-mutation.service";
-import type {
-  SeasonTransitionView,
-  CarryForwardSuggestion,
-  PeriodReviewFacts,
-  ReviewWriting,
-} from "@/features/reviews/contracts/types/review.types";
+import type { SeasonTransitionView } from "@/features/reviews/contracts/types/review.types";
 
 function savedSeasonParticipationSql(userId: string) {
   return Prisma.sql`SELECT make_date(year,(quarter-1)*3+1,1) AS start_on FROM user_season s WHERE "userId"=${userId} AND ("openingCompletedAt" IS NOT NULL OR title<>'' OR intention<>'' OR COALESCE(character->>'name','')<>'' OR COALESCE(character->'standards','[]'::jsonb)<>'[]'::jsonb OR EXISTS(SELECT 1 FROM jsonb_each_text(answers) a WHERE a.key IN ('carryForward','leaveBehind','protect','meaningful') AND a.value<>'') OR EXISTS(SELECT 1 FROM season_goal g WHERE g."seasonId"=s.id AND g."userId"=${userId}))`;
@@ -209,31 +204,4 @@ export function getSeasonTransition(
     (tx) => readSeasonTransition(tx, userId, options, at),
     { isolationLevel: "RepeatableRead", timeout: 30000 },
   );
-}
-export async function getCarryForwardSuggestion(
-  userId: string,
-  year: number,
-  quarter: number,
-): Promise<CarryForwardSuggestion | null> {
-  const start = storedDate(
-    `${year}-${String((quarter - 1) * 3 + 1).padStart(2, "0")}-01`,
-  );
-  const edition = await prisma.reviewEdition.findFirst({
-    where: { userId, review: { timeframe: "season", startOn: { lt: start } } },
-    orderBy: [{ review: { startOn: "desc" } }, { number: "desc" }],
-  });
-  if (!edition) return null;
-  const facts = edition.facts as unknown as PeriodReviewFacts,
-    writing = edition.writing as unknown as ReviewWriting;
-  return {
-    editionId: edition.id,
-    reviewHref:
-      reviewHref("season", facts.period.startOn) + `?editionId=${edition.id}`,
-    label: facts.identity.title,
-    carryForward: writing.carryForward,
-    leaveBehind: writing.leaveBehind,
-    unfinished: facts.intentions
-      .filter((i) => i.status !== "CONCLUDED")
-      .map((i) => ({ id: i.id, title: i.title, href: i.href })),
-  };
 }

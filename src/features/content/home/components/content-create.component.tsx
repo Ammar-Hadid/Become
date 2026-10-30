@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -74,7 +80,7 @@ function ContentCreateForm({ ideaId }: { ideaId?: string }) {
     <form ref={formRef} className="content-dialog-form" onSubmit={submit}>
       <label className="content-form-field content-form-field--wide">
         <span>Working title</span>
-        <input
+        <Input
           name="title"
           value={intent.title}
           onChange={(event) =>
@@ -90,7 +96,7 @@ function ContentCreateForm({ ideaId }: { ideaId?: string }) {
       </label>
       <label className="content-form-field content-form-field--wide">
         <span>What should this do?</span>
-        <textarea
+        <Textarea
           name="purpose"
           value={intent.purpose}
           onChange={(event) =>
@@ -129,14 +135,15 @@ function ContentCreateForm({ ideaId }: { ideaId?: string }) {
         </div>
       )}
       <footer className="content-dialog-actions">
-        <button
+        <Button
+          variant="primary"
           type="submit"
-          className="content-primary-action"
+          className="content-action"
           disabled={pending}
         >
           {pending ? "Starting…" : "Start making"}
           {!pending && <ArrowRight aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -153,16 +160,12 @@ export function ContentCreate({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Create content"
       triggerLabel={triggerLabel}
       title="Start with the idea, not the paperwork."
       description="One variant is ready for you. Add another only when the work needs a different cut or format."
-      unstyledTrigger
-      className={
-        variant === "primary"
-          ? "content-primary-action"
-          : "content-secondary-action"
-      }
+      variant={variant}
       icon={false}
     >
       <ContentCreateForm ideaId={ideaId} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createRequestDeadline } from "@/lib/http/utils/request-deadline.util";
 import type { ThinkingPage } from "@/features/direction/thinking/types/thinking.types";
 
 type PageState<Item> = ThinkingPage<Item> & {
@@ -75,10 +76,11 @@ export function useThinkingPage<Item extends { id: string }>({
     setState({ ...visible, pending: true, error: null });
     const params = new URLSearchParams(query);
     params.set("cursor", visible.nextCursor);
+    const deadline = createRequestDeadline(15_000, controller.signal);
     try {
       const response = await fetch(`${endpoint}?${params.toString()}`, {
         cache: "no-store",
-        signal: controller.signal,
+        signal: deadline.signal,
       });
       if (!response.ok) throw new Error();
       const page = (await response.json()) as ThinkingPage<Item>;
@@ -104,11 +106,11 @@ export function useThinkingPage<Item extends { id: string }>({
           error: null,
         };
       });
-    } catch (loadError) {
+    } catch {
       if (
         request === requestRef.current &&
         requestedIdentity === identityRef.current &&
-        !(loadError instanceof DOMException && loadError.name === "AbortError")
+        !controller.signal.aborted
       ) {
         setState((current) => ({
           ...(current.identity === identity
@@ -118,6 +120,8 @@ export function useThinkingPage<Item extends { id: string }>({
           error: "More records could not be loaded. Try again.",
         }));
       }
+    } finally {
+      deadline.dispose();
     }
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useId, useState } from "react";
 import { Building2, CircleHelp, UserRound, UsersRound } from "lucide-react";
 import { BusinessField } from "@/features/entrepreneurship/shared/components/business-field.component";
@@ -132,10 +133,10 @@ export function AudienceFields({
             <label className="field-label" htmlFor={marketId}>
               Buying context
             </label>
-            <select
+            <NativeSelect
               id={marketId}
               name="marketType"
-              className="text-input"
+
               value={marketType}
               onChange={(event) => {
                 setMarketType(event.target.value);
@@ -148,7 +149,7 @@ export function AudienceFields({
                 Businesses · buying for an organization
               </option>
               <option value="BOTH">Consumers & businesses</option>
-            </select>
+            </NativeSelect>
             <p className="business-hint text-body-sm text-text-muted">
               Describe the context of this record. A person may represent a
               business; their identity does not decide who buys.

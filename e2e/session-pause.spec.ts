@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "./utils/browser-test.util";
 import type {
@@ -21,26 +22,44 @@ async function account(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-pause-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
-    timeout: 15_000,
-  });
-  // Finish the arrival before beginning this separate timer journey.
-  await page.getByRole("button", { name: "Not now", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: /Good .*Disposable/ }),
-  ).toBeVisible();
+  await deferAutomaticSeasonOpening(page);
 }
 
 async function followShellLink(page: Page, href: string) {
-  const link = page.locator(`a[href="${href}"]:visible`).first();
-  if (!(await link.isVisible()))
-    await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.locator(`a[href="${href}"]:visible`).first().click();
+  const mobileMenu = page.getByRole("button", {
+    name: "Open navigation",
+    exact: true,
+  });
+  if (await mobileMenu.isVisible()) {
+    await mobileMenu.click();
+    await page
+      .getByRole("navigation", { name: "Primary navigation" })
+      .locator(`a[href="${href}"]`)
+      .click();
+  } else {
+    await page
+      .getByRole("button", { name: "Open area navigation", exact: true })
+      .click();
+    const navigation = page.getByRole("navigation", {
+      name: "Desktop area navigation",
+      exact: true,
+    });
+    const label = href === "/content" ? "Content" : "Entrepreneurship";
+    const area = navigation.getByRole("button", { name: label, exact: true });
+    if (!(await area.count()))
+      await navigation.locator(".desktop-rail-window").press("ArrowUp");
+    await area.click();
+    await page.keyboard.press("Escape");
+  }
+  await expect(page).toHaveURL(href);
 }
 
 async function start(page: Page, focus = "Keep this focus through a break") {
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "What are you working on?" })
+    .getByRole("button", { name: "Engineering", exact: true })
+    .click();
   await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("session-description").fill(focus);
   const response = page
@@ -118,9 +137,10 @@ test("repeated breaks preserve one session and paused Home recovers with frozen 
   const frozen = String(firstPause.session.durationSeconds);
   await expect(card).toHaveAttribute("data-status", "PAUSED");
   await expect(card).toHaveAttribute("data-elapsed-seconds", frozen);
-  await expect(
-    page.locator('[data-testid="active-timer-trigger"]:visible'),
-  ).toHaveAttribute("data-status", "PAUSED");
+  await expect(page.locator(".app-header-focus")).toHaveAttribute(
+    "data-timer-state",
+    "paused",
+  );
   await page.clock.install();
   await page.clock.fastForward(10 * 60 * 1000);
   await expect(card).toHaveAttribute("data-elapsed-seconds", frozen);
@@ -129,14 +149,13 @@ test("repeated breaks preserve one session and paused Home recovers with frozen 
   await expect(card).toHaveAttribute("data-elapsed-seconds", frozen);
   await expect(card.getByTestId("resume-session")).toBeVisible();
   await expect(card.getByTestId("end-session")).toBeVisible();
-  await expect(card).toContainText("Break time is excluded");
+  await expect(card).toContainText("Breaks excluded");
   await expect(page.getByText("Running", { exact: true })).toHaveCount(0);
   if (page.viewportSize()!.width <= 639) {
-    const navigation = await page
-      .getByTestId("mobile-bottom-nav")
-      .boundingBox();
+    const header = await page.getByRole("banner").boundingBox();
     const resume = await card.getByTestId("resume-session").boundingBox();
-    expect(resume!.y + resume!.height).toBeLessThan(navigation!.y);
+    expect(resume!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+    await card.getByTestId("resume-session").click({ trial: true });
   }
   await page.screenshot({
     path: info.outputPath("paused-home.png"),
@@ -190,8 +209,12 @@ test("paused End keeps the optional wrap-up paused through cancel and keyboard d
     "data-elapsed-seconds",
     String(paused.session.durationSeconds),
   );
-  await page.locator('[data-testid="active-timer-trigger"]:visible').click();
-  await expect(page.getByRole("dialog")).toContainText("without resuming");
+  await page
+    .getByRole("button", { name: "End focus session", exact: true })
+    .click();
+  await expect(page.getByTestId("paused-wrap-up")).toContainText(
+    "Session paused. Break time stays excluded while you wrap up.",
+  );
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
@@ -201,6 +224,7 @@ test("paused End keeps the optional wrap-up paused through cancel and keyboard d
     paused.session.durationSeconds,
   );
   expect(resumeRequests).toBe(0);
+  await page.goto("/sessions");
   await page
     .getByTestId("session-row-trigger")
     .filter({ hasText: original.session.description! })
@@ -284,6 +308,7 @@ test("other tabs reconcile pause, resume, and completion", async ({
   await page.bringToFront();
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect(page.getByTestId("dashboard-active-session")).toHaveCount(0);
+  await page.goto("/sessions");
   await expect(
     page
       .getByTestId("session-row-trigger")
@@ -386,6 +411,14 @@ test("a paused session blocks every global start and Content's direct start", as
   await expect(
     rail.getByRole("button", { name: "View current session", exact: true }),
   ).toBeVisible();
+  await rail
+    .getByRole("button", { name: "View current session", exact: true })
+    .click();
+  await expect(
+    page.getByRole("dialog").getByTestId("resume-session"),
+  ).toBeVisible();
+  await expect(page.getByTestId("confirm-start-timer")).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await followShellLink(page, "/entrepreneurship");
   await expect(
     page.getByRole("heading", {
@@ -397,10 +430,11 @@ test("a paused session blocks every global start and Content's direct start", as
   await expect(
     page.locator('[data-testid="start-timer-trigger"]:visible'),
   ).toHaveCount(0);
-  await page.locator('[data-testid="active-timer-trigger"]:visible').click();
-  await expect(
-    page.getByRole("dialog").getByTestId("resume-session"),
-  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "End focus session", exact: true })
+    .click();
+  await expect(page.getByTestId("paused-wrap-up")).toBeVisible();
+  await expect(page.getByTestId("confirm-start-timer")).toHaveCount(0);
   expect(starts).toBe(1);
 });
 

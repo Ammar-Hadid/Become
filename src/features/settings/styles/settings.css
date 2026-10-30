@@ -1,6 +1,7 @@
 .settings-shell {
-  --settings-content-width: 58rem;
-  padding-top: clamp(36px, 5vw, 58px);
+  width: 100%;
+  padding-inline: var(--space-page-edge);
+  padding-top: calc(var(--spacing-4xl) + var(--spacing-4xl));
 }
 
 .settings-shell-heading {
@@ -82,7 +83,7 @@
 }
 
 .settings-content {
-  width: min(100%, var(--settings-content-width));
+  width: 100%;
   min-width: 0;
 }
 
@@ -104,6 +105,40 @@
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
+}
+
+.application-settings-heading {
+  display: grid;
+  gap: var(--spacing-sm);
+  max-width: var(--container-copy);
+  margin-bottom: var(--space-action-section);
+}
+
+.application-settings-heading .type-overline {
+  color: var(--color-primary);
+}
+
+.application-settings-heading .type-body {
+  color: var(--color-text-secondary);
+}
+
+.application-settings-panel {
+  border: 1px solid var(--material-glass-edge);
+  border-radius: var(--radius-panel);
+  padding: var(--space-action-panel);
+}
+
+.application-settings-sound-row {
+  min-height: var(--selection-row-height);
+  padding-block: var(--spacing-sm);
+}
+
+.application-settings-sound-row .become-selection-copy {
+  flex: 1;
+}
+
+.application-settings-sound-state {
+  color: var(--color-text-muted);
 }
 
 .personal-settings-form {
@@ -184,6 +219,11 @@
 }
 
 @media (max-width: 639px) {
+  .settings-shell {
+    padding-inline: var(--space-page-edge-mobile);
+    padding-top: var(--spacing-3xl);
+  }
+
   .settings-shell-heading {
     margin-bottom: var(--spacing-3xl);
   }

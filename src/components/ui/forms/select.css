@@ -1,0 +1,138 @@
+@layer components {
+  :where(.select-control, .select-control .submenu) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  :where(.select-trigger) {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: var(--select-height);
+    min-height: var(--select-height);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--select-gap);
+    border-width: var(--select-edge-width);
+    border-style: solid;
+    border-radius: var(--select-radius);
+    outline: 0;
+    padding-block: var(--select-padding-block);
+    padding-inline: var(--select-padding-inline);
+    text-align: left;
+  }
+
+  :where(.select-trigger > span) {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :where(.select-trigger svg) {
+    width: var(--select-icon-size);
+    height: var(--select-icon-size);
+    flex: 0 0 auto;
+  }
+
+  :where(.select-wrap) {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: var(--select-height);
+    min-height: var(--select-height);
+    align-items: center;
+    gap: var(--select-gap);
+    border-width: var(--select-edge-width);
+    border-style: solid;
+    border-radius: var(--select-radius);
+    outline: 0;
+    padding-block: var(--select-padding-block);
+    padding-inline: var(--select-padding-inline);
+  }
+
+  :where(.select-wrap select) {
+    min-width: 0;
+    flex: 1;
+    cursor: pointer;
+    appearance: none;
+    border: 0;
+    outline: 0;
+    padding: 0;
+  }
+
+  :where(.select-wrap svg) {
+    width: var(--select-icon-size);
+    height: var(--select-icon-size);
+    flex: 0 0 auto;
+  }
+
+  :where(.select-control .menu-item) {
+    justify-content: space-between;
+  }
+}
+
+/* Native control resets are unlayered, so select typography and states are
+   unlayered while geometry remains utility-friendly. */
+.select-trigger,
+.select-wrap {
+  border-color: var(--select-edge);
+  background: var(--select-background);
+  color: var(--select-text);
+  font-family: var(--text-body--font-family);
+  font-size: var(--text-body);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--text-body--letter-spacing);
+  line-height: var(--text-body--line-height);
+  transition:
+    border-color var(--motion-control-duration) var(--motion-control-ease),
+    background-color var(--motion-control-duration) var(--motion-control-ease),
+    color var(--motion-control-duration) var(--motion-control-ease);
+}
+
+.select-wrap select {
+  height: 100%;
+  min-height: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.select-trigger svg,
+.select-wrap svg {
+  color: var(--select-icon-color);
+}
+
+.select-trigger:where(:not(:disabled)):hover,
+.select-wrap:where(:not(:has(select:disabled))):hover {
+  border-color: var(--select-edge-hover);
+}
+
+.select-trigger:focus-visible,
+.select-trigger[aria-expanded="true"],
+.select-wrap:focus-within {
+  border-color: var(--select-focus-color);
+  outline: 0;
+  box-shadow: none;
+}
+
+.select-trigger[aria-invalid="true"],
+.select-wrap:has(select[aria-invalid="true"]) {
+  --select-focus-color: var(--field-error-color);
+
+  border-color: var(--field-error-color);
+  background: var(--field-error-background);
+}
+
+.select-trigger:disabled,
+.select-wrap:has(select:disabled) {
+  cursor: not-allowed;
+  opacity: var(--select-disabled-opacity);
+}
+
+.select-wrap select:disabled {
+  cursor: not-allowed;
+}

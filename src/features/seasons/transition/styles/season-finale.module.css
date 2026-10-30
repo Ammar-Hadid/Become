@@ -1,4 +1,5 @@
 .finale {
+  --finale-page-gutter: var(--space-app-page-gutter);
   --finale-navigation-clearance: calc(
     var(--spacing-input-height-md) + 2 * var(--spacing-xl) + 1px +
       var(--spacing-lg)
@@ -8,7 +9,7 @@
   min-height: 100svh;
   overflow-x: clip;
   padding-bottom: calc(var(--finale-controls-height, 6rem) + var(--spacing-xl));
-  background: var(--color-background);
+  background: transparent;
   color: var(--color-text-primary);
 }
 
@@ -36,7 +37,7 @@
   min-height: 5rem;
   align-items: center;
   gap: var(--spacing-lg);
-  padding: var(--spacing-lg) clamp(var(--spacing-xl), 5vw, var(--spacing-4xl));
+  padding: var(--spacing-lg) var(--finale-page-gutter);
   border-bottom: 1px solid var(--color-border);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
@@ -100,12 +101,12 @@
   top: 0;
   z-index: 5;
   display: flex;
-  width: min(100%, 80rem);
+  width: 100%;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--spacing-xl);
   margin: 0 auto;
-  padding: var(--spacing-xl) clamp(var(--spacing-xl), 5vw, var(--spacing-4xl));
+  padding: var(--spacing-xl) var(--finale-page-gutter);
   background: var(--color-background);
 }
 
@@ -113,7 +114,7 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  width: min(100%, 60rem);
+  width: 100%;
   border-bottom: 1px solid var(--color-border);
 }
 .movementGuide {
@@ -158,15 +159,15 @@
 }
 
 .document {
-  width: min(100%, 76rem);
+  width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(var(--spacing-xl), 5vw, var(--spacing-4xl));
+  padding: 0 var(--finale-page-gutter);
 }
 .previewNote {
   display: flex;
-  width: min(100%, 76rem);
+  width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-lg) clamp(var(--spacing-xl), 5vw, var(--spacing-4xl));
+  padding: var(--spacing-lg) var(--finale-page-gutter);
   gap: var(--spacing-lg) var(--spacing-2xl);
   flex-wrap: wrap;
   align-items: center;
@@ -200,7 +201,7 @@
 }
 .passage {
   position: relative;
-  padding: var(--spacing-2xl) 0 var(--spacing-3xl);
+  padding: var(--space-overview-panel);
 }
 .passage[hidden] {
   display: none;
@@ -845,5 +846,35 @@
   }
   .intentionCollection summary svg {
     transition: none;
+  }
+}
+
+/* Full-width ritual composition, using the same equal gutters as other workspaces. */
+.document {
+  margin-top: var(--spacing-lg);
+}
+.beginning,
+.closing {
+  min-height: min(36rem, 60svh);
+}
+.controls {
+  padding-inline: max(var(--finale-page-gutter), env(safe-area-inset-left));
+}
+.controlActions {
+  gap: var(--spacing-md);
+}
+@media (max-width: 639px) {
+  .finale {
+    --finale-page-gutter: var(--space-page-edge-mobile);
+  }
+  .beginning,
+  .closing {
+    min-height: auto;
+  }
+  .controlActions {
+    gap: var(--spacing-xs);
+  }
+  .controlActions > :global(.become-button) {
+    padding-inline: var(--spacing-md);
   }
 }

@@ -1,3 +1,10 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
+import {
+  WorkspaceHeader,
+  WorkspaceLink,
+  WorkspacePanel,
+} from "@/components/ui/workspace/workspace.component";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -115,127 +122,123 @@ export async function ExplorationOverview({
   ] as const;
 
   return (
-    <div className="direct-workspace overview-workspace">
-      <header className="workspace-heading overview-heading">
-        <div>
-          <h2>Overview</h2>
-        </div>
-        {!niche?.archivedAt && (
-          <EvidenceCapture {...options} triggerVariant="quiet" />
+    <div className="direct-workspace business-overview">
+      <WorkspaceHeader
+        title="Your next move"
+        description="Keep learning, one useful step at a time."
+        actions={
+          !niche?.archivedAt ? (
+            <EvidenceCapture {...options} triggerVariant="quiet" />
+          ) : undefined
+        }
+      />
+      <div className="business-overview-focus">
+        {snapshot && (
+          <Card material="elevated-glass" className="business-recommendation">
+            <p className="eyebrow">Suggested from your records</p>
+            <h3>{snapshot.recommendation.title}</h3>
+            <p>{snapshot.recommendation.reason}</p>
+            <WorkspaceLink
+              href={recommendationHref(nicheId, snapshot.recommendation)}
+            >
+              {snapshot.recommendation.title}
+              <ArrowRight aria-hidden="true" />
+            </WorkspaceLink>
+          </Card>
         )}
-      </header>
-
-      {snapshot && (
-        <section
-          className="overview-next-move"
-          aria-labelledby="overview-next-move"
+        <WorkspacePanel
+          title="So Far We Know"
+          description="Your findings, open questions and decisions."
+          className="business-understanding"
         >
-          <div>
-            <p className="eyebrow">One useful next move</p>
-            <h3 id="overview-next-move">{snapshot.recommendation.title}</h3>
-            <details>
-              <summary>Why this now?</summary>
-              <p>{snapshot.recommendation.reason}</p>
-            </details>
-          </div>
-          <Link
-            className="workspace-primary-link"
-            href={recommendationHref(nicheId, snapshot.recommendation)}
-          >
-            {snapshot.recommendation.title} <ArrowRight aria-hidden="true" />
-          </Link>
-        </section>
-      )}
-
-      <section
-        className="overview-command"
-        aria-labelledby="overview-understanding"
-      >
-        <div className="overview-command-copy">
-          <span className="overview-command-icon" aria-hidden="true">
+          <IconFrame treatment="featured" area="entrepreneurship">
             <BookOpenText />
-          </span>
-          <div>
-            <p className="eyebrow">Central understanding</p>
-            <h3 id="overview-understanding">So Far We Know</h3>
-            <p>Findings, open questions, and decisions.</p>
-          </div>
-        </div>
-        <dl>
-          <div>
-            <dt>Problems</dt>
-            <dd>{summary.problems}</dd>
-          </div>
-          <div>
-            <dt>Segments</dt>
-            <dd>{summary.segments}</dd>
-          </div>
-          <div>
-            <dt>Conversations</dt>
-            <dd>{summary.conversations}</dd>
-          </div>
-        </dl>
-        <Link href={explorationWorkspaceHref(nicheId, "so-far-we-know")}>
-          Open understanding <ArrowRight aria-hidden="true" />
-        </Link>
-      </section>
-
-      <nav className="overview-workspaces" aria-label="Workspace shortcuts">
+          </IconFrame>
+          <dl className="business-understanding-facts">
+            <div>
+              <dd>{summary.problems}</dd>
+              <dt>Problems</dt>
+            </div>
+            <div>
+              <dd>{summary.segments}</dd>
+              <dt>Segments</dt>
+            </div>
+            <div>
+              <dd>{summary.conversations}</dd>
+              <dt>Conversations</dt>
+            </div>
+          </dl>
+          <WorkspaceLink
+            variant="secondary"
+            href={explorationWorkspaceHref(nicheId, "so-far-we-know")}
+          >
+            Open understanding <ArrowRight aria-hidden="true" />
+          </WorkspaceLink>
+        </WorkspacePanel>
+      </div>
+      <nav
+        className="business-destination-grid"
+        aria-label="Workspace shortcuts"
+      >
         {workspaces.map(({ key, label, note, value, icon: Icon }) => (
-          <Link key={key} href={explorationWorkspaceHref(nicheId, key)}>
-            <Icon aria-hidden="true" />
-            <span>
-              <strong>{label}</strong>
-              <small>{note}</small>
-            </span>
-            <span className="overview-workspace-count">{value}</span>
-            <ArrowRight aria-hidden="true" />
+          <Link
+            href={explorationWorkspaceHref(nicheId, key)}
+            key={key}
+            className="business-destination"
+          >
+            <Card spacing="dense">
+              <IconFrame treatment="compact" area="entrepreneurship">
+                <Icon />
+              </IconFrame>
+              <span className="business-destination-value">{value}</span>
+              <h3>{label}</h3>
+              <p>{note}</p>
+              <ArrowRight
+                className="business-destination-arrow"
+                aria-hidden="true"
+              />
+            </Card>
           </Link>
         ))}
       </nav>
-
-      <div className="overview-lower-grid">
-        <section className="overview-recent">
-          <header>
-            <div>
-              <p className="eyebrow">Recent material</p>
-              <h3>Latest evidence</h3>
-            </div>
+      <div className="business-overview-bottom">
+        <WorkspacePanel
+          title="Latest evidence"
+          actions={
             <Link
               className="business-text-link"
               href={explorationWorkspaceHref(nicheId, "evidence")}
             >
               View all <ArrowRight aria-hidden="true" />
             </Link>
-          </header>
+          }
+        >
           <EvidenceJournal
             data={{ entries: signals.recentEvidence, next: null }}
             nicheId={nicheId}
           />
-        </section>
-        <aside className="overview-next-actions">
-          <header>
-            <p className="eyebrow">Committed next moves</p>
-            <h3>
-              {signals.nextActions.length
-                ? `${signals.nextActions.length} follow-ups`
-                : "The path is open"}
-            </h3>
-          </header>
+        </WorkspacePanel>
+        <WorkspacePanel
+          title="Follow-ups"
+          description={
+            signals.nextActions.length
+              ? `${signals.nextActions.length} chosen next actions`
+              : "Nothing scheduled right now."
+          }
+        >
           {signals.nextActions.length ? (
             signals.nextActions.map((record) => (
               <FollowUpRecord key={record.id} record={record} />
             ))
           ) : (
-            <div className="overview-next-actions-empty">
-              <p>No follow-up is scheduled.</p>
-              <Link href={explorationWorkspaceHref(nicheId, "outreach")}>
-                Open outreach to choose a next action
-                <ArrowRight aria-hidden="true" />
-              </Link>
-            </div>
+            <WorkspaceLink
+              variant="secondary"
+              href={explorationWorkspaceHref(nicheId, "outreach")}
+            >
+              Open outreach <ArrowRight aria-hidden="true" />
+            </WorkspaceLink>
           )}
-        </aside>
+        </WorkspacePanel>
       </div>
     </div>
   );

@@ -18,10 +18,6 @@ try:
         raise ValueError("unsupported database URL scheme")
     host = url.hostname
     direct_url = url.geturl()
-    if host and host.endswith(".neon.tech") and "-pooler." in host:
-        host = host.replace("-pooler.", ".", 1)
-        userinfo, endpoint = url.netloc.rsplit("@", 1)
-        direct_url = url._replace(netloc=userinfo + "@" + endpoint.replace("-pooler.", ".", 1)).geturl()
     port = str(url.port or 5432)
     user = unquote(url.username or "")
     password = unquote(url.password or "")

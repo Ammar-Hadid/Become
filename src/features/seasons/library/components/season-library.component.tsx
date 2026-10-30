@@ -1,8 +1,12 @@
+import { Input } from "@/components/ui/forms/input.component";
+import { Button } from "@/components/ui/buttons/button.component";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { SeasonPoster } from "@/features/seasons/posters/components/season-poster.component";
+import { CharacterBanner } from "@/components/ui/character-banner/character-banner.component";
 import type { PageResult } from "@/features/direction/types/direction.types";
 import type { SeasonView } from "@/features/seasons/types/season.types";
+import "../styles/season-library.css";
 
 export function SeasonLibrary({
   result,
@@ -19,10 +23,9 @@ export function SeasonLibrary({
       <header className="direction-section-heading">
         <div>
           <p className="eyebrow">Your seasons</p>
-          <h2 id="season-library-title">A record of who you were becoming.</h2>
+          <h1 id="season-library-title">Season library</h1>
           <p>
-            Past seasons keep their closing truth while linked goals continue on
-            their own horizons.
+            Your characters, artwork, and memories, kept together by Season.
           </p>
         </div>
       </header>
@@ -31,24 +34,42 @@ export function SeasonLibrary({
         <label className="sr-only" htmlFor="season-search">
           Search seasons
         </label>
-        <input
+        <Input
           id="season-search"
           name="search"
           defaultValue={search}
           placeholder="Search season titles…"
         />
+        <Button type="submit" variant="secondary">
+          Search
+        </Button>
         {search && <Link href="/direction/seasons">Clear</Link>}
       </form>
       {result.items.length ? (
         <div className="season-library-grid">
-          {result.items.map((season) => (
-            <SeasonPoster
-              key={`${season.year}-${season.quarter}`}
-              season={season}
-              variant="archive"
-              href={`/direction/seasons/${season.year}/${season.quarter}`}
-            />
-          ))}
+          {result.items.map((season) =>
+            season.characterBanner ? (
+              <Link
+                key={`${season.year}-${season.quarter}`}
+                className="season-library-character-banner"
+                href={`/direction/seasons/${season.year}/${season.quarter}`}
+                aria-label={`Open ${season.characterBanner.name}, Season ${season.quarter} ${season.year}`}
+              >
+                <CharacterBanner content={season.characterBanner} />
+                <span className="type-label">
+                  Season {season.quarter} / {season.year}{" "}
+                  <ArrowRight aria-hidden="true" />
+                </span>
+              </Link>
+            ) : (
+              <SeasonPoster
+                key={`${season.year}-${season.quarter}`}
+                season={season}
+                variant="archive"
+                href={`/direction/seasons/${season.year}/${season.quarter}`}
+              />
+            ),
+          )}
         </div>
       ) : (
         <div className="direction-library-empty">

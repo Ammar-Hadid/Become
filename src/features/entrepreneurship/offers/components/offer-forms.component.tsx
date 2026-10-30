@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useExploration } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { WorkSourceChoiceFields } from "@/features/entrepreneurship/market/components/company-work-source.component";
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
@@ -81,7 +82,7 @@ function QuoteFields({
       )}
       <BusinessFormSection
         eyebrow="Value"
-        title="What you are offering"
+        title="What are you offering?"
         description="Keep the promise and its boundary together."
       >
         {initial || initialMode ? (
@@ -184,13 +185,13 @@ function QuoteFields({
       </BusinessFormSection>
       <BusinessFormSection
         eyebrow="Terms"
-        title="How the quote works"
+        title="How should it be priced?"
         description="Unknown and free are different; the amount can stay blank."
       >
         <label className="field-label">
           Pricing basis
-          <select
-            className="text-input mt-sm"
+          <NativeSelect
+            className="mt-sm"
             name="priceBasis"
             value={basis}
             onChange={(event) => setBasis(event.target.value)}
@@ -199,7 +200,7 @@ function QuoteFields({
             <option value="HOURLY">Hourly quote</option>
             <option value="PER_UNIT">Per-unit quote</option>
             <option value="RECURRING">Recurring quote</option>
-          </select>
+          </NativeSelect>
         </label>
         <div className="gap-lg grid grid-cols-2">
           <BusinessField
@@ -296,6 +297,7 @@ export function OfferForm(
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Make the value concrete"
       triggerLabel={props.offerId ? "Revise terms" : "Shape an offer"}
       title={props.offerId ? "Create a new revision" : "Shape an offer"}
@@ -336,6 +338,7 @@ export function OfferEventForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="An actual outcome"
       triggerLabel={
         mode === "AUDIENCE_TEST" && !engagementId
@@ -470,6 +473,7 @@ export function OfferContinuationForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="After acceptance"
       triggerLabel="Choose how to continue"
       title="Keep the work connected"
@@ -488,8 +492,8 @@ export function OfferContinuationForm({
 
         <label className="field-label">
           Next step
-          <select
-            className="text-input mt-sm"
+          <NativeSelect
+            className="mt-sm"
             name="choice"
             value={choice}
             onChange={(event) => setChoice(event.target.value)}
@@ -497,7 +501,7 @@ export function OfferContinuationForm({
             <option value="NOT_NOW">Not now</option>
             <option value="LINKED">Create / Link WorkSource</option>
             <option value="NOT_NEEDED">No work-source link needed</option>
-          </select>
+          </NativeSelect>
         </label>
         {choice === "LINKED" && (
           <WorkSourceChoiceFields workSources={workSources} />
@@ -526,6 +530,7 @@ export function OfferResponseForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="One recipient’s response"
       title="Add a response"
       triggerLabel="Add response"

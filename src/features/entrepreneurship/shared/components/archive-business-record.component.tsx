@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { MenuItem } from "@/components/ui/menus/menu-item.component";
@@ -25,13 +27,9 @@ export function ArchiveBusinessRecord({
         label={`${kind} actions`}
         placement="bottom-end"
         trigger={(props) => (
-          <button
-            {...props}
-            disabled={pending}
-            className="business-icon-button"
-          >
+          <Button variant="ghost" size="icon" {...props} disabled={pending}>
             <MoreHorizontal aria-hidden="true" />
-          </button>
+          </Button>
         )}
       >
         <MenuItem

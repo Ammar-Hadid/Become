@@ -12,7 +12,10 @@ type MenuItemRenderProps = {
   className: string;
   role: MenuItemRole;
   "aria-checked"?: boolean;
+  "aria-disabled"?: boolean;
 };
+
+type MenuItemTone = "default" | "danger";
 
 type MenuItemProps = {
   checked?: boolean;
@@ -24,6 +27,7 @@ type MenuItemProps = {
   onSelect?: MouseEventHandler<HTMLElement>;
   render?: (props: MenuItemRenderProps) => ReactNode;
   role?: MenuItemRole;
+  tone?: MenuItemTone;
 } & Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "children" | "onClick" | "role"
@@ -39,12 +43,23 @@ export function MenuItem({
   onSelect,
   render,
   role = menuItemProps.role,
+  tone = "default",
+  disabled,
   ...buttonProps
 }: MenuItemProps) {
+  const ariaDisabled =
+    disabled ||
+    buttonProps["aria-disabled"] === true ||
+    buttonProps["aria-disabled"] === "true";
   const itemProps: MenuItemRenderProps = {
-    className: cn(menuItemProps.className, className),
+    className: cn(
+      menuItemProps.className,
+      tone === "danger" && "menu-item--danger",
+      className,
+    ),
     role,
     ...(role === "menuitem" ? {} : { "aria-checked": Boolean(checked) }),
+    ...(ariaDisabled ? { "aria-disabled": true } : {}),
   };
   if (render) return render(itemProps);
 
@@ -62,8 +77,17 @@ export function MenuItem({
         className={itemProps.className}
         role={itemProps.role}
         aria-checked={itemProps["aria-checked"]}
+        aria-disabled={itemProps["aria-disabled"]}
         aria-label={label}
-        onClick={onSelect as MouseEventHandler<HTMLAnchorElement>}
+        tabIndex={ariaDisabled ? -1 : undefined}
+        onClick={(event) => {
+          if (ariaDisabled) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          onSelect?.(event);
+        }}
       >
         {content}
       </Link>
@@ -74,11 +98,27 @@ export function MenuItem({
     <button
       {...buttonProps}
       type={buttonProps.type ?? "button"}
+      disabled={disabled}
       className={itemProps.className}
       role={itemProps.role}
       aria-checked={itemProps["aria-checked"]}
+      aria-disabled={itemProps["aria-disabled"]}
       aria-label={label}
-      onClick={onSelect as MouseEventHandler<HTMLButtonElement>}
+      onMouseDown={(event) => {
+        buttonProps.onMouseDown?.(event);
+        if (event.button === 0 && !event.defaultPrevented && !ariaDisabled) {
+          // Safari otherwise focuses the enclosing drawer and dismisses the menu before click.
+          event.preventDefault();
+          event.currentTarget.focus({ preventScroll: true });
+        }
+      }}
+      onClick={(event) => {
+        if (ariaDisabled) {
+          event.preventDefault();
+          return;
+        }
+        onSelect?.(event);
+      }}
     >
       {content}
     </button>

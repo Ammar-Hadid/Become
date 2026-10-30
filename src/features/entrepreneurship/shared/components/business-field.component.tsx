@@ -1,3 +1,6 @@
+import { Input } from "@/components/ui/forms/input.component";
+import { Textarea } from "@/components/ui/forms/textarea.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useId, type ChangeEventHandler, type ReactNode } from "react";
 
 export function BusinessFormSection({
@@ -33,6 +36,7 @@ export function BusinessField({
   hint,
   min,
   step,
+  featured = false,
 }: {
   label: string;
   name: string;
@@ -43,6 +47,7 @@ export function BusinessField({
   hint?: string;
   min?: number;
   step?: number;
+  featured?: boolean;
 }) {
   const id = useId();
   const props = {
@@ -50,21 +55,22 @@ export function BusinessField({
     name,
     defaultValue: value ?? "",
     required,
-    className: "text-input",
+    variant: featured ? ("featured" as const) : ("body" as const),
+
     "aria-describedby": hint ? `${id}-hint` : undefined,
   };
   return (
     <div className="business-form-field gap-sm grid">
       <label htmlFor={id} className="field-label">
         {label}
-        {!required && (
+        {!required && !label.toLowerCase().includes("optional") && (
           <span className="text-text-muted normal-case"> · optional</span>
         )}
       </label>
       {multiline ? (
-        <textarea {...props} rows={4} maxLength={6000} />
+        <Textarea {...props} rows={4} maxLength={6000} />
       ) : (
-        <input
+        <Input
           {...props}
           type={type}
           min={min}
@@ -106,7 +112,7 @@ export function BusinessSelect({
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
-      <select
+      <NativeSelect
         id={id}
         name={name}
         defaultValue={onChange ? undefined : value}
@@ -114,10 +120,9 @@ export function BusinessSelect({
         onChange={onChange}
         required={required}
         disabled={disabled}
-        className="text-input"
       >
         {children}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

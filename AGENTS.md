@@ -8,216 +8,51 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Permanent repository organization
+# Become: current agent contract
 
-Become is a modular monolith organized primarily by product domain or feature.
+Read this file before designing architecture or changing code. The product owner's latest request takes precedence. Inspect the current implementation and Git state first; the working tree may contain other unfinished work. `README.md` describes what exists. `docs/product/MASTER_SPEC.md` records long-term ideas, not proof they are implemented. Earlier phase plans, screenshots, and review pages are historical evidence rather than new design mandates.
 
-- Put product-specific code under `src/features/<feature>/`.
-- Keep feature roots primarily structural. Do not allow implementation files to accumulate directly in a feature root as a flat collection.
-- Apply this organization recursively to nested concerns, not only feature roots. A concern such as `technologies/`, `projects/`, or `timer/` should contain role folders such as `components/`, `constants/`, `services/`, `hooks/`, and `utils/` for the code it actually owns.
-- Role folders are implementation leaves; do not repeat the same role in additional nested folders. Keep related tests beside their source. Shared UI may group components by purpose, with a component's own stylesheet beside it.
-- Within each feature, group authored files into meaningful concern or responsibility folders such as:
-  - `components/`
-  - `services/`
-  - `queries/`
-  - `analytics/`
-  - `projects/`
-  - `technologies/`
-  - `evidence/`
-  - `hooks/`
-  - `schemas/`
-  - `types/`
-  - `constants/`
-  - `styles/`
-  - `mappers/`
-  - `adapters/`
-- These folder names are examples, not a mandatory universal folder list. Prefer grouping by the actual responsibilities and concepts present in the feature.
-- A folder containing only one file is acceptable. Do not leave an implementation file in a feature root merely to avoid creating a single-file folder.
-- Do not create speculative folders for functionality, concepts, or future phases that do not exist yet.
-- Prefer the following hierarchy:
+This file carries the current product-owner decisions. Historical agent instructions are nonbinding. Runtime authorization, validation, financial calculations, and stored records are application behavior; change those when the task calls for it.
 
-  `feature/domain → concern or responsibility → role folder → file with architectural-role suffix`
+## Approved shared experience
 
-  For example:
+Before changing a user-facing interface, read `docs/design/SHARED_LIBRARY.md`, its applicable linked contract, and the real shared implementation in `src/components/ui/` or `src/components/layout/`. Reuse an approved treatment for its role. The feature owns its data, persistence, and copy; shared components own their approved presentation and interaction. `pnpm storybook` opens the component workshop. Stories and metadata document treatments but do not approve new ones.
 
-        src/features/engineering/
-        ├── analytics/
-        │   ├── queries/
-        │   │   └── engineering-analytics.query.ts
-        │   └── utils/
-        │       ├── engineering-analytics.util.ts
-        │       └── engineering-analytics.util.test.ts
-        ├── projects/
-        │   ├── actions/
-        │   │   └── engineering-project.action.ts
-        │   └── services/
-        │       └── engineering-project.service.ts
-        └── technologies/
-            ├── constants/
-            │   └── engineering-technology.constants.ts
-            └── utils/
-                ├── engineering-technology.util.ts
-                └── engineering-technology.util.test.ts
+For a genuinely new component, visual treatment, interaction, motion, or sound—or a visible or audible change to an approved one—build a separate candidate page with realistic desktop/phone states and accessible interaction. Show the working candidate and ask exactly **“Do you like it?”**. Promote it to the shared library and feature only after explicit approval of that candidate. A behavior-preserving fix or reuse of an approved treatment needs no new preview. `docs/design/SHARED_LIBRARY.md` contains the inventory and admission procedure.
 
-- Do not replace domain-first organization with global technical folders such as `src/services/`, `src/hooks/`, `src/queries/`, or `src/types/`.
-- Keep truly shared UI primitives in `src/components/ui/` and truly shared application layout components in `src/components/layout/`. These directories are not general component dumping grounds.
-- Keep only genuinely cross-cutting infrastructure and primitives under `src/lib/`, such as authentication, database access, dates, money, environment configuration, and generic validation infrastructure.
-- Keep domain-owned types close to their feature. Do not create or use a global `src/types/` dumping ground. Prefer deriving types from Prisma, Zod, and existing TypeScript definitions where practical.
-- Keep Next.js route files under `src/app/`. Route files should focus on routing, transport concerns, authorization boundaries, and composition; delegate substantial feature behavior to the owning feature module.
-- Keep generated code under `src/generated/`, Prisma schema/migrations/seeding under `prisma/`, and end-to-end tests under `e2e/`. Never edit generated code manually.
-- Do not reorganize generated code, Prisma-generated output, Prisma migration structure, framework-managed files, tool-managed artifacts, or other generated output merely to satisfy authored-source folder conventions.
-- Framework- and tool-managed structure should remain in the layout expected by the owning framework or tool.
+Approved shared roles include header and six-area navigation; solid, glass, and elevated-glass cards; semantic spacing and typography; buttons; forms and selections; menus, dialogs and drawers; icon frames and area identities; badges; empty states; progress and loading; tooltips; time-chart interaction; the rich-text editor with a rendered-line guide; and the resizable phone-artwork viewport. Use the real component instead of redrawing its treatment inside a feature. `src/app/styles/tokens.css` is the owner-editable surface for approved visual values; behavior counts belong beside components. New visual decisions follow the candidate workflow. Historical visuals do not override the owner's supplied designs.
 
-The purpose of this organization is predictable navigation and clear ownership, not maximum nesting. Avoid unnecessary folder depth when it does not improve understanding.
+The shared application menu overlays its page instead of shifting the layout. Non-dashboard pages fill the available width inside equal approved side gutters, without a narrower outer max-width. Use Settings as the reference: `--space-app-page-gutter` follows the collapsed navigation launcher on desktop; phones use `--space-page-edge-mobile`. Ritual pages outside AppShell follow the same rule. The dashboard has its own full-bleed composition. The approved desktop area rail loops with the selected area first. Read `docs/design/HEADER_SYSTEM.md` and `docs/design/SPACING_SYSTEM.md` when changing the shell.
 
-## Permanent file-role naming
+### Motion, sound, and AI text
 
-Every application-owned TypeScript or TSX file that is not constrained by a framework or tool must use an explicit architectural-role suffix:
+- Use **Precision Light** control/surface motion and **Living Light** changing-progress motion through shared tokens and lifecycle primitives in `docs/design/MOTION_SYSTEM.md`. Motion never delays state, saving, navigation, or focus. Reduced motion preserves behavior immediately.
+- Use the shared sound provider and event-to-cue mapping in `docs/design/SOUND_SYSTEM.md`. The twelve approved cues are Pulse Pin, Aperture, Horizon, Gravity, Soft Ascent, Pending Line, Red Offset, Ignition, Hold, Closure, Season Seal, and Thought Arrives. Sound is supplemental, user-mutable, and never synthesized locally by a feature.
+- Use shared `AiTypingText` and the approved `type-quote` role for the **Terminal Prompt** C.O.T.S. reveal on the dashboard, its lenses, and other C.O.T.S. speech surfaces. Begin only when visible; pause out of view; show full text with reduced motion. It reveals text; it is not a generation/loading state. See `docs/design/TYPING_SYSTEM.md`. Terminal Prompt is solely for C.O.T.S. speech. Longer AI-generated summaries, briefs and paragraphs use shared `AiGeneratedText` / **Living Ink**, with strictly sequential paragraphs and the approved gold trail; see `docs/design/AI_GENERATED_TEXT.md`.
+- The typed `ComponentMeta` records in `src/components/ui/metadata/` describe treatments approved in this thread, including Pulse Pin and rail motion. Storybook exposes them under **Documentation → Approved Metadata**. Keep each record aligned with its implementation.
 
-- React component: `*.component.tsx`
-- Business/domain service: `*.service.ts`
-- Database/read query: `*.query.ts`
-- Server Action: `*.action.ts`
-- Application/domain middleware: `*.middleware.ts`
-- Zod/validation schema: `*.schema.ts`
-- Utility: `*.util.ts`
-- React hook: `*.hook.ts`
-- Types: `*.types.ts`
-- Constants: `*.constants.ts`
-- Configuration: `*.config.ts`
-- Mapper: `*.mapper.ts`
-- Adapter: `*.adapter.ts`
-- Repository abstraction, only when genuinely justified: `*.repository.ts`
-- Unit/integration test: `*.test.ts` or `*.test.tsx`
-- End-to-end test: `*.spec.ts`
+## C.O.T.S. and Living Seasons
 
-The folder path states which part of Become owns the file and which concern it belongs to. The suffix states what architectural role the file performs.
+The new-Season flow chooses a Character of the Season first. The approved onboarding order is **Character → World & mood → References → Banner & portrait → Scenes → Review & activate**. Character recognition and the five source-grounded profile sections belong inside Character. Connected preparation uses Character → World & mood → Summary with inline recognition, without a separate confirmation checkpoint. World & mood combines setting and visual intent; banner authoring follows reviewed references. The guided opening and Season library reuse the saved pack. The owner removed the standalone Advanced editing / Living Season Studio on 26 October 2026; do not restore its links or separate workspace. Old `/living` URLs redirect to the guided opening. Preview routes and sample Levi artwork are examples, not saved Season data. Read `docs/product/LIVING_SEASONS.md` and `docs/design/COTS_CHARACTER_WORKSPACE_CANDIDATE.md` before changing this flow.
 
-Avoid redundant names and needless abstraction layers.
+- Use shared `SeasonPreparationProgress` / **Focus** during connected ASSEMBLING, including pause and recovery; see `docs/design/SEASON_PREPARATION.md`. Focus was approved on 26 October 2026. Use actual saved identity/image, complete streamed paragraphs, measured timing estimates and feature-owned actions. Reading room and simulation controls stay out of the product flow.
+- Use shared `RecognizedCharacter` and `VersionDrawer` for connected onboarding; see `docs/design/RECOGNIZED_CHARACTER.md`. Continue accepts the displayed identity/version, while authentic-image likeness review happens at Summary before artwork. Use shared `CharacterConfirmation` for other explicit identity-review surfaces. Its approved darker, centered carousel supports buttons, keyboard and horizontal swipes without autoplay. AI can resolve only catalogue-backed identities and adaptations; it must not invent reference images. Anime lookup uses AniList and a character-bound MyAnimeList gallery; other identities retain Wikidata/manual entry.
+- At least one authentic, likeness-reviewed original is required before generation. Every image package carries up to two originals before the approved generated sheet and optional continuity image, with at most four references. A generated sheet never replaces the originals. Changing identity invalidates current review readiness without hiding the prior active snapshot.
+- A source-grounded, versioned character profile supplies C.O.T.S. voice and visual facts. Its five workspace steps are Source material, Speech patterns, Signature phrases, Canon references, and Reactions. Reactions owns success, setback, recovery, visual identity, and visual boundaries. Saved values and approval remain Season-owned.
+- Use shared `CharacterStepRail`: four fixed-width cards on desktop, two on phones; selected step first; order wraps. Wheel and touch advance one step while containing page scroll. Deliberate click/keyboard selection uses Pulse Pin; passive gestures are silent. Reduced motion moves immediately.
+- A custom response test waits for the deterministic completeness check in `src/features/seasons/living/character-workspace/utils/character-response-readiness.util.ts` and a configured text model. Clearly label an unconnected sample. Show the actual character name and use the approved portrait and full-width Ask another question action.
+- Use shared `CharacterBanner` and `CharacterAvatarEditor`. The banner fills its card with artwork, crown pill, large name, source, verified user-curated quote with attribution, and editable right-side line. Its phone composition is separate. A portrait is separately generated or uploaded, with a reversible crop saved across refreshes. Keep UI copy out of generated pixels.
+- The approved saved-records treatment is a quiet divided list. It scrolls within its desktop panel when needed and joins normal page scrolling on phones.
+- Source, speech, phrase, and canon influence explanations use the shared radial percentage indicator. Position it beside the explanation on desktop and below it on phones. These percentages express relative design priority, not a measured share of an AI answer.
+- The owner-approved visual-intent brief describes feeling, demeanor, recognizable anchors, atmosphere, and depictions to avoid. It adapts Become's consistent composition to the character. Never infer temperament from a name, gender, or genre; insufficient source material needs owner direction. Manual authoring works without an API key.
+- Seven chapters × three pace states × desktop/phone produce **42** evolving Season scenes. Banner and portrait images are separate. Latest profile, intent, reference, image compositions, and copy require human review before pack activation. Approved art stays visible during replacement review; a closed Season retains its archived revision. The API artwork cap is €15 per Season pack, with manual upload available.
 
-Framework- and tool-reserved filenames take precedence. Keep required names such as `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `route.ts`, framework-required `middleware.ts`, `schema.prisma`, `next.config.*`, `eslint.config.*`, `playwright.config.*`, `vitest.config.*`, `components.json`, `package.json`, and `tsconfig.json`.
+## One image prompt source
 
-## Project documentation and development scope
+For reference sheets, character banners, portraits, and scenery + C.O.T.S. scenes, obtain the exact versioned package from `src/features/seasons/living/image-direction/`. Use its prompt verbatim and ordered references for provider calls, Codex/image-skill handoff, and manual copy. Record its receipt and source/template revisions with generated or uploaded work. Manual external use is a claimed receipt and still needs visual approval. Character-specific prose belongs in the resolver, never an adapter or improvised handoff. See `docs/design/IMAGE_DIRECTION.md`.
 
-The repository is authoritative for what currently exists.
+Settings → Image Direction first shows saved text, with separate edit controls for Intent and Prompt, plus controls for Variables and Rules, and `{{variables}}` insertable through the shared editor. The document icon saves a versioned draft and has a shared delayed tooltip explaining that action. Publishing changes **future generation prompts**, including unmade current-Season images; it does not replace approved images. The inspector assembles the exact prompt, references, versions, and receipt for a real selected Season without spending budget. Its subject is the selected real Season, not fictional sample personalities. Existing imagery is replaced through that Season's review workspace and becomes visible only after asset approval.
 
-- `README.md` is the human-facing project overview and local development guide.
-- `docs/product/MASTER_SPEC.md` is the authoritative long-term product specification, including product direction, future requirements, and development phases.
+## Evidence and AI boundaries
 
-Do not assume that functionality described in `docs/product/MASTER_SPEC.md` has already been implemented. Inspect the repository to determine the current implementation state.
-
-For small, isolated tasks, read only the documentation and code relevant to the task.
-
-Before beginning a new development phase:
-
-1. Read this `AGENTS.md`.
-2. Read `docs/product/MASTER_SPEC.md`.
-3. Inspect the current repository and Git state.
-4. Understand the existing implementation relevant to the new phase.
-5. Plan the phase before modifying code.
-
-Build Become incrementally:
-
-`Build → Use → Understand → Adjust → Expand`
-
-Do not implement functionality belonging to later phases unless explicitly requested.
-
-Do not introduce speculative infrastructure.
-
-## Styling and design system
-
-Become uses Tailwind CSS as the default styling approach, backed by a small, explicit global design system.
-
-### Shared submenu component
-
-Whenever an interface needs a submenu or action menu, use the shared menu components in `src/components/ui/menus/`. Do not create feature-specific submenu markup, interaction state, keyboard handling, positioning logic, or duplicate menu styling. Extend the shared menu components when a legitimate new submenu requirement is not yet supported.
-
-### Design tokens
-
-Define recurring product-wide design decisions as Tailwind theme tokens.
-
-Examples include:
-
-- colors
-- typography
-- spacing
-- border radii
-- layout dimensions
-- motion values
-
-Prefer existing theme tokens over arbitrary values.
-
-Before introducing a new color, spacing value, font size, radius, width, or other recurring visual constant, check whether an existing token already represents that design decision.
-
-Use arbitrary values when the value is genuinely component-specific or one-off. Do not create a design token for every literal value.
-
-If a visual value becomes repeated or represents a product-wide design decision, promote it into the theme rather than duplicating literals.
-
-### Locked typography scale
-
-The typography tokens in `src/app/styles/tokens.css` are product-owner controlled and must not be adjusted without the product owner's explicit prior approval. This restriction is absolute and applies especially to every typography `font-size` and `line-height` value.
-
-- Do not add, remove, rename, reorder, or change typography tokens or their values on your own initiative.
-- Do not introduce one-off `font-size` or `line-height` values, arbitrary typography utilities, or Tailwind's default type-scale utilities as a workaround.
-- Apply the existing semantic typography tokens throughout authored application code.
-- If a task appears to require any typography token or value change, stop and ask the product owner for approval before editing it.
-
-### CSS ownership
-
-Do not use `globals.css` as the default destination for application styling.
-
-Keep global CSS intentionally small and limited primarily to:
-
-- Tailwind imports and global stylesheet composition
-- design-system tokens
-- document-level base styles and resets
-- truly application-wide utilities or behavior
-
-Prefer Tailwind utilities directly in components for ordinary component styling.
-
-When custom CSS is clearer or necessary, such as for complex selectors, pseudo-elements, animations, or substantial bespoke styling, colocate that CSS with the feature or component that owns it.
-
-Feature-specific styles belong with their feature under `src/features/<feature>/`.
-
-Shared layout styles belong with the corresponding layout components under `src/components/layout/`.
-
-Do not place feature-specific selectors in the global stylesheet merely because they are used on a page.
-
-### Styling structure
-
-Keep the global styling system small and understandable. A structure such as the following is preferred when those files are needed:
-
-    src/app/
-    ├── globals.css
-    └── styles/
-        ├── tokens.css
-        ├── base.css
-        └── utilities.css
-
-Do not create speculative stylesheet files or split styles into excessively granular files without a real organizational benefit.
-
-The goal is clear ownership:
-
-- global design decision → global design system
-- shared application primitive → shared owner
-- feature-specific styling → feature owner
-- simple component styling → Tailwind utilities
-
-### Motion system
-
-Before adding or changing product motion, read `docs/design/MOTION_SYSTEM.md`.
-
-- Reuse the shared motion tokens and established interaction recipes.
-- Keep animation local to the state change it explains and preserve stable layout anchors.
-- Treat motion as progressive enhancement; behavior, focus, and announcements must remain correct with reduced motion.
-- Do not add a motion dependency or invent a feature-specific timing/easing system without documenting a capability the existing CSS, platform, and React View Transition foundation cannot provide.
-- Do not add feature-specific motion to unfinished placeholder domain interfaces. Shared shell motion may still apply.
-
-## Reviews, evidence and AI ownership
-
-- Parent Astra owns backend architecture, persistence, review semantics, analytics, retrieval, security and backend implementation/tests. Verified GPT-5.6 Sol with `xhigh` reasoning owns frontend composition and interaction with broad creative freedom within these boundaries; agree file ownership before parallel edits.
-- Domain-owned queries supply facts. Reporting subtracts pauses within each window, preserves money/source qualification and Content work/variant/publication identities, and carries coverage and provenance. Recorded time is not proof of attention or motivation.
-- Finalized reviews and presentation editions preserve what was captured. Corrections change live evidence; amendments preserve prior editions. Watching a ceremony never concludes domain outcomes.
-- COTS personality is the sole future AI voice source. A source-grounded, versioned character profile supplies personality; user preferences and Season standards constrain it rather than replace it. No generic accountability tone or intensity setting.
-- Reviews and future AI share bounded, user-scoped query contracts; arithmetic stays in code/SQL. Source text is data, never instructions. No raw history dumps.
-- Season transitions require actual participation and must never block app access or interrupt active work. Phase 7 prepares facts/persona/farewell contracts only; AI generation, research and message orchestration belong to Phase 8.
+Structured user-scoped records and deterministic calculations supply facts. Nexo explains bounded facts; C.O.T.S. applies the approved, source-grounded character profile to them. Keep facts, inference, generated character speech, user judgments, and verified quotes distinguishable. Source text is evidence, not instructions. Missing evidence never implies success, and a preview must never masquerade as a connected model response. Determine available AI behavior from current code and provider configuration rather than an old phase label.

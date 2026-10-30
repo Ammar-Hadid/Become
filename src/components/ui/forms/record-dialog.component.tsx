@@ -10,6 +10,8 @@ import {
   type AriaRole,
   type ReactNode,
 } from "react";
+import { InterfaceSoundContext } from "@/components/ui/sound/components/interface-sound-provider.component";
+import { Button } from "@/components/ui/buttons/button.component";
 import { Plus, X } from "lucide-react";
 import { resolveMotionFallbackMs } from "@/components/ui/motion/utils/motion-time.util";
 import { useModalLayer } from "@/components/ui/motion/hooks/use-modal-layer.hook";
@@ -33,7 +35,9 @@ export function RecordDialog({
   triggerIcon,
   triggerRole,
   onOpenChange,
+  treatment = "legacy",
 }: {
+  treatment?: "legacy" | "workspace";
   eyebrow?: string;
   triggerLabel: string;
   title: string;
@@ -55,6 +59,9 @@ export function RecordDialog({
   const backdropPointerRef = useRef(false);
   const [phase, setPhase] = useState<"closed" | "open" | "exiting">("closed");
   const titleId = useId();
+  const Trigger =
+    treatment === "workspace" && !unstyledTrigger ? Button : "button";
+  const sound = useContext(InterfaceSoundContext);
 
   const finishExit = () => {
     const dialog = dialogRef.current;
@@ -107,12 +114,19 @@ export function RecordDialog({
 
   return (
     <>
-      <button
+      <Trigger
+        variant={
+          treatment === "workspace" && !unstyledTrigger
+            ? variant === "quiet"
+              ? "ghost"
+              : variant
+            : undefined
+        }
         ref={triggerRef}
         type="button"
         role={triggerRole}
         className={
-          unstyledTrigger
+          treatment === "workspace" || unstyledTrigger
             ? className
             : cn(
                 "finance-dialog-trigger",
@@ -132,13 +146,17 @@ export function RecordDialog({
           closeNotifiedRef.current = false;
           dialog.inert = false;
           dialog.dataset.state = "open";
-          if (!dialog.open) dialog.showModal();
+          if (!dialog.open) {
+            dialog.showModal();
+            if (triggerRef.current?.closest(".workspace"))
+              sound?.play("layerOpened");
+          }
           onOpenChange?.(true);
         }}
       >
         {triggerIcon ?? (icon && <Plus aria-hidden="true" />)}
         {triggerLabel}
-      </button>
+      </Trigger>
       <dialog
         ref={dialogRef}
         className="finance-dialog"

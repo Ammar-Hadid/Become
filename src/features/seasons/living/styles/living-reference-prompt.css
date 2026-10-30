@@ -1,0 +1,150 @@
+.living-reference-prompt-card {
+  display: grid;
+  gap: var(--spacing-md);
+  min-width: 0;
+  border-color: var(--living-line);
+}
+
+.living-reference-prompt-actions,
+.living-reference-prompt-heading,
+.living-reference-prompt-foot,
+.living-reference-prompt-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.living-reference-prompt-actions > .become-button:first-child {
+  flex: 0 0 auto;
+}
+
+.living-reference-prompt-kicker {
+  flex: 1;
+  color: var(--color-primary);
+}
+
+.living-reference-prompt-sheet {
+  display: grid;
+  gap: var(--spacing-xl);
+  min-width: 0;
+  padding: var(--space-action-panel);
+  border: 1px solid var(--living-line);
+  border-radius: var(--radius-panel);
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--color-primary) 5%, transparent), transparent 55%),
+    var(--color-surface-sidebar);
+}
+
+.living-reference-prompt-heading {
+  align-items: flex-start;
+}
+
+.living-reference-prompt-heading > div {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.living-reference-prompt-heading .type-overline,
+.living-reference-prompt-heading > .type-caption {
+  color: var(--color-text-muted);
+}
+
+.living-reference-prompt-preview {
+  max-height: 16rem;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--color-text-secondary);
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}
+
+.living-reference-prompt-foot {
+  flex-wrap: wrap;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--living-line);
+  color: var(--color-text-muted);
+}
+
+.living-reference-prompt-dialog {
+  width: min(100%, 1100px);
+  height: min(88dvh, 900px);
+  max-height: calc(100dvh - 2 * var(--dialog-viewport-gutter));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.living-reference-prompt-dialog .become-dialog__body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.living-reference-prompt-dialog .become-dialog__footer {
+  align-items: center;
+}
+
+.living-reference-prompt-count {
+  margin-right: auto;
+  color: var(--color-text-muted);
+}
+
+.living-reference-prompt-dialog .document-editor-toolbar {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) 0;
+  border-block: 1px solid var(--living-line);
+  background: var(--dialog-background);
+}
+
+.living-reference-prompt-stage {
+  min-height: 100%;
+  padding: var(--space-action-panel);
+  border: 1px solid var(--living-line);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-sidebar);
+}
+
+.living-reference-prompt-manuscript {
+  position: relative;
+  min-height: 100%;
+  padding-left: 4.5rem;
+}
+
+.living-reference-prompt-prose {
+  min-height: 100%;
+  outline: none;
+  caret-color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.living-reference-prompt-prose > * + * {
+  margin-top: var(--spacing-lg);
+}
+
+.living-reference-prompt-prose:focus-visible {
+  outline: none;
+}
+
+.living-reference-prompt-stage:focus-within {
+  border-color: var(--color-primary);
+}
+
+.living-reference-prompt-error {
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .living-reference-prompt-heading {
+    display: grid;
+  }
+
+  .living-reference-prompt-dialog {
+    height: calc(100dvh - 2 * var(--dialog-viewport-gutter));
+  }
+
+  .living-reference-prompt-manuscript {
+    padding-left: 2rem;
+  }
+}

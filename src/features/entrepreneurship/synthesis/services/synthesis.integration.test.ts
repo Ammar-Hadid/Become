@@ -241,11 +241,20 @@ describe.skipIf(!enabled)(
       );
       vi.mocked(executeOpenAiTask).mockResolvedValue({
         output,
-        usage: { inputTokens: 100, outputTokens: 100 },
+        usage: { inputTokens: 100, outputTokens: 100, reasoningTokens: null },
         providerRequestId: "mock",
       });
       const operation = randomUUID();
       const run = await generateSynthesis(userId, nicheId, operation);
+      expect(
+        (await prisma.nexoRun.findUniqueOrThrow({ where: { id: run.id } }))
+          .usage,
+      ).toMatchObject({
+        inputTokens: 100,
+        outputTokens: 100,
+        providerRequestId: "mock",
+        latencyMs: expect.any(Number),
+      });
       expect(await prisma.explorationClaim.count({ where: { userId } })).toBe(
         0,
       );
@@ -327,7 +336,7 @@ describe.skipIf(!enabled)(
       const output = proposal(current.sources[0].key);
       vi.mocked(executeOpenAiTask).mockResolvedValue({
         output,
-        usage: { inputTokens: 0, outputTokens: 0 },
+        usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: null },
         providerRequestId: null,
       });
       const run = await generateSynthesis(userId, nicheId, randomUUID());
@@ -351,7 +360,9 @@ describe.skipIf(!enabled)(
       );
       await expect(
         generateSynthesis(userId, nicheId, randomUUID()),
-      ).rejects.toThrow(/Generation failed/);
+      ).rejects.toThrow(
+        /Generation with openai model test-model failed.*Saved work is preserved/,
+      );
       expect(await prisma.explorationClaim.count({ where: { userId } })).toBe(
         0,
       );
@@ -381,7 +392,7 @@ describe.skipIf(!enabled)(
       );
       vi.mocked(executeOpenAiTask).mockResolvedValue({
         output,
-        usage: { inputTokens: 100, outputTokens: 100 },
+        usage: { inputTokens: 100, outputTokens: 100, reasoningTokens: null },
         providerRequestId: "mock",
       });
       const run = await generateSynthesis(userId, nicheId, randomUUID());
@@ -576,15 +587,27 @@ describe.skipIf(!enabled)(
       await configure();
       vi.mocked(executeOpenAiTask).mockResolvedValue({
         output: { invalid: true },
-        usage: { inputTokens: 0, outputTokens: 0 },
+        usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: null },
         providerRequestId: "mock",
       });
       await expect(
         generateSynthesis(userId, nicheId, randomUUID()),
       ).rejects.toThrow(/validation/);
+      expect(
+        (
+          await prisma.nexoRun.findFirstOrThrow({
+            where: { userId, status: "FAILED" },
+          })
+        ).usage,
+      ).toMatchObject({
+        inputTokens: 0,
+        outputTokens: 0,
+        providerRequestId: "mock",
+        latencyMs: expect.any(Number),
+      });
       vi.mocked(executeOpenAiTask).mockResolvedValue({
         output: proposal("OBSERVATION:foreign"),
-        usage: { inputTokens: 0, outputTokens: 0 },
+        usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: null },
         providerRequestId: "mock",
       });
       await expect(
@@ -593,7 +616,11 @@ describe.skipIf(!enabled)(
       const output = proposal((await context()).sources[0].key);
       let complete!: (value: {
         output: SynthesisOutput;
-        usage: { inputTokens: number; outputTokens: number };
+        usage: {
+          inputTokens: number;
+          outputTokens: number;
+          reasoningTokens: number | null;
+        };
         providerRequestId: string;
       }) => void;
       vi.mocked(executeOpenAiTask).mockImplementation(
@@ -609,7 +636,7 @@ describe.skipIf(!enabled)(
       await discardSynthesis(userId, nicheId, duplicate.id);
       complete({
         output,
-        usage: { inputTokens: 0, outputTokens: 0 },
+        usage: { inputTokens: 0, outputTokens: 0, reasoningTokens: null },
         providerRequestId: "mock",
       });
       await pending;

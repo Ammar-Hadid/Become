@@ -10,6 +10,7 @@ export async function sendContentCommand(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(command),
+      signal: AbortSignal.timeout(15_000),
     });
     const body = (await response.json()) as ContentCommandResult;
     if (typeof body.error !== "string" && body.error !== null)

@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@/components/ui/forms/input.component";
+import { Card } from "@/components/ui/cards/card.component";
 import Link from "next/link";
 import { Archive, ArrowUpRight, Check, ListFilter, Search } from "lucide-react";
 import { useId, useMemo, useState } from "react";
@@ -58,27 +60,25 @@ export function PastExplorations({
         : "There are no past explorations in this view.";
 
   return (
-    <section
+    <Card
       className="exploration-history exploration-past"
       aria-labelledby="past-explorations-title"
     >
       <header className="exploration-section-heading exploration-past-heading">
         <div>
-          <p className="eyebrow">Your trail</p>
           <h2 id="past-explorations-title">
             Past explorations{" "}
             <span className="business-count">{visibleExplorations.length}</span>
           </h2>
           <p>
-            Paused and stopped work stays close. Archived explorations remain
-            out of sight until you need them.
+            Paused and stopped work stays here. Use filters to include archives.
           </p>
         </div>
         <div className="exploration-past-tools">
           <label className="exploration-search" htmlFor={searchId}>
             <Search aria-hidden="true" />
             <span className="sr-only">Search past explorations</span>
-            <input
+            <Input
               id={searchId}
               type="search"
               autoComplete="off"
@@ -198,6 +198,6 @@ export function PastExplorations({
           <p>{emptyMessage}</p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

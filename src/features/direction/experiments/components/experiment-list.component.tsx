@@ -1,3 +1,4 @@
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
 import Link from "next/link";
 import { ArrowRight, FlaskConical, Plus } from "lucide-react";
 import { DirectionListFilters } from "@/features/direction/library/components/direction-list-filters.component";
@@ -34,20 +35,15 @@ export function ExperimentList({
       <header className="direction-section-heading">
         <div>
           <p className="eyebrow">Questions in motion</p>
-          <h2 id="experiment-list-title">
-            Try something small enough to learn from.
-          </h2>
-          <p>
-            Each attempt keeps its own approach, stopping condition, sources,
-            and conclusion.
-          </p>
+          <h1 id="experiment-list-title">Experiments</h1>
+          <p>Test an idea, record what happens, and decide what to try next.</p>
         </div>
-        <Link
-          className="season-primary-action"
+        <WorkspaceLink
+          variant="primary"
           href="/direction/experiments/new"
         >
           <Plus aria-hidden="true" /> New experiment
-        </Link>
+        </WorkspaceLink>
       </header>
       <DirectionListFilters
         action="/direction/experiments"

@@ -1,3 +1,5 @@
+import { WorkspaceMetric } from "@/components/ui/workspace/workspace.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
@@ -85,7 +87,7 @@ export async function OpportunitiesPage({ userId }: { userId: string }) {
       <FinancePageHeader
         eyebrow="Earning"
         title="Work & opportunities"
-        description="The relationships that pay you today, and the possibilities that could become paid work next."
+        description="Your paid work today, and the possibilities you are pursuing."
         actions={
           <FinanceDialog
             triggerLabel="Add opportunity"
@@ -97,35 +99,114 @@ export async function OpportunitiesPage({ userId }: { userId: string }) {
         }
       />
 
-      <section className="finance-work-cockpit">
-        <article>
-          <span className="finance-panel-icon">
-            <BriefcaseBusiness aria-hidden="true" />
-          </span>
-          <strong>{activeSources.length}</strong>
-          <p>active work relationships</p>
-        </article>
-        <article>
-          <span className="finance-panel-icon finance-panel-icon--violet">
-            <Waypoints aria-hidden="true" />
-          </span>
-          <strong>{activeOpportunities.length}</strong>
-          <p>open possibilities</p>
-        </article>
-        <article>
-          <span className="finance-panel-icon finance-panel-icon--blue">
-            <CheckCircle2 aria-hidden="true" />
-          </span>
-          <strong>
-            {
-              opportunities.filter(
-                (opportunity) => opportunity.status === "ACCEPTED",
-              ).length
+      <div className="finance-overview-metrics">
+        <WorkspaceMetric
+          label="Work relationships"
+          value={activeSources.length}
+          icon={<BriefcaseBusiness />}
+          detail="Active employers, clients and platforms"
+        />
+        <WorkspaceMetric
+          label="Open opportunities"
+          value={activeOpportunities.length}
+          icon={<Waypoints />}
+          detail="Possibilities you are pursuing"
+        />
+        <WorkspaceMetric
+          label="Accepted"
+          value={
+            opportunities.filter(
+              (opportunity) => opportunity.status === "ACCEPTED",
+            ).length
+          }
+          icon={<CheckCircle2 />}
+          detail="Acceptance stays separate from income"
+        />
+      </div>
+
+      <FinanceSection
+        title="Possibilities in motion"
+        description="Prospective work stays separate from actual income until money is explicitly received."
+        action={
+          <FinanceDialog
+            triggerLabel="Capture another opportunity"
+            title="Could this turn into something?"
+            variant="secondary"
+          >
+            {opportunityForm}
+          </FinanceDialog>
+        }
+      >
+        {!opportunities.length ? (
+          <FinanceEmptyState
+            icon={<Sparkles aria-hidden="true" />}
+            title="No possibilities in motion"
+            description="A role, gig or client lead can begin as a small signal. Capture it before it disappears."
+            action={
+              <FinanceDialog
+                triggerLabel="Add your first opportunity"
+                title="Could this turn into something?"
+                variant="secondary"
+              >
+                {opportunityForm}
+              </FinanceDialog>
             }
-          </strong>
-          <p>accepted opportunities</p>
-        </article>
-      </section>
+          />
+        ) : (
+          <>
+            <div className="finance-opportunity-list">
+              {activeOpportunities.map((opportunity) => (
+                <Link
+                  key={opportunity.id}
+                  href={"/finance/opportunities/" + opportunity.id}
+                  className="finance-opportunity-row"
+                >
+                  <span className="finance-opportunity-status">
+                    <CircleDot aria-hidden="true" />
+                  </span>
+                  <span className="finance-opportunity-identity">
+                    <strong>{opportunity.title}</strong>
+                    <span>
+                      {opportunity.organizationName || "Independent lead"}
+                      {opportunity.resultingWorkSource
+                        ? " · Now " + opportunity.resultingWorkSource.name
+                        : ""}
+                    </span>
+                  </span>
+                  <span className="finance-status-pill finance-status-pill--muted">
+                    {statusCopy[opportunity.status]}
+                  </span>
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+            {closedOpportunities.length > 0 && (
+              <WorkspaceDisclosure
+                title={<>Closed opportunities ({closedOpportunities.length})</>}
+                className="finance-disclosure"
+              >
+                <div className="finance-details-body finance-opportunity-list">
+                  {closedOpportunities.map((opportunity) => (
+                    <Link
+                      key={opportunity.id}
+                      href={"/finance/opportunities/" + opportunity.id}
+                      className="finance-opportunity-row is-closed"
+                    >
+                      <span className="finance-opportunity-identity">
+                        <strong>{opportunity.title}</strong>
+                        <span>
+                          {opportunity.organizationName || "Independent lead"}
+                        </span>
+                      </span>
+                      <span>{statusCopy[opportunity.status]}</span>
+                    </Link>
+                  ))}
+                </div>
+              </WorkspaceDisclosure>
+            )}
+          </>
+        )}
+      </FinanceSection>
 
       <FinanceSection
         title="Where income comes from"
@@ -230,90 +311,6 @@ export async function OpportunitiesPage({ userId }: { userId: string }) {
               );
             })}
           </div>
-        )}
-      </FinanceSection>
-
-      <FinanceSection
-        title="Possibilities in motion"
-        description="Prospective work stays separate from actual income until money is explicitly received."
-        action={
-          <FinanceDialog
-            triggerLabel="Capture another opportunity"
-            title="Could this turn into something?"
-            variant="secondary"
-          >
-            {opportunityForm}
-          </FinanceDialog>
-        }
-      >
-        {!opportunities.length ? (
-          <FinanceEmptyState
-            icon={<Sparkles aria-hidden="true" />}
-            title="No possibilities in motion"
-            description="A role, gig or client lead can begin as a small signal. Capture it before it disappears."
-            action={
-              <FinanceDialog
-                triggerLabel="Add your first opportunity"
-                title="Could this turn into something?"
-                variant="secondary"
-              >
-                {opportunityForm}
-              </FinanceDialog>
-            }
-          />
-        ) : (
-          <>
-            <div className="finance-opportunity-list">
-              {activeOpportunities.map((opportunity) => (
-                <Link
-                  key={opportunity.id}
-                  href={"/finance/opportunities/" + opportunity.id}
-                  className="finance-opportunity-row"
-                >
-                  <span className="finance-opportunity-status">
-                    <CircleDot aria-hidden="true" />
-                  </span>
-                  <span className="finance-opportunity-identity">
-                    <strong>{opportunity.title}</strong>
-                    <span>
-                      {opportunity.organizationName || "Independent lead"}
-                      {opportunity.resultingWorkSource
-                        ? " · Now " + opportunity.resultingWorkSource.name
-                        : ""}
-                    </span>
-                  </span>
-                  <span className="finance-status-pill finance-status-pill--muted">
-                    {statusCopy[opportunity.status]}
-                  </span>
-                  <ArrowRight aria-hidden="true" />
-                </Link>
-              ))}
-            </div>
-            {closedOpportunities.length > 0 && (
-              <details className="finance-details finance-archived">
-                <summary>
-                  Closed opportunities ({closedOpportunities.length})
-                </summary>
-                <div className="finance-details-body finance-opportunity-list">
-                  {closedOpportunities.map((opportunity) => (
-                    <Link
-                      key={opportunity.id}
-                      href={"/finance/opportunities/" + opportunity.id}
-                      className="finance-opportunity-row is-closed"
-                    >
-                      <span className="finance-opportunity-identity">
-                        <strong>{opportunity.title}</strong>
-                        <span>
-                          {opportunity.organizationName || "Independent lead"}
-                        </span>
-                      </span>
-                      <span>{statusCopy[opportunity.status]}</span>
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            )}
-          </>
         )}
       </FinanceSection>
     </>

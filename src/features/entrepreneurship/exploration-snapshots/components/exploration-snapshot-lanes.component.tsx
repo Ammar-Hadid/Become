@@ -1,5 +1,6 @@
 "use client";
 
+import { useInterfaceSound } from "@/components/ui/sound/hooks/use-interface-sound.hook";
 import { useState } from "react";
 
 const lanes = [
@@ -13,6 +14,7 @@ export function ExplorationSnapshotLanes({
 }: {
   children: React.ReactNode[];
 }) {
+  const sound = useInterfaceSound();
   const [active, setActive] = useState(0);
   return (
     <div className="exploration-snapshot-lanes" data-active-lane={active}>
@@ -30,7 +32,10 @@ export function ExplorationSnapshotLanes({
             aria-selected={active === index}
             aria-controls={`snapshot-lane-panel-${key}`}
             tabIndex={active === index ? 0 : -1}
-            onClick={() => setActive(index)}
+            onClick={() => {
+              if (active !== index) sound.play("controlConfirmed");
+              setActive(index);
+            }}
             onKeyDown={(event) => {
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
                 return;
@@ -39,6 +44,7 @@ export function ExplorationSnapshotLanes({
                 event.key === "ArrowRight"
                   ? (active + 1) % lanes.length
                   : (active - 1 + lanes.length) % lanes.length;
+              sound.play("controlConfirmed");
               setActive(next);
               requestAnimationFrame(() =>
                 document

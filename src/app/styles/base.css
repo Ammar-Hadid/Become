@@ -11,9 +11,12 @@ body {
   margin: 0;
   background: var(--color-background);
   color: var(--color-text-primary);
-  font-family: var(--font-sans);
+  font-family: var(--text-body--font-family);
   font-size: var(--text-body);
+  font-weight: var(--text-body--font-weight);
+  letter-spacing: var(--text-body--letter-spacing);
   line-height: var(--text-body--line-height);
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -33,7 +36,7 @@ button {
 }
 
 ::selection {
-  background: rgba(232, 168, 62, 0.28);
+  background: var(--color-primary-muted);
   color: var(--color-text-primary);
 }
 

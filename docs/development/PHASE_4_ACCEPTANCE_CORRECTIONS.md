@@ -1,5 +1,8 @@
 # Phase 4 acceptance corrections
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Implemented on `feature/phase-4`, 8 September 2026. No branch change, stash, reset, commit, push, deployment, dependency installation, schema change, migration, or Phase 5 work. Existing uncommitted work was inspected and retained. Test writes used disposable local users only.
 
 | Reported issue | Responsible layer / root cause | Correction and verification |

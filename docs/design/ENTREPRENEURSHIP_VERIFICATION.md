@@ -1,8 +1,13 @@
 # Entrepreneurship verification ledger
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Implementation branch: `refactor/entrepreneurship`. Browser checks use disposable accounts and the isolated local `become_entrepreneurship_ux_test` database. Provider responses are mocked or seeded review proposals; no live OpenAI request is part of these checks.
 
 The workspace base below is `/entrepreneurship/explorations/:nicheId`. Direct access never requires a prior stage. Shared typography values remain unchanged.
+
+Screenshots, destination names and layout checks below record historical implementation verification; they do not prescribe the new frontend design.
 
 ## Reachable flows
 

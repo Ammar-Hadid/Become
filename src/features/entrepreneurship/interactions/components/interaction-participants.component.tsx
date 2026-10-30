@@ -1,4 +1,7 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
 import { useState } from "react";
 export type ParticipantSnapshot = {
   name: string;
@@ -40,8 +43,7 @@ export function InteractionParticipants({
                   : field === "role"
                     ? "Role"
                     : "Email · optional"}
-                <input
-                  className="text-input"
+                <Input
                   type={field === "email" ? "email" : "text"}
                   required={field === "name"}
                   value={row[field] ?? ""}
@@ -58,21 +60,24 @@ export function InteractionParticipants({
               </label>
             ))}
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             type="button"
-            className="business-text-link"
+
             aria-label={`Remove participant ${i + 1}`}
             onClick={() =>
               setRows((current) => current.filter((r) => r.key !== row.key))
             }
           >
             Remove participant
-          </button>
+          </Button>
         </fieldset>
       ))}
-      <button
+      <Button
+        variant="secondary"
         type="button"
-        className="finance-dialog-trigger finance-dialog-trigger--secondary"
+
         disabled={rows.length >= 30}
         onClick={() =>
           setRows((current) => [
@@ -82,7 +87,7 @@ export function InteractionParticipants({
         }
       >
         Add participant
-      </button>
+      </Button>
     </div>
   );
 }

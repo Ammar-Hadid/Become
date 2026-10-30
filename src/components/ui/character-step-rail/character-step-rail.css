@@ -1,0 +1,93 @@
+.character-step-rail {
+  display: flex;
+  gap: var(--spacing-md);
+  min-width: 0;
+  /* Keep the border inside the clip even when the browser rounds scrollLeft. */
+  padding-inline: var(--spacing-2xs);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  touch-action: pinch-zoom;
+}
+.character-step-rail::-webkit-scrollbar {
+  display: none;
+}
+.character-step-rail__step {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  flex: 0 0 calc((100% - 3 * var(--spacing-md)) / 4);
+  align-items: center;
+  gap: var(--spacing-md);
+  min-width: 0;
+  min-height: var(--character-workspace-step-height);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-surface-duration) var(--motion-surface-ease),
+    background var(--motion-surface-duration) var(--motion-surface-ease),
+    box-shadow var(--motion-surface-duration) var(--motion-surface-ease);
+}
+.character-step-rail__step:hover,
+.character-step-rail__step:focus-visible {
+  border-color: var(--color-primary);
+}
+.character-step-rail__step[data-selected="true"] {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--color-surface));
+  box-shadow:
+    inset 0 0 0 1px var(--color-primary-muted),
+    0 0 1.4rem var(--color-primary-muted);
+  color: var(--color-text-primary);
+}
+.character-step-rail__step[aria-hidden="true"] {
+  pointer-events: none;
+  cursor: default;
+}
+.character-step-rail__number {
+  color: var(--color-primary);
+}
+.character-step-rail__step > span:nth-child(2) {
+  display: grid;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+.character-step-rail__step strong {
+  display: block;
+}
+.character-step-rail__step svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary);
+}
+
+@media (max-width: 55rem) {
+  .character-step-rail__step {
+    flex-basis: calc((100% - var(--spacing-md)) / 2);
+  }
+}
+@media (max-width: 40rem) {
+  .character-step-rail {
+    gap: var(--spacing-sm);
+  }
+  .character-step-rail__step {
+    flex-basis: calc((100% - var(--spacing-sm)) / 2);
+    gap: var(--spacing-sm);
+    min-height: 4.75rem;
+    padding: var(--spacing-md);
+  }
+  .character-step-rail__step > svg {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .character-step-rail__step {
+    transition-duration: 0.01ms;
+  }
+}

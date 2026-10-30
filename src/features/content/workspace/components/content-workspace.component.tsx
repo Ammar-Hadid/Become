@@ -2,6 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  WorkspacePanel,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
 import { ArrowLeft, Link2, Plus } from "lucide-react";
 import { confirmRecordFormDiscard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { ContentWritingEditor } from "@/features/content/editor/components/content-writing-editor.component";
@@ -76,16 +80,14 @@ export function ContentWorkspace({
   return (
     <div className="page-shell content-workspace-shell">
       <header className="content-workspace-header">
-        <Link href="/content" className="content-back-link">
+        <WorkspaceLink href="/content" variant="ghost">
           <ArrowLeft aria-hidden="true" /> Back to Content
-        </Link>
+        </WorkspaceLink>
         <div className="content-workspace-heading">
           <div>
             <p className="eyebrow">Creative work</p>
-            <p>
-              Keep the core idea in one place. Variants change shape; releases
-              show where each variant went.
-            </p>
+            <h1 className="content-workspace-title">Your next piece.</h1>
+            <p>Your brief, the version you are making, and its next step.</p>
           </div>
           <ContentThumbnailEditor
             contentId={workspace.id}
@@ -105,11 +107,13 @@ export function ContentWorkspace({
       </header>
 
       <div className="content-workspace-body">
-        <ContentIntentEditor
-          key={workspace.id}
-          workspace={workspace}
-          onWorkspace={acceptWorkspace}
-        />
+        <WorkspacePanel className="content-brief-card">
+          <ContentIntentEditor
+            key={workspace.id}
+            workspace={workspace}
+            onWorkspace={acceptWorkspace}
+          />
+        </WorkspacePanel>
 
         <nav className="content-versions" aria-label="Content variants">
           <div className="content-version-tabs">

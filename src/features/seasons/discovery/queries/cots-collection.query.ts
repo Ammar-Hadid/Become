@@ -1,14 +1,10 @@
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
 import type { DirectionTx } from "@/features/direction/services/direction-mutation.service";
 import { cotsCategory } from "@/features/seasons/discovery/constants/cots-category.constants";
-import { cotsLimits } from "@/features/seasons/discovery/config/cots-provider.config";
 import type {
-  CotsCandidateView,
   CotsCollectionView,
   CotsIdentityView,
-  CotsSelectionView,
 } from "@/features/seasons/discovery/types/cots-discovery.types";
-import type { ProviderCandidate } from "@/features/seasons/discovery/types/cots-provider.types";
 import type {
   SeasonCotsContext,
   SeasonCotsIdentity,
@@ -37,22 +33,6 @@ export function identityView(
     language: context?.language ?? "en",
     savedAt: identity.savedAt.toISOString(),
     sourceEntityId: context?.sourceEntityId ?? null,
-  };
-}
-export function candidateView(
-  snapshot: ProviderCandidate,
-  id: string,
-): CotsCandidateView {
-  // The client never receives the download URL or credentials. Preview is authenticated and candidate-bound.
-  const { originalUrl, previewUrl, imageQuality, popularityRank, ...view } =
-    snapshot;
-  void originalUrl;
-  void imageQuality;
-  void popularityRank;
-  return {
-    ...view,
-    candidateRef: id,
-    previewHref: previewUrl ? `/api/direction/cots/preview/${id}` : null,
   };
 }
 export async function getCotsIdentity(
@@ -88,36 +68,8 @@ export async function getCotsCollection(
     where: { userId_year_quarter: { userId, year, quarter } },
   });
   const active = season ? await getCotsIdentity(userId, season.id, tx) : null;
-  const rows = active
-    ? await tx.seasonCotsSelection.findMany({
-        where: { userId, seasonId: season!.id, identityId: active.row.id },
-        orderBy: { createdAt: "asc" },
-      })
-    : [];
-  const selections = rows.map((row): CotsSelectionView => {
-    const snapshot = row.snapshot as unknown as ProviderCandidate & {
-      sourceCategory?: string;
-      adaptation?: string;
-    };
-    return {
-      id: row.id,
-      candidateRef: row.candidateId,
-      candidate: candidateView(snapshot, row.candidateId),
-      identityId: row.identityId,
-      sourceCategory: cotsCategory(snapshot.sourceCategory)?.value ?? null,
-      sourceWork: snapshot.sourceWork,
-      adaptation: snapshot.adaptation ?? "",
-      status: row.status as CotsSelectionView["status"],
-      desiredPoster: row.desiredPoster,
-      mediaId: row.mediaId,
-      quoteId: row.quoteId,
-      error: row.error,
-    };
-  });
   return {
     identity: active?.view ?? null,
     selectionRevision: active?.row.selectionRevision ?? 0,
-    selections,
-    limits: cotsLimits(),
   };
 }

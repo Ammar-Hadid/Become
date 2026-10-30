@@ -1,3 +1,5 @@
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
+import { Card } from "@/components/ui/cards/card.component";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import { ArrowRight, Landmark } from "lucide-react";
@@ -57,7 +59,7 @@ export async function AccountsPage({ userId }: { userId: string }) {
 
       <FinanceSection
         title="Current accounts"
-        description="Positions use the freshest qualified manual, statement or live balance evidence available for each account."
+        description="Balances update from your latest manual check, statement or bank sync."
       >
         {!accounts.length ? (
           <FinanceEmptyState
@@ -76,7 +78,7 @@ export async function AccountsPage({ userId }: { userId: string }) {
             }
           />
         ) : (
-          <div className="finance-account-list">
+          <div className="finance-account-cards">
             {accounts.map((account) => {
               const freshness = account.reconciledAt
                 ? Math.floor((now - account.reconciledAt.getTime()) / 86400000)
@@ -110,7 +112,7 @@ export async function AccountsPage({ userId }: { userId: string }) {
               return (
                 <Link
                   href={"/finance/accounts/" + account.id}
-                  className="finance-account-row"
+                  className="finance-account-link"
                   key={account.id}
                   aria-label={
                     account.name +
@@ -120,56 +122,62 @@ export async function AccountsPage({ userId }: { userId: string }) {
                       : "Everyday position")
                   }
                 >
-                  <AccountArtwork
-                    name={account.name}
-                    type={account.type}
-                    institutionName={account.institutionName}
-                    compact
-                  />
-                  <span className="finance-account-identity">
-                    <strong>{account.name}</strong>
-                    <span>
-                      {
-                        FINANCIAL_ACCOUNT_TYPES.find(
-                          ([value]) => value === account.type,
-                        )?.[1]
-                      }
-                      {" · "}
-                      {account.includeInLiquidSavings
-                        ? "Included in liquid savings"
-                        : "Everyday position"}
+                  <Card className="finance-account-tile" spacing="dense">
+                    <AccountArtwork
+                      name={account.name}
+                      type={account.type}
+                      institutionName={account.institutionName}
+                      compact
+                    />
+                    <span className="finance-account-identity">
+                      <strong>{account.name}</strong>
+                      <span>
+                        {
+                          FINANCIAL_ACCOUNT_TYPES.find(
+                            ([value]) => value === account.type,
+                          )?.[1]
+                        }
+                        {" · "}
+                        {account.includeInLiquidSavings
+                          ? "Included in liquid savings"
+                          : "Everyday position"}
+                      </span>
                     </span>
-                  </span>
-                  <span className="finance-account-balance">
-                    <strong className="finance-number">
-                      {account.balanceMinor === null
-                        ? "Unavailable"
-                        : formatMoney(
-                            account.type === "CREDIT_CARD" &&
-                              account.balanceMinor < 0n
-                              ? -account.balanceMinor
-                              : account.balanceMinor,
-                            account.currency,
-                          )}
-                    </strong>
-                    <span
-                      className={
-                        "finance-account-freshness " +
-                        (freshness !== null && freshness > 30 ? "is-stale" : "")
-                      }
-                    >
-                      {balanceQualification}
+                    <span className="finance-account-balance">
+                      <strong className="finance-number">
+                        {account.balanceMinor === null
+                          ? "Unavailable"
+                          : formatMoney(
+                              account.type === "CREDIT_CARD" &&
+                                account.balanceMinor < 0n
+                                ? -account.balanceMinor
+                                : account.balanceMinor,
+                              account.currency,
+                            )}
+                      </strong>
+                      <span
+                        className={
+                          "finance-account-freshness " +
+                          (freshness !== null && freshness > 30
+                            ? "is-stale"
+                            : "")
+                        }
+                      >
+                        {balanceQualification}
+                      </span>
                     </span>
-                  </span>
-                  <ArrowRight aria-hidden="true" />
+                    <ArrowRight aria-hidden="true" />
+                  </Card>
                 </Link>
               );
             })}
           </div>
         )}
         {archived.length > 0 && (
-          <details className="finance-details finance-archived">
-            <summary>Archived accounts ({archived.length})</summary>
+          <WorkspaceDisclosure
+            title={<>Archived accounts ({archived.length})</>}
+            className="finance-disclosure"
+          >
             <div className="finance-details-body">
               {archived.map((account) => (
                 <Link
@@ -182,7 +190,7 @@ export async function AccountsPage({ userId }: { userId: string }) {
                 </Link>
               ))}
             </div>
-          </details>
+          </WorkspaceDisclosure>
         )}
       </FinanceSection>
     </>

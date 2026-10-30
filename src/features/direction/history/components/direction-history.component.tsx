@@ -1,5 +1,7 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
@@ -30,7 +32,9 @@ export function DirectionHistory({
     setError(null);
     try {
       const params = new URLSearchParams({ kind, id, cursor });
-      const response = await fetch(`/api/direction/history?${params}`);
+      const response = await fetch(`/api/direction/history?${params}`, {
+        signal: AbortSignal.timeout(15_000),
+      });
       const body = (await response.json().catch(() => null)) as
         (PageResult<DirectionChangeView> & { error?: string }) | null;
       if (!response.ok || !body?.items)
@@ -56,7 +60,7 @@ export function DirectionHistory({
   if (!items.length) return null;
 
   return (
-    <section
+    <Card
       className="direction-history"
       aria-labelledby={`direction-${kind.toLowerCase()}-history`}
     >
@@ -106,6 +110,6 @@ export function DirectionHistory({
           {pending ? "Loading…" : "Load older changes"}
         </Button>
       )}
-    </section>
+    </Card>
   );
 }

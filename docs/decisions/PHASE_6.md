@@ -1,9 +1,12 @@
 # Phase 6: Content, Ideas and Decisions
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 > Reconciled 13 September 2026 during Phase 7: the implementation checkpoint below is historical. The current repository contains the completed creator workspace, thumbnails, dedicated rich script editor, release corrections, histories and analytics. Its earlier browser approval block and temporary-worktree status are superseded by the user's subsequent implementation authorization and current `feature/reviews` checkout. Phase 7 independently re-ran the existing Content/script PostgreSQL regressions; see [the current verification record](PHASE_7.md). Original checkpoint results remain unchanged below.
 
 
-Implementation approved by the product owner, with the YouTube plan superseded by Content → ContentVariant → Publication → Channel. Parent Astra owns all backend semantics and implementation. The existing Sol subagent's effective runtime was verified as gpt-5.6-sol with xhigh reasoning; Sol owns frontend composition and interaction.
+Implementation approved by the product owner, with the YouTube plan superseded by Content → ContentVariant → Publication → Channel.
 
 A Content is one creative work. A Variant is a cut, format or language of that work. A Publication is an explicitly recorded release of one variant on one Channel (an owned account on YouTube, TikTok, Instagram or OTHER). Cross-posting one short to three channels remains one Content, one Variant and three Publications. The UI calls variants versions and publications releases. Creating content creates its first version atomically. Stage is production guidance and never publication proof. Pause/archive preserves all creation and release history.
 
@@ -13,7 +16,7 @@ Existing YouTube Domain IDs and activities are renamed in place to Content; hist
 
 Global Ideas belong to Direction. Typed many-to-many origin links support Content, Goal and Experiment destinations. Promotion creates the canonical destination and origin atomically, only on deliberate save. Decisions preserve meaningful choices and reasoning, optional owned contexts and user-scheduled review dates. Later reflections and superseding choices retain the original; routine domain changes are not mirrored.
 
-The creator desk and writing workspace are the first vertical slice. Acceptance is Idea → Content → writing/version → linked timer → multiple channels → explicit releases → manual results. Inspect this real browser journey before extending the creator's interaction patterns to media, corrections and analytics. Independently authored Ideas/Decisions and Direction criteria use the same canonical backend contracts, including all three production counts, bounded histories, explicit experiment cohorts and manual-result coverage.
+The creator desk and writing workspace are the first vertical slice. Acceptance is Idea → Content → writing/version → linked timer → multiple channels → explicit releases → manual results. Verify this browser journey when extending media, corrections and analytics capabilities. Independently authored Ideas/Decisions and Direction criteria use the same canonical backend contracts, including all three production counts, bounded histories, explicit experiment cohorts and manual-result coverage.
 
 All migration execution and fixtures use an isolated local database in the temporary feature/phase-6 worktree, separate port 3016 and media root. No changes are applied to the original database. No deployment, commit, push, OAuth, paid provider calls, Phase 7 work or external integrations.
 
@@ -53,7 +56,7 @@ Remaining work after that browser checkpoint:
 
 1. Inspect the complete creator journey on desktop and mobile, including writing recovery, timer linkage and one-work/one-version/three-release identity. Adjust the interaction patterns from actual browser evidence.
 2. Complete creator media upload/remove, bounded collection/history navigation, release correction/withdrawal/restoration, observation corrections, Content/version archive controls and channel management over the implemented backend contracts.
-3. Add the authoritative Content analytics surface and sparse Home continue/Idea entry points.
+3. Add Content analytics and access to continuing work and Idea capture.
 4. Run the remaining browser acceptance and regression checks, update this record, and review the final diff. Phase 6 is not complete until these steps pass.
 
 Commands for an explicitly isolated local Phase 6 database, from this worktree:

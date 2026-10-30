@@ -39,16 +39,22 @@ export function requireVersion(actual: number, expected: number | undefined) {
     );
 }
 
-/** Prisma's adapter can expose SQLSTATE directly instead of wrapping it as P2034. */
+/** Inspect Prisma/adapter codes for a confirmed rollback, including raw-query metadata. */
 export function isDirectionWriteConflict(error: unknown): boolean {
-  let current = error;
-  for (let depth = 0; depth < 4; depth++) {
-    if (!current || typeof current !== "object") return false;
+  const pending: unknown[] = [error];
+  const visited = new Set<object>();
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current || typeof current !== "object" || visited.has(current))
+      continue;
+    visited.add(current);
     const value = current as {
       code?: unknown;
       originalCode?: unknown;
       kind?: unknown;
       cause?: unknown;
+      meta?: unknown;
+      driverAdapterError?: unknown;
     };
     if (
       value.code === "P2034" ||
@@ -57,7 +63,7 @@ export function isDirectionWriteConflict(error: unknown): boolean {
       value.kind === "TransactionWriteConflict"
     )
       return true;
-    current = value.cause;
+    pending.push(value.cause, value.meta, value.driverAdapterError);
   }
   return false;
 }

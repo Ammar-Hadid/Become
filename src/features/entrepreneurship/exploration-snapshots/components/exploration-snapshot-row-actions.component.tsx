@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
 import { useState, useTransition } from "react";
 import { Archive, Check, MoreHorizontal, Pencil } from "lucide-react";
@@ -67,6 +68,7 @@ function MenuDialog({
   const closeMenu = useSubMenuClose();
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Living record"
       triggerLabel={label}
       title={title}
@@ -226,9 +228,9 @@ export function SnapshotClaimActions({
       placement="bottom-end"
       closeOnSelect={false}
       trigger={(props) => (
-        <button {...props} className="business-icon-button">
+        <Button variant="ghost" size="icon" {...props}>
           <MoreHorizontal aria-hidden="true" />
-        </button>
+        </Button>
       )}
     >
       <ClaimCorrection claim={claim} observations={observations} />
@@ -343,9 +345,9 @@ export function SnapshotUncertaintyActions({
       placement="bottom-end"
       closeOnSelect={false}
       trigger={(props) => (
-        <button {...props} className="business-icon-button">
+        <Button variant="ghost" size="icon" {...props}>
           <MoreHorizontal aria-hidden="true" />
-        </button>
+        </Button>
       )}
     >
       <UncertaintyCorrection uncertainty={uncertainty} />

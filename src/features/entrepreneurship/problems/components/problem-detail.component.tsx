@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { evidenceWords } from "@/features/entrepreneurship/problems/utils/evidence-source.util";
 import { ArchiveBusinessRecord } from "@/features/entrepreneurship/shared/components/archive-business-record.component";
 import { formatMoney } from "@/lib/money/utils/money.util";
@@ -119,7 +120,7 @@ export async function ProblemDetail({
         <p>{problem.initialStatement}</p>
         <span className="business-hint">This is the claim being examined.</span>
       </section>
-      <section className="business-zone">
+      <Card material="glass" spacing="dense" className="business-zone">
         <div className="business-row-heading">
           <div>
             <p className="eyebrow">Current audience boundary</p>
@@ -162,8 +163,12 @@ export async function ProblemDetail({
             ))}
           </div>
         </details>
-      </section>
-      <section className="business-zone business-evidence-zone">
+      </Card>
+      <Card
+        material="glass"
+        spacing="dense"
+        className="business-zone business-evidence-zone"
+      >
         <div className="business-row-heading">
           <div>
             <h3>Evidence, with its source</h3>
@@ -340,8 +345,12 @@ export async function ProblemDetail({
             </p>
           </div>
         )}
-      </section>
-      <section className="business-zone business-judgment-zone">
+      </Card>
+      <Card
+        material="glass"
+        spacing="dense"
+        className="business-zone business-judgment-zone"
+      >
         <div className="business-row-heading">
           <div>
             <p className="eyebrow">Decision trail</p>
@@ -403,7 +412,7 @@ export async function ProblemDetail({
             a while.
           </p>
         )}
-      </section>
+      </Card>
     </>
   );
 }

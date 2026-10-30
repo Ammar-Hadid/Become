@@ -1,0 +1,33 @@
+.ai-glow-review {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-xl);
+  width: 100%;
+  min-height: 100dvh;
+  padding: var(--spacing-xl) var(--space-app-page-gutter) var(--spacing-2xl);
+}
+.ai-glow-review-heading,
+.ai-glow-summary-copy,
+.ai-glow-review-foot {
+  display: grid;
+  gap: var(--spacing-md);
+}
+.ai-glow-review-heading > p {
+  max-width: 72ch;
+}
+.ai-glow-review-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+}
+@media (max-width: 720px) {
+  .ai-glow-review {
+    padding-inline: var(--space-page-edge-mobile);
+    gap: var(--spacing-lg);
+  }
+}
+
+.ai-glow-summary-copy > .become-button {
+  justify-self: start;
+}

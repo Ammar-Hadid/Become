@@ -1,10 +1,9 @@
 # Phase 5.5 — COTS discovery, curation and Season arrival
 
-Implementation authorized on 10 September 2026. Astra owns backend, providers,
-storage and security. Frontend implementation and visual direction were delegated
-to the real `gpt-5.6-sol` subagent with `xhigh` reasoning, verified from its runtime
-record. The user's final proactive-opening amendment supersedes the earlier
-invitation-card proposal. No confetti or new motion dependency is used.
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
+Implementation authorized on 10 September 2026. The user's final proactive-opening amendment supersedes the earlier invitation-card proposal. No new motion dependency was added.
 
 ## Product behavior
 
@@ -13,15 +12,7 @@ invitation-card proposal. No confetti or new motion dependency is used.
   dialogs, interaction already begun, hidden pages, and deep links prevent entry.
   `Not now` stores `openingDeferredAt` independently of the draft version. It
   prevents further automatic entry for that Season; Direction still offers resume.
-- Four ritual stages remain. COTS uses Identity → Standards → Images → Words
-  inside stage 3, followed by the real saved poster preview in stage 4. Empty
-  media is valid.
-- Stage 2 creates a complete goal inside an in-place ritual studio instead of
-  navigating into the application shell. The opening header, progress rail, URL and
-  saved draft remain anchored while the standard goal fields, domains and optional
-  evidence builder use the stage body. The user explicitly places the result as the
-  main direction or a supporting goal before saving. Standalone goal creation keeps
-  its existing page presentation and navigation unchanged.
+- Opening supports saved identity, standards, curated images/words and a saved preview; empty media is valid. Goal creation uses canonical fields, domains and evidence and explicitly assigns main or supporting participation before saving.
 - The user explicitly selects Anime, TV show, Movie, Game, Book, Comic, or Public
   figure / real-life person. The registry adapts work/context fields and derives
   subject kind. Public figures require no fictional source work. Fan art is valid.
@@ -104,16 +95,7 @@ requires film-category evidence to avoid returning novel text for a Movie identi
 Unsupported layouts remain reviewable source links. Book passages need an explicit
 edition/chapter and remain passages with no invented speaker.
 
-Words discovery presents one active item at a time. The quotation sits inside a
-layered, textured primary-gold gallery frame with carved foliate rails; attribution,
-evidence and curation controls form one aligned, intentionally dim provenance strip
-outside the artwork. Previous/next controls and Left/Right keys move through the result set.
-If another provider page exists, advancing beyond the final visible quotation
-replaces the artwork with a framed continuation prompt; loading continues in place
-and the next result occupies the same stage. There is no detached load-more control.
-Each newly shown item receives one bounded glow/reveal; reduced-motion mode removes
-both animations. Manual wording entry and existing storage/import contracts remain
-unchanged.
+Words discovery supports previous/next and keyboard navigation, provider pagination and manual wording entry. Storage/import and attribution contracts remain unchanged.
 
 ## Setup, costs and result depth
 

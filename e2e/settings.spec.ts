@@ -37,18 +37,32 @@ test("personal settings persist, protect email changes, and share top navigation
   });
   try {
     await page.goto("/settings");
-    await expect(page).toHaveURL(/\/settings\/personal$/);
+    await expect(page).toHaveURL(/\/settings\/application$/);
     await expect(
-      page.getByRole("heading", { name: "Settings", exact: true }),
+      page.getByRole("heading", {
+        name: "Application preferences",
+        exact: true,
+      }),
     ).toBeVisible();
     const navigation = page.getByRole("navigation", {
       name: "Settings sections",
     });
     await expect(navigation.getByRole("link")).toHaveText([
+      "Application",
       "Personal",
       "Finance",
       "Nexo",
     ]);
+    await expect(
+      navigation.getByRole("link", { name: "Application", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    await navigation
+      .getByRole("link", { name: "Personal", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/settings\/personal$/);
+    await expect(
+      page.getByRole("heading", { name: "Profile and account", exact: true }),
+    ).toBeVisible();
     await expect(
       navigation.getByRole("link", { name: "Personal", exact: true }),
     ).toHaveAttribute("aria-current", "page");
@@ -87,6 +101,9 @@ test("personal settings persist, protect email changes, and share top navigation
             .name,
       )
       .toBe("Renamed Tester");
+    await expect(page.locator(".app-header-account-name").first()).toHaveText(
+      "Renamed Tester",
+    );
     await page.reload();
     await expect(nameField).toHaveValue("Renamed Tester");
 
@@ -140,6 +157,9 @@ test("personal settings persist, protect email changes, and share top navigation
     await save.click();
     await expect(save).toBeDisabled();
     await expect(currentPassword).toHaveCount(0);
+    await expect(page.locator(".app-header-account-name").first()).toHaveText(
+      "Updated Tester",
+    );
     await page.reload();
     await expect(nameField).toHaveValue("Updated Tester");
     await expect(emailField).toHaveValue(newEmail);
@@ -163,7 +183,7 @@ test("personal settings persist, protect email changes, and share top navigation
         navigation.getByRole("link", { name: section, exact: true }),
       ).toHaveAttribute("aria-current", "page");
       await expect(navigation.locator('[aria-current="page"]')).toHaveCount(1);
-      await expect(page.locator("main h2")).toBeVisible();
+      await expect(page.locator("main h1")).toBeVisible();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= window.innerWidth,

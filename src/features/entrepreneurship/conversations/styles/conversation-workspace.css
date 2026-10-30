@@ -11,10 +11,8 @@
 .conversation-workspace[data-empty] {
   grid-template-columns: minmax(19rem, 21rem) minmax(0, 1fr);
 }
-
 .conversation-index {
   min-width: 0;
-  border-right: 1px solid var(--color-border);
 }
 
 .conversation-index > header {
@@ -75,7 +73,6 @@
 .conversation-index span[data-status="in_progress"] {
   color: var(--color-success);
 }
-
 .conversation-thread {
   display: flex;
   min-width: 0;
@@ -261,32 +258,13 @@
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
 }
-
-.conversation-composer select,
+.conversation-composer select {
+  width: 100%;
+  color: var(--color-text-primary);
+}
 .conversation-composer textarea {
   width: 100%;
-  min-height: 2.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-input);
-  padding: var(--spacing-md);
   color: var(--color-text-primary);
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
-}
-
-.conversation-composer button {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  gap: var(--spacing-sm);
-  border-radius: var(--radius-control);
-  background: var(--color-primary);
-  padding-inline: var(--spacing-lg);
-  color: var(--color-on-primary);
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
-  font-weight: 600;
 }
 
 .conversation-composer button svg {
@@ -303,11 +281,6 @@
 
 .conversation-composer-error {
   color: var(--color-danger);
-}
-
-.conversation-composer-error button {
-  color: var(--color-text-primary);
-  text-decoration: underline;
 }
 
 .conversation-pending-message {
@@ -358,9 +331,7 @@
   padding-left: var(--spacing-lg);
   border-left: 1px solid var(--color-border);
 }
-
 .conversation-thread-empty,
-.conversation-welcome,
 .conversation-index-empty {
   display: grid;
   place-content: center;
@@ -368,6 +339,16 @@
   gap: var(--spacing-md);
   min-height: 20rem;
   padding: var(--spacing-3xl);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.conversation-welcome {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--spacing-md);
+  min-height: 20rem;
   color: var(--color-text-muted);
   text-align: center;
 }

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import type { ReactNode } from "react";
 import styles from "../styles/review-reading.module.css";
 
@@ -19,7 +20,12 @@ export function ReviewChapter({
   aside?: ReactNode;
 }) {
   return (
-    <section className={styles.chapter} id={id} aria-labelledby={`${id}-title`}>
+    <Card
+      material="glass"
+      className={styles.chapter}
+      id={id}
+      aria-labelledby={`${id}-title`}
+    >
       <header className={styles.chapterHeading}>
         <span className={styles.chapterNumber} aria-hidden="true">
           {number}
@@ -38,6 +44,6 @@ export function ReviewChapter({
         <div className={styles.chapterContent}>{children}</div>
         {aside && <aside className={styles.chapterAside}>{aside}</aside>}
       </div>
-    </section>
+    </Card>
   );
 }

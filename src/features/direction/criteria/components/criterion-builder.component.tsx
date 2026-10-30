@@ -1,5 +1,11 @@
 "use client";
 
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+
 import {
   AlertCircle,
   ChevronDown,
@@ -264,8 +270,7 @@ export function CriterionBuilder({
                 <div className="direction-form-grid">
                   <label>
                     <span className="field-label">Evidence type</span>
-                    <span className="select-wrap">
-                      <select
+                    <NativeSelect
                         value={criterion.metric}
                         onChange={(event) =>
                           onChange(
@@ -288,12 +293,11 @@ export function CriterionBuilder({
                             {item.name}
                           </option>
                         ))}
-                      </select>
-                    </span>
+                      </NativeSelect>
                   </label>
                   <label>
                     <span className="field-label">Definition label</span>
-                    <input
+                    <Input
                       className="text-input"
                       value={criterion.label}
                       maxLength={200}
@@ -310,7 +314,7 @@ export function CriterionBuilder({
                           ? "Target amount"
                           : `Target ${capability?.unit ?? "value"}`}
                       </span>
-                      <input
+                      <Input
                         className="text-input"
                         inputMode={monetary ? "decimal" : "numeric"}
                         value={criterion.target}
@@ -334,7 +338,7 @@ export function CriterionBuilder({
                         <span className="field-label">
                           Evidence starts <span>— defaults to goal</span>
                         </span>
-                        <input
+                        <Input
                           className="text-input"
                           type="date"
                           value={criterion.startOn ?? ""}
@@ -347,7 +351,7 @@ export function CriterionBuilder({
                         <span className="field-label">
                           Evidence ends <span>— defaults to goal</span>
                         </span>
-                        <input
+                        <Input
                           className="text-input"
                           type="date"
                           value={criterion.endOn ?? ""}
@@ -408,8 +412,7 @@ export function CriterionBuilder({
                       <span className="field-label">
                         Version format <span>— optional</span>
                       </span>
-                      <span className="select-wrap">
-                        <select
+                      <NativeSelect
                           value={criterion.contentFormat ?? ""}
                           onChange={(event) =>
                             patch({
@@ -425,8 +428,7 @@ export function CriterionBuilder({
                               {label}
                             </option>
                           ))}
-                        </select>
-                      </span>
+                        </NativeSelect>
                     </label>
                   )}
                   {context === "EXPERIMENT" &&
@@ -619,7 +621,7 @@ export function CriterionBuilder({
                           <span className="field-label">
                             Recorded buying context
                           </span>
-                          <select
+                          <NativeSelect
                             className="text-input"
                             value={criterion.marketType ?? ""}
                             onChange={(event) =>
@@ -634,7 +636,7 @@ export function CriterionBuilder({
                             <option value="B2C">Consumers</option>
                             <option value="B2B">Businesses</option>
                             <option value="BOTH">Consumers & businesses</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         {criterion.metric === "BUSINESS_RECEIPTS" && (
                           <ScopePicker
@@ -737,8 +739,7 @@ export function CriterionBuilder({
                       <span className="field-label">
                         Output kind <span>— optional</span>
                       </span>
-                      <span className="select-wrap">
-                        <select
+                      <NativeSelect
                           value={criterion.evidenceType ?? ""}
                           onChange={(event) =>
                             patch({
@@ -752,8 +753,7 @@ export function CriterionBuilder({
                               {label}
                             </option>
                           ))}
-                        </select>
-                      </span>
+                        </NativeSelect>
                     </label>
                   )}
                   {criterion.metric === "SAVINGS_GOAL" && (
@@ -776,7 +776,7 @@ export function CriterionBuilder({
                           Minimum received{" "}
                           <span>— optional, separate from quote</span>
                         </span>
-                        <input
+                        <Input
                           className="text-input"
                           inputMode="decimal"
                           value={criterion.minimumReceived ?? ""}
@@ -823,7 +823,7 @@ export function CriterionBuilder({
                           </label>
                           {criterion.baselineAssertions?.[0]
                             ?.noPriorPaidRelationship && (
-                            <textarea
+                            <Textarea
                               className="text-input text-input--textarea-sm"
                               value={criterion.baselineAssertions[0].note}
                               onChange={(event) =>

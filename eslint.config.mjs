@@ -12,5 +12,8 @@ export default defineConfig([
     "src/generated/**",
     "playwright-report/**",
     "test-results/**",
+    "storybook-static/**",
+    "coverage/**",
+    ".data/**",
   ]),
 ]);

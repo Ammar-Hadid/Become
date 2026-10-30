@@ -1,4 +1,5 @@
 "use client";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
 import { useState } from "react";
 import { RecordDialog } from "@/components/ui/forms/record-dialog.component";
 import { RecordForm } from "@/components/ui/forms/record-form.component";
@@ -26,14 +27,14 @@ export function WorkSourceChoiceFields({
       >
         <label className="field-label">
           WorkSource action
-          <select
-            className="text-input mt-sm"
+          <NativeSelect
+            className="mt-sm"
             value={mode}
             onChange={(e) => setMode(e.target.value)}
           >
             <option value="CREATE">Create a WorkSource</option>
             <option value="LINK">Link an existing WorkSource</option>
-          </select>
+          </NativeSelect>
         </label>
         {mode === "CREATE" ? (
           <BusinessField
@@ -75,6 +76,7 @@ export function CompanyWorkSourceForm({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Work relationship"
       triggerLabel="Create / Link WorkSource"
       title="Connect a WorkSource"

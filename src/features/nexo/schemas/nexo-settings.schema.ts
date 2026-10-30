@@ -4,7 +4,7 @@ import { NEXO_TASKS } from "@/features/nexo/constants/nexo-task.constants";
 export const nexoProfileSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,60}$/),
   name: z.string().trim().min(1).max(80),
-  provider: z.literal("openai"),
+  provider: z.enum(["openai", "zai", "moonshot", "google"]),
   model: z.string().trim().min(1).max(120),
   reasoning: z.enum([
     "default",
@@ -16,18 +16,33 @@ export const nexoProfileSchema = z.object({
     "xhigh",
   ]),
   verbosity: z.enum(["default", "low", "medium", "high"]),
-  maxOutputTokens: z.number().int().min(1000).max(32000),
+  maxOutputTokens: z.number().int().min(100).max(32000),
   timeoutSeconds: z.number().int().min(15).max(180),
+  inputUsdPerMillion: z.number().min(0).max(1000).nullable().optional(),
+  outputUsdPerMillion: z.number().min(0).max(1000).nullable().optional(),
 });
 export const nexoSettingsSchema = z
   .object({
     schemaVersion: z.literal(1),
     profiles: z.array(nexoProfileSchema).max(20),
-    assignments: z
-      .array(
-        z.object({ taskId: z.enum(NEXO_TASKS), profileId: z.string().max(60) }),
-      )
-      .max(4),
+    assignments: z.preprocess(
+      // Old saved configurations can still contain this retired route.
+      // Normalize on read/save without rewriting profiles or historical runs.
+      (value) =>
+        Array.isArray(value)
+          ? value.filter(
+              (assignment) => assignment?.taskId !== "cots.identity-resolution",
+            )
+          : value,
+      z
+        .array(
+          z.object({
+            taskId: z.enum(NEXO_TASKS),
+            profileId: z.string().max(60),
+          }),
+        )
+        .max(NEXO_TASKS.length),
+    ),
     dailyRunLimit: z.number().int().min(1).max(100),
   })
   .superRefine((value, ctx) => {

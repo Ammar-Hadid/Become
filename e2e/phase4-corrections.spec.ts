@@ -227,7 +227,7 @@ test("company and accepted offer connect existing work and explicitly attribute 
       .getByText("EUR 175.00 every 1 month", { exact: true }),
   ).toBeVisible();
   await page.screenshot({
-    path: `docs/development/phase4-corrections/${info.project.name}-accepted-offer.png`,
+    path: info.outputPath("accepted-offer.png"),
     fullPage: true,
   });
   expect(await prisma.financialTransaction.count({ where: { userId } })).toBe(
@@ -294,7 +294,7 @@ test("company and accepted offer connect existing work and explicitly attribute 
   await page.getByRole("link", { name: "View the Finance receipt ↗" }).click();
   await expect(page.getByText("EUR 150.00 attributed")).toBeVisible();
   await page.screenshot({
-    path: `docs/development/phase4-corrections/${info.project.name}-receipt.png`,
+    path: info.outputPath("receipt.png"),
     fullPage: true,
   });
 });
@@ -673,7 +673,7 @@ test("completed-session capture uses the page width and preserves notes through 
     .getByRole("textbox", { name: "Summary", exact: true })
     .fill("Only notes about an actual conversation.");
   await page.screenshot({
-    path: `docs/development/phase4-corrections/${info.project.name}-session-capture.png`,
+    path: info.outputPath("session-capture.png"),
     fullPage: true,
   });
   await page.route(

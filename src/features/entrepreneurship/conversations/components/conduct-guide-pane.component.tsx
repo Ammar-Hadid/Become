@@ -1,4 +1,7 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
+import { Workspace } from "@/components/ui/workspace/workspace.component";
+import { createPortal } from "react-dom";
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -139,6 +142,97 @@ export function ConductGuidePane({
     .map((item) => item.questionId)
     .filter((questionId) => !skipped.includes(questionId));
 
+  const pane = (!mobile || presence.isPresent) && (
+    <aside
+      ref={paneRef}
+      className="conduct-guide-pane"
+      data-presence={mobile ? presence.presenceState : "open"}
+      aria-label="Interview guide"
+      role={mobile ? "dialog" : undefined}
+      aria-modal={mobile ? true : undefined}
+      aria-labelledby="conduct-guide-title"
+      tabIndex={mobile ? -1 : undefined}
+      inert={mobile && presence.isExiting ? true : undefined}
+      onAnimationEnd={presence.onPresenceAnimationEnd}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Pinned edition {guideVersion}</p>
+          <h2 id="conduct-guide-title">{guideTitle}</h2>
+        </div>
+        <button
+          ref={closeRef}
+          type="button"
+          aria-label="Close interview guide"
+          onClick={() => setOpen(false)}
+        >
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      {questions.length > 0 && (
+        <div
+          className="conduct-guide-progress"
+          aria-label={`${progress} of ${questions.length} questions reached`}
+        >
+          <span
+            style={{
+              width: `${(progress / questions.length) * 100}%`,
+            }}
+          />
+        </div>
+      )}
+      <div className="conduct-guide-document">
+        <InterviewGuideDocumentView
+          document={guideDocument}
+          activeQuestionId={question?.questionId ?? null}
+          askedQuestionIds={asked}
+          skippedQuestionIds={skipped}
+          renderQuestionActions={() =>
+            !exploration?.archived ? (
+              <div className="conduct-guide-question-actions">
+                <Button
+                  variant="primary"
+                  type="button"
+                  disabled={pending}
+                  onClick={() => advance(false)}
+                >
+                  Ask <ChevronRight aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={pending}
+                  onClick={() => advance(true)}
+                >
+                  <SkipForward aria-hidden="true" /> Skip
+                </Button>
+              </div>
+            ) : null
+          }
+        />
+        {questions.length > 0 && !question && (
+          <div className="conduct-guide-complete" role="status">
+            <h3>Every guide question is covered.</h3>
+            <p>Keep following the conversation wherever it is useful.</p>
+          </div>
+        )}
+      </div>
+      {message && (
+        <p className="conduct-guide-error" role="alert">
+          {message}
+        </p>
+      )}
+      <footer>
+        <span>
+          {questions.length > 0
+            ? `${skipped.length} skipped`
+            : "No scripted questions"}
+        </span>
+        <p>Guidance stays optional throughout the conversation.</p>
+      </footer>
+    </aside>
+  );
+
   return (
     <>
       <button
@@ -153,107 +247,28 @@ export function ConductGuidePane({
           ? `Guide · ${progress} of ${questions.length}`
           : "Guide notes"}
       </button>
-      {mobile && presence.isPresent && (
-        <button
-          type="button"
-          className="conduct-guide-scrim"
-          data-presence={presence.presenceState}
-          aria-label="Close interview guide"
-          tabIndex={open ? 0 : -1}
-          onClick={() => setOpen(false)}
-          onAnimationEnd={presence.onPresenceAnimationEnd}
-        />
-      )}
-      {(!mobile || presence.isPresent) && (
-        <aside
-          ref={paneRef}
-          className="conduct-guide-pane"
-          data-presence={mobile ? presence.presenceState : "open"}
-          aria-label="Interview guide"
-          role={mobile ? "dialog" : undefined}
-          aria-modal={mobile ? true : undefined}
-          aria-labelledby="conduct-guide-title"
-          tabIndex={mobile ? -1 : undefined}
-          inert={mobile && presence.isExiting ? true : undefined}
-          onAnimationEnd={presence.onPresenceAnimationEnd}
-        >
-          <header>
-            <div>
-              <p className="eyebrow">Pinned edition {guideVersion}</p>
-              <h2 id="conduct-guide-title">{guideTitle}</h2>
-            </div>
-            <button
-              ref={closeRef}
-              type="button"
-              aria-label="Close interview guide"
-              onClick={() => setOpen(false)}
+      {mobile && presence.isPresent && typeof document !== "undefined"
+        ? createPortal(
+            <Workspace
+              area="entrepreneurship"
+              className="conduct-guide-overlay"
             >
-              <X aria-hidden="true" />
-            </button>
-          </header>
-          {questions.length > 0 && (
-            <div
-              className="conduct-guide-progress"
-              aria-label={`${progress} of ${questions.length} questions reached`}
-            >
-              <span
-                style={{
-                  width: `${(progress / questions.length) * 100}%`,
-                }}
+              <button
+                type="button"
+                className="conduct-guide-scrim"
+                data-presence={presence.presenceState}
+                aria-label="Close interview guide"
+                tabIndex={open ? 0 : -1}
+                onClick={() => setOpen(false)}
+                onAnimationEnd={presence.onPresenceAnimationEnd}
               />
-            </div>
-          )}
-          <div className="conduct-guide-document">
-            <InterviewGuideDocumentView
-              document={guideDocument}
-              activeQuestionId={question?.questionId ?? null}
-              askedQuestionIds={asked}
-              skippedQuestionIds={skipped}
-              renderQuestionActions={() =>
-                !exploration?.archived ? (
-                  <div className="conduct-guide-question-actions">
-                    <button
-                      type="button"
-                      className="finance-dialog-trigger"
-                      disabled={pending}
-                      onClick={() => advance(false)}
-                    >
-                      Ask <ChevronRight aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      className="finance-dialog-trigger finance-dialog-trigger--secondary"
-                      disabled={pending}
-                      onClick={() => advance(true)}
-                    >
-                      <SkipForward aria-hidden="true" /> Skip
-                    </button>
-                  </div>
-                ) : null
-              }
-            />
-            {questions.length > 0 && !question && (
-              <div className="conduct-guide-complete" role="status">
-                <h3>Every guide question is covered.</h3>
-                <p>Keep following the conversation wherever it is useful.</p>
-              </div>
-            )}
-          </div>
-          {message && (
-            <p className="conduct-guide-error" role="alert">
-              {message}
-            </p>
-          )}
-          <footer>
-            <span>
-              {questions.length > 0
-                ? `${skipped.length} skipped`
-                : "No scripted questions"}
-            </span>
-            <p>Guidance stays optional throughout the conversation.</p>
-          </footer>
-        </aside>
-      )}
+              {pane}
+            </Workspace>,
+            document.body,
+          )
+        : !mobile
+          ? pane
+          : null}
     </>
   );
 }

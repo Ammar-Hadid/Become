@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { expect, test, type Page } from "./utils/browser-test.util";
 
 async function createAccount(page: Page, name: string) {
@@ -8,13 +9,7 @@ async function createAccount(page: Page, name: string) {
   await page.getByTestId("email-input").fill(email);
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
-    timeout: 15_000,
-  });
-  await page.goto("/?timer=journey");
-  await expect(
-    page.getByRole("heading", { name: new RegExp(name) }),
-  ).toBeVisible();
+  await deferAutomaticSeasonOpening(page);
 }
 
 test("a new user can start, recover, and complete a timer", async ({
@@ -22,22 +17,22 @@ test("a new user can start, recover, and complete a timer", async ({
 }) => {
   await createAccount(page, "Ammar");
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "What are you working on?" })
+    .getByRole("button", { name: "Engineering", exact: true })
+    .click();
   await page.getByTestId("activity-select").selectOption({ label: "Coding" });
   await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("session-description").fill("Build the timer journey");
   await page.getByTestId("confirm-start-timer").click();
   await page.goto("/");
 
-  const shellTimer = page.locator(
-    '[data-testid="active-timer-trigger"]:visible',
-  );
+  const shellTimer = page.locator(".app-header-focus [data-elapsed-seconds]");
   const dashboardTimer = page.getByTestId("dashboard-active-session");
   await expect(shellTimer).toBeVisible();
   await expect(dashboardTimer).toBeVisible();
   const activeSessionId = await dashboardTimer.getAttribute("data-session-id");
   expect(activeSessionId).not.toBeNull();
-  await expect(shellTimer).toHaveAttribute("data-session-id", activeSessionId!);
   await expect
     .poll(async () =>
       Number(await dashboardTimer.getAttribute("data-elapsed-seconds")),
@@ -71,20 +66,21 @@ test("a new user can start, recover, and complete a timer", async ({
   await page.getByTestId("confirm-stop-timer").click();
   await expect(dashboardTimer).toHaveCount(0);
 
+  await page.goto("/sessions");
   const completedSessionTrigger = page
     .getByTestId("session-row-trigger")
     .filter({ hasText: "Build the timer journey" });
   await completedSessionTrigger.click();
-  await expect(page).toHaveURL(/\/?session=/);
+  await expect(page).toHaveURL(/\/sessions\?session=/);
   await expect(page.getByTestId("session-details")).toContainText(
     "Timer journey verified",
   );
   await page.getByRole("button", { name: "Close session details" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/sessions$/);
   await expect(page.getByTestId("session-details")).toHaveCount(0);
 });
 
-test("shell controls remain readable, separated, centered, and explicit", async ({
+test("shell controls remain readable and navigation overlays the page", async ({
   page,
 }) => {
   await page.goto("/sign-in");
@@ -105,66 +101,65 @@ test("shell controls remain readable, separated, centered, and explicit", async 
     );
   await page.getByTestId("password-input").fill("become-test-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/, {
-    timeout: 15_000,
+  await deferAutomaticSeasonOpening(page);
+  const header = page.getByRole("banner");
+  await expect(header).toBeVisible();
+  await expect(
+    header.getByRole("button", { name: "Start focus", exact: true }),
+  ).toBeVisible();
+  const pageBeforeOpen = await page.getByRole("main").boundingBox();
+  const navigationTrigger = page.getByRole("button", {
+    name: "Open navigation",
+    exact: true,
   });
-  await page.goto("/?timer=shell");
-  await expect(page.getByRole("heading", { name: /Shell/ })).toBeVisible();
-
-  const mobileNavigation = page.getByTestId("mobile-bottom-nav");
-  if (await mobileNavigation.isVisible()) {
-    await expect(page.getByRole("banner")).toHaveCSS("display", "flex");
-    const navigationBox = await mobileNavigation.boundingBox();
-    const timerBox = await page
-      .locator('[data-testid="start-timer-trigger"]:visible')
-      .boundingBox();
-    expect(navigationBox).not.toBeNull();
-    expect(timerBox).not.toBeNull();
-    expect(
-      Math.abs(
-        navigationBox!.x +
-          navigationBox!.width / 2 -
-          (timerBox!.x + timerBox!.width / 2),
-      ),
-    ).toBeLessThanOrEqual(1);
-    await page.getByRole("button", { name: "Open navigation" }).click();
+  const mobile = await navigationTrigger.isVisible();
+  if (mobile) {
+    await navigationTrigger.click();
+    await expect(
+      page
+        .getByRole("navigation", { name: "Primary navigation" })
+        .getByRole("link"),
+    ).toHaveText([
+      "Dashboard",
+      "Engineering",
+      "Finance",
+      "Entrepreneurship",
+      "Content",
+      "Direction",
+    ]);
+    await page.keyboard.press("Escape");
+    await expect(navigationTrigger).toBeFocused();
+    await navigationTrigger.click();
+  } else {
+    await page
+      .getByRole("button", { name: "Open area navigation", exact: true })
+      .click();
+    await expect(
+      page.getByRole("navigation", {
+        name: "Desktop area navigation",
+        exact: true,
+      }),
+    ).toBeVisible();
   }
-
-  const overviewSection = page.locator(
-    '[data-testid="nav-section-overview"]:visible',
-  );
-  const domainsSection = page.locator(
-    '[data-testid="nav-section-domains"]:visible',
-  );
-  const overviewBox = await overviewSection.boundingBox();
-  const domainsBox = await domainsSection.boundingBox();
-  expect(overviewBox).not.toBeNull();
-  expect(domainsBox).not.toBeNull();
+  expect(await page.getByRole("main").boundingBox()).toEqual(pageBeforeOpen);
+  const accountName = page.locator(".app-header-account-name:visible");
+  await expect(accountName).toContainText("Shell Tester");
   expect(
-    domainsBox!.y - (overviewBox!.y + overviewBox!.height),
-  ).toBeGreaterThanOrEqual(24);
-
-  const navigationFontSize = await overviewSection
-    .locator(".nav-link")
-    .first()
-    .evaluate((element) =>
+    await accountName.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
-    );
-  const sectionLabelFontSize = await overviewSection
-    .locator(".nav-label")
-    .evaluate((element) =>
-      Number.parseFloat(getComputedStyle(element).fontSize),
-    );
-  expect(navigationFontSize).toBeGreaterThanOrEqual(14);
-  expect(sectionLabelFontSize).toBeGreaterThanOrEqual(11);
+    ),
+  ).toBeGreaterThanOrEqual(12);
 
   const pageUrl = page.url();
-  await page.locator('[data-testid="user-identity"]:visible').click();
+  await page
+    .getByRole("button", { name: "Account", exact: true })
+    .filter({ visible: true })
+    .click();
   await expect(page).toHaveURL(pageUrl);
   await expect(
-    page.locator('button[aria-label="Sign out"]:visible'),
+    page.getByRole("menuitem", { name: "Sign out", exact: true }),
   ).toBeVisible();
 
-  await page.locator('button[aria-label="Sign out"]:visible').click();
+  await page.getByRole("menuitem", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/sign-in/);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import { useRouter } from "next/navigation";
 import { FinanceForm } from "@/features/finance/components/finance-form.component";
@@ -84,8 +85,10 @@ export function OpportunityForm({
         defaultValue={initial.discoveredAt}
         required
       />
-      <details className="finance-details">
-        <summary>Milestones and prospective compensation</summary>
+      <WorkspaceDisclosure
+        title={<>Milestones and prospective compensation</>}
+        className="finance-disclosure"
+      >
         <div className="finance-details-body space-y-lg">
           {[
             ["appliedAt", "Applied at"],
@@ -128,7 +131,7 @@ export function OpportunityForm({
             defaultValue={initial.expectedCurrency ?? ""}
           />
         </div>
-      </details>
+      </WorkspaceDisclosure>
       <FinanceField
         label="Notes"
         name="notes"

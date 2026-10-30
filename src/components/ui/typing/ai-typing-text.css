@@ -1,0 +1,55 @@
+.ai-typing-text {
+  width: 100%;
+  min-width: 0;
+  color: var(--ai-typing-accent, currentColor);
+}
+
+.ai-typing-text__prompt {
+  display: block;
+  margin-bottom: var(--ai-typing-prompt-gap);
+  color: var(--color-text-muted);
+}
+
+.ai-typing-text__body {
+  display: grid;
+}
+
+.ai-typing-text__message,
+.ai-typing-text__reserve {
+  display: block;
+  grid-area: 1 / 1;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.ai-typing-text__reserve {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ai-typing-text__caret {
+  display: inline-block;
+  width: var(--ai-typing-caret-width);
+  height: 1em;
+  margin-left: var(--spacing-2xs);
+  vertical-align: -0.15em;
+  background: currentColor;
+  box-shadow: 0 0 var(--ai-typing-caret-glow) currentColor;
+  animation: ai-typing-caret var(--ai-typing-caret-cycle) steps(1, end) infinite;
+}
+
+.ai-typing-text[data-complete="true"] .ai-typing-text__caret {
+  display: none;
+}
+
+@keyframes ai-typing-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-typing-text__caret {
+    animation: none;
+  }
+}

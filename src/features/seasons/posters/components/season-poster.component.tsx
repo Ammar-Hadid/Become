@@ -4,11 +4,7 @@ import { ViewTransition } from "react";
 import "@/features/seasons/posters/styles/season-poster.css";
 import type { SeasonView } from "@/features/seasons/types/season.types";
 import { cn } from "@/lib/styles/utils/class-name.util";
-import {
-  SeasonPosterImage,
-  type SeasonPosterImageEditor,
-} from "@/features/seasons/posters/components/season-poster-image.component";
-import type { SeasonImagePosition } from "@/features/seasons/posters/utils/season-image-position.util";
+import { SeasonPosterImage } from "@/features/seasons/posters/components/season-poster-image.component";
 import { SeasonQuoteExcerpt } from "@/features/seasons/media/components/season-quote-excerpt.component";
 
 function posterTitle(season: SeasonView) {
@@ -38,15 +34,11 @@ export function SeasonPoster({
   variant = "detail",
   href,
   linkLabel,
-  imagePosition,
-  imageEditor,
 }: {
   season: SeasonView;
   variant?: "home" | "detail" | "archive";
   href?: string;
   linkLabel?: string;
-  imagePosition?: SeasonImagePosition;
-  imageEditor?: SeasonPosterImageEditor;
 }) {
   const media = season.closingCard?.media ?? season.media;
   const quotes = season.closingCard?.quotes ?? season.quotes;
@@ -100,12 +92,7 @@ export function SeasonPoster({
           )}
         </div>
         <div className="season-poster-visual">
-          <SeasonPosterImage
-            poster={poster}
-            character={character}
-            position={imagePosition}
-            editor={imageEditor}
-          />
+          <SeasonPosterImage poster={poster} character={character} />
           <span className="season-poster-date">
             <CalendarDays aria-hidden="true" />
             {season.closingCard

@@ -49,28 +49,28 @@ export function SessionDetailsProvider({
     if (cachedSession) {
       setSelectedSession(cachedSession);
       setDrawerOpen(true);
-      return;
     }
 
-    const response = await fetch(
-      `/api/sessions/${encodeURIComponent(sessionId)}`,
-    );
-    if (sequence !== requestSequence.current) return;
-
-    if (!response.ok) {
+    try {
+      const response = await fetch(
+        `/api/sessions/${encodeURIComponent(sessionId)}`,
+        { signal: AbortSignal.timeout(15_000) },
+      );
+      if (sequence !== requestSequence.current) return;
+      if (!response.ok) throw new Error("Could not load session details.");
+      const session = (await response.json()) as SessionDetailItem;
+      if (sequence !== requestSequence.current) return;
+      sessionCache.current.set(session.id, session);
+      setSelectedSession(session);
+      setDrawerOpen(true);
+    } catch {
+      if (sequence !== requestSequence.current) return;
       const url = new URL(window.location.href);
       url.searchParams.delete(SESSION_QUERY_KEY);
       window.history.replaceState(window.history.state, "", url);
       setSelectedSession(null);
       setDrawerOpen(false);
-      return;
     }
-
-    const session = (await response.json()) as SessionDetailItem;
-    if (sequence !== requestSequence.current) return;
-    sessionCache.current.set(session.id, session);
-    setSelectedSession(session);
-    setDrawerOpen(true);
   }, []);
 
   const syncSelection = useCallback(
@@ -200,7 +200,7 @@ function SessionDetailsStage({
   onClose: () => void;
   onSessionUpdated: (session: SessionDetailItem) => void;
 }) {
-  const presence = usePresence(open, "content");
+  const presence = usePresence(open, "surface");
   if (!presence.isPresent || !session) return null;
 
   return (

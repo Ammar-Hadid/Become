@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { Copy, Pencil, RefreshCw } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -96,7 +102,7 @@ function IdeaEditForm({
     <form ref={formRef} className="idea-capture-form" onSubmit={submit}>
       <label className="thinking-writing-field">
         <span>Idea</span>
-        <input
+        <Input
           name="title"
           value={draft.title}
           onChange={(event) =>
@@ -110,7 +116,7 @@ function IdeaEditForm({
       </label>
       <label className="thinking-writing-field">
         <span>Note · optional</span>
-        <textarea
+        <Textarea
           name="notes"
           value={draft.notes}
           onChange={(event) =>
@@ -154,13 +160,9 @@ function IdeaEditForm({
       )}
       <footer>
         <span>Earlier versions remain in history</span>
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save changes"}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -175,12 +177,12 @@ export function IdeaEditor({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
+      variant="secondary"
       eyebrow="Refine the thought"
       triggerLabel="Edit idea"
       title="Make the idea easier to return to."
       description="Refining the title or note keeps the idea’s earlier history intact."
-      unstyledTrigger
-      className="thinking-quiet-action"
       triggerIcon={<Pencil aria-hidden="true" />}
     >
       <IdeaEditForm idea={idea} domains={domains} />

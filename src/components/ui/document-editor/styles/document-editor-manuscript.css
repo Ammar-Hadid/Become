@@ -1,0 +1,94 @@
+.document-editor-prose {
+  color: var(--color-text-primary);
+  caret-color: var(--color-primary);
+  font-synthesis: style;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+.document-editor-prose em {
+  font-style: italic;
+}
+
+.document-editor-prose > * + * {
+  margin-top: var(--spacing-xl);
+}
+
+.document-editor-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--color-text-muted);
+}
+
+.document-editor-prose h1,
+.document-editor-prose h2,
+.document-editor-prose h3 {
+  color: var(--color-text-primary);
+  font-weight: 590;
+  letter-spacing: -0.035em;
+}
+
+.document-editor-prose h1 {
+  margin-top: var(--spacing-4xl);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+}
+
+.document-editor-prose h2 {
+  margin-top: var(--spacing-3xl);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+}
+
+.document-editor-prose h3 {
+  margin-top: var(--spacing-2xl);
+  font-size: var(--text-h4);
+  line-height: var(--text-h4--line-height);
+}
+
+.document-editor-prose strong {
+  font-weight: 700;
+}
+
+.document-editor-prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary-muted);
+  text-underline-offset: 0.2em;
+}
+
+.document-editor-prose blockquote {
+  border-left: 2px solid var(--color-primary-muted);
+  padding: var(--spacing-sm) 0 var(--spacing-sm) var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.document-editor-prose ul,
+.document-editor-prose ol {
+  display: grid;
+  gap: var(--spacing-sm);
+  padding-left: var(--spacing-2xl);
+}
+
+.document-editor-prose ul {
+  list-style: disc;
+}
+
+.document-editor-prose ol {
+  list-style: decimal;
+}
+
+.document-editor-prose li > p {
+  display: inline;
+}
+
+.document-editor-prose hr {
+  height: 1px;
+  margin: var(--spacing-4xl) 0;
+  border: 0;
+  background: linear-gradient(90deg, var(--color-primary-muted), var(--color-border));
+}

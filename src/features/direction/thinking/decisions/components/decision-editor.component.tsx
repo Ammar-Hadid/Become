@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
+import { Textarea } from "@/components/ui/forms/textarea.component";
+
 import {
   useCallback,
   useRef,
@@ -291,7 +297,7 @@ function DecisionForm({
       )}
       <label className="decision-writing-field decision-writing-field--choice">
         <span>Decision</span>
-        <textarea
+        <Textarea
           name="choice"
           value={draft.choice}
           onChange={(event) => patch({ choice: event.target.value })}
@@ -305,7 +311,7 @@ function DecisionForm({
       </label>
       <label className="decision-writing-field decision-writing-field--reason">
         <span>Because</span>
-        <textarea
+        <Textarea
           name="reason"
           value={draft.reason}
           onChange={(event) => patch({ reason: event.target.value })}
@@ -319,7 +325,7 @@ function DecisionForm({
       <div className="decision-date-row">
         <label className="thinking-form-field">
           <span>Decided on</span>
-          <input
+          <Input
             type="date"
             name="decidedOn"
             value={draft.decidedOn}
@@ -330,7 +336,7 @@ function DecisionForm({
         </label>
         <label className="thinking-form-field">
           <span>Review on · optional</span>
-          <input
+          <Input
             type="date"
             name="reviewOn"
             value={draft.reviewOn ?? ""}
@@ -351,7 +357,7 @@ function DecisionForm({
         <div className="decision-supporting-grid">
           <label className="thinking-form-field thinking-form-field--wide">
             <span>Situation · optional</span>
-            <textarea
+            <Textarea
               name="context"
               value={draft.context}
               onChange={(event) => patch({ context: event.target.value })}
@@ -361,7 +367,7 @@ function DecisionForm({
           </label>
           <label className="thinking-form-field">
             <span>Alternatives considered · optional</span>
-            <textarea
+            <Textarea
               name="alternatives"
               value={draft.alternatives}
               onChange={(event) => patch({ alternatives: event.target.value })}
@@ -370,7 +376,7 @@ function DecisionForm({
           </label>
           <label className="thinking-form-field">
             <span>Expected outcome · optional</span>
-            <textarea
+            <Textarea
               name="expectedOutcome"
               value={draft.expectedOutcome}
               onChange={(event) =>
@@ -381,7 +387,7 @@ function DecisionForm({
           </label>
           <label className="thinking-form-field thinking-form-field--wide">
             <span>Reconsider when · optional</span>
-            <textarea
+            <Textarea
               name="reconsiderWhen"
               value={draft.reconsiderWhen}
               onChange={(event) =>
@@ -444,7 +450,7 @@ function DecisionForm({
       {mode === "edit" && (
         <label className="thinking-form-field">
           <span>What changed?</span>
-          <input
+          <Input
             name="changeReason"
             value={changeReason}
             onChange={(event) => setChangeReason(event.target.value)}
@@ -480,18 +486,14 @@ function DecisionForm({
         </div>
       )}
       <footer className="thinking-dialog-actions">
-        <button
-          type="submit"
-          className="thinking-primary-action"
-          disabled={pending}
-        >
+        <Button variant="primary" type="submit" disabled={pending}>
           {pending
             ? "Saving…"
             : mode === "edit"
               ? "Save revision"
               : "Record decision"}
           {!pending && <ArrowRight aria-hidden="true" />}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -548,12 +550,13 @@ export function DecisionDialog({
 
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow={copy.eyebrow}
       triggerLabel={copy.label}
       title={copy.title}
       description={copy.description}
-      unstyledTrigger
-      className={className ?? "thinking-primary-action"}
+      className={className}
+      variant={mode === "create" ? "primary" : "secondary"}
       triggerIcon={copy.icon}
     >
       {children ?? (

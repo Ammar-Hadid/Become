@@ -1,6 +1,6 @@
 #!/bin/bash
 # Root-owned installation: /usr/local/sbin/become-backup, mode 0750.
-# Requires PostgreSQL client tools of the same major version as Neon (or newer).
+# Requires PostgreSQL client tools of the same major version as the server (or newer).
 set -Eeuo pipefail
 umask 077
 export PATH=/opt/become-node/bin:/usr/local/bin:/usr/bin:/bin
@@ -36,31 +36,32 @@ stamp=$(date -u +%Y%m%dT%H%M%SZ)
 partial="$base/$stamp.partial"
 complete="$base/$stamp"
 mkdir -m 0700 "$partial"
-restart=0
-restart_worker=0
+restart=()
+restart_writers() {
+  local unit failed=0
+  for unit in "${restart[@]}"; do
+    systemctl start "$unit" || failed=1
+  done
+  if (( failed == 0 )); then restart=(); fi
+  return "$failed"
+}
 cleanup() {
   local status=$?
   trap - EXIT
-  if (( restart )); then
-    systemctl start become.service || status=1
-  fi
-  if (( restart_worker )); then
-    systemctl start become-bank-sync.service || status=1
-  fi
+  restart_writers || status=1
   if (( status != 0 )); then
     echo "Backup failed. Inspect $base and journalctl -u become-backup; a local set may exist, and no old backup was deleted." >&2
   fi
   exit "$status"
 }
 trap cleanup EXIT
-if systemctl is-active --quiet become-bank-sync.service; then
-  restart_worker=1
-  systemctl stop become-bank-sync.service
-fi
-if systemctl is-active --quiet become.service; then
-  restart=1
-  systemctl stop become.service
-fi
+# Only installed, active Become writers are stopped and subsequently restarted.
+for unit in become-bank-sync.service become-season-onboarding.service become.service; do
+  if systemctl is-active --quiet "$unit"; then
+    restart+=("$unit")
+    systemctl stop "$unit"
+  fi
+done
 # All writers must be stopped, including Studio, migration jobs and manual SQL.
 pg_dump --format=custom --no-owner --no-acl --file="$partial/database.dump"
 tar -czf "$partial/media.tar.gz" -C /srv/data/become media
@@ -71,14 +72,7 @@ pg_restore --list "$partial/database.dump" > "$partial/database-contents.txt"
 tar -tzf "$partial/media.tar.gz" > /dev/null
 (cd "$partial" && sha256sum database.dump media.tar.gz commit.txt BUILD_ID release.txt > SHA256SUMS)
 mv "$partial" "$complete"
-if (( restart )); then
-  systemctl start become.service
-  restart=0
-fi
-if (( restart_worker )); then
-  systemctl start become-bank-sync.service
-  restart_worker=0
-fi
+restart_writers
 printf 'Local backup complete: %s\n' "$complete"
 if (( offsite_enabled )); then
   restic backup --tag become "$complete"

@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useRef, useState, type FormEvent } from "react";
 import { useRecordFormGuard } from "@/components/ui/forms/hooks/use-record-form-guard.hook";
 import { Select } from "@/components/ui/forms/select.component";
@@ -60,7 +64,7 @@ function ContentAddVersionForm({
     <form ref={formRef} className="content-dialog-form" onSubmit={submit}>
       <label className="content-form-field content-form-field--wide">
         <span>Variant name</span>
-        <input
+        <Input
           name="versionName"
           value={name}
           onChange={(event) => setName(event.target.value)}
@@ -90,13 +94,14 @@ function ContentAddVersionForm({
         </p>
       )}
       <footer className="content-dialog-actions">
-        <button
+        <Button
+          variant="primary"
           type="submit"
-          className="content-primary-action"
+          className="content-action"
           disabled={pending}
         >
           {pending ? "Adding…" : "Add variant"}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -108,12 +113,12 @@ export function ContentAddVersion(props: {
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Another variant"
       triggerLabel="Add a variant"
       title="Does the work need a different shape?"
       description="Use another variant for a different cut, language, or format. Posting the same variant elsewhere is a release, not a new variant."
-      unstyledTrigger
-      className="content-add-version-trigger"
+      variant="secondary"
       icon={false}
     >
       <ContentAddVersionForm {...props} />

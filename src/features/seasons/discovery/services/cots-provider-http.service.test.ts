@@ -33,9 +33,13 @@ describe("provider JSON redirect boundary", () => {
       vi.fn().mockResolvedValue(Response.json({ ok: true })),
     );
 
-    await providerJson("serpapi", new URL("https://serpapi.com/search.json"), {
-      timeoutMs: 20_000,
-    });
+    await providerJson(
+      "wikimedia",
+      new URL("https://www.wikidata.org/w/api.php"),
+      {
+        timeoutMs: 20_000,
+      },
+    );
 
     expect(timeout).toHaveBeenCalledWith(20_000);
   });
@@ -56,14 +60,14 @@ describe("provider JSON redirect boundary", () => {
 
     await expect(
       providerJson(
-        "zerochan",
-        new URL("https://www.zerochan.net/Rintar%C5%8D%20Okabe?json=&p=1"),
+        "wikimedia",
+        new URL("https://www.wikidata.org/Rintar%C5%8D%20Okabe?json=&p=1"),
         { redirects: "same-origin-preserve-query" },
       ),
     ).resolves.toEqual({ items: [{ tag: "Okabe Rintarou" }] });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(String(fetchMock.mock.calls[1][0])).toBe(
-      "https://www.zerochan.net/Okabe+Rintarou?json=&p=1",
+      "https://www.wikidata.org/Okabe+Rintarou?json=&p=1",
     );
     expect(fetchMock.mock.calls[1][1]).toMatchObject({ redirect: "manual" });
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
@@ -79,7 +83,7 @@ describe("provider JSON redirect boundary", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      providerJson("zerochan", new URL("https://www.zerochan.net/Okabe"), {
+      providerJson("wikimedia", new URL("https://www.wikidata.org/Okabe"), {
         redirects: "same-origin",
       }),
     ).rejects.toThrow("trusted origin");

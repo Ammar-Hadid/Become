@@ -55,11 +55,39 @@ export async function chooseSpecificBusinessOffer(page: Page, name: string) {
   await chooseBusinessSource(page, name);
 }
 
-export async function openExplorationBusinesses(page: Page) {
+export async function openExplorationWorkspace(page: Page, label: string) {
+  const base = new URL(page.url()).pathname.match(
+    /^\/entrepreneurship\/explorations\/[^/]+/,
+  )?.[0];
+  if (!base)
+    throw new Error("Open a saved exploration before choosing a workspace.");
+  const closeNavigation = page.getByRole("button", {
+    name: "Close navigation",
+    exact: true,
+  });
+  if (await closeNavigation.isVisible()) await closeNavigation.click();
+  if (new URL(page.url()).pathname !== `${base}/overview`) {
+    await page
+      .getByRole("link", { name: "Back to explorations", exact: true })
+      .click();
+    await page.locator(`a[href="${base}/overview"]`).first().click();
+  }
+  await expect(page).toHaveURL(`${base}/overview`);
+  if (label === "Overview") return;
+  if (label === "So Far We Know") {
+    await page
+      .getByRole("link", { name: "Open understanding", exact: true })
+      .click();
+    return;
+  }
   await page
-    .getByRole("navigation", { name: "Exploration workspaces" })
-    .getByRole("link", { name: "Audience", exact: true })
+    .getByRole("navigation", { name: "Workspace shortcuts", exact: true })
+    .getByRole("link", { name: new RegExp(`^${escapeRegExp(label)}\\s`) })
     .click();
+}
+
+export async function openExplorationBusinesses(page: Page) {
+  await openExplorationWorkspace(page, "Audience");
   await page
     .getByRole("navigation", { name: "Audience records" })
     .getByRole("link", { name: "Businesses", exact: true })

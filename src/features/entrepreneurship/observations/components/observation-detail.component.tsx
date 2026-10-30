@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import { notFound } from "next/navigation";
@@ -104,7 +105,11 @@ export async function ObservationDetail({
         <p>{source.statement}</p>
       </section>
       <div className="business-observation-grid">
-        <section className="business-zone business-source-zone">
+        <Card
+          material="glass"
+          spacing="dense"
+          className="business-zone business-source-zone"
+        >
           <div className="business-row-heading">
             <div>
               <p className="eyebrow">Provenance</p>
@@ -183,8 +188,12 @@ export async function ObservationDetail({
               Open public source ↗
             </a>
           )}
-        </section>
-        <section className="business-zone business-usage-zone">
+        </Card>
+        <Card
+          material="glass"
+          spacing="dense"
+          className="business-zone business-usage-zone"
+        >
           <div className="business-row-heading">
             <div>
               <p className="eyebrow">Interpretation</p>
@@ -212,7 +221,7 @@ export async function ObservationDetail({
               This observation has not been linked to a problem yet.
             </p>
           )}
-        </section>
+        </Card>
       </div>
       {observation.revisions.length > 1 && (
         <details className="business-disclosure business-zone">

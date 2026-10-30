@@ -1,5 +1,9 @@
 "use client";
 
+import { Card } from "@/components/ui/cards/card.component";
+import { Button } from "@/components/ui/buttons/button.component";
+import { WorkspaceLink } from "@/components/ui/workspace/workspace.component";
+
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -70,7 +74,7 @@ function ReviewReadingSession({
     Boolean(identity.intention) || identity.originalIntention != null;
   const reading = {
     week: {
-      title: "The week, gathered.",
+      title: "Your week in review.",
       introduction:
         "The shape of seven days: where your time went, what you made, and what deserves another look.",
       timeTitle: "The rhythm of the week.",
@@ -78,7 +82,7 @@ function ReviewReadingSession({
       reflectionTitle: "One reading to take into the week ahead.",
     },
     month: {
-      title: "The shape of a month.",
+      title: "Your month in review.",
       introduction:
         "Enough distance to see a pattern. Follow the recorded days, work and choices, then name what they mean to you.",
       timeTitle: "A month of recorded days.",
@@ -95,7 +99,7 @@ function ReviewReadingSession({
       reflectionTitle: "Keep one honest reading.",
     },
     year: {
-      title: "A year, in perspective.",
+      title: "Your year in review.",
       introduction:
         "Read across the months. Look at the direction you chose, the work that reached the world, and the conclusions you recorded.",
       timeTitle: "The year in recorded time.",
@@ -144,7 +148,7 @@ function ReviewReadingSession({
     ...(moments.length
       ? [{ id: "review-moments", label: "Defining moments" }]
       : []),
-    { id: "review-reflection", label: "Your reading" },
+    { id: "review-reflection", label: "Your reflection" },
   ];
   const chapterNumber = (id: string) =>
     String(chapters.findIndex((chapter) => chapter.id === id) + 1).padStart(
@@ -191,7 +195,7 @@ function ReviewReadingSession({
           )}
         </nav>
       )}
-      <header className={styles.masthead}>
+      <Card as="div" material="elevated-glass" className={styles.masthead}>
         <div className={styles.mastheadCopy}>
           <p className="eyebrow">
             {facts.period.label} ·{" "}
@@ -215,21 +219,21 @@ function ReviewReadingSession({
           </div>
           <div className={styles.mastheadActions}>
             {view.finaleHref && (
-              <Link href={view.finaleHref}>
+              <WorkspaceLink href={view.finaleHref} variant="primary">
                 <BookOpen aria-hidden="true" />
                 {view.edition ? "Revisit the finale" : "Close the chapter"}
                 <ArrowRight aria-hidden="true" />
-              </Link>
+              </WorkspaceLink>
             )}
             {view.editions.length > 0 && (
               <SubMenu
                 label="Read a saved edition"
                 placement="bottom-end"
                 trigger={(props) => (
-                  <button {...props}>
+                  <Button {...props} variant="secondary">
                     <History aria-hidden="true" /> Editions{" "}
                     <ChevronDown aria-hidden="true" />
-                  </button>
+                  </Button>
                 )}
               >
                 {view.editions.map((edition) => (
@@ -272,7 +276,7 @@ function ReviewReadingSession({
             </figcaption>
           </figure>
         )}
-      </header>
+      </Card>
       {view.liveChanged && (
         <aside className={styles.changedNotice}>
           <span>

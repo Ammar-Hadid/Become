@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import {
@@ -20,7 +21,7 @@ async function createContent(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-thumbnail-password");
   await page.getByTestId("auth-submit").click();
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/);
+  await deferAutomaticSeasonOpening(page);
   await page.goto("/content");
   await page
     .getByRole("button", { name: "Start content", exact: true })

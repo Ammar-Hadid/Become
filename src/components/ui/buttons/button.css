@@ -1,0 +1,278 @@
+@layer components {
+  .become-button:where(
+    .become-button--primary,
+    .become-button--secondary,
+    .become-button--ghost,
+    .become-button--danger
+  ) {
+    --button-fill-rest: transparent;
+    --button-fill-hover: transparent;
+    --button-fill-pressed: transparent;
+    --button-edge-rest: transparent;
+    --button-edge-hover: transparent;
+    --button-foreground-rest: var(--color-text-primary);
+    --button-foreground-hover: var(--button-foreground-rest);
+    display: inline-flex;
+    height: var(--button-control-height, var(--button-height-md));
+    flex: 0 0 auto;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: var(--button-gap);
+    border: var(--button-border-width) solid var(--button-edge-rest);
+    border-radius: var(--button-radius);
+    outline: 0;
+    background: var(--button-fill-rest);
+    padding-inline: var(
+      --button-control-padding-inline,
+      var(--button-padding-inline-md)
+    );
+    color: var(--button-foreground-rest);
+    transition:
+      transform var(--motion-control-duration) var(--motion-control-ease),
+      box-shadow var(--motion-control-duration) var(--motion-control-ease),
+      border-color var(--motion-control-duration) var(--motion-control-ease),
+      background-color var(--motion-control-duration) var(--motion-control-ease),
+      color var(--motion-control-duration) var(--motion-control-ease);
+  }
+
+  .become-button--primary {
+    --button-fill-rest: var(--button-primary-rest);
+    --button-fill-hover: var(--button-primary-hover);
+    --button-fill-pressed: var(--button-primary-pressed);
+    --button-edge-rest: var(--button-primary-edge);
+    --button-edge-hover: var(--button-primary-edge-hover);
+    --button-foreground-rest: var(--button-primary-foreground);
+  }
+  .become-button--primary[data-feedback="success"] {
+    --button-fill-rest: var(--button-success-rest);
+    --button-fill-hover: var(--button-success-hover);
+    --button-fill-pressed: var(--button-success-pressed);
+    --button-edge-rest: transparent;
+    --button-edge-hover: transparent;
+    --button-foreground-rest: var(--button-success-foreground);
+    --button-foreground-hover: var(--button-success-foreground);
+    --button-motion-glow-color: var(--color-success);
+  }
+  .become-button[data-feedback="pending"] {
+    cursor: wait;
+  }
+  .become-button-feedback-icons {
+    display: grid;
+    width: var(--button-icon-glyph-size);
+    height: var(--button-icon-glyph-size);
+    flex: none;
+  }
+  .become-button-feedback-icons > * {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    transition:
+      opacity var(--motion-control-duration) var(--motion-control-ease),
+      transform var(--motion-control-duration) var(--motion-control-ease);
+  }
+  .become-button-feedback-original svg {
+    width: 100%;
+    height: 100%;
+  }
+  .become-button-feedback-check {
+    opacity: 0;
+    transform: translateY(var(--button-feedback-travel));
+  }
+  [data-feedback="success"]
+    > .become-button-feedback-icons
+    > .become-button-feedback-original {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--button-feedback-travel)));
+  }
+  [data-feedback="success"]
+    > .become-button-feedback-icons
+    > .become-button-feedback-check {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .become-button-feedback-labels {
+    display: grid;
+  }
+  .become-button-feedback-labels > span {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transition: opacity var(--motion-control-duration)
+      var(--motion-control-ease);
+  }
+  [data-feedback="idle"] > .become-button-feedback-labels > [data-label="idle"],
+  [data-feedback="pending"]
+    > .become-button-feedback-labels
+    > [data-label="pending"],
+  [data-feedback="success"]
+    > .become-button-feedback-labels
+    > [data-label="success"] {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .become-button[data-feedback],
+    .become-button-feedback-icons > *,
+    .become-button-feedback-labels > span {
+      transition: none;
+      transform: none;
+    }
+  }
+
+  .become-button--secondary {
+    --button-fill-rest: var(--button-secondary-rest);
+    --button-fill-hover: var(--button-secondary-hover);
+    --button-fill-pressed: var(--button-secondary-pressed);
+    --button-edge-rest: var(--button-secondary-edge);
+    --button-edge-hover: var(--button-secondary-edge-hover);
+    --button-foreground-rest: var(--button-secondary-foreground);
+  }
+
+  .become-button--ghost {
+    --button-fill-rest: var(--button-ghost-rest);
+    --button-fill-hover: var(--button-ghost-hover);
+    --button-fill-pressed: var(--button-ghost-pressed);
+    --button-edge-rest: var(--button-ghost-edge);
+    --button-edge-hover: var(--button-ghost-edge-hover);
+    --button-foreground-rest: var(--button-ghost-foreground);
+    --button-foreground-hover: var(--button-ghost-foreground-hover);
+  }
+
+  .become-button--danger {
+    --button-fill-rest: var(--button-danger-rest);
+    --button-fill-hover: var(--button-danger-hover);
+    --button-fill-pressed: var(--button-danger-pressed);
+    --button-edge-rest: var(--button-danger-edge);
+    --button-edge-hover: var(--button-danger-edge-hover);
+    --button-foreground-rest: var(--button-danger-foreground);
+    --button-motion-glow-color: var(--color-danger);
+  }
+
+  .become-button--sm {
+    --button-control-height: var(--button-height-sm);
+    --button-control-padding-inline: var(--button-padding-inline-sm);
+  }
+
+  .become-button--md {
+    --button-control-height: var(--button-height-md);
+    --button-control-padding-inline: var(--button-padding-inline-md);
+  }
+
+  .become-button--lg {
+    --button-control-height: var(--button-height-lg);
+    --button-control-padding-inline: var(--button-padding-inline-lg);
+  }
+
+  .become-button--icon {
+    --button-control-height: var(--button-icon-size);
+    --button-control-padding-inline: 0px;
+
+    width: var(--button-icon-size);
+    min-width: var(--button-icon-size);
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):not(:disabled):hover {
+    border-color: var(--button-edge-hover);
+    background: var(--button-fill-hover);
+    color: var(--button-foreground-hover);
+    transform: translateY(calc(-1 * var(--motion-control-hover-lift)));
+    box-shadow: 0 0 var(--motion-control-glow-radius)
+      color-mix(
+        in srgb,
+        var(--button-motion-glow-color, var(--button-focus-color))
+          var(--motion-control-glow-strength),
+        transparent
+      );
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):not(:disabled):active {
+    border-color: var(--button-edge-hover);
+    background: var(--button-fill-pressed);
+    color: var(--button-foreground-hover);
+    transform: scale(var(--motion-control-pressed-scale));
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):focus-visible {
+    box-shadow:
+      0 0 0 var(--button-focus-offset) var(--color-background),
+      0 0 0 calc(var(--button-focus-offset) + var(--button-focus-width))
+        var(--button-focus-color);
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):disabled {
+    cursor: not-allowed;
+    opacity: var(--button-disabled-opacity);
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    )
+    > svg {
+    width: var(--button-icon-glyph-size);
+    height: var(--button-icon-glyph-size);
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-button:where(
+    .become-button--primary,
+    .become-button--secondary,
+    .become-button--ghost,
+    .become-button--danger
+  ) {
+    transition: none;
+  }
+
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):not(:disabled):hover,
+  .become-button:where(
+      .become-button--primary,
+      .become-button--secondary,
+      .become-button--ghost,
+      .become-button--danger
+    ):not(:disabled):active {
+    transform: none;
+  }
+}
+
+/* The document reset uses unlayered font inheritance, so the approved button
+   role must be unlayered too. Keep this selector scoped to shared Button variants. */
+.become-button:where(
+  .become-button--primary,
+  .become-button--secondary,
+  .become-button--ghost,
+  .become-button--danger
+) {
+  font-family: var(--text-label--font-family);
+  font-size: var(--text-label);
+  font-weight: var(--text-label--font-weight);
+  letter-spacing: var(--text-label--letter-spacing);
+  line-height: var(--text-label--line-height);
+}

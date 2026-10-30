@@ -1,9 +1,0 @@
-# Seasons
-
-- Astra owns lifecycle, persistence, persona/retrieval contracts and authorization. Verified Sol XHIGH owns the opening/finale presentation and interaction, preserving locked typography and shared accessible controls/motion.
-- Calendar quarters use Europe/Amsterdam and remain independent of reviews and canonical goal lifetimes. Prior participation requires saved intent or activity, not an empty Season record or elapsed quarter.
-- Automatic transition entry is limited to safe ordinary Home visits. Running/paused sessions, timer recovery/mutations, unsaved work, dialogs, deep links and started interactions suppress entry. Not now persists manual-only resumption; skip/replay never block app access or restart completed openings.
-- Frozen presentations and finalized closing meaning survive source corrections. Retain their media/provenance and bind replay to the saved edition.
-- Future AI voice comes from the COTS source-grounded persona profile. Communication tendencies, temperament, values, support/challenge, behavior and anti-caricature boundaries need provenance. Admired/rejected traits and Season standards constrain that profile; no generic tone field or substitute questionnaire.
-- Phase 7 leaves the grounded profile absent and supplies an honest non-character closing beat. Research, inferred psychology, generated farewells, chat and AI orchestration belong to Phase 8.
-- A finale unfolds one primary movement at a time. Preserve original versus later wording and visible source attribution; expose deeper context through purposeful interaction. The 01–04 controls select the actual single-scene ceremony; do not reintroduce an alternate reading-view mode. Reduced motion uses the same scenes with animation disabled. Keep Not now in the sticky footer only, and preserve screen one’s composition.

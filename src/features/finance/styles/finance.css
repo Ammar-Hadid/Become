@@ -10,23 +10,6 @@
   overflow-x: clip;
 }
 
-.finance-shell::before {
-  position: absolute;
-  z-index: -1;
-  top: -170px;
-  left: 28%;
-  width: 520px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(232, 168, 62, 0.055),
-    transparent 68%
-  );
-  content: "";
-  pointer-events: none;
-}
-
 .finance-masthead {
   display: flex;
   align-items: flex-end;
@@ -3401,7 +3384,7 @@
   align-items: center;
 }
 
-.finance-entity-list button {
+.finance-entity-list button:not(.become-button) {
   min-height: 34px;
   padding: 0 var(--spacing-sm);
   font-size: var(--text-body-sm);

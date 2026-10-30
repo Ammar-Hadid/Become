@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { Fragment, useMemo, useRef, useState, type FormEvent } from "react";
 import { Check, Plus } from "lucide-react";
 import { DateTime } from "luxon";
@@ -227,7 +231,7 @@ function ContentReleaseForm({
           {channelDraft.platform === "OTHER" && (
             <label className="content-form-field">
               <span>Platform name</span>
-              <input
+              <Input
                 name="platformLabel"
                 value={channelDraft.platformLabel ?? ""}
                 onChange={(event) =>
@@ -244,7 +248,7 @@ function ContentReleaseForm({
           )}
           <label className="content-form-field">
             <span>Channel name</span>
-            <input
+            <Input
               name="channelName"
               value={channelDraft.name}
               onChange={(event) =>
@@ -256,7 +260,7 @@ function ContentReleaseForm({
           </label>
           <label className="content-form-field content-form-field--wide">
             <span>Account or handle</span>
-            <input
+            <Input
               name="channelAccount"
               value={channelDraft.account}
               onChange={(event) =>
@@ -269,14 +273,15 @@ function ContentReleaseForm({
               maxLength={160}
             />
           </label>
-          <button
+          <Button
+            variant="secondary"
             type="button"
-            className="content-secondary-action"
+            className="content-action"
             onClick={saveChannel}
             disabled={pending || !channelDraft.name.trim()}
           >
             Save channel
-          </button>
+          </Button>
         </fieldset>
       )}
 
@@ -285,7 +290,7 @@ function ContentReleaseForm({
           <div className="content-release-common">
             <label className="content-form-field content-form-field--wide">
               <span>Published title</span>
-              <input
+              <Input
                 name="publishedTitle"
                 value={publishedTitle}
                 onChange={(event) => setPublishedTitle(event.target.value)}
@@ -296,7 +301,7 @@ function ContentReleaseForm({
             </label>
             <label className="content-form-field">
               <span>Release date</span>
-              <input
+              <Input
                 type="date"
                 name="publishedOn"
                 value={publishedOn}
@@ -308,7 +313,7 @@ function ContentReleaseForm({
               <span>
                 Time in Amsterdam <small>Optional</small>
               </span>
-              <input
+              <Input
                 type="time"
                 name="publishedTime"
                 value={publishedTime}
@@ -327,7 +332,7 @@ function ContentReleaseForm({
                   <span>
                     Public URL <small>Optional</small>
                   </span>
-                  <input
+                  <Input
                     type="url"
                     name={`releaseUrl:${channel.id}`}
                     value={selected[channel.id]?.url ?? ""}
@@ -351,7 +356,7 @@ function ContentReleaseForm({
                   <span>
                     Placement <small>Optional</small>
                   </span>
-                  <input
+                  <Input
                     name={`releasePlacement:${channel.id}`}
                     value={selected[channel.id]?.placement ?? ""}
                     onChange={(event) =>
@@ -393,9 +398,10 @@ function ContentReleaseForm({
         </ul>
       )}
       <footer className="content-dialog-actions">
-        <button
+        <Button
+          variant="primary"
           type="submit"
-          className="content-primary-action"
+          className="content-action"
           disabled={
             pending ||
             selectedChannels.length === 0 ||
@@ -406,7 +412,7 @@ function ContentReleaseForm({
           {pending
             ? "Recording…"
             : `Record ${selectedChannels.length === 1 ? "release" : `${selectedChannels.length} releases`}`}
-        </button>
+        </Button>
       </footer>
     </form>
   );
@@ -419,12 +425,11 @@ export function ContentReleaseDialog(props: {
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Release this variant"
       triggerLabel="Record a release"
       title="Where did it go?"
       description="Choose every channel that received this same variant. Each release can collect its own results."
-      unstyledTrigger
-      className="content-primary-action"
       icon={false}
     >
       <ContentReleaseForm {...props} />

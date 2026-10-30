@@ -1,8 +1,7 @@
 import { mergeAttributes, type Extensions } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
-import TextAlign from "@tiptap/extension-text-align";
+import { getDocumentEditorExtensions } from "@/components/ui/document-editor/config/document-editor.config";
 import { isScriptLinkAllowed } from "@/features/content/scripts/utils/content-script-url.util";
 
 export const ScriptImage = Image.extend({
@@ -72,22 +71,8 @@ export const ScriptImage = Image.extend({
 // It has no browser side effects; getSchema() can run on the server.
 export function getScriptExtensions(): Extensions {
   return [
-    StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
-      code: false,
-      codeBlock: false,
-      link: {
-        openOnClick: false,
-        defaultProtocol: "https",
-        isAllowedUri: isScriptLinkAllowed,
-        HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
-      },
-    }),
+    ...getDocumentEditorExtensions({ isAllowedUri: isScriptLinkAllowed }),
     TableKit.configure({ table: { resizable: false } }),
     ScriptImage.configure({ allowBase64: false, resize: false }),
-    TextAlign.configure({
-      types: ["heading", "paragraph"],
-      defaultAlignment: "left",
-    }),
   ];
 }

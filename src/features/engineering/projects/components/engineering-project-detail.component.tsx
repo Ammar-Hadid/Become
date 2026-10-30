@@ -1,6 +1,10 @@
 import { ExternalLink, Pencil, RotateCcw, Archive } from "lucide-react";
-import Link from "next/link";
 import { ViewTransition } from "react";
+import {
+  WorkspaceHeader,
+  WorkspacePanel,
+  WorkspaceLink,
+} from "@/components/ui/workspace/workspace.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import { EngineeringEvidenceList } from "@/features/engineering/evidence/components/engineering-evidence-list.component";
 import { EngineeringTechnologyStack } from "@/features/engineering/technologies/components/engineering-technology-stack.component";
@@ -22,48 +26,52 @@ export function EngineeringProjectDetailView({
   project: EngineeringProjectDetail;
 }) {
   return (
-    <div className="page-shell">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow mb-md">Engineering project</p>
+    <div className="page-shell engineering-project-page">
+      <WorkspaceLink href="/engineering/projects" variant="ghost">
+        ← All projects
+      </WorkspaceLink>
+      <WorkspaceHeader
+        eyebrow="Engineering project"
+        title={
           <ViewTransition
             name={`engineering-project-${project.id}`}
             share="motion-carry"
             default="none"
           >
-            <h1>{project.name}</h1>
+            <span>{project.name}</span>
           </ViewTransition>
-          <p className="page-description text-text-secondary mt-sm max-w-copy">
-            {project.description ||
-              "A body of Engineering work, connected to time and evidence."}
-          </p>
-        </div>
-        <div className="engineering-header-actions">
-          <Link
-            href={`/engineering/projects/${project.id}/edit`}
-            className="engineering-secondary-link"
-          >
-            <Pencil className="size-4" /> Edit
-          </Link>
-          {project.archivedAt ? (
-            <form action={restoreEngineeringProjectAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <Button type="submit" variant="secondary">
-                <RotateCcw className="size-4" /> Restore
-              </Button>
-            </form>
-          ) : (
-            <form action={archiveEngineeringProjectAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <Button type="submit" variant="secondary">
-                <Archive className="size-4" /> Archive
-              </Button>
-            </form>
-          )}
-        </div>
-      </header>
+        }
+        description={
+          project.description || "Your work, connected to time and evidence."
+        }
+        actions={
+          <div className="engineering-header-actions">
+            <WorkspaceLink
+              href={`/engineering/projects/${project.id}/edit`}
+              variant="secondary"
+            >
+              <Pencil className="size-4" /> Edit
+            </WorkspaceLink>
+            {project.archivedAt ? (
+              <form action={restoreEngineeringProjectAction}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <Button type="submit" variant="secondary">
+                  <RotateCcw className="size-4" /> Restore
+                </Button>
+              </form>
+            ) : (
+              <form action={archiveEngineeringProjectAction}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <Button type="submit" variant="secondary">
+                  <Archive className="size-4" /> Archive
+                </Button>
+              </form>
+            )}
+          </div>
+        }
+      />
 
-      <section className="engineering-project-facts">
+      <WorkspacePanel className="engineering-project-facts" spacing="dense">
         <div>
           <span>Project context</span>
           <strong data-testid="engineering-project-detail-context">
@@ -91,24 +99,26 @@ export function EngineeringProjectDetailView({
           <span>Evidence</span>
           <strong>{project.evidenceCount}</strong>
         </div>
-      </section>
+      </WorkspacePanel>
 
       {project.technologies.length > 0 && (
-        <section className="engineering-project-stack">
-          <p className="eyebrow mb-md">Technology stack</p>
+        <WorkspacePanel
+          className="engineering-project-stack"
+          title="Technology stack"
+        >
           <EngineeringTechnologyStack technologies={project.technologies} />
           <p className="engineering-field-help mt-md">
             Project association only; technologies are not attributed to
             individual sessions.
           </p>
-        </section>
+        </WorkspacePanel>
       )}
 
       {(project.repositoryUrl ||
         project.liveUrl ||
         project.startedOn ||
         project.completedOn) && (
-        <section className="engineering-project-links">
+        <WorkspacePanel className="engineering-project-links" spacing="dense">
           {project.repositoryUrl && (
             <a href={project.repositoryUrl} target="_blank" rel="noreferrer">
               Repository <ExternalLink />
@@ -121,33 +131,35 @@ export function EngineeringProjectDetailView({
           )}
           {project.startedOn && <span>Started {project.startedOn}</span>}
           {project.completedOn && <span>Completed {project.completedOn}</span>}
-        </section>
+        </WorkspacePanel>
       )}
 
       {project.notes && (
-        <section className="engineering-project-notes">
-          <p className="eyebrow mb-md">Project notes</p>
+        <WorkspacePanel
+          className="engineering-project-notes"
+          title="Project notes"
+        >
           <p>{project.notes}</p>
-        </section>
+        </WorkspacePanel>
       )}
 
-      <section className="engineering-output-section">
+      <WorkspacePanel className="engineering-output-section">
         <div className="engineering-section-heading">
           <div>
             <p className="eyebrow mb-sm">Evidence</p>
             <h2 className="section-title">What came from the work</h2>
           </div>
-          <Link
+          <WorkspaceLink
             href={`/engineering/evidence/new?project=${project.id}`}
-            className="text-link"
+            variant="secondary"
           >
             Add evidence
-          </Link>
+          </WorkspaceLink>
         </div>
         <EngineeringEvidenceList evidence={project.evidence} />
-      </section>
+      </WorkspacePanel>
 
-      <section className="engineering-output-section">
+      <WorkspacePanel className="engineering-output-section">
         <div className="engineering-section-heading">
           <div>
             <p className="eyebrow mb-sm">History</p>
@@ -165,7 +177,7 @@ export function EngineeringProjectDetailView({
             </div>
           )}
         </div>
-      </section>
+      </WorkspacePanel>
     </div>
   );
 }

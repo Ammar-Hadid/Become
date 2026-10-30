@@ -1,3 +1,7 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { IconFrame } from "@/components/ui/icons/icon-frame.component";
+import { ProgressIndicator } from "@/components/ui/progress/progress-indicator.component";
+import { WorkspaceDisclosure } from "@/components/ui/workspace/workspace-disclosure.component";
 import { CurrencySelect } from "@/components/ui/forms/currency-select.component";
 import Link from "next/link";
 import {
@@ -70,7 +74,7 @@ export async function SavingsPage({ userId }: { userId: string }) {
       <FinancePageHeader
         eyebrow="Direction"
         title="Savings"
-        description="See the money you actually hold, the safety you want to protect and the goals you choose to fund."
+        description="Protect your reserve. Give the rest a purpose."
         actions={
           <FinanceDialog
             triggerLabel="New savings goal"
@@ -84,7 +88,7 @@ export async function SavingsPage({ userId }: { userId: string }) {
 
       <FinanceSection
         title="Savings direction"
-        description="Account balances show what is actually there. Your protected reserve is the safety threshold you want those savings to cover."
+        description="What you hold, what you protect, and what is available for goals."
       >
         {!pools.length ? (
           <FinanceEmptyState
@@ -168,18 +172,14 @@ export async function SavingsPage({ userId }: { userId: string }) {
                   )}
 
                   <div className="finance-pool-visual">
-                    <div
-                      className="finance-reserve-track"
-                      role="img"
-                      aria-label={
-                        pool.reserve === null
-                          ? "Protected reserve not configured"
-                          : `${reserveCoverage}% of the ${formatMoney(pool.reserve, pool.currency)} protected reserve is covered`
-                      }
-                    >
-                      <span style={{ width: reserveCoverage + "%" }} />
-                      {pool.reserve !== null && <i aria-hidden="true" />}
-                    </div>
+                    {pool.liquid !== null && pool.reserve !== null && (
+                      <ProgressIndicator
+                        variant="season-ticks"
+                        value={reserveCoverage}
+                        label={`${pool.currency} protected reserve coverage`}
+                        area="finance"
+                      />
+                    )}
                     <div className="finance-reserve-track-caption">
                       <span>
                         {pool.reserve === null
@@ -313,8 +313,10 @@ export async function SavingsPage({ userId }: { userId: string }) {
                         </div>
                       </div>
                     )}
-                    <details className="finance-details finance-goal-rebalance">
-                      <summary>Rebalance {pool.currency} allocations</summary>
+                    <WorkspaceDisclosure
+                      title={<>Rebalance {pool.currency} allocations</>}
+                      className="finance-disclosure"
+                    >
                       <div className="finance-details-body finance-rebalance-panel">
                         <p>
                           Decide how much of your above-reserve savings you
@@ -346,7 +348,7 @@ export async function SavingsPage({ userId }: { userId: string }) {
                             ))}
                         </FinanceForm>
                       </div>
-                    </details>
+                    </WorkspaceDisclosure>
                   </div>
                 );
               })}
@@ -384,62 +386,70 @@ export async function SavingsPage({ userId }: { userId: string }) {
                   href={"/finance/savings/" + goal.id}
                   aria-label={goal.name + " savings goal"}
                   className={
-                    "finance-goal " + (goal.archivedAt ? "is-archived" : "")
+                    "finance-goal-link " +
+                    (goal.archivedAt ? "is-archived" : "")
                   }
                 >
-                  <header>
-                    <span className="finance-goal-icon">
-                      <Sparkles aria-hidden="true" />
-                    </span>
-                    <span className="finance-status-pill finance-status-pill--muted">
-                      {goal.archivedAt ? "Archived" : goal.status.toLowerCase()}
-                    </span>
-                  </header>
-                  <div className="finance-goal-copy">
-                    <h3>{goal.name}</h3>
-                    <p className="finance-number">
-                      {formatMoney(goal.funding.remaining, goal.currency)} left
-                      of {formatMoney(goal.funding.target, goal.currency)}
-                    </p>
-                  </div>
-                  <div className="finance-goal-progress">
-                    <div>
-                      <span>
-                        Confirmed progress <strong>{spentPercent}%</strong>
+                  <Card spacing="dense" className="finance-goal-tile">
+                    <header>
+                      <IconFrame treatment="compact" area="finance">
+                        <Sparkles />
+                      </IconFrame>
+                      <span className="finance-status-pill finance-status-pill--muted">
+                        {goal.archivedAt
+                          ? "Archived"
+                          : goal.status.toLowerCase()}
                       </span>
-                      <i>
-                        <b style={{ width: spentPercent + "%" }} />
-                      </i>
+                    </header>
+                    <div className="finance-goal-copy">
+                      <h3>{goal.name}</h3>
+                      <p className="finance-number">
+                        {formatMoney(goal.funding.remaining, goal.currency)}{" "}
+                        left of{" "}
+                        {formatMoney(goal.funding.target, goal.currency)}
+                      </p>
                     </div>
-                    <div>
-                      <span>
-                        Remaining cost funded <strong>{fundedPercent}%</strong>
-                      </span>
-                      <i>
-                        <b
-                          className="is-funded"
-                          style={{ width: fundedPercent + "%" }}
+                    <div className="finance-goal-progress">
+                      <div>
+                        <span>
+                          Confirmed progress <strong>{spentPercent}%</strong>
+                        </span>
+                        <ProgressIndicator
+                          value={spentPercent}
+                          label={`${goal.name}: confirmed spending`}
+                          area="finance"
                         />
-                      </i>
+                      </div>
+                      <div>
+                        <span>
+                          Remaining cost funded{" "}
+                          <strong>{fundedPercent}%</strong>
+                        </span>
+                        <ProgressIndicator
+                          value={fundedPercent}
+                          label={`${goal.name}: remaining cost funded`}
+                          area="finance"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <dl>
-                    <div>
-                      <dt>Allocated now</dt>
-                      <dd className="finance-number">
-                        {formatMoney(goal.funding.allocated, goal.currency)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Funding gap</dt>
-                      <dd className="finance-number">
-                        {formatMoney(goal.funding.gap, goal.currency)}
-                      </dd>
-                    </div>
-                  </dl>
-                  <span className="finance-goal-open">
-                    Open goal <ArrowRight aria-hidden="true" />
-                  </span>
+                    <dl>
+                      <div>
+                        <dt>Allocated now</dt>
+                        <dd className="finance-number">
+                          {formatMoney(goal.funding.allocated, goal.currency)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Funding gap</dt>
+                        <dd className="finance-number">
+                          {formatMoney(goal.funding.gap, goal.currency)}
+                        </dd>
+                      </div>
+                    </dl>
+                    <span className="finance-goal-open">
+                      Open goal <ArrowRight aria-hidden="true" />
+                    </span>
+                  </Card>
                 </Link>
               );
             })}

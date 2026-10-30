@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import Link from "next/link";
 import { ArrowRight, BookOpenText, Building2, UserRound } from "lucide-react";
 import { getInterviewGuideIndex } from "@/features/entrepreneurship/interview-guides/queries/interview-guide.query";
@@ -30,10 +31,10 @@ export async function InterviewGuideIndex({
       <header className="interview-guide-index-heading">
         <div>
           <p className="eyebrow">Conversation guides</p>
-          <h1>Prepare enough to listen well.</h1>
+          <h1>Interview guides</h1>
           <p>
-            Write context, reminders, and optional questions in one document.
-            Published editions stay pinned to the conversations that used them.
+            Prepare a few questions or write freely. Conversations keep the
+            edition you used.
           </p>
         </div>
         <div className="business-actions">
@@ -51,7 +52,6 @@ export async function InterviewGuideIndex({
         aria-labelledby="starter-guides-title"
       >
         <header>
-          <p className="eyebrow">Starting points</p>
           <h2 id="starter-guides-title">Starting points</h2>
         </header>
         <div>
@@ -59,10 +59,7 @@ export async function InterviewGuideIndex({
             const guide = starter(market);
             const Icon = market === "B2C" ? UserRound : Building2;
             return guide ? (
-              <Link
-                key={market}
-                href={guideHref(`/${guide.id}/edit`)}
-              >
+              <Link key={market} href={guideHref(`/${guide.id}/edit`)}>
                 <Icon aria-hidden="true" />
                 <span>{market === "B2C" ? "Consumers" : "Businesses"}</span>
                 <div>
@@ -88,7 +85,11 @@ export async function InterviewGuideIndex({
           })}
         </div>
       </section>
-      <section className="interview-guide-ledger-section">
+      <Card
+        material="glass"
+        spacing="dense"
+        className="interview-guide-ledger-section"
+      >
         <header>
           <div>
             <p className="eyebrow">Guide ledger</p>
@@ -141,7 +142,7 @@ export async function InterviewGuideIndex({
             </div>
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

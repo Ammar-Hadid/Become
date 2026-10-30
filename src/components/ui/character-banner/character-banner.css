@@ -1,0 +1,228 @@
+.become-character-banner {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: var(--character-banner-height);
+  align-items: center;
+  overflow: hidden;
+  padding: var(--character-banner-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+.become-character-banner__art,
+.become-character-banner__fallback {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+}
+.become-character-banner__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.become-character-banner__fallback {
+  background: radial-gradient(
+    ellipse at 68% 48%,
+    color-mix(in srgb, var(--color-primary) 20%, var(--color-surface)),
+    var(--color-surface) 72%
+  );
+}
+.become-character-banner::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-overlay-left),
+          transparent
+        )
+        0%,
+      color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-overlay-mid),
+          transparent
+        )
+        29%,
+      color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-overlay-center),
+          transparent
+        )
+        55%,
+      color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-overlay-right),
+          transparent
+        )
+        100%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(
+        in srgb,
+        var(--color-background) var(--character-banner-overlay-bottom),
+        transparent
+      ),
+      transparent 38%
+    );
+  content: "";
+  pointer-events: none;
+}
+.become-character-banner__copy {
+  position: relative;
+  display: grid;
+  max-width: var(--character-banner-copy-width);
+  gap: var(--spacing-sm);
+  text-shadow: 0 1px 9px
+    color-mix(
+      in srgb,
+      var(--color-background) var(--character-banner-copy-shadow),
+      transparent
+    );
+}
+.become-character-banner__copy h1,
+.become-character-banner__copy h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--text-banner-title--font-family);
+  font-size: var(--text-banner-title);
+  font-weight: var(--text-banner-title--font-weight);
+  letter-spacing: var(--text-banner-title--letter-spacing);
+  line-height: var(--text-banner-title--line-height);
+  overflow-wrap: anywhere;
+}
+.become-character-banner__copy > p {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+.become-character-banner__crown {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--character-banner-badge-padding-block)
+    var(--character-banner-badge-padding-inline);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-primary) var(--character-banner-badge-edge),
+      transparent
+    );
+  border-radius: var(--character-banner-badge-radius);
+  background: color-mix(
+    in srgb,
+    var(--color-primary) var(--character-banner-badge-fill),
+    color-mix(in srgb, var(--color-background) 66%, transparent)
+  );
+  box-shadow: 0 0 1.25rem
+    color-mix(
+      in srgb,
+      var(--color-primary) var(--character-banner-badge-glow),
+      transparent
+    );
+  color: var(--color-text-primary);
+  backdrop-filter: blur(var(--character-banner-badge-blur));
+}
+.become-character-banner__crown svg {
+  width: var(--character-banner-badge-icon-size);
+  height: var(--character-banner-badge-icon-size);
+  fill: var(--color-primary);
+  color: var(--color-primary);
+}
+.become-character-banner__quote {
+  display: grid;
+  max-width: var(--character-banner-quote-width);
+  gap: var(--spacing-xs);
+  margin: var(--spacing-lg) 0 0;
+  padding-left: var(--spacing-lg);
+  border-left: var(--character-banner-quote-rule) solid var(--color-primary);
+}
+.become-character-banner__quote p {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--character-banner-quote-font-family);
+  font-size: var(--character-banner-quote-size);
+  font-weight: var(--character-banner-quote-font-weight);
+  font-style: var(--character-banner-quote-font-style);
+  line-height: var(--character-banner-quote-leading);
+}
+.become-character-banner__quote cite {
+  color: var(--color-text-secondary);
+  font-style: normal;
+}
+.become-character-banner__line {
+  position: absolute;
+  right: var(--character-banner-padding);
+  bottom: var(--character-banner-padding);
+  max-width: var(--character-banner-line-width);
+  margin: 0;
+  color: var(--color-text-primary);
+  letter-spacing: var(--character-banner-line-tracking);
+  line-height: var(--character-banner-line-leading);
+  text-align: right;
+  text-shadow: 0 1px 8px var(--color-background);
+  white-space: pre-line;
+}
+@media (max-width: 40rem) {
+  .become-character-banner {
+    min-height: var(--character-banner-phone-height);
+    align-items: end;
+    padding: var(--spacing-xl);
+  }
+  .become-character-banner__art img {
+    object-position: var(--character-banner-phone-image-position);
+  }
+  .become-character-banner::before {
+    background:
+      linear-gradient(
+        0deg,
+        color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-phone-overlay-bottom),
+          transparent
+        ),
+        color-mix(
+            in srgb,
+            var(--color-background) var(--character-banner-phone-overlay-mid),
+            transparent
+          )
+          46%,
+        transparent 72%
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(
+          in srgb,
+          var(--color-background) var(--character-banner-phone-overlay-side),
+          transparent
+        ),
+        transparent 70%
+      );
+  }
+  .become-character-banner__copy {
+    max-width: 100%;
+    padding-bottom: var(--character-banner-phone-copy-clearance);
+  }
+  .become-character-banner__copy h1,
+  .become-character-banner__copy h2 {
+    font-size: var(--character-banner-phone-title);
+  }
+  .become-character-banner__quote {
+    margin-top: var(--spacing-sm);
+  }
+  .become-character-banner__quote p {
+    font-size: var(--character-banner-phone-quote-size);
+  }
+  .become-character-banner__line {
+    right: var(--spacing-xl);
+    bottom: var(--spacing-md);
+    max-width: none;
+    letter-spacing: var(--character-banner-phone-line-tracking);
+    line-height: var(--character-banner-phone-line-leading);
+  }
+}

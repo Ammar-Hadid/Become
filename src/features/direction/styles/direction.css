@@ -887,82 +887,6 @@
   color: var(--color-danger);
 }
 
-.season-opening-progress {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: var(--spacing-3xl) 0 var(--spacing-4xl);
-}
-
-.season-opening-progress li {
-  position: relative;
-}
-
-.season-opening-progress li::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 15px;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: var(--color-border);
-}
-
-.season-opening-progress li:first-child::after {
-  left: 50%;
-}
-
-.season-opening-progress li:last-child::after {
-  right: 50%;
-}
-
-.season-opening-progress button {
-  display: flex;
-  width: 100%;
-  cursor: pointer;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  transition: color var(--duration-control) var(--ease-enter);
-}
-
-.season-opening-progress button:disabled {
-  cursor: wait;
-}
-
-.season-opening-progress button > span:first-child {
-  display: grid;
-  width: 31px;
-  height: 31px;
-  place-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-background);
-  color: inherit;
-  font-variant-numeric: tabular-nums;
-  transition:
-    border-color var(--duration-control) var(--ease-enter),
-    background var(--duration-control) var(--ease-enter);
-}
-
-.season-opening-progress-label {
-  text-align: center;
-}
-
-.season-opening-progress li[data-current] button {
-  color: var(--color-text-primary);
-}
-
-.season-opening-progress li[data-current] button > span:first-child {
-  border-color: var(--color-primary);
-  background: var(--color-primary-subtle);
-  color: var(--color-primary);
-  box-shadow: 0 0 0 5px rgba(232, 168, 62, 0.05);
-}
-
 .season-opening-stage {
   animation: direction-stage-in var(--duration-surface) var(--ease-enter) both;
 }
@@ -1041,119 +965,6 @@
 .season-support-note {
   display: block;
   padding-left: var(--spacing-xl);
-}
-
-.season-create-goal {
-  display: inline-flex;
-  width: fit-content;
-  cursor: pointer;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--color-primary);
-}
-
-.season-create-goal:disabled {
-  cursor: wait;
-  opacity: 0.5;
-}
-
-.season-create-goal svg,
-.season-add-standard svg {
-  width: 15px;
-  height: 15px;
-}
-
-.season-standards-editor {
-  display: grid;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-3xl);
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-2xl);
-}
-
-.season-standards-editor h3 {
-  margin-top: var(--spacing-xs);
-  font-size: var(--text-h4);
-  line-height: var(--text-h4--line-height);
-  font-weight: 560;
-}
-
-.season-standard-editor {
-  display: grid;
-  grid-template-columns: minmax(9rem, 0.45fr) minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--spacing-md);
-}
-
-.season-standard-editor > button {
-  display: grid;
-  width: var(--spacing-input-height-md);
-  height: var(--spacing-input-height-md);
-  cursor: pointer;
-  place-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: var(--color-text-muted);
-}
-
-.season-standard-editor > button:hover {
-  border-color: rgba(229, 103, 103, 0.4);
-  color: var(--color-danger);
-}
-
-.season-standard-editor > button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.season-standard-link {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-md);
-}
-
-.season-standard-link > summary {
-  width: fit-content;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-standard-link > summary span,
-.season-standard-link > p {
-  color: var(--color-text-muted);
-}
-
-.season-standard-link > div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
-}
-
-.season-standard-link > p {
-  margin-top: var(--spacing-sm);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-add-standard {
-  display: inline-flex;
-  width: fit-content;
-  cursor: pointer;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  color: var(--color-primary);
-}
-
-.season-opening-title-fields {
-  margin-bottom: var(--spacing-3xl);
-}
-
-.season-opening-title-fields textarea {
-  min-height: var(--spacing-textarea-height-sm);
 }
 
 .season-form-error {
@@ -2272,15 +2083,13 @@
 }
 
 .direction-lifecycle,
-.direction-history,
-.season-inspiration {
+.direction-history {
   margin-top: var(--spacing-4xl);
   border-top: 1px solid var(--color-border);
   padding-top: var(--spacing-3xl);
 }
 
-.direction-lifecycle > header,
-.season-inspiration > header {
+.direction-lifecycle > header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -2289,7 +2098,6 @@
 
 .direction-lifecycle h2,
 .direction-history h2,
-.season-inspiration h2,
 .direction-linked-sources h2 {
   margin-top: var(--spacing-sm);
   font-size: var(--text-h3);
@@ -2303,8 +2111,7 @@
   color: var(--color-text-muted);
 }
 
-.direction-lifecycle-actions,
-.season-inspiration > header > div:last-child {
+.direction-lifecycle-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2313,8 +2120,7 @@
 }
 
 .direction-lifecycle-actions > button,
-.direction-manage-trigger,
-.season-collection-menu-trigger {
+.direction-manage-trigger {
   display: inline-flex;
   min-height: var(--spacing-input-height-sm);
   cursor: pointer;
@@ -2331,9 +2137,7 @@
 
 .direction-lifecycle-actions > button:hover,
 .direction-manage-trigger:hover,
-.direction-manage-trigger[aria-expanded="true"],
-.season-collection-menu-trigger:hover,
-.season-collection-menu-trigger[aria-expanded="true"] {
+.direction-manage-trigger[aria-expanded="true"] {
   border-color: #444952;
   color: var(--color-text-primary);
 }
@@ -2343,35 +2147,7 @@
   height: 15px;
 }
 
-.season-collection-menu-trigger svg {
-  width: 15px;
-  height: 15px;
-}
-
-.season-inspiration[data-compact] {
-  border: 1px solid var(--direction-line);
-  border-radius: var(--radius-panel);
-  background:
-    radial-gradient(circle at 8% 12%, var(--direction-glow), transparent 35%),
-    var(--color-surface);
-  padding: var(--spacing-2xl);
-}
-
-.season-inspiration-active-anchor {
-  scroll-margin-top: var(--spacing-3xl);
-}
-
-.season-collection-limit {
-  margin-top: var(--spacing-lg);
-  border-left: 2px solid var(--color-primary);
-  padding-left: var(--spacing-md);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.direction-lifecycle-form,
-.season-inspiration-form {
+.direction-lifecycle-form {
   margin-top: var(--spacing-xl);
   border: 1px solid var(--direction-line);
   border-radius: var(--radius-panel);
@@ -2385,8 +2161,7 @@
   display: none;
 }
 
-.direction-lifecycle-form-heading,
-.season-inspiration-form-heading {
+.direction-lifecycle-form-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -2394,16 +2169,14 @@
   margin-bottom: var(--spacing-xl);
 }
 
-.direction-lifecycle-form-heading h3,
-.season-inspiration-form-heading h3 {
+.direction-lifecycle-form-heading h3 {
   margin-top: var(--spacing-xs);
   font-size: var(--text-h4);
   line-height: var(--text-h4--line-height);
   font-weight: 560;
 }
 
-.direction-lifecycle-form-heading > button,
-.season-inspiration-form-heading > button {
+.direction-lifecycle-form-heading > button {
   display: grid;
   width: 36px;
   height: 36px;
@@ -2414,8 +2187,7 @@
   color: var(--color-text-muted);
 }
 
-.direction-lifecycle-form-heading svg,
-.season-inspiration-form-heading svg {
+.direction-lifecycle-form-heading svg {
   width: 16px;
   height: 16px;
 }
@@ -2438,7 +2210,6 @@
 }
 
 .direction-lifecycle-form-actions,
-.season-inspiration-form-actions,
 .direction-assessment-actions {
   display: flex;
   align-items: center;
@@ -2686,16 +2457,14 @@
   flex: 0 0 auto;
 }
 
-.direction-outreach-only,
-.season-check-field {
+.direction-outreach-only {
   display: flex;
   cursor: pointer;
   align-items: flex-start;
   gap: var(--spacing-md);
 }
 
-.direction-outreach-only input,
-.season-check-field input {
+.direction-outreach-only input {
   width: 17px;
   height: 17px;
   flex: 0 0 auto;
@@ -2720,196 +2489,14 @@
   line-height: var(--text-body-sm--line-height);
 }
 
-.season-inspiration > header > div:first-child > p:last-child {
-  max-width: 42rem;
-  margin-top: var(--spacing-sm);
-  color: var(--color-text-secondary);
-}
-
-.season-inspiration > header svg {
-  width: 16px;
-  height: 16px;
-}
-
-.season-inspiration-library {
-  display: grid;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-xl);
-}
-
-.season-media-thumb,
-.season-quote-row {
-  display: grid;
-  grid-template-columns: 5rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--spacing-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  padding: var(--spacing-sm);
-}
-
-.season-media-thumb > img {
-  width: 5rem;
-  height: 3.5rem;
-  border-radius: calc(var(--radius-control) - 4px);
-  object-fit: cover;
-}
-
-.season-media-thumb > div,
-.season-quote-row > div {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.season-media-thumb strong,
-.season-quote-row blockquote {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  overflow: hidden;
-  color: var(--color-text-primary);
-  font-weight: 570;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.season-media-thumb strong svg {
-  width: 14px;
-  height: 14px;
-  color: var(--color-primary);
-}
-
-.season-media-thumb small,
-.season-quote-row small {
-  overflow: hidden;
-  margin-top: var(--spacing-xs);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.season-media-thumb > .submenu > button,
-.season-quote-footer > .submenu > button {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  cursor: pointer;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--color-text-muted);
-}
-
-.season-media-thumb > .submenu > button:hover,
-.season-quote-footer > .submenu > button:hover,
-.season-media-thumb > .submenu > button[aria-expanded="true"],
-.season-quote-footer > .submenu > button[aria-expanded="true"] {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text-primary);
-}
-
-.season-media-thumb > .submenu > button svg,
-.season-quote-footer > .submenu > button svg {
-  width: 15px;
-  height: 15px;
-}
-
-.season-quote-row {
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  padding: var(--spacing-md);
-}
-
-.season-quote-row > svg {
-  width: 18px;
-  height: 18px;
-  color: var(--color-primary);
-}
-
-.season-quote-content {
-  gap: var(--spacing-sm);
-}
-
-.season-quote-footer,
-.season-quote-details,
 .season-quote-actions {
   display: flex;
   align-items: center;
-}
-
-.season-quote-footer {
-  min-width: 0;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-}
-
-.season-quote-details {
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm) var(--spacing-md);
-}
-
-.season-quote-row .season-quote-details small {
-  margin-top: 0;
-}
-
-.season-quote-featured {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: var(--spacing-xs);
-  color: var(--color-primary);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  white-space: nowrap;
-}
-
-.season-quote-featured svg {
-  display: block;
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
 }
 
 .season-quote-actions {
   flex: 0 0 auto;
   gap: var(--spacing-2xs);
-}
-
-.season-file-input {
-  display: block;
-  width: 100%;
-  border: 1px dashed #3a3f48;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-input);
-  padding: var(--spacing-lg);
-  color: var(--color-text-secondary);
-}
-
-.season-file-input::file-selector-button {
-  margin-right: var(--spacing-md);
-  border: 0;
-  border-radius: 999px;
-  background: var(--color-primary-subtle);
-  padding: var(--spacing-sm) var(--spacing-md);
-  color: var(--color-primary);
-  font: inherit;
-}
-
-.season-file-input + small {
-  display: block;
-  margin-top: var(--spacing-sm);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-}
-
-.season-range {
-  width: 100%;
-  accent-color: var(--color-primary);
 }
 
 .season-closing-card {
@@ -3143,14 +2730,12 @@
     grid-column: 1 / -1;
   }
 
-  .direction-lifecycle > header,
-  .season-inspiration > header {
+  .direction-lifecycle > header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .direction-lifecycle-actions,
-  .season-inspiration > header > div:last-child {
+  .direction-lifecycle-actions {
     justify-content: flex-start;
   }
 }
@@ -3240,36 +2825,14 @@
     flex-direction: column;
   }
 
-  .season-opening-progress {
-    gap: var(--spacing-sm);
-  }
-
-  .season-opening-progress button {
-    color: var(--color-text-muted);
-  }
-
-  .season-opening-progress-label {
-    display: none;
-  }
-
-  .season-opening-progress li[data-current] button > span:first-child {
-    color: var(--color-primary);
-  }
-
   .season-opening-fields--two,
-  .direction-form-grid,
-  .season-standard-editor {
+  .direction-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .season-standard-link > div,
   .direction-assessment-choice,
   .direction-assessment-sources {
     grid-template-columns: 1fr;
-  }
-
-  .season-standard-editor > button {
-    justify-self: end;
   }
 
   .season-opening-actions {
@@ -3348,34 +2911,6 @@
 
   .direction-goal-badges {
     justify-content: flex-start;
-  }
-
-  .season-quote-row {
-    gap: var(--spacing-lg);
-    background:
-      linear-gradient(110deg, var(--direction-glow), transparent 7rem),
-      var(--color-surface);
-    padding: var(--spacing-lg);
-  }
-
-  .season-quote-row > svg {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--color-primary-muted);
-    border-radius: 50%;
-    background: var(--color-primary-subtle);
-    padding: 7px;
-  }
-
-  .season-quote-row blockquote {
-    overflow: visible;
-    overflow-wrap: anywhere;
-    text-overflow: clip;
-    white-space: normal;
-  }
-
-  .season-quote-footer {
-    align-items: flex-end;
   }
 
   .season-closing-card {

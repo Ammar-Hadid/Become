@@ -1,0 +1,195 @@
+.become-loading {
+  --loading-area-accent: var(--loading-default-accent);
+  --loading-color: var(--loading-accent, var(--loading-area-accent));
+  display: inline-grid;
+  max-width: 100%;
+  place-items: center;
+  vertical-align: middle;
+}
+
+.become-loading[data-loading-area="engineering"] {
+  --loading-area-accent: var(--color-domain-engineering-accent);
+}
+
+.become-loading[data-loading-area="finance"] {
+  --loading-area-accent: var(--color-domain-finance-accent);
+}
+
+.become-loading[data-loading-area="entrepreneurship"] {
+  --loading-area-accent: var(--color-domain-entrepreneurship-accent);
+}
+
+.become-loading[data-loading-area="content"] {
+  --loading-area-accent: var(--color-domain-content-accent);
+}
+
+.become-loading__orbit {
+  display: block;
+  width: var(--loading-orbit-size);
+  height: var(--loading-orbit-size);
+  border: var(--loading-orbit-stroke) solid var(--loading-track-color);
+  border-top-color: var(--loading-color);
+  border-right-color: color-mix(
+    in srgb,
+    var(--loading-color) var(--loading-orbit-highlight-strength),
+    var(--loading-track-color)
+  );
+  border-radius: 50%;
+  filter: drop-shadow(
+    0 0 var(--loading-glow-radius)
+      color-mix(
+        in srgb,
+        var(--loading-color) var(--loading-glow-strength),
+        transparent
+      )
+  );
+  animation: become-loading-spin var(--loading-orbit-cycle) linear infinite;
+}
+
+.become-loading__edge {
+  position: relative;
+  display: grid;
+  width: min(100%, var(--loading-edge-width));
+  gap: var(--loading-edge-line-gap);
+  overflow: hidden;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--loading-color) var(--loading-edge-border-strength),
+      var(--color-border)
+    );
+  border-radius: var(--loading-edge-radius);
+  background: var(--material-glass-background);
+  padding: var(--loading-edge-padding);
+}
+
+.become-loading__edge::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--loading-edge-trace-height);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--loading-color),
+    transparent
+  );
+  box-shadow: 0 0 var(--loading-edge-trace-glow-radius) var(--loading-color);
+  content: "";
+  animation: become-loading-edge var(--loading-edge-cycle)
+    var(--motion-progress-ease) infinite;
+}
+
+.become-loading__edge > span {
+  display: block;
+  height: var(--loading-edge-line-height);
+  border-radius: var(--loading-edge-line-radius);
+  background: var(--color-surface-elevated);
+}
+
+.become-loading__edge > span:first-child {
+  width: var(--loading-edge-first-line-width);
+}
+
+.become-loading__edge > span:last-child {
+  width: var(--loading-edge-second-line-width);
+}
+
+.become-loading[data-loading-variant="edge-trace"] {
+  width: min(100%, var(--loading-edge-width));
+}
+
+.become-loading__eclipse {
+  position: relative;
+  display: block;
+  width: var(--loading-eclipse-size);
+  height: var(--loading-eclipse-size);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--loading-color) var(--loading-eclipse-ring-strength),
+      var(--color-border)
+    );
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--color-background) 0 45%,
+    color-mix(
+        in srgb,
+        var(--loading-color) var(--loading-eclipse-core-strength),
+        transparent
+      )
+      53%,
+    transparent 68%
+  );
+  box-shadow: 0 0 var(--loading-glow-radius)
+    color-mix(
+      in srgb,
+      var(--loading-color) var(--loading-glow-strength),
+      transparent
+    );
+}
+
+.become-loading__eclipse-orbit {
+  position: absolute;
+  inset: calc(var(--loading-eclipse-ring-stroke) / -2);
+  border: var(--loading-eclipse-ring-stroke) solid transparent;
+  border-top-color: var(--loading-color);
+  border-right-color: color-mix(
+    in srgb,
+    var(--loading-color) var(--loading-eclipse-arc-strength),
+    transparent
+  );
+  border-radius: 50%;
+  filter: drop-shadow(
+    0 0 var(--loading-glow-radius)
+      color-mix(
+        in srgb,
+        var(--loading-color) var(--loading-glow-strength),
+        transparent
+      )
+  );
+  animation: become-loading-spin var(--loading-eclipse-cycle) linear infinite;
+}
+
+.become-loading__eclipse-orbit::after {
+  position: absolute;
+  top: calc(var(--loading-eclipse-dot-size) / -2);
+  left: 50%;
+  width: var(--loading-eclipse-dot-size);
+  height: var(--loading-eclipse-dot-size);
+  border-radius: 50%;
+  background: var(--loading-color);
+  box-shadow: 0 0 var(--loading-glow-radius) var(--loading-color);
+  content: "";
+}
+
+@keyframes become-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes become-loading-edge {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-loading__orbit,
+  .become-loading__edge::before,
+  .become-loading__eclipse-orbit {
+    animation: none;
+  }
+}

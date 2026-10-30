@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/buttons/button.component";
 import { DurationPicker } from "@/features/sessions/details/components/duration-picker.component";
+import styles from "@/features/sessions/details/styles/session-details-drawer.component.module.css";
 import type { SessionDetailItem } from "@/features/sessions/types/session.types";
 
 export function SessionTimeEditor({
@@ -29,6 +30,7 @@ export function SessionTimeEditor({
         `/api/sessions/${encodeURIComponent(session.id)}`,
         {
           method: "PATCH",
+          signal: AbortSignal.timeout(15_000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             durationSeconds,
@@ -41,6 +43,7 @@ export function SessionTimeEditor({
         if (response.status === 409) {
           const refreshed = await fetch(
             `/api/sessions/${encodeURIComponent(session.id)}`,
+            { signal: AbortSignal.timeout(15_000) },
           );
           if (refreshed.ok) {
             const latest = (await refreshed.json()) as SessionDetailItem;
@@ -61,11 +64,12 @@ export function SessionTimeEditor({
   }
 
   return (
-    <section className="border-border py-xl border-t">
+    <section className={styles.timeSection}>
       {!editing ? (
-        <button
+        <Button
           type="button"
-          className="text-primary hover:text-primary-hover text-body-sm font-medium"
+          variant="secondary"
+          className={styles.editTimeTrigger}
           onClick={() => {
             setDurationSeconds(session.durationSeconds);
             setError(null);
@@ -73,26 +77,26 @@ export function SessionTimeEditor({
           }}
         >
           Edit recorded time
-        </button>
+        </Button>
       ) : (
-        <form onSubmit={save} className="gap-md grid">
-          <fieldset className="gap-sm m-0 grid min-w-0 border-0 p-0">
-            <legend className="field-label">How long did you work?</legend>
+        <form onSubmit={save} className={`${styles.card} ${styles.timeEditor}`}>
+          <fieldset className={styles.timeFieldset}>
+            <legend className="type-label">How long did you work?</legend>
             <DurationPicker
               value={durationSeconds}
               onChange={setDurationSeconds}
               disabled={saving}
             />
           </fieldset>
-          <p className="text-text-muted text-body-sm">
+          <p className={`type-caption ${styles.timeHelper}`}>
             Focused time and reports will update. Recorded breaks stay excluded.
           </p>
           {error && (
-            <p className="form-error" role="alert">
+            <p className={`form-error ${styles.timeStatus}`} role="alert">
               {error}
             </p>
           )}
-          <div className="gap-sm flex">
+          <div className={styles.timeActions}>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save time"}
             </Button>

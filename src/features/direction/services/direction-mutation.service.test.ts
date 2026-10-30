@@ -1,10 +1,49 @@
 import { describe, expect, it } from "vitest";
+import { Prisma } from "@/generated/prisma/client";
 import {
   isDirectionWriteConflict,
   retryDirectionTransaction,
 } from "./direction-mutation.service";
 
 describe("confirmed transaction rollback recovery", () => {
+  it("retries a raw-query rollback nested in Prisma adapter metadata", async () => {
+    const rollback = new Prisma.PrismaClientKnownRequestError(
+      "Raw query failed",
+      {
+        code: "P2010",
+        clientVersion: "7.10.0",
+        meta: {
+          driverAdapterError: new Error("TransactionWriteConflict", {
+            cause: { kind: "TransactionWriteConflict", originalCode: "40001" },
+          }),
+        },
+      },
+    );
+    let attempts = 0;
+    await expect(
+      retryDirectionTransaction(async () => {
+        if (++attempts === 1) throw rollback;
+        return "finalized once";
+      }),
+    ).resolves.toBe("finalized once");
+    expect(attempts).toBe(2);
+    expect(
+      isDirectionWriteConflict({ code: "P2010", meta: { code: "40P01" } }),
+    ).toBe(true);
+    expect(
+      isDirectionWriteConflict({
+        code: "P2010",
+        meta: {
+          driverAdapterError: {
+            cause: { originalCode: "08006", kind: "ConnectionClosed" },
+          },
+        },
+      }),
+    ).toBe(false);
+    const cyclic = new Error("Unknown failure");
+    cyclic.cause = cyclic;
+    expect(isDirectionWriteConflict(cyclic)).toBe(false);
+  });
   it("recognizes both Prisma and driver-adapter serialization errors", () => {
     expect(isDirectionWriteConflict({ code: "P2034" })).toBe(true);
     expect(

@@ -1,0 +1,228 @@
+.become-progress {
+  --progress-area-accent: var(--motion-progress-default-accent);
+  --progress-color: var(--progress-accent, var(--progress-area-accent));
+  width: 100%;
+}
+
+.become-progress[data-progress-area="engineering"] {
+  --progress-area-accent: var(--color-domain-engineering-accent);
+}
+
+.become-progress[data-progress-area="finance"] {
+  --progress-area-accent: var(--color-domain-finance-accent);
+}
+
+.become-progress[data-progress-area="entrepreneurship"] {
+  --progress-area-accent: var(--color-domain-entrepreneurship-accent);
+}
+
+.become-progress[data-progress-area="content"] {
+  --progress-area-accent: var(--color-domain-content-accent);
+}
+
+.become-progress[data-complete="true"]:is(
+    [data-progress-variant="plasma-core"],
+    [data-progress-variant="season-ticks"]
+  ) {
+  --progress-color: var(--color-success);
+}
+
+.become-progress__plasma-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--progress-plasma-height);
+  overflow: hidden;
+  border: var(--progress-plasma-border-width) solid
+    color-mix(
+      in srgb,
+      var(--progress-color) var(--progress-plasma-edge-strength),
+      var(--color-border)
+    );
+  border-radius: var(--progress-plasma-radius);
+  background: color-mix(
+    in srgb,
+    var(--color-background) var(--progress-plasma-track-background-strength),
+    var(--color-surface)
+  );
+  padding: var(--progress-plasma-inset);
+}
+
+.become-progress__plasma-fill {
+  position: relative;
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(
+      in srgb,
+      var(--progress-color) var(--progress-plasma-fill-start-strength),
+      var(--color-background)
+    ),
+    var(--progress-color)
+  );
+  box-shadow:
+    0 0 var(--progress-plasma-static-glow-radius)
+      color-mix(
+        in srgb,
+        var(--progress-color) var(--progress-plasma-static-glow-strength),
+        transparent
+      ),
+    inset 0 1px 0
+      color-mix(
+        in srgb,
+        var(--color-text-primary) var(--progress-plasma-top-light-strength),
+        transparent
+      );
+  transition: width var(--motion-progress-duration) var(--motion-progress-ease);
+}
+
+.become-progress__plasma-fill::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--motion-progress-glint-width);
+  height: 100%;
+  background: color-mix(
+    in srgb,
+    var(--color-text-primary) var(--motion-progress-glint-strength),
+    transparent
+  );
+  content: "";
+  filter: blur(var(--motion-progress-glint-blur));
+  opacity: 0;
+  transition: opacity var(--duration-content) var(--ease-exit);
+}
+
+.become-progress[data-changing="true"] .become-progress__plasma-fill {
+  box-shadow: 0 0 var(--motion-progress-glow-radius)
+    color-mix(
+      in srgb,
+      var(--progress-color) var(--motion-progress-glow-strength),
+      transparent
+    );
+}
+
+.become-progress[data-changing="true"] .become-progress__plasma-fill::after {
+  opacity: 1;
+}
+
+.become-progress__season {
+  display: flex;
+  width: 100%;
+  height: var(--progress-season-height);
+  gap: var(--progress-season-gap);
+}
+
+.become-progress__season-unit {
+  position: relative;
+  display: block;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  border-radius: var(--progress-season-radius);
+  background: var(--progress-season-inactive);
+}
+
+.become-progress__season-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  width: 0;
+  border-radius: inherit;
+  background: var(--progress-color);
+  box-shadow: inset 0 1px 0
+    color-mix(
+      in srgb,
+      var(--color-text-primary) var(--progress-season-top-light-strength),
+      transparent
+    );
+  transition: width var(--motion-progress-duration) var(--motion-progress-ease)
+    calc(var(--progress-segment-index) * var(--progress-segment-stagger));
+}
+
+.become-progress__season-unit[data-filled="true"]
+  .become-progress__season-fill {
+  box-shadow:
+    inset 0 1px 0
+      color-mix(
+        in srgb,
+        var(--color-text-primary) var(--progress-season-top-light-strength),
+        transparent
+      ),
+    0 0 var(--progress-season-fill-glow-radius)
+      color-mix(
+        in srgb,
+        var(--progress-color) var(--progress-season-fill-glow-strength),
+        transparent
+      );
+}
+
+.become-progress__halo-layout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--progress-halo-content-gap);
+}
+
+.become-progress__halo {
+  position: relative;
+  display: block;
+  width: var(--progress-halo-size);
+  height: var(--progress-halo-size);
+  flex: 0 0 auto;
+}
+
+.become-progress__halo-tick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: var(--progress-halo-tick-width);
+  height: var(--progress-halo-tick-height);
+  border-radius: var(--progress-halo-tick-radius);
+  background: var(--progress-halo-inactive);
+  transform: rotate(var(--progress-halo-rotation))
+    translateY(calc(-1 * var(--progress-halo-ring-radius)));
+  transform-origin: center;
+  transition:
+    background-color var(--progress-segment-color-duration)
+      var(--motion-progress-ease)
+      calc(var(--progress-segment-index) * var(--progress-segment-stagger)),
+    box-shadow var(--progress-segment-color-duration)
+      var(--motion-progress-ease)
+      calc(var(--progress-segment-index) * var(--progress-segment-stagger));
+}
+
+.become-progress__halo-tick[data-filled="true"] {
+  background: var(--progress-color);
+  box-shadow: 0 0 var(--progress-halo-glow-radius)
+    color-mix(
+      in srgb,
+      var(--progress-color) var(--progress-halo-glow-strength),
+      transparent
+    );
+}
+
+.become-progress__halo-copy {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.become-progress__halo-copy strong {
+  color: var(--progress-color);
+}
+
+.become-progress__halo-copy span {
+  color: var(--color-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .become-progress__plasma-fill,
+  .become-progress__plasma-fill::after,
+  .become-progress__season-fill,
+  .become-progress__halo-tick {
+    transition: none;
+  }
+}

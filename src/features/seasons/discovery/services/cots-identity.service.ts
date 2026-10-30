@@ -15,6 +15,7 @@ import {
   getCotsIdentity,
 } from "@/features/seasons/discovery/queries/cots-collection.query";
 import { emptySeasonDraft } from "@/features/seasons/utils/season-calendar.util";
+import { preserveLivingSnapshot } from "@/features/seasons/living/services/living-snapshot.service";
 export async function saveCotsIdentity(userId: string, input: unknown) {
   const c = cotsIdentityCommand.parse(input);
   await prisma.$transaction(async (tx) => {
@@ -51,6 +52,18 @@ export async function saveCotsIdentity(userId: string, input: unknown) {
         "association",
         409,
       );
+    if (contextChanged || c.association === "NEW") {
+      const pack = await tx.livingSeasonPack.findUnique({
+        where: { seasonId: season.id },
+      });
+      if (pack) {
+        await preserveLivingSnapshot(pack.id, false, tx);
+        await tx.livingSeasonPack.update({
+          where: { id: pack.id },
+          data: { activeAt: null, briefRevision: { increment: 1 } },
+        });
+      }
+    }
     if (active && c.association === "NEW")
       await tx.seasonCotsIdentity.update({
         where: { id: active.row.id },

@@ -1,3 +1,4 @@
+import { WorkspacePanel } from "@/components/ui/workspace/workspace.component";
 import { ArrowUpRight } from "lucide-react";
 import { ContentObservationDialog } from "@/features/content/results/components/content-observation-dialog.component";
 import { ContentReleaseDialog } from "@/features/content/releases/components/content-release-dialog.component";
@@ -41,11 +42,14 @@ export function ContentReleaseHistory({
   onWorkspace: (workspace: ContentWorkspace) => void;
 }) {
   return (
-    <section className="content-releases" aria-labelledby="releases-title">
+    <WorkspacePanel
+      className="content-releases"
+      aria-labelledby="releases-title"
+    >
       <header>
         <div>
           <p className="eyebrow">Release and learn</p>
-          <h2 id="releases-title">One variant, every place it went.</h2>
+          <h2 id="releases-title">Releases & results.</h2>
           <p>
             Each number is a lifetime reading for one release. Platform, format,
             and observation date stay visible beside it.
@@ -123,6 +127,6 @@ export function ContentReleaseHistory({
           </p>
         </div>
       )}
-    </section>
+    </WorkspacePanel>
   );
 }

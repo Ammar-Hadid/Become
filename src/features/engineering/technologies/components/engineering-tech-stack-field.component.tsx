@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { Input } from "@/components/ui/forms/input.component";
 import { Plus, Search, X } from "lucide-react";
 import { EngineeringTechnologyIcon } from "@/features/engineering/technologies/components/engineering-technology-icon.component";
 import { TECHNOLOGY_CATEGORY_LABELS } from "@/features/engineering/technologies/constants/engineering-technology.constants";
@@ -128,7 +129,9 @@ export function EngineeringTechStackField({
           {selected.map((technology) => (
             <span key={technology.id} data-testid="selected-technology">
               <EngineeringTechnologyIcon iconKey={technology.iconKey} />
-              {technology.name}
+              <span className="engineering-technology-name">
+                {technology.name}
+              </span>
               <button
                 type="button"
                 onClick={() =>
@@ -155,7 +158,8 @@ export function EngineeringTechStackField({
       )}
       <div className="engineering-tech-combobox">
         <Search aria-hidden="true" />
-        <input
+        <Input
+          aria-label="Search technologies"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);

@@ -90,7 +90,7 @@ export async function RecurringPage({ userId }: { userId: string }) {
       <FinancePageHeader
         eyebrow="Commitments"
         title="Recurring"
-        description="What is coming next, what needs a confirmation and which expenses will record themselves."
+        description="See what is due, confirm an expense, or change a schedule."
         actions={
           accounts.length ? (
             <FinanceDialog
@@ -108,7 +108,7 @@ export async function RecurringPage({ userId }: { userId: string }) {
 
       <FinanceSection
         title="On the horizon"
-        description="The next 30 days of expected commitments. These remain expectations until an expense is recorded."
+        description="Expected in the next 30 days. These amounts stay prospective until posted."
       >
         {currencies.length > 0 && (
           <div className="finance-commitment-totals">

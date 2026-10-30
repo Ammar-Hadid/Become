@@ -306,16 +306,16 @@
   grid-column: 1 / -1;
 }
 
-.thinking-form-field > span {
+.thinking-form-field > span:not(.become-native-select) {
   color: var(--color-text-secondary);
   font-size: var(--text-body-sm);
   line-height: var(--text-body-sm--line-height);
   font-weight: 600;
 }
 
-.thinking-form-field input,
-.thinking-form-field textarea,
-.thinking-form-field select {
+.thinking-form-field input:not(.become-input),
+.thinking-form-field textarea:not(.become-textarea),
+.thinking-form-field select:not(.become-native-select select) {
   width: 100%;
   min-height: var(--spacing-input-height-md);
   border: 1px solid var(--color-border);
@@ -326,14 +326,14 @@
   outline: none;
 }
 
-.thinking-form-field textarea {
+.thinking-form-field textarea:not(.become-textarea) {
   min-height: var(--spacing-textarea-height-sm);
   resize: vertical;
 }
 
-.thinking-form-field input:focus,
-.thinking-form-field textarea:focus,
-.thinking-form-field select:focus {
+.thinking-form-field input:not(.become-input):focus,
+.thinking-form-field textarea:not(.become-textarea):focus,
+.thinking-form-field select:not(.become-native-select select):focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-muted);
 }
@@ -851,6 +851,7 @@
 .thinking-conflict button svg,
 .thinking-conflict-actions button svg {
   width: 14px;
+  flex-shrink: 0;
 }
 
 .thinking-conflict-actions {
@@ -987,6 +988,11 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.decision-supporting-fields + .thinking-dialog-actions {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .decision-supporting-fields > summary {
   min-height: 60px;
   cursor: pointer;
@@ -1061,6 +1067,8 @@
 
 .decision-links svg {
   width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 .decision-context,

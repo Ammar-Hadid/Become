@@ -1,0 +1,40 @@
+# Season opening layout: approved and integrated
+
+The owner explicitly approved this working layout on 15 October 2026 and requested connected integration. Shared `SeasonRitualLayout` and `StepIndicator` now own presentation; the connected onboarding uses them across every checkpoint. See [SEASON_RITUAL_LAYOUT.md](SEASON_RITUAL_LAYOUT.md). The following records the historical prototype; its former pending admission statements are superseded by this approval.
+
+
+The owner approved the implementation plan on 11 October 2026. The working review is `/season-opening-layout-candidate`; the layout and numbered step indicator remain outside the shared library. This approval authorizes the review prototype, not visual admission or replacement of the existing onboarding candidate. The subsequently approved Gold Drift backdrop has been promoted independently to shared `AmbientLight`, with Storybook and typed metadata; it now persists through preparation, imagery and activation with one pause control.
+
+The selected render supplies a 40/60 desktop split, quiet divider, faint current-step numeral, a step-specific H1 in the left panel, and a focused working area. The actual approved Become brand and underline controls are reused. The parent rail has Character, Imagery and Activate Season; preparation has Character, Confirm, World & mood and Summary. Below 1024px the introduction compacts above the form and the decorative number disappears. Preparation uses a viewport-height shell with only the working section scrolling and approved gutters; imagery retains normal page scrolling. Two diffuse gold light fields drift diagonally across the entire backdrop on offset 16-second and 22.4-second cycles. Low-strength color stops keep the effect behind the content. Only transform and opacity animate; both layers pause in hidden tabs/offscreen and become static under reduced motion. One motion control also pauses the approved AI text frame and Living Ink summary.
+
+`StepIndicatorCandidate` and `SeasonRitualLayoutCandidate` are the two presentation candidates. Their implementations and remaining local visual values live in `src/features/design-review/season-opening-layout/`. The backdrop reuses shared `AmbientLight` and its approved tokens. The stepper is informational, uses native ordered lists and current/completed/upcoming semantics, and does not bypass approvals. Loading, clarification, paused preparation, retry and correction remain at preparation step 04. The pure progress mapping is tested independently from animation timing.
+
+This is a sample-only, local review with no catalogue, model, generation or Season command requests. Year and quarter come from valid route parameters or the current Amsterdam calendar. Drafts use their own key, separate from the existing onboarding candidate; local writes complete before displaying a saved state and preserve paused preparation across immediate refresh. The header says Saved on this device, not server-saved. A storage failure leaves an explicit error and prevents Save and leave from navigating. Sample corrections are shown as requested owner direction, not falsely presented as a connected model revision. Unknown character names use no sample portrait or invented canon; their summaries identify the preview and the evidence required from connected research.
+
+The original preview's sample model factory is exported for reuse without changing its rendering or actions. The new review reuses the actual imagery review component after summary approval; its old duplicate topbar and progress are omitted only inside this new route. Image review controls, full-width compositions and approval gates are retained. The original `/season-onboarding-candidate` is not restyled.
+
+Verification used regular Playwright because the Browser testing plugin is not available, plus the in-app browser for owner presentation. Fourteen unit cases verify progression. Eight browser cases across desktop and phone verify the normal four-step flow, adaptation controls, paused refresh, correction, motion, save failures, keyboard scrolling confined to the working section, viewport height and explicit activation; no API requests or browser errors occurred. Four existing-candidate regression cases passed. All four preparation screens were inspected on desktop and phone; the opening also fits a 1366×768 laptop without horizontal overflow. TypeScript and targeted ESLint pass.
+
+After explicit approval of this working preview, promote the two presentation components and local visual values to shared owners, add Storybook and typed ComponentMeta records, and integrate with the existing connected model/actions and truthful server save status. Preserve Season-owned approval and generation behavior. The full onboarding still requires its own approval. Follow [SHARED_LIBRARY.md](SHARED_LIBRARY.md); present the working review and ask exactly “Do you like it?” before promotion.
+
+
+## Owner correction
+
+The owner clarified that the oversized number represents preparation step 01–04, not the Season quarter. It now follows the same preparation index as the numbered rail, including step 04 during assembly, clarification and summary correction. The active step’s sole H1 and supporting description occupy the left panel (the compact top section on phones). The generic “A new Season begins” headline and redundant right-side “Step … of 04” caption are removed. Season quarter/year remain separate calendar context. Both columns belong to one main landmark; imagery continues to reuse its existing main. Regression checks cover all four numerals with a different quarter to prevent this confusion recurring.
+
+
+The owner then requested a viewport-height preparation workspace. Header, step introduction and footer stay fixed in the shell; only the right section scrolls (the lower working section on phones). Review-only controls join that section instead of extending the document. The scroll region is keyboard focusable, contains overscroll, and resets to the top when the step or correction view changes. This applies to entry, confirmation, world, summary and their loading/correction/failure variants. Imagery and activation keep their existing scrolling.
+
+
+Banner review now reuses the scenery Desktop/Mobile selector and the same retained, inert, viewport-clipped slide panes. It shows one format at a time, preserves the resized phone viewport when toggling, and switches immediately with reduced motion. Desktop selection uses the desktop artwork even on a narrow device. Regeneration and existing likeness approval callbacks remain unchanged; the shared view updates both candidate routes.
+
+
+## Ambient motion refinement
+
+The owner found the original 20-second, 3% horizontal movement nearly invisible, then clarified that the replacement should stay quiet and travel across the entire screen rather than gather at the bottom. The revised treatment uses two overlapping diffuse fields following different diagonal paths, with low-opacity gold and offset cycles. The effect remains decorative and does not represent generation or progress. Pause/resume preserves position; hidden-tab and reduced-motion behavior apply to both fields. After explicit approval, this motion was promoted to [AmbientLight](AMBIENT_LIGHT.md); its visual values now live in shared tokens, with no duplicate candidate gradient implementation.
+
+Research consulted on 11 October 2026:
+
+- [Google Design: Illustrating the Gemini App](https://design.google/library/gemini-ai-visual-design) describes concentrated/diffused gradients and directional flow. This informs the visible spatial movement, adapted to Become’s palette and the owner’s quieter backdrop request.
+- [Stripe: Connect front-end experience](https://stripe.com/blog/connect-front-end-experience) documents CSS/Web Animations, transform/opacity performance, and visibility-aware animation.
+- [web.dev: High-performance CSS animations](https://web.dev/articles/animations-guide) recommends avoiding layout/paint-heavy animated properties. Gradient pixels remain fixed inside their moving layers; no animated blur or layout changes are needed.

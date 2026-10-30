@@ -1,0 +1,34 @@
+.document-editor-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1.25rem;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--color-border) 3rem, var(--color-border) calc(100% - 3rem), transparent);
+  pointer-events: none;
+}
+
+.document-editor-guide span {
+  position: absolute;
+  top: 0;
+  left: -2px;
+  display: block;
+  width: 5px;
+  height: 1.75rem;
+  border-radius: 99px;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 7%, transparent), 0 0 18px color-mix(in srgb, var(--color-primary) 42%, transparent);
+  transition: transform var(--duration-content) var(--ease-move);
+}
+
+@media (max-width: 639px) {
+  .document-editor-guide { left: 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .document-editor-guide span { transition: none; }
+}
+
+@media print {
+  .document-editor-guide { display: none; }
+}

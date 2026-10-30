@@ -1,3 +1,5 @@
+import { WorkspaceHeader } from "@/components/ui/workspace/workspace.component";
+import "@/features/finance/styles/finance-workspace.css";
 import Link from "next/link";
 import { ArrowLeft, FolderTree, Tags } from "lucide-react";
 import { prisma } from "@/lib/db/adapters/prisma.adapter";
@@ -24,14 +26,11 @@ export async function ExpenseCategoryManagement({
         Finance settings
       </Link>
 
-      <header className="finance-settings-heading">
-        <p className="eyebrow">Expense categories</p>
-        <h2>Manage your category vocabulary.</h2>
-        <p>
-          Keep the list useful and easy to scan. Archived categories remain on
-          historical transactions but are no longer available for new expenses.
-        </p>
-      </header>
+      <WorkspaceHeader
+        eyebrow="Finance settings"
+        title="Expense categories"
+        description="A short, useful list for organizing expenses. Archived categories stay on past transactions."
+      />
 
       <ReusableEntityManagement
         noun="category"

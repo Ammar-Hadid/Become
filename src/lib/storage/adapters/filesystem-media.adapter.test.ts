@@ -17,6 +17,18 @@ afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
 });
 describe("private filesystem media", () => {
+  it("stores authentic character references through the same private boundary", async () => {
+    const storage = filesystemMediaStorage(await root());
+    const key = "media/character-references/pack-one/original-one.webp";
+    await storage.put(key, Buffer.from("authentic-original"));
+    expect((await storage.read(key)).toString()).toBe("authentic-original");
+    await expect(
+      storage.put(
+        "media/character-references/../original.webp",
+        Buffer.from("bad"),
+      ),
+    ).rejects.toThrow("Invalid");
+  });
   it("writes exclusively, reads exact bytes, and deletes only the requested key", async () => {
     const storage = filesystemMediaStorage(await root()),
       key = "media/seasons/season-one/image-one.webp";

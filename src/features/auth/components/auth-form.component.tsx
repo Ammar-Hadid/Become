@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { Input } from "@/components/ui/forms/input.component";
 import { Button } from "@/components/ui/buttons/button.component";
 import { authClient } from "@/lib/auth/config/auth-client.config";
 
@@ -79,7 +80,7 @@ export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
         {signingUp && (
           <label className="block">
             <span className="field-label">Name</span>
-            <input
+            <Input
               className="text-input"
               type="text"
               autoComplete="name"
@@ -93,7 +94,7 @@ export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
         )}
         <label className="block">
           <span className="field-label">Email</span>
-          <input
+          <Input
             className="text-input"
             type="email"
             autoComplete="email"
@@ -107,7 +108,7 @@ export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
         <label className="block">
           <span className="field-label">Password</span>
           <span className="relative block">
-            <input
+            <Input
               className="text-input pr-12"
               type={showPassword ? "text" : "password"}
               autoComplete={signingUp ? "new-password" : "current-password"}
@@ -116,7 +117,7 @@ export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
               placeholder={
                 signingUp ? "At least 8 characters" : "Your password"
               }
-              minLength={8}
+              minLength={signingUp ? 8 : undefined}
               required
               data-testid="password-input"
             />
@@ -152,11 +153,6 @@ export function AuthForm({ allowSignUp }: { allowSignUp: boolean }) {
           )}
         </Button>
       </form>
-      <p className="auth-supporting-text text-text-muted mt-2xl text-center">
-        Your data stays in your PostgreSQL database.
-        <br />
-        No activity is shared or published.
-      </p>
     </div>
   );
 }

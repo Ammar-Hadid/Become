@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { Button } from "@/components/ui/buttons/button.component";
+import { InterfaceSoundContext } from "@/components/ui/sound/components/interface-sound-provider.component";
 import type {
   ReviewMetric,
   ReviewView,
@@ -17,6 +19,7 @@ export function ReviewMetricGroups({
   metrics: ReviewMetric[];
   allowAll?: boolean;
 }) {
+  const sound = useContext(InterfaceSoundContext);
   const domains = [...new Set(metrics.map(({ domain }) => domain))];
   const [chosen, setChosen] = useState(domains[0]);
   const [all, setAll] = useState(false);
@@ -30,30 +33,40 @@ export function ReviewMetricGroups({
         aria-label="Choose a domain to read"
       >
         {domains.map((domain) => (
-          <button
+          <Button
+            variant={!all && domain === active ? "secondary" : "ghost"}
+            size="sm"
             key={domain}
             type="button"
             aria-pressed={!all && domain === active}
             onClick={() => {
-              if (all || domain !== active) setHasChanged(true);
+              if (all || domain !== active) {
+                setHasChanged(true);
+                sound?.play("controlConfirmed");
+              }
               setChosen(domain);
               setAll(false);
             }}
           >
             {domain[0].toUpperCase() + domain.slice(1)}
-          </button>
+          </Button>
         ))}
         {allowAll && (
-          <button
+          <Button
+            variant={all ? "secondary" : "ghost"}
+            size="sm"
             type="button"
             aria-pressed={all}
             onClick={() => {
-              if (!all) setHasChanged(true);
+              if (!all) {
+                setHasChanged(true);
+                sound?.play("controlConfirmed");
+              }
               setAll(true);
             }}
           >
             All domains
-          </button>
+          </Button>
         )}
       </div>
       <div

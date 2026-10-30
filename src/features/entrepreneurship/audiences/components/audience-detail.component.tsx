@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { BusinessBackLink } from "@/features/entrepreneurship/explorations/components/business-back-link.component";
 import {
@@ -51,7 +52,7 @@ export function AudienceDetail({
           />
         </div>
       </header>
-      <section className="business-zone">
+      <Card material="glass" spacing="dense" className="business-zone">
         <div className="business-row-heading">
           <h3>
             {kind === "segment"
@@ -72,8 +73,12 @@ export function AudienceDetail({
             ? "Sources and judgments preserve the audience definition captured at the time."
             : "A person’s role and buying context belong to each recorded event."}
         </p>
-      </section>
-      <section className="business-zone business-zone--ledger">
+      </Card>
+      <Card
+        material="glass"
+        spacing="dense"
+        className="business-zone business-zone--ledger"
+      >
         <div className="business-row-heading">
           <div>
             <p className="eyebrow">
@@ -96,9 +101,9 @@ export function AudienceDetail({
               : undefined
           }
         />
-      </section>
+      </Card>
       <div className="business-overview-grid">
-        <section className="business-zone">
+        <Card material="glass" spacing="dense" className="business-zone">
           <div className="business-row-heading">
             <h3>Problems being examined</h3>
           </div>
@@ -121,8 +126,8 @@ export function AudienceDetail({
               No scoped problems linked here yet.
             </p>
           )}
-        </section>
-        <section className="business-zone">
+        </Card>
+        <Card material="glass" spacing="dense" className="business-zone">
           <div className="business-row-heading">
             <h3>Offers</h3>
           </div>
@@ -145,7 +150,7 @@ export function AudienceDetail({
           ) : (
             <p className="business-inline-empty">No offers linked here yet.</p>
           )}
-        </section>
+        </Card>
       </div>
       <details className="business-disclosure business-zone">
         <summary>Shared identity & exploration links</summary>

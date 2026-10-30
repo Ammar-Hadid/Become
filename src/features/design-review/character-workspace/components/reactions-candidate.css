@@ -1,0 +1,180 @@
+.reactions-candidate {
+  display: grid;
+  gap: var(--spacing-lg);
+  max-width: var(--character-workspace-max-width);
+  margin-inline: auto;
+  padding: var(--space-page-edge);
+  min-width: 0;
+}
+
+.reactions-candidate__intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+}
+.reactions-candidate__intro > div {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+.reactions-candidate__intro h1,
+.reactions-candidate__intro p {
+  margin: 0;
+}
+.reactions-candidate__intro .type-overline {
+  color: var(--color-primary);
+}
+.reactions-candidate__intro .type-body-sm,
+.reactions-candidate__intro > .type-caption {
+  color: var(--color-text-secondary);
+}
+
+.reactions-candidate__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(
+      18rem,
+      var(--character-workspace-sidebar-width)
+    );
+  align-items: start;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+.reactions-candidate__main {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+.reactions-candidate__sidebar {
+  min-width: 0;
+}
+.reactions-candidate__sidebar section {
+  display: grid;
+  gap: var(--spacing-md);
+}
+.reactions-candidate__sidebar p,
+.reactions-candidate__sidebar h2 {
+  margin: 0;
+}
+.reactions-candidate__sidebar .type-overline {
+  color: var(--color-primary);
+}
+.reactions-candidate__sidebar .type-caption {
+  color: var(--color-text-secondary);
+}
+
+.reactions-candidate__panel {
+  display: grid;
+  gap: var(--spacing-lg);
+  animation: reactions-candidate-arrive var(--motion-surface-duration)
+    var(--motion-surface-ease) both;
+}
+.reactions-candidate__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.reactions-candidate__heading > div:last-child {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+.reactions-candidate__heading p,
+.reactions-candidate__heading h2 {
+  margin: 0;
+}
+.reactions-candidate__heading .type-overline {
+  color: var(--color-primary);
+}
+.reactions-candidate__heading .type-body-sm {
+  color: var(--color-text-secondary);
+}
+.reactions-candidate__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-lg);
+}
+.reactions-candidate__fields > *:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.reactions-candidate__fields textarea {
+  min-height: 8rem;
+}
+.reactions-candidate__records {
+  display: grid;
+}
+.reactions-candidate__record {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--spacing-md);
+  padding-block: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+.reactions-candidate__record .type-overline {
+  color: var(--color-primary);
+}
+.reactions-candidate__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-block-start: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+.reactions-candidate__actions p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+.reactions-candidate__actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+@keyframes reactions-candidate-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-surface-travel));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 76rem) {
+  .reactions-candidate__workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reactions-candidate__sidebar {
+    display: none;
+  }
+}
+@media (max-width: 55rem) {
+  .reactions-candidate__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reactions-candidate__fields > *:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+  .reactions-candidate__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+@media (max-width: 40rem) {
+  .reactions-candidate {
+    padding: var(--space-page-edge-mobile);
+  }
+  .reactions-candidate__intro {
+    align-items: start;
+    flex-direction: column;
+  }
+  .reactions-candidate__actions > div > * {
+    flex: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reactions-candidate__panel {
+    animation: none;
+  }
+}

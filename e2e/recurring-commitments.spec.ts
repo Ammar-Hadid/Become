@@ -7,6 +7,7 @@ import {
   type Page,
 } from "./utils/browser-test.util";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 test.describe("Recurring commitment actions", () => {
   let email: string;
@@ -22,9 +23,7 @@ test.describe("Recurring commitment actions", () => {
     await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill("recurring-menu-password");
     await page.getByTestId("auth-submit").click();
-    await expect(
-      page.getByRole("heading", { name: /Good (morning|afternoon|evening)/ }),
-    ).toBeVisible();
+    await deferAutomaticSeasonOpening(page);
 
     await page.goto("/finance/accounts");
     await page.getByRole("button", { name: "Add account" }).click();

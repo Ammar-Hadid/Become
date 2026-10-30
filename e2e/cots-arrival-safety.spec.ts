@@ -60,7 +60,10 @@ test("season arrival preserves deep links, unfinished timer input, and an active
     window.history.replaceState({}, "", "/?timer=pending"),
   );
   await page.locator('[data-testid="start-timer-trigger"]:visible').click();
-  await page.getByRole("button", { name: "Engineering", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "What are you working on?" })
+    .getByRole("button", { name: "Engineering", exact: true })
+    .click();
   await page.getByTestId("activity-select").selectOption({ label: "Coding" });
   await page.getByTestId("engineering-context-select").selectOption("PERSONAL");
   await page.getByTestId("session-description").fill("Protected active work");
@@ -93,15 +96,10 @@ test("season arrival preserves deep links, unfinished timer input, and an active
   await expectNoSeasonTakeover(page);
   releaseStart?.();
 
-  const activeTimer = page.locator(
-    '[data-testid="active-timer-trigger"]:visible',
-  );
+  const activeTimer = page.getByTestId("dashboard-active-session");
   await expect(activeTimer).toBeVisible();
-  await expect(activeTimer).toHaveAttribute("data-session-id", /.+/);
-  await expect(activeTimer).toHaveAttribute(
-    "aria-label",
-    "View running Coding session",
-  );
+  await expect(activeTimer).toContainText("Protected active work");
+  await expect(activeTimer.getByTestId("end-session")).toBeEnabled();
   await page.evaluate(() => {
     window.history.replaceState({}, "", "/?timer=active");
     window.history.replaceState({}, "", "/");

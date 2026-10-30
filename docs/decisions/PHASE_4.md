@@ -1,5 +1,8 @@
 # Phase 4 — implementation decisions
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Approved implementation, 8 September 2026. Work is on `feature/phase-4`;
 the existing timer, Finance, Engineering and motion changes are preserved.
 
@@ -35,8 +38,8 @@ checks are not acceptance claims. No commit, push or deployment is authorized.
 ## Shipped journeys
 
 1. **Market → listen:** add a niche and company, retain their context, then log an
-   interaction from the overview, journal or company page. The compact save needs
-   only event kind, date and summary. Search or create a company inline. Expand
+   interaction from the overview, journal or company page. The event requires
+   kind, date and summary. Company search and creation are supported. Include
    context, an observation/problem interpretation, or an explicitly dated next
    action only when useful. Those additions save atomically with the interaction.
 2. **Outreach → reply:** select actual recipients in manual batch capture, confirm
@@ -61,17 +64,11 @@ checks are not acceptance claims. No commit, push or deployment is authorized.
 
 ## UI and cross-domain changes
 
-The overview leads with exploration, market words and chosen next actions. Market
-uses searchable company rows and exploration cards. Interactions read as a journal;
-Problems separate the original claim, source words, interpretation and judgments.
-Offer pages give scope and quote terms primary space, alongside outcome history,
-actual receipts and next actions. Management actions use shared contextual menus.
-Forms open on request, protect unsaved entries and preserve failed/stale submissions.
+Management actions use shared contextual menus. Forms protect unsaved entries and preserve failed/stale submissions.
 
 The existing Finance dialog, form guard and creatable control were narrowly promoted
 to shared UI; Finance imports retain compatibility aliases. Phase 4 consumes the
-approved motion tokens, native dialog lifecycle, local disclosure/reveal and navigation
-patterns. Reduced motion changes presentation without delaying saved-state application.
+shared motion tokens and native dialog lifecycle. Reduced motion changes presentation without delaying saved-state application.
 No dependency or overlay framework was added.
 
 Finance transaction edit/delete now shares its transaction row lock with business

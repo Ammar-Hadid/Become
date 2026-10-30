@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/buttons/button.component";
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
@@ -40,6 +41,7 @@ export function AudienceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow={
         kind === "segment"
           ? "A useful audience boundary"
@@ -151,6 +153,7 @@ export function AttachAudienceForm({
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Context you already know"
       title={`Attach an existing ${kind}`}
       triggerLabel={`Attach existing ${kind}`}
@@ -195,13 +198,9 @@ export function AudienceMenu({
         label={`${kind} actions`}
         placement="bottom-end"
         trigger={(props) => (
-          <button
-            {...props}
-            disabled={pending}
-            className="business-icon-button"
-          >
+          <Button variant="ghost" size="icon" {...props} disabled={pending}>
             <MoreHorizontal aria-hidden="true" />
-          </button>
+          </Button>
         )}
       >
         <MenuItem

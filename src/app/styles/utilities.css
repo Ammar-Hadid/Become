@@ -3,10 +3,11 @@
 }
 
 .eyebrow {
-  font-size: var(--text-body-sm);
-  line-height: var(--text-body-sm--line-height);
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-family: var(--text-overline--font-family);
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline--font-weight);
+  letter-spacing: var(--text-overline--letter-spacing);
+  line-height: var(--text-overline--line-height);
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
@@ -17,6 +18,21 @@
   padding: 54px clamp(var(--spacing-xl), 5vw, 72px) 80px;
 }
 
+:where(.app-shell-main:not([data-dashboard="true"])) .page-shell {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--space-page-edge);
+}
+
+@media (min-width: 45.001rem) {
+  :where(.app-shell-main:not([data-dashboard="true"])) .page-shell {
+    padding-top: calc(
+      var(--nav-rail-offset-block) + var(--nav-rail-launcher-size) +
+        var(--spacing-sm)
+    );
+  }
+}
+
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -25,14 +41,18 @@
 }
 
 .page-header h1 {
-  font-size: var(--text-h1);
-  line-height: var(--text-h1--line-height);
-  font-weight: 570;
-  letter-spacing: -0.055em;
+  font-family: var(--text-page-title--font-family);
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title--font-weight);
+  letter-spacing: var(--text-page-title--letter-spacing);
+  line-height: var(--text-page-title--line-height);
 }
 
 .page-description {
+  font-family: var(--text-body-lg--font-family);
   font-size: var(--text-body-lg);
+  font-weight: var(--text-body-lg--font-weight);
+  letter-spacing: var(--text-body-lg--letter-spacing);
   line-height: var(--text-body-lg--line-height);
 }
 

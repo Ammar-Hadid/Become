@@ -1,26 +1,6 @@
 # Become Phase 3: Finance
-## Authoritative Architecture and Implementation Contract
 
-You are implementing Phase 3 of **Become**, a long-term personal operating system for growth, direction, evidence, and self-understanding.
-
-Before implementing anything:
-
-1. Read the repository carefully.
-2. Read `AGENTS.md` and obey it exactly.
-3. Read `SPEC.md` completely so you understand the product and the later phases.
-4. Inspect the existing Prisma schema and all applied migrations.
-5. Inspect the existing Session/timer architecture.
-6. Inspect the existing Week/Month/Season/Year analytics and timezone utilities.
-7. Inspect the authenticated application shell, global sidebar, Engineering implementation, Session Details drawer, design tokens, CSS organization, tests, and current repository conventions.
-8. Inspect the actual current code before deciding filenames or abstractions.
-
-This document is the authoritative architecture contract for **Phase 3 Finance**.
-
-If an older Finance decision in `SPEC.md`, previous planning notes, comments, or existing unfinished Finance code contradicts this document, **this document wins for Phase 3**.
-
-Do not override unrelated Phase 1 or Phase 2 behavior merely because this document is newer.
-
-Do not expand Phase 3 into later phases.
+This is the historical Phase 3 Finance plan, not an active agent instruction or design authority. The current product owner's request, root `AGENTS.md`, approved shared library, and implemented Finance contracts govern new work. The implementation and tests determine which planned behaviors actually shipped.
 
 ---
 
@@ -486,7 +466,7 @@ ExpenseCategory
 
 No giant pre-seeded budgeting taxonomy.
 
-Allow quick inline creation where useful.
+Support category creation when needed.
 
 Archived categories remain on historical transactions.
 
@@ -2162,7 +2142,7 @@ Do not create a fake global "ROI" metric by mixing unrelated sources/opportuniti
 
 # 51. Needs Attention model
 
-Finance should have one coherent attention surface rather than random warning cards.
+Finance attention data must retain its deterministic urgency and source qualification.
 
 Possible attention items:
 
@@ -2201,87 +2181,11 @@ Recommended:
 
 Existing generic `/domains/finance` should redirect to dedicated Finance experience while preserving relevant query state where appropriate.
 
-Finance local navigation:
-
-```text
-Overview
-Transactions
-Accounts
-Savings
-Recurring
-Work & Opportunities
-```
-
-Do not add all sub-pages to the global application sidebar.
-
-Global sidebar keeps one Finance entry.
-
 ---
 
-# 53. Finance Overview hierarchy
+# 53. Finance overview facts
 
-Do not render seven giant equal cards.
-
-Recommended hierarchy:
-
-## 1. Financial position
-
-Primary current recorded position grouped by currency.
-
-Show reconciliation freshness/completeness.
-
-## 2. Needs attention
-
-Compact and prominent only when something requires action.
-
-## 3. Savings + upcoming commitments
-
-Desktop may use a balanced two-column composition:
-
-```text
-Savings direction
-Upcoming recurring commitments
-```
-
-## 4. Cash movement
-
-Selected period inflow/outflow/transfer story.
-
-## 5. Work and income development
-
-Paid Work, acquisition effort, payment attribution, opportunities.
-
-Mobile order:
-
-```text
-Position
-Urgent attention
-Savings
-Upcoming commitments
-Cash movement
-Work & opportunities
-```
-
-Respect Become's visual identity:
-
-```text
-modern
-minimal
-premium
-serious
-calm
-```
-
-Avoid:
-
-```text
-crypto dashboard
-accounting ERP
-rainbow KPI wall
-gamification
-glows
-excessive cards
-```
+Supply current recorded position by currency, reconciliation freshness/completeness, deterministic actionable obligations, savings, recurring commitments, separately qualified inflow/outflow/transfers, and work/income development.
 
 ---
 
@@ -2297,21 +2201,6 @@ What goals currently claim that money?
 How much has actually been spent toward each goal?
 How much remains to fund?
 Is my savings plan internally supportable?
-```
-
-A goal should be understandable at a glance.
-
-Potential presentation:
-
-```text
-Gaming PC
-
-Target              €2,500
-Spent                 €500
-Remaining            €2,000
-
-Allocated            €1,400
-Still unfunded         €600
 ```
 
 Do not call `allocated / target` "goal progress" once spending exists.
@@ -2342,9 +2231,6 @@ Should support:
 - category/account
 - next due date
 
-Avoid building a calendar application unless it materially improves the experience.
-
-A chronological upcoming list may be enough.
 
 ---
 
@@ -2410,10 +2296,6 @@ That preserves one balance architecture.
 
 Settings is a coherent application area, not a Finance-specific random page.
 
-Existing global sidebar remains global navigation.
-
-Add Settings near the lower utility/profile area if that fits the current shell.
-
 Routes:
 
 ```text
@@ -2439,44 +2321,9 @@ Entrepreneurship
 
 until they exist.
 
-But build secondary navigation so future real sections can be added without redesign.
-
 ---
 
-# 59. Settings responsive UX
-
-## Desktop
-
-Global sidebar remains.
-
-Inside main content:
-
-```text
-Settings secondary navigation
-+
-Settings content
-```
-
-Only Finance appears.
-
-## Tablet
-
-Use compact horizontal/section navigation rather than two cramped vertical sidebars.
-
-## Mobile
-
-Global mobile navigation remains authoritative.
-
-Show:
-
-```text
-Settings
-Finance
-```
-
-with a compact section mechanism capable of expansion later.
-
-Do not open an empty selector for one section.
+# 59. Finance Settings scope
 
 Finance Settings currently contains at minimum:
 
@@ -2494,16 +2341,6 @@ Recurring expense definitions are NOT settings.
 ---
 
 # 60. Transaction and savings interaction
-
-Ordinary expense recording should remain low-friction.
-
-Do not ask:
-
-```text
-Which savings goal funded this?
-```
-
-for every purchase.
 
 Most expenses are unrelated to goal semantics.
 
@@ -2527,40 +2364,13 @@ No goal deduction is guessed.
 
 # 61. Optional goal impact on expense
 
-When context suggests the purchase may be goal-related, the UI may expose:
-
-```text
-Savings goal impact
-```
-
-Possible flow:
-
-```text
-Does part of this expense count toward a savings goal?
-```
-
-If yes:
+Optional expense-to-goal attribution supports:
 
 - choose goal
 - choose amount of expense that counts toward goal
 - optionally choose how much current goal allocation to release
 
-Do not phrase this as physically tracing money from a particular account allocation.
-
-Savings allocation is conceptual.
-
-A better question is:
-
-```text
-Reduce Gaming PC allocation by:
-€____
-```
-
-not:
-
-```text
-Which bank euros paid for this?
-```
+Savings allocation is conceptual; expense attribution does not trace physical money from a particular account allocation.
 
 ---
 
@@ -2840,13 +2650,11 @@ Optional or encouraged opportunity linkage depending on activity.
 
 No unnecessary income-development fields.
 
-Do not make starting a timer cumbersome.
-
 ---
 
 # 72. Repository architecture
 
-Follow the repository's domain-first organization and `AGENTS.md` suffix rules.
+The following structure describes the original Phase 3 implementation plan.
 
 Do not create empty folders for hypothetical future code.
 
@@ -2932,9 +2740,7 @@ Do not put reusable global Settings shell logic inside Finance merely because Fi
 
 # 73. Naming conventions
 
-Obey `AGENTS.md`.
-
-Expected authored suffixes include:
+The original plan expected these authored suffixes:
 
 ```text
 *.component.tsx
@@ -2973,17 +2779,6 @@ Do not rename generated/framework-managed files just to satisfy suffix preferenc
 ---
 
 # 74. Styling
-
-Reuse Become's existing design system.
-
-Identity:
-
-```text
-near-black
-warm ivory
-amber/gold accent
-calm premium UI
-```
 
 Tailwind remains default.
 
@@ -3192,7 +2987,7 @@ Implement:
 /settings/finance
 ```
 
-with responsive secondary navigation.
+with responsive access to the implemented configuration.
 
 Finance Settings initially owns:
 
@@ -3299,9 +3094,9 @@ Do not hide unfinished attribution.
 
 # 88. Final overview assembly
 
-Only after core slices work should `/finance` become the full command center.
+Assemble `/finance` only after its core capability slices work.
 
-Avoid building fake overview cards backed by incomplete systems.
+Overview data must come from implemented systems.
 
 The final overview should compose real query/service results from the completed slices.
 

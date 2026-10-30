@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 test("a Goal reads completion from its selected Engineering project", async ({
   page,
@@ -17,12 +18,7 @@ test("a Goal reads completion from its selected Engineering project", async ({
     .getByTestId("password-input")
     .fill("become-disposable-project-password");
   await page.getByTestId("auth-submit").click();
-  await expect
-    .poll(() => new URL(page.url()).pathname)
-    .toMatch(/^\/$|\/direction\/seasons\/\d+\/[1-4]\/opening$/);
-  if (page.url().includes("/opening"))
-    await page.getByRole("button", { name: "Not now" }).click();
-  await expect(page).toHaveURL("/");
+  await deferAutomaticSeasonOpening(page);
 
   const projectName = "Selected Engineering project";
   await page.goto("/engineering/projects/new");

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/cards/card.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { ScanSearch, ArrowUpRight } from "lucide-react";
 import {
@@ -28,10 +29,10 @@ export async function ProblemList({
     <>
       <header className="business-section-heading business-page-heading">
         <div>
-          <h2>Hold the question open.</h2>
+          <h2>Problems to understand</h2>
           <p>
-            Keep the claim, the market’s words and your judgment distinct.
-            Contradictions belong here too.
+            See what supports each problem, what challenges it, and what to test
+            next.
           </p>
         </div>
         <ProblemForm
@@ -40,7 +41,9 @@ export async function ProblemList({
           nicheId={nicheId}
         />
       </header>
-      <section
+      <Card
+        material="glass"
+        spacing="dense"
         className={`business-zone business-zone--ledger${archived ? "business-zone--archived" : ""}`}
       >
         <div className="business-row-heading">
@@ -141,7 +144,7 @@ export async function ProblemList({
             More problems →
           </Link>
         )}
-      </section>
+      </Card>
     </>
   );
 }

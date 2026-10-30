@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["pdf-parse"],
+  devIndicators: false,
   // Calendar boundaries must agree in server and browser code. This is public,
   // non-secret configuration and changing it requires a rebuild.
   env: { APP_TIMEZONE: process.env.APP_TIMEZONE ?? "Europe/Amsterdam" },

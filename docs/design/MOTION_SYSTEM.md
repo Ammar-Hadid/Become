@@ -1,116 +1,37 @@
-# Become motion system
+# Become motion infrastructure
 
-Motion in Become explains state, continuity, and cause. It follows confirmed
-application state and never delays saving, navigation, focus, timer truth, or a
-useful follow-up action.
+Motion is progressive enhancement. Saving, navigation, focus, timer state and recovery must follow confirmed application state without waiting for animation. This document records shared implementation contracts; frontend composition and choreography follow the product owner's designs.
 
-## Research and decisions
+## Tokens and ownership
 
-This system is informed by public documentation. It is not presented as
-hands-on testing of authenticated products.
+`src/app/styles/tokens.css` is the numeric source of truth for visual motion. JavaScript lifecycle fallbacks read computed CSS custom properties through `motion-time.util.ts`; do not maintain a second duration table. Reuse shared tokens rather than introducing feature-specific timing or easing systems.
 
-- [Carbon motion](https://carbondesignsystem.com/elements/motion/overview/)
-  distinguishes frequent productive motion from rare expressive motion, maps
-  entrance, movement, and exit to different easing curves, and relates duration
-  to travel and element size.
-- [Apple motion](https://developer.apple.com/design/human-interface-guidelines/motion)
-  emphasizes continuity, purpose, and alternatives for people who reduce
-  motion.
-- [Fluent 2 motion](https://fluent2.microsoft.design/motion) treats motion as a
-  way to expose relationships and changes, keeps top-level navigation calm, and
-  recommends short, focused choreography.
-- [Next.js View Transitions](https://nextjs.org/docs/app/guides/view-transitions)
-  documents React View Transitions in the App Router, including shared elements,
-  stable anchors, content crossfades, transition types, progressive fallback,
-  and pointer-event behavior.
-- [React ViewTransition](https://react.dev/reference/react/ViewTransition)
-  defines the component contract. React coordinates the platform transition;
-  product code must not call `document.startViewTransition()` around the same
-  updates.
+## Approved visual language
 
-The durations, distances, and choreography below are Become product decisions.
-They are not measurements copied from another product.
+The product owner selected **Precision Light** for controls, surfaces, and layer feedback, with **Living Light** for progress changes. Controls respond in 150ms; surface arrivals use 300ms and 8px of travel. Hover adds a short lift and a localized glow. Pressing returns the control to a compact scale. The brighter 420ms treatment belongs only to a progress fill when its value changes; it does not turn the whole surface into a long animation. Static progress remains still. An active timer may carry a restrained breathing signal; idle content does not pulse.
 
-## Principles
+The semantic controls for duration, easing, travel, glow, pressed scale, live cycle, and progress glint are grouped in the **Approved motion treatment** section of `src/app/styles/tokens.css`. Domain-owned components pass their accent into those effects; the shared Become shell uses gold. Keep the approved time-picker scrolling and desktop-navigation scrolling mechanics unchanged.
 
-1. Keep the user's anchor. Shells, headings, controls, timelines, filters, and
-   collection scroll positions remain stable while the changed region moves.
-2. Show cause and effect locally. Animate the control or record whose state
-   changed, once.
-3. Use direction only for a real spatial relationship, such as collection to
-   detail or an adjacent drawer. Workspace changes use a ready-state crossfade.
-4. Report truth before motion. Pending, failed, cancelled, review-ready, and
-   confirmed states match the underlying operation.
-5. Let work continue. Decorative animation never gates input, focus,
-   navigation, persistence, timer state, or recovery.
-6. Preserve geometry while loading. An active indicator exists only while work
-   is pending and stops on completion, error, cancellation, or removal.
-7. Treat reduced motion as a behavior contract. State, focus, announcements,
-   and cleanup stay immediate when visual motion is disabled.
+Use the shared `ProgressIndicator` for the three approved progress treatments: Plasma Core, Season Ticks, and Segmented Halo. Their appearance is controlled by the progress tokens; their segment counts live in the nearby config file. The area prop selects a domain accent, and an owning surface can override `--progress-accent`. See `docs/design/PROGRESS_SYSTEM.md` for use and data rules. Value changes animate, while resting indicators do not loop.
 
-## Canonical contract
+Use the shared `LoadingIndicator` for the three approved indeterminate treatments: Orbit Arc, Edge Trace, and Eclipse. Its variants and domain accents are controlled in `tokens.css`; see `docs/design/LOADING_SYSTEM.md` for contexts and state rules. A loader loops only while the owning operation is pending and stops immediately when that state ends.
 
-`src/app/styles/tokens.css` is the only numeric source of truth for visual
-motion. JavaScript lifecycle fallbacks read its computed CSS custom properties
-through `motion-time.util.ts`; they do not maintain a second duration table.
+C.O.T.S. speech uses the approved Terminal Prompt treatment through the shared `AiTypingText` component. The visible text starts only when its owning surface intersects the viewport, pauses when it leaves view, and reveals the full message immediately under reduced motion. The shared text and timing rules are documented in `docs/design/TYPING_SYSTEM.md`.
 
-| Token                     |  Value | Purpose                                     |
-| ------------------------- | -----: | ------------------------------------------- |
-| `--duration-response`     |   90ms | Press and immediate acknowledgement         |
-| `--duration-control`      |  150ms | Menus, toggles, and rapid detail swaps      |
-| `--duration-content`      |  220ms | Disclosure, filtering, selection, insertion |
-| `--duration-surface`      |  300ms | Dialogs, drawers, contextual panels         |
-| `--duration-emphasis`     |  420ms | One confirmed meaningful completion         |
-| `--duration-active-cycle` | 1400ms | Contained indicator while work is pending   |
-| `--delay-sequence`        |   32ms | Maximum offset in a two-beat sequence       |
+AI-prepared prose may use the owner-approved `AiTextFrame` decorative reading border. Its eight-second highlight loops only while visible in the foreground tab, with a pause/play control and static reduced-motion treatment. This explicit reading treatment does not indicate generation or progress, and its text is available immediately. See [AI_TEXT_FRAME.md](AI_TEXT_FRAME.md).
 
-The easing curves are:
+The comparison's Reduce motion switch was off for the approved visual treatment. Production continues to honor the device's `prefers-reduced-motion` setting: remove movement, pulses, and sequencing while keeping state changes, focus indication, and progress values immediate and clear.
 
-| Token             | Value                       | Use                               |
-| ----------------- | --------------------------- | --------------------------------- |
-| `--ease-enter`    | `cubic-bezier(0,0,.38,.9)`  | Content entering the view         |
-| `--ease-move`     | `cubic-bezier(.2,0,.38,.9)` | Visible content changing position |
-| `--ease-exit`     | `cubic-bezier(.2,0,1,.9)`   | Content leaving the view          |
-| `--ease-emphasis` | `cubic-bezier(.4,.14,.3,1)` | Confirmed completion              |
+Network polling, leases, debounce, retries and reading cadence use semantic constants owned by their workflows, independently of visual motion tokens. New typography treatments follow the shared candidate approval workflow; the owner can edit approved values in `tokens.css`.
 
-Control travel is at most `--distance-control` (6px), content travel is
-`--distance-content` (8px), and surface travel is at most
-`--distance-surface` (24px). Dialog entry uses `--distance-dialog` (12px).
-Authored scale never falls below `--scale-pressed` (`.985`).
+## State correctness
 
-Sequences use at most two beats with a 32ms offset. Do not stagger collection
-rows, animate each search keystroke, or create a longer signature sequence from
-visual duration tokens.
+Owner-approved primary-button confirmation uses shared `Button.feedback`: the fill turns semantic green, the original icon hands off to Check, and overlapping labels preserve width through Precision Light control timing. Reduced motion switches immediately. Confirmed state and announcements never wait for the transition. Features own operation confirmation and hold/reset timing; image prompt copying uses a two-second hold. See [BUTTON_FEEDBACK.md](BUTTON_FEEDBACK.md).
 
-## Choreography
-
-- **Controls:** color and border transitions use Control. Press transforms use
-  Response. Focus indicators appear immediately and do not transition in.
-- **Menus and popovers:** enter for 150ms from their trigger origin and exit for
-  90ms. The trigger stays anchored.
-- **Dialogs:** the surface enters for 300ms over a 220ms backdrop and exits for
-  150ms. Native dialogs use the same visual contract without replacing platform
-  modality.
-- **Drawers and contextual panels:** enter from the adjacent edge over 300ms and
-  exit over 220ms. A nonmodal inspector leaves its collection interactive.
-- **Workspace navigation:** keep the shell stable, carry the active indicator,
-  and crossfade ready destination content. Workspace peers do not slide.
-- **Collection and detail:** preserve selection and scroll. Adjacent record
-  details swap over 150ms. A supported full page transition may carry a stable
-  record ID; unsupported browsers use the local fallback.
-- **Filtering:** acknowledge the control immediately and recompose the bounded
-  result region over 220ms. Rows do not stagger.
-- **Disclosure:** keep the trigger in place and animate only the revealed
-  context over 220ms.
-- **Creation, correction, withdrawal, and removal:** preserve the operation's
-  meaning. A confirmed arriving record is identified by ID and receives one
-  local 420ms treatment.
-- **Loading:** retain stable geometry. The 1400ms loop is reserved for a visible,
-  currently pending operation.
-- **Nexo:** acknowledge generation immediately, distinguish pending, error, and
-  review-ready states, reveal the proposal as a review surface, and mark
-  acceptance once. Do not use typewriter output, fake percentages, or an
-  ambient loop after work stops.
+- Pending, failed, cancelled and confirmed states reflect the underlying operation. Loading indicators stop when work completes, fails, is cancelled or is removed.
+- Record effects use confirmed stable IDs rather than titles or list positions. Failed mutations must not imply successful arrival.
+- Motion must not imply that an offer, transfer, receivable or pending amount is settled revenue.
+- State changes remain understandable without animation or color alone.
 
 ## Shared lifecycle contract
 
@@ -141,90 +62,29 @@ and cancellation-safe state rather than checking an animation name.
 It also joins the shared modal stack so nested dialogs and drawers agree on
 Escape handling, scroll locking, and focus restoration.
 
-## React View Transition contract
+## React View Transition infrastructure
 
-Use the installed React/Next foundation and no feature-specific transition
-library. A transition remains an enhancement; the application must work when
-the browser lacks View Transition support.
+Use the installed React/Next foundation. Add a dependency only for a documented capability the existing foundation cannot provide. Transitions remain optional; the application works without browser View Transition support.
 
-- `motion-guide` carries an active indicator while the surrounding shell stays
-  fixed.
-- `motion-data-recompose` crossfades a bounded result or analytics region.
-- `motion-workspace-content` crossfades ready peer-workspace content.
-- `motion-carry` preserves the identity of a supported record across a genuine
-  collection/detail relationship.
-- `motion-shell` explicitly anchors persistent shell content.
-- Named transitions use stable IDs and `default="none"` so unrelated updates do
-  not animate them.
+React coordinates platform transitions. Do not also call `document.startViewTransition()` around the same update. Named transitions use stable IDs; unrelated updates must not animate them. React transitions activate through navigation, Suspense and React Transitions. Ordinary immediate `setState` does not become a View Transition merely because it is wrapped.
 
-React transitions activate through navigation, Suspense, and React Transitions.
-A normal immediate `setState` is a local CSS interaction and does not become a
-View Transition merely because it is wrapped.
+Existing transition classes are implementation details, not required visual recipes for new screens.
 
-## Domain migration decisions
+## Reduced motion and accessibility
 
-- Home keeps the running timer visually stable. The changing numerals are the
-  ambient signal; the former decorative orbit loop is static.
-- Engineering record arrival uses the confirmed evidence ID. A duplicate title
-  cannot animate the wrong record, and a failed create cannot leave a false
-  arrival marker.
-- Finance uses calm recomposition and surface motion. Motion never implies that
-  an offer, transfer, receivable, or pending amount is settled revenue.
-- Content uses the active-cycle token only while autosave is pending. Saved and
-  failed states are static and operation-scoped.
-- Direction uses surface entry only where a stage or layer actually appears.
-- Reviews keep reading facts available immediately; evidence drawers follow the
-  shared modal lifecycle.
-- Sessions and timer updates never wait for emphasis motion. A confirmed session
-  row can mark itself once by ID after timer truth is saved.
-- Settings uses content crossfade for the selected ready section.
-- COTS network polling, leases, debounce, retry, and reading cadence use semantic
-  constants owned by those workflows. They are independent of visual motion
-  tokens. Only pending imports and loading indicators use Active cycle. The
-  former ambient opening glow is static.
+The owner-approved **Gold Drift** backdrop uses shared `AmbientLight` and `--ambient-light-*` tokens across Season preparation, imagery and activation. Two low-strength gold fields move diagonally across the viewport while visible, remain behind content, and freeze on pause or hidden/offscreen pages. Reduced motion produces a static backdrop. Keep the instance and its pause state across phase changes; decorative motion never indicates operation progress. See [AMBIENT_LIGHT.md](AMBIENT_LIGHT.md).
 
-## Reduced motion
+Under `prefers-reduced-motion: reduce`, authored animations, transitions, spatial movement, scaling, sequencing, loops, smooth scrolling and View Transition animation are disabled. Functionality, current state, focus, announcements, scroll locking, operation timing and lifecycle cleanup remain correct and immediate.
 
-Under `prefers-reduced-motion: reduce`, Become removes authored animations,
-transitions, spatial movement, scaling, sequencing, loops, smooth scrolling,
-and View Transition animation. Current state, focus movement, announcements,
-scroll locking, operation timing, and lifecycle cleanup remain correct and
-immediate.
+Focus indicators appear immediately. Motion is never the only state signal. Avoid flashing that violates accessibility requirements.
 
-Do not use motion as the only signal. Avoid flashing, bounce, parallax, shaking,
-count-up numbers, ornamental chart drawing, confetti, and repeated peripheral
-movement.
+## Verification
 
-## Review checklist
+For affected interactions, verify keyboard and touch behavior, responsive access, rapid reopening, cancelled animation, nested layers, focus restoration, changing reduced-motion preferences and fallback without View Transition support. Saving and useful follow-up actions must remain immediately available.
 
-Before adding or changing motion, verify:
+Existing `e2e/motion-system.spec.ts` and `e2e/shared-motion-regression.spec.ts` cover layer cleanup, Escape order, scroll locking, focus restoration, cancellation, confirmed record identity and shared controls. Their historical screenshots and visual assertions describe the implementation tested, not the new design requirements.
 
-1. What state or relationship does the motion explain?
-2. Which anchor remains stable?
-3. Does it use the lowest suitable canonical duration, distance, and easing?
-4. Is the sequence at most two beats and 32ms apart?
-5. Does the loop exist only while work is actually pending?
-6. Does opening, rapid reopening, nested Escape, scroll lock, and focus restore
-   correctly?
-7. Does changing reduced-motion preference while open complete correctly?
-8. Does the interaction remain complete without View Transition support?
-9. Does saving, navigation, focus, or follow-up access proceed immediately?
 
-Verify keyboard and touch behavior, 320/390/768/1024/1440px layouts, rapid
-reopening, cancelled animation, nested layers, and reduced motion in a rendered
-browser. Compilation alone is not motion evidence.
+## AI prose and C.O.T.S. speech
 
-## Regression evidence
-
-- `e2e/motion-system.spec.ts` exercises reduced-motion cleanup, rapid reopening,
-  nested menu and modal Escape order, nested scroll locking, focus restoration,
-  native-dialog cancellation, and confirmed-record arrival by ID.
-- `e2e/shared-motion-regression.spec.ts` renders Home, Engineering, Finance,
-  Content, Direction, Reviews, Sessions, Settings, Nexo settings, and the COTS
-  identity step at 390px and 1440px. It checks the runtime token values,
-  document overflow, layer focus, menus, dialogs, and browser errors.
-- The shared regression attaches named screenshots for every surface and open
-  layer through `testInfo.outputPath`, so a successful run preserves reviewable
-  evidence beneath the configured Playwright output directory.
-- The typography section of `src/app/styles/tokens.css` is compared with the
-  branch base during completion review. Motion work does not alter it.
+The owner approved **Living Ink** on 11 October 2026 for longer AI-generated text and paragraphs. Shared `AiGeneratedText` reveals one paragraph at a time; words emerge through a primary-gold glow trail and settle into normal readable prose. Use its shared `--ai-generated-text-*` tokens. Pause/resume preserves progress, offscreen paragraphs and hidden tabs pause, and reduced motion immediately shows full text. This reveals already-prepared text, without delaying actions or implying pending generation. `AiTypingText` / Terminal Prompt is exclusively for C.O.T.S. speech. See [AI_GENERATED_TEXT.md](AI_GENERATED_TEXT.md) and [TYPING_SYSTEM.md](TYPING_SYSTEM.md).

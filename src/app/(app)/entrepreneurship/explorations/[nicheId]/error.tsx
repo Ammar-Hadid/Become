@@ -1,6 +1,8 @@
 "use client";
 
-import { CircleAlert } from "lucide-react";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/buttons/button.component";
+import { WorkspacePanel } from "@/components/ui/workspace/workspace.component";
 
 export default function Error({
   error,
@@ -9,21 +11,26 @@ export default function Error({
   error: Error & { digest?: string };
   retry: () => void;
 }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
   return (
-    <section className="exploration-route-error" role="alert">
-      <CircleAlert aria-hidden="true" />
-      <div>
-        <p className="eyebrow">This workspace did not open</p>
-        <h2>The record is safe.</h2>
-        <p>
-          Become could not load this part of the exploration. Retry the read;
-          unfinished form entries in another open dialog are not submitted.
-        </p>
-        {error.digest && <small>Reference {error.digest}</small>}
-      </div>
-      <button type="button" className="finance-dialog-trigger" onClick={retry}>
-        Try again
-      </button>
-    </section>
+    <div role="alert">
+      <WorkspacePanel
+        title="This exploration couldn’t load."
+        description="Try again to return to your exploration."
+        actions={
+          <Button type="button" variant="secondary" onClick={retry}>
+            Try again
+          </Button>
+        }
+      >
+        {error.digest && (
+          <p className="text-body-sm text-text-muted">
+            Reference {error.digest}
+          </p>
+        )}
+      </WorkspacePanel>
+    </div>
   );
 }

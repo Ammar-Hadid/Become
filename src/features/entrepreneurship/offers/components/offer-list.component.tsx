@@ -1,3 +1,7 @@
+import { Card } from "@/components/ui/cards/card.component";
+import { Input } from "@/components/ui/forms/input.component";
+import { NativeSelect } from "@/components/ui/forms/native-select.component";
+import { Button } from "@/components/ui/buttons/button.component";
 import { BusinessLink as Link } from "@/features/entrepreneurship/explorations/components/exploration-context.component";
 import { FileText, ArrowUpRight, Search, X } from "lucide-react";
 import {
@@ -72,10 +76,8 @@ export async function OfferList({
       >
         <div>
           {nicheId && <p className="eyebrow">Offers</p>}
-          <h2>Something worth saying yes to.</h2>
-          <p>
-            What you offered, what happened, and what was actually received.
-          </p>
+          <h2>Your offers</h2>
+          <p>Compare your proposals, responses and confirmed receipts.</p>
         </div>
         <OfferForm
           companies={options.companies}
@@ -90,7 +92,7 @@ export async function OfferList({
           <label className="workspace-search">
             <Search aria-hidden="true" />
             <span className="sr-only">Search offers</span>
-            <input
+            <Input
               type="search"
               name="q"
               defaultValue={query}
@@ -99,19 +101,21 @@ export async function OfferList({
           </label>
           <label className="workspace-filter">
             <span className="sr-only">Offer type</span>
-            <select name="mode" defaultValue={mode ?? ""}>
+            <NativeSelect name="mode" defaultValue={mode ?? ""}>
               <option value="">All offer types</option>
               <option value="SPECIFIC">Specific proposals</option>
               <option value="AUDIENCE_TEST">Audience tests</option>
-            </select>
+            </NativeSelect>
           </label>
-          <button className="workspace-filter-button" type="submit">
+          <Button variant="secondary" type="submit">
             Filter
-          </button>
+          </Button>
           <span className="workspace-toolbar-count">{data.total} total</span>
         </form>
       )}
-      <section
+      <Card
+        material="glass"
+        spacing="dense"
         className={
           nicheId
             ? "workspace-ledger"
@@ -197,7 +201,9 @@ export async function OfferList({
               })}
             </div>
             {selected && selectedPresentation && (
-              <aside
+              <Card
+                material="glass"
+                spacing="dense"
                 className="workspace-inspector"
                 aria-label="Selected offer"
               >
@@ -241,7 +247,7 @@ export async function OfferList({
                     </div>
                   </dl>
                   <Link
-                    className="workspace-primary-link"
+                    className="become-button become-button--primary become-button--md"
                     href={withExplorationReturn(
                       explorationWorkspaceHref(
                         nicheId!,
@@ -254,7 +260,7 @@ export async function OfferList({
                     Open full offer <ArrowUpRight aria-hidden="true" />
                   </Link>
                 </div>
-              </aside>
+              </Card>
             )}
           </div>
         ) : (
@@ -276,7 +282,7 @@ export async function OfferList({
             More offers →
           </Link>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

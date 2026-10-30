@@ -1,4 +1,5 @@
 import { sendContentCommand } from "@/features/content/commands/utils/content-command.util";
+import { createRequestDeadline } from "@/lib/http/utils/request-deadline.util";
 import type {
   OwnedScriptImage,
   ScriptSaveRequest,
@@ -47,15 +48,25 @@ export async function uploadScriptImage(
   form.set("variantId", variantId);
   form.set("operationKey", operationKey);
   form.set("file", file);
-  const response = await fetch("/api/content/scripts/images", {
-    method: "POST",
-    body: form,
-    signal,
-  });
-  const body = await response.json();
-  if (!response.ok || !body.image)
-    throw new Error(
-      body.error ?? "This image could not be uploaded. Try again.",
-    );
-  return body.image as OwnedScriptImage;
+  const deadline = createRequestDeadline(60_000, signal);
+  try {
+    const response = await fetch("/api/content/scripts/images", {
+      method: "POST",
+      body: form,
+      signal: deadline.signal,
+    });
+    const body = await response.json();
+    if (!response.ok || !body.image)
+      throw new Error(
+        body.error ?? "This image could not be uploaded. Try again.",
+      );
+    return body.image as OwnedScriptImage;
+  } catch (error) {
+    // WebKit may reject with AbortError for a timeout; callers must distinguish
+    // that failed upload from the user deliberately cancelling it.
+    if (deadline.signal.aborted) throw deadline.signal.reason;
+    throw error;
+  } finally {
+    deadline.dispose();
+  }
 }

@@ -1,0 +1,64 @@
+.character-confirmation {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+.character-confirmation__heading {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+.character-confirmation__heading > div {
+  flex: 1;
+}
+.character-confirmation__identity {
+  display: grid;
+  gap: var(--spacing-sm);
+  justify-items: start;
+}
+.character-confirmation__carousel {
+  min-width: 0;
+}
+.character-confirmation__carousel figure {
+  margin: 0;
+  display: grid;
+  gap: var(--spacing-sm);
+}
+.character-confirmation__image {
+  position: relative;
+  min-height: 18rem;
+  height: var(--character-confirmation-image-height);
+  background: var(--color-background);
+}
+.character-confirmation__image img {
+  object-fit: contain;
+}
+.character-confirmation__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+@media (max-width: 40rem) {
+  .character-confirmation__actions {
+    display: grid;
+  }
+  .character-confirmation__actions button {
+    width: 100%;
+  }
+}
+
+.character-confirmation__image-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+.character-confirmation__pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.character-confirmation__carousel:focus-visible {
+  outline: var(--button-focus-width) solid var(--color-primary);
+  outline-offset: var(--spacing-xs);
+}

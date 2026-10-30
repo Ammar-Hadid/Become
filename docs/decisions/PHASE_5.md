@@ -1,8 +1,11 @@
 # Phase 5: Seasons and Direction
 
+Historical implementation and verification record. Its visual, layout, navigation, copy and interaction choices are not requirements or a baseline for the frontend redesign. Domain semantics and objective technical constraints remain applicable.
+
+
 Phase 5 adds a user-owned seasonal identity around fixed calendar quarters, canonical cross-domain goals, bounded experiments, and evidence-first progress. It does not implement automatic COTS discovery, recurring-commitment compliance, rich reviews, AI judgments, or later product phases.
 
-Backend ownership stayed with the parent Astra agent. The frontend implementation is owned by the existing real `gpt-5.6-sol` agent with `xhigh` reasoning, verified against its runtime configuration. The pre-existing Phase 4 working tree remains in place; no branch change, commit, push, deployment, or VPS access is part of this work.
+The pre-existing Phase 4 working tree remained in place during this historical implementation. No branch change, commit, push, deployment, or VPS access was part of that work.
 
 ## Ownership and identity
 

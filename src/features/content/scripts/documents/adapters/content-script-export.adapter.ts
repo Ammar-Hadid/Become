@@ -39,7 +39,9 @@ function exportTypography(): ScriptExportTypography {
 }
 
 async function exportImage(id: string): Promise<ScriptExportImage> {
-  const response = await fetch(scriptImageUrl(id));
+  const response = await fetch(scriptImageUrl(id), {
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!response.ok)
     throw new Error(
       "An image could not be loaded. Retry the export when it is available.",

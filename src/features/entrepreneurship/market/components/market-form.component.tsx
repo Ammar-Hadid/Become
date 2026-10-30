@@ -36,6 +36,7 @@ export function MarketForm({
   const entityLabel = kind === "company" ? "business" : "exploration";
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Market"
       title={`${record ? "Edit" : "Add"} ${entityLabel}`}
       triggerIcon={record ? <Pencil aria-hidden="true" /> : undefined}
@@ -140,6 +141,7 @@ export function DirectionForm({
 }) {
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Direction"
       title="Change direction"
       triggerLabel="Change direction"

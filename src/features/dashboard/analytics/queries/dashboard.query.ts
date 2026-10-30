@@ -10,6 +10,7 @@ import {
   getPeriodBuckets,
   getPreviousPeriod,
   percentageChange,
+  type Period,
   type Timeframe,
 } from "@/lib/dates/utils/period.util";
 
@@ -25,13 +26,12 @@ async function getSessionsForRange(userId: string, start: Date, end: Date) {
   });
 }
 
-export async function getDashboardData(
+async function readDashboardData(
   userId: string,
-  timeframe: Timeframe,
   now: DateTime,
+  period: Period,
+  previousPeriod: Period,
 ): Promise<DashboardData> {
-  const period = getPeriod(now, timeframe);
-  const previousPeriod = getPreviousPeriod(period);
   const domains = await prisma.domain.findMany({
     where: { userId, enabled: true },
     orderBy: { sortOrder: "asc" },
@@ -61,7 +61,7 @@ export async function getDashboardData(
   const activeDays = countActiveDaysWithinPeriod(sessions, period, now);
 
   return {
-    timeframe,
+    timeframe: period.timeframe,
     periodLabel: period.label,
     totalSeconds,
     previousTotalSeconds,
@@ -82,6 +82,7 @@ export async function getDashboardData(
     })),
     chart: getPeriodBuckets(period).map((bucket) => ({
       label: bucket.label,
+      date: bucket.start.toFormat("yyyy-MM-dd"),
       seconds: sessions.reduce(
         (total, session) =>
           total + calculateSessionDurationWithinPeriod(session, bucket, now),
@@ -89,4 +90,34 @@ export async function getDashboardData(
       ),
     })),
   };
+}
+
+export async function getDashboardData(
+  userId: string,
+  timeframe: Timeframe,
+  now: DateTime,
+): Promise<DashboardData> {
+  const period = getPeriod(now, timeframe);
+  return readDashboardData(userId, now, period, getPreviousPeriod(period));
+}
+
+/** The home screen uses a truthful rolling window, including the first days of a week. */
+export async function getDashboardRollingWeekData(
+  userId: string,
+  now: DateTime,
+): Promise<DashboardData> {
+  const start = now.startOf("day").minus({ days: 6 });
+  const period: Period = {
+    timeframe: "week",
+    start,
+    end: start.plus({ days: 7 }),
+    label: "Last 7 days",
+  };
+  const previousPeriod: Period = {
+    ...period,
+    start: period.start.minus({ days: 7 }),
+    end: period.start,
+    label: "Previous 7 days",
+  };
+  return readDashboardData(userId, now, period, previousPeriod);
 }

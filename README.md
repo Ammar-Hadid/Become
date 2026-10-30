@@ -1,17 +1,19 @@
 # Become
 
-Become is a calm personal operating system for connecting intention, focused time, outcomes, and direction. This repository currently contains **Phases 1–7: Foundation, Engineering, Finance, Entrepreneurship, Seasons & Direction, COTS discovery, Content/Ideas/Decisions, and Reviews**.
+Frontend redesign uses the product owner’s supplied designs. Descriptions of existing screens, routes and workflows document functionality; they do not prescribe visual composition, navigation, copy or interaction design. Shared tokens, accessibility, security and domain contracts remain applicable.
+
+Become is a personal operating system for connecting intention, focused time, outcomes, and direction. This repository contains **Phases 1–7: Foundation, Engineering, Finance, Entrepreneurship, Seasons & Direction, COTS discovery, Content/Ideas/Decisions, and Reviews**, plus the current Living Season and shared-design work.
 
 ## What Phase 1 includes
 
 - Email/password authentication with Better Auth
 - Personal, configurable domains and activity types seeded on signup
 - A single global timer with persistent pause/resume and refresh recovery
-- Lightweight start and stop flows with optional intention, outcome, and notes
+- Start and stop flows with optional intention, outcome, and notes
 - Session history and domain views
 - Week, Month, Season, and Year focused-time analytics
 - Fixed calendar seasons and Europe/Amsterdam-aware period boundaries
-- Responsive desktop/mobile interface using the Become dark visual system
+- Responsive desktop/mobile interface
 - Deterministic business-logic tests and a Playwright timer journey
 
 ## What Phase 2 adds
@@ -40,7 +42,9 @@ Become is a calm personal operating system for connecting intention, focused tim
 - Finance timer metadata, payment-first many-to-many attribution, completeness review, and confirmed linked hourly rates
 - Week/Month/Season/Year cash movement, work, opportunity and position analysis, with deterministic Needs Attention
 
-COTS discovery uses category-specific external sources; credentialed adapters require setup. Nexo supports explicit, reviewed Entrepreneurship synthesis; COTS AI, Gmail, and social-platform integrations remain deferred. Finance includes consent-based Open Banking integration, statement imports and deterministic forecasting. Provider setup and real-account consent are required; FX conversion remains outside the model.
+C.O.T.S. anime lookup uses AniList, with a character-bound MyAnimeList image gallery; Wikidata/manual entry remain available for other identities. Generic image and quote search have been removed; the new Character workspace owns banner, portrait, and Living Season artwork authoring. Nexo supports explicit, reviewed Entrepreneurship synthesis. Living Season C.O.T.S. text tasks are implemented but require an approved profile and configured provider; Gmail and social-platform integrations remain deferred.
+
+Finance also includes consent-based Open Banking, statement imports, and deterministic forecasting. Provider setup and real-account consent are required; FX conversion remains outside the model.
 
 ## Entrepreneurship and Nexo
 
@@ -48,9 +52,9 @@ Explorations have seven direct workspaces: Overview, So Far We Know, Audience, O
 
 Nexo generates a proposed synthesis only when requested. Review and edit it before acceptance; accepted editions preserve their source context. Later material changes recommend a refresh without automatically generating or rewriting anything. Non-AI discovery work remains available without model configuration.
 
-To enable generation, set `OPENAI_API_KEY` on the server, restart the development server, then create and assign a synthesis model profile under **Settings → Nexo**. Provider/model options, output/time limits, and the daily run limit are editable there. Never use a `NEXT_PUBLIC` credential. Apply committed migrations with `pnpm db:deploy` before starting the updated application.
+To enable generation, set `OPENAI_API_KEY` on the server, restart the development server, then create and assign a synthesis model profile under **Settings → Nexo**. OpenAI model options, output/time limits, and the daily run limit are editable there. Legacy synthesis may use the server OpenAI credential; Season onboarding requires a key saved on its owning account and explicit task assignments. Never use a `NEXT_PUBLIC` credential. Apply committed migrations with `pnpm db:deploy` before starting the updated application.
 
-See [experience and research](docs/design/ENTREPRENEURSHIP_EXPERIENCE.md), [Nexo architecture](docs/decisions/NEXO_SYNTHESIS.md), and the canonical [motion system](docs/design/MOTION_SYSTEM.md).
+See [implementation coverage](docs/design/ENTREPRENEURSHIP_EXPERIENCE.md), [Nexo architecture](docs/decisions/NEXO_SYNTHESIS.md), and the shared [motion infrastructure](docs/design/MOTION_SYSTEM.md).
 
 ## Content, Ideas and Decisions
 
@@ -58,11 +62,19 @@ Content connects one creative work → variants → explicit releases → owned 
 
 ## Reviews and Season transitions
 
-Week, Month, Season and Year reviews combine domain-qualified facts, optional writing, source drill-through and defining moments. Finalization preserves immutable editions; source corrections change the live reading and explicit amendments retain earlier editions. A participating prior Season can unfold into a four-movement finale and the existing next-Season opening, with direct numbered scene navigation, manual progress, deferral, skip and replay. Reduced motion uses the same ceremony without animation. First-time users retain direct opening; active work suppresses automatic arrival.
+Week, Month, Season and Year reviews combine domain-qualified facts, optional writing, source drill-through and defining moments. Finalization preserves immutable editions; source corrections change the live reading and explicit amendments retain earlier editions. A participating prior Season can unfold into a four-movement finale and the existing next-Season opening, with direct numbered scene navigation, manual progress, deferral, skip and replay. Reduced motion preserves transition functionality without animation. First-time users retain direct opening; active work suppresses automatic arrival.
 
-The versioned Phase 8 foundation provides bounded period facts, current context, typed retrieval and a source-grounded COTS persona-profile contract. No profile research, inferred personality, AI calls or generated farewells run in Phase 7. Generic Direct/Harsh/Ruthless settings are removed. See [Phase 7 architecture, verification and manual acceptance](docs/decisions/PHASE_7.md).
+Phase 7 established bounded period facts, current context, typed retrieval and a source-grounded COTS persona-profile contract; it did not generate AI content at that time. Later Living Season work added approved character-profile and provider-dependent AI tasks. Generic Direct/Harsh/Ruthless settings remain removed. See [Phase 7 architecture](docs/decisions/PHASE_7.md) for its historical scope and [Living Seasons](docs/product/LIVING_SEASONS.md) for the current contract.
 
 The Phase 7 migration has been verified on isolated local databases. Applying it to an existing personal installation is a separate explicit local migration step; implementation testing did not modify personal records.
+
+## Living Seasons and C.O.T.S
+
+The new Living Season editor is linked from a saved Season after a Character of the Season is selected. It prepares a source-grounded profile, a character/setting reference sheet, and 42 reviewed desktop/phone scene compositions. A pack becomes active only after the latest profile, reference, and all scenes are approved. The dashboard then selects artwork from deterministic goal pace; Nexo explains that pace, and C.O.T.S can generate contextual daily messages and conversation from the same bounded facts. Missing evidence never counts as success.
+
+Manual ChatGPT artwork uses copyable prompts and private image uploads. Optional Google image generation requires a Google API key entered in Settings → Nexo and is held to an estimated €15 per-Season API budget. Text tasks need an assigned model profile and provider key in the same settings page. ChatGPT subscriptions and API billing are separate. Keep `BETTER_AUTH_SECRET` stable, or set a dedicated `BECOME_AI_KEY_SECRET` before saving keys. See [the Living Season contract](docs/product/LIVING_SEASONS.md) and [model comparison protocol](docs/research/COTS_MODEL_COMPARISON.md).
+
+The owner-approved **Image Prompts** workspace is connected at `/settings/image-direction`, with shared style, banners, portrait and 42 chapter-specific recipes, saved drafts/publication and a real-Season inspector. The normal `/direction/seasons/[year]/[quarter]/opening` and authenticated `/season-onboarding-candidate?connect=1` share the connected flow and use AI-written versioned prompt packages for automatic artwork or manual ChatGPT creation. Banner/portrait preparation and a single scene-method choice precede the chapter reviews; kept attempts restore their uploads and approvals. Shared upload treatment, Storybook and typed metadata are admitted. The complete opening/onboarding and activation candidates retain their separate visual approval requirements. See [implementation and validation](docs/development/MANUAL_IMAGE_PROMPTS_IMPLEMENTATION.md) and [worker setup](docs/development/SEASON_ONBOARDING.md).
 
 ## Stack
 
@@ -79,7 +91,7 @@ pnpm install
 pnpm db:generate
 pnpm db:migrate
 pnpm db:sync-tech
-pnpm dev
+pnpm dev:seasons
 ```
 
 Open [http://localhost:3010](http://localhost:3010), create an account, and the default domains will be created automatically. Become uses port 3010 so it can coexist with services that commonly occupy port 3000.
@@ -87,7 +99,12 @@ Open [http://localhost:3010](http://localhost:3010), create an account, and the 
 ## Commands
 
 ```bash
-pnpm dev            # local development
+pnpm dev            # web app only
+pnpm dev:seasons    # web app + Season worker, shared environment and shutdown
+pnpm worker:seasons # worker only when the app is already running
+pnpm check:seasons --email=your-account-email # read-only account/model/worker checks
+pnpm storybook      # approved shared-component workshop on port 6006
+pnpm build-storybook # static Storybook build in storybook-static/
 pnpm build          # production build
 pnpm lint           # ESLint
 pnpm typecheck      # TypeScript
@@ -231,7 +248,7 @@ database-independent.
 
 ## Known boundaries
 
-- Dashboard layout is intentionally fixed; persisted drag/reorder/resize begins only when customization is prioritized.
+- Dashboard customization is not implemented; persisted drag/reorder/resize begins only when customization is prioritized.
 - Completed session timing cannot be edited or deleted. Finance metadata and payment completeness have narrow correction flows; Engineering context and project can be corrected before stopping an active session.
 - Engineering projects can be edited and archived, and evidence can be edited; permanent deletion is intentionally not exposed.
 - Project forms use browser confirmation rather than drafts or autosave when modified data would be discarded.
@@ -326,8 +343,7 @@ Use a dedicated migrated local PostgreSQL test database. No real bank credential
 
 ## Entrepreneurship (Phase 4)
 
-Open `/entrepreneurship` to start or continue a niche exploration. Each workspace
-has Overview, Companies, Interactions, Problems and Offers; new records and timers
+Open `/entrepreneurship` to start or continue a niche exploration. Exploration records and timers
 inherit its context. Pause/stop decisions retain the exploration under past history.
 Global history remains available at `/entrepreneurship/history`. Timer activity
 never invents contact, and proposed or accepted offers never create income.
@@ -359,23 +375,18 @@ or served from a public uploads directory. No VPS access is needed for local wor
 qualification, lifecycle history, media limits and the Phase 5.5 boundary. Run local
 Phase 5 database tests with `RUN_DIRECTION_INTEGRATION=1 pnpm test`.
 
-Phase 5.5 adds explicit Anime, TV, Movie, Game, Book, Comic and Public figure
-identity categories, onboarding image/text curation, recoverable imports, local
-previews, cross-season image reuse, and later collection preferences. An eligible ordinary Home entry starts a prior participating Season's finale before the current opening. First-time users enter the current opening directly.
-`Not now` persists deferral; Direction retains the resume path.
+The normal Season opening now uses the approved two-question preparation: Character (name/source) → World & mood (setting/visual direction) → Summary. Catalogue recognition appears inline with Change character and Change version; the separate confirmation checkpoint is removed. Authentic original-image review remains at Summary before banner/portrait and seven-chapter imagery review. The Character workspace holds the detailed profile steps. Explicit Nexo task assignments enable AI identification, profile drafting and visual-intent drafting. Manual authoring remains available.
 
-Read [Phase 5.5 setup, contracts and limitations](docs/decisions/PHASE_5_5.md)
-before enabling providers. Copy only the desired settings from `.env.example`;
-the default paid budget is zero. After additive migrations and `prisma generate`,
-restart the local dev server to load the new generated client. Run the disposable
-local COTS database suite with `RUN_COTS_INTEGRATION=1 pnpm test`.
+At least one likeness-reviewed authentic original is required before image generation. Originals stay attached to every prompt package; generated references cannot replace them. Banner authoring follows References. Approval includes character likeness and phone composition checks, and activation requires the full reviewed pack. Prior activated imagery remains visible during replacement editing. Generic image/quote search and legacy outer onboarding capabilities remain removed; stored history stays readable. The workspace fills the approved non-dashboard page gutters.
 
 ## Production deployment
+
+Production PostgreSQL runs in its own resource-limited VPS container. See [database setup and operations](docs/deployment/SELF_HOSTED_DATABASE.md) for credentials, backups, recovery, and SSH access.
 
 For automatic deployment after a push to `main`, see the [Become automatic deployment setup](docs/deployment/AUTO_DEPLOY.md). It builds separate releases, requires a coordinated database/media backup before migrations, and checks health with application rollback. Offsite Restic copies can be added later.
 
 Use the [production deployment walkthrough](docs/deployment/PRODUCTION.md) for the
-Hetzner + Caddy + Neon setup, and read the [readiness report](docs/deployment/READINESS.md)
+Hetzner + Caddy + self-hosted PostgreSQL setup, and read the [readiness report](docs/deployment/READINESS.md)
 for verified checks and remaining operational prerequisites. Production requires
 an explicit HTTPS origin, a generated auth secret, and a persistent media root
 outside the release. Registration is closed by default in production; bootstrap

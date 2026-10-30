@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/buttons/button.component";
+
+import { Card } from "@/components/ui/cards/card.component";
+
+import { Input } from "@/components/ui/forms/input.component";
+
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -115,7 +121,7 @@ export function IdeaList({
       <header className="thinking-masthead">
         <div>
           <p className="eyebrow">A place for unfinished thoughts</p>
-          <h2>Ideas</h2>
+          <h1>Ideas</h1>
           <p>
             Keep what catches your attention. Decide what it becomes only when
             you are ready.
@@ -138,7 +144,7 @@ export function IdeaList({
           <label className="sr-only" htmlFor="idea-search">
             Search ideas
           </label>
-          <input
+          <Input
             ref={searchRef}
             id="idea-search"
             value={searchValue}
@@ -218,7 +224,7 @@ export function IdeaList({
           ))}
         </ol>
       ) : (
-        <section className="thinking-empty" aria-label="No ideas">
+        <Card className="thinking-empty" aria-label="No ideas">
           <p className="eyebrow">
             {archived ? "The archive is quiet" : "Nothing parked here yet"}
           </p>
@@ -232,18 +238,18 @@ export function IdeaList({
               ? "Return to active Ideas whenever you are ready."
               : "The composer above is enough. Domains and destinations can wait."}
           </p>
-        </section>
+        </Card>
       )}
 
       {page.nextCursor && (
-        <button
+        <Button
+          variant="secondary"
           type="button"
-          className="thinking-more"
           onClick={() => void page.loadMore()}
           disabled={page.pending}
         >
           {page.pending ? "Loading…" : "More ideas"}
-        </button>
+        </Button>
       )}
       {page.error && (
         <p className="thinking-pagination-error" role="alert">

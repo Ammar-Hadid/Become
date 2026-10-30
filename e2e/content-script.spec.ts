@@ -1,3 +1,4 @@
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
@@ -23,8 +24,7 @@ async function createScript(page: Page, baseURL: string) {
     .getByTestId("password-input")
     .fill("become-disposable-script-password");
   await page.getByTestId("auth-submit").click();
-  // Let the new account's opening redirect settle before navigating to Content.
-  await expect(page).toHaveURL(/\/direction\/seasons\/\d{4}\/\d\/opening/);
+  await deferAutomaticSeasonOpening(page);
   const response = await page.request.post("/api/content/commands", {
     headers: { origin: baseURL },
     data: {
@@ -232,10 +232,13 @@ test("Word import, owned images, tables, and Word export survive a saved round t
   await expect(
     body.getByRole("img", { name: "An amber storyboard frame" }),
   ).toBeVisible();
-  await Promise.all([
-    scriptSave(page),
-    page.getByRole("button", { name: /^Save/ }).click(),
-  ]);
+  // Autosave may already have confirmed this revision while the image dialog
+  // closes. An explicit save of a clean document need not issue another request.
+  await page.getByRole("button", { name: /^Save/ }).click();
+  await expect(page.locator(".content-script-save-state")).toHaveAttribute(
+    "data-state",
+    "saved",
+  );
   await page.reload();
   await expect(
     body.getByRole("img", { name: "An amber storyboard frame" }),
@@ -408,6 +411,20 @@ test("block controls reopen the right image and add or delete the hovered table 
   ] as const) {
     if (isMobile) await firstTable.locator("th, td").first().tap();
     else await firstTable.hover();
+    // Controls must use the positioned canvas, not a boxless wrapper's bounds.
+    await expect
+      .poll(async () => {
+        const tableBounds = await firstTable.boundingBox();
+        const controlBounds = await page
+          .locator('.content-script-block-controls[data-kind="table"]')
+          .boundingBox();
+        if (!tableBounds || !controlBounds) return Infinity;
+        return Math.max(
+          Math.abs(tableBounds.x - controlBounds.x),
+          Math.abs(tableBounds.y - controlBounds.y),
+        );
+      })
+      .toBeLessThan(1);
     const edge = page.getByRole("button", { name: label, exact: true });
     if (!isMobile) await edge.hover();
     await expect(edge.locator("span")).toHaveCSS("opacity", "1");

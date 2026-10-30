@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { getFinancialLedger } from "@/features/finance/transactions/queries/financial-ledger.query";
 import { randomUUID } from "node:crypto";
 import { DateTime } from "luxon";
 import {
@@ -181,6 +182,92 @@ describe.skipIf(process.env.RUN_FINANCE_INTEGRATION !== "1")(
         },
       });
     };
+    it("keeps ledger filter totals stable across pages and isolated by owner and currency", async () => {
+      const ownAccount = await account();
+      const usdAccount = await account("1000", "USD");
+      const foreignAccount = await account("1000", "EUR", otherUserId);
+      const counterparty = await saveCounterparty(userId, {
+        name: "Ledger shop",
+      });
+      await prisma.financialTransaction.createMany({
+        data: Array.from({ length: 26 }, (_, index) => ({
+          userId,
+          accountId: ownAccount.id,
+          counterpartyId: counterparty.id,
+          type: "EXPENSE",
+          currency: "EUR",
+          amountMinor: 100n,
+          occurredAt: new Date(Date.UTC(2026, 9, 25, 9, index)),
+        })),
+      });
+      await prisma.financialTransaction.createMany({
+        data: [
+          {
+            userId,
+            accountId: ownAccount.id,
+            type: "EXPENSE",
+            currency: "EUR",
+            amountMinor: 999n,
+            occurredAt: new Date("2026-10-24T12:00:00Z"),
+          },
+          {
+            userId,
+            accountId: usdAccount.id,
+            type: "EXPENSE",
+            currency: "USD",
+            amountMinor: 750n,
+            occurredAt: new Date("2026-10-25T12:00:00Z"),
+          },
+          {
+            userId: otherUserId,
+            accountId: foreignAccount.id,
+            type: "EXPENSE",
+            currency: "EUR",
+            amountMinor: 99999n,
+            occurredAt: new Date("2026-10-25T12:00:00Z"),
+          },
+        ],
+      });
+      const filters = {
+        date: "2026-10-25",
+        type: "EXPENSE",
+        currency: "EUR",
+        counterparty: counterparty.id,
+      };
+      const first = await getFinancialLedger(userId, filters);
+      expect(first.rows).toHaveLength(25);
+      expect(first.summary).toEqual([
+        {
+          currency: "EUR",
+          type: "EXPENSE",
+          _sum: { amountMinor: 2600n },
+          _count: { _all: 26 },
+        },
+      ]);
+      expect(first.nextCursor).toBeTruthy();
+      const second = await getFinancialLedger(userId, {
+        ...filters,
+        cursor: first.nextCursor!,
+      });
+      expect(second.rows).toHaveLength(1);
+      expect(second.summary).toEqual(first.summary);
+      expect(
+        new Set([...first.rows, ...second.rows].map((row) => row.id)).size,
+      ).toBe(26);
+      const mixed = await getFinancialLedger(userId, { date: "2026-10-25" });
+      expect(
+        mixed.summary
+          .map((group) => [group.currency, group._sum.amountMinor])
+          .sort(),
+      ).toEqual([
+        ["EUR", 2600n],
+        ["USD", 750n],
+      ]);
+      expect(
+        (await getFinancialLedger(userId, { account: foreignAccount.id })).rows,
+      ).toEqual([]);
+    });
+
     it("derives balances from anchors, strictly subsequent flows, negative balances and historical archive dates", async () => {
       const a = await account();
       await saveFinancialTransaction(userId, transaction(a.id, "1100"));

@@ -247,13 +247,11 @@ export function CaptureFields({
                 (value?.respondsToInteractionId ?? respondsTo) &&
                 !replies.some(
                   (reply) =>
-                    reply.id ===
-                    (value?.respondsToInteractionId ?? respondsTo),
+                    reply.id === (value?.respondsToInteractionId ?? respondsTo),
                 )
                   ? [
                       {
-                        id:
-                          value?.respondsToInteractionId ?? respondsTo ?? "",
+                        id: value?.respondsToInteractionId ?? respondsTo ?? "",
                         name: "Previously linked interaction",
                       },
                       ...replies,
@@ -324,6 +322,7 @@ export function InteractionForm(
   if (exploration?.archived) return null;
   return (
     <RecordDialog
+      treatment="workspace"
       eyebrow="Field notes"
       title={props.value ? "Correct interaction" : "Log interaction"}
       triggerLabel={

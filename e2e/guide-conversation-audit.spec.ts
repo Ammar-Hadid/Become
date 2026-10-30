@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/db/adapters/prisma.adapter";
 import { expect, test, type Page } from "./utils/browser-test.util";
+import { deferAutomaticSeasonOpening } from "./utils/season-arrival.util";
 
 async function signUp(page: Page) {
   await page.goto("/sign-in");
@@ -17,13 +18,7 @@ async function signUp(page: Page) {
     .getByTestId("password-input")
     .fill("become-disposable-guide-audit");
   await page.getByTestId("auth-submit").click();
-  await page.waitForURL((url) => url.pathname !== "/sign-in", {
-    timeout: 30_000,
-  });
-  if (/\/direction\/seasons\/\d{4}\/[1-4]\/opening/.test(page.url())) {
-    await page.getByRole("button", { name: "Not now", exact: true }).click();
-    await expect(page).toHaveURL(/\/?opening=paused$/);
-  }
+  await deferAutomaticSeasonOpening(page);
   return (await prisma.user.findUniqueOrThrow({ where: { email } })).id;
 }
 
@@ -100,7 +95,7 @@ test("free-form and pinned-guide conversations preserve meaning across their ful
   );
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
-  const artifactDir = resolve("test-results/guide-audit");
+  const artifactDir = testInfo.outputPath("guide-audit");
   await mkdir(artifactDir, { recursive: true });
 
   const userId = await signUp(page);
